@@ -1,0 +1,24 @@
+{
+  "items": [
+    {
+      "id": "potion",
+      "quantity": 3
+    },
+    {
+      "id": "elixir",
+      "quantity": 1
+    },
+    {
+      "id": "key",
+      "quantity": 0
+    },
+    {
+      "id": "ain",
+      "quantity": 4
+    },
+    {
+      "id": "ainain",
+      "quantity": 2
+    }
+  ]
+}

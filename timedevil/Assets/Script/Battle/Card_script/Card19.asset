@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae67f8acdd35dd84fb814605a4b67711, type: 3}
+  m_Name: Card19
+  m_EditorClassIdentifier: 
+  id: Card19
+  displayName: Card19
+  type: 2
+  display: "[\uD0D0\uC695]\n\uB371\uC5D0\uC11C 5\uC7A5 \uB4DC\uB85C\uC6B0"
+  explanation: "\uD0D0\uC695\uC758 \uD558\uC544\uB9AC"
+  cost: 6
+  positive: 0
+  negative: 0
+  drawMode: 0
+  amount: 5

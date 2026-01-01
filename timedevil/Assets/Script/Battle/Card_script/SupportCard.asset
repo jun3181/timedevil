@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4aba08e57345df14899d9494d051ce96, type: 3}
+  m_Name: SupportCard
+  m_EditorClassIdentifier: 
+  id: 
+  displayName: 
+  type: 1
+  display: 
+  explanation: 
+  cost: 1
+  positive: 0
+  negative: 0
+  action: 0
+  debuffStat: 0
+  debuffAmount: 0
+  debuffTurn: 0
+  debuffTickDamage: 0
+  buffStat: 0
+  buffAmount: 0
+  buffTurn: 0

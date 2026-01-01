@@ -1,0 +1,159 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ab7059ed9806584bab32746afc3b7b5, type: 3}
+  m_Name: Card1
+  m_EditorClassIdentifier: 
+  id: Card1
+  displayName: Card1
+  type: 0
+  display: "[\uAC70\uC9D3]"
+  explanation: "[\uAC70\uC9D3]\n\uAC70\uC9D3\uB41C \uAC10\uC815\uC774 \uBAB0\uB824\uC628\uB2E4"
+  cost: 3
+  positive: 0
+  negative: 0
+  power: 5
+  pattern16: 0000000000000000
+  timeline:
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  cameraShake: 0
+  animationKey: 
+  sfx: {fileID: 0}
+  waves:
+  - pattern16: 0001001001001000
+    timeline:
+    - 0
+    - 0
+    - 0
+    - 1
+    - 0
+    - 0
+    - 1
+    - 0
+    - 0
+    - 1
+    - 0
+    - 0
+    - 1
+    - 0
+    - 0
+    - 0
+    delayBefore: 0
+    delayAfter: 0
+    sfx: {fileID: 0}
+    sfxEveryHit: 0
+    vfxPrefab: {fileID: 0}
+    vfxEveryHit: 0
+    vfxLifetime: 0
+    hitDelays: []
+    projectilePrefab: {fileID: 0}
+    projectileSpeed: 0
+    projectileHitWidth: 0
+    projectileHitHeight: 0
+    destroyOnImpact: 0
+    projectileScale: 0
+    labelsA: 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+    labelsB: 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+    explosionPrefab: {fileID: 1013674140931256, guid: ebf86d4ce48c77c40967eba4912f2444, type: 3}
+    explosionLifetime: 0.5
+    explosionScale: 0.7
+    clipKey: 
+  - pattern16: 0000001100110000
+    timeline:
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 1
+    - 1
+    - 1
+    - 0
+    - 1
+    - 1
+    - 1
+    - 0
+    - 0
+    - 0
+    - 0
+    delayBefore: 0.1
+    delayAfter: 0
+    sfx: {fileID: 0}
+    sfxEveryHit: 0
+    vfxPrefab: {fileID: 0}
+    vfxEveryHit: 0
+    vfxLifetime: 0
+    hitDelays: []
+    projectilePrefab: {fileID: 1417293269292998, guid: f668dfc3488676f439ca6cf67d1c796e, type: 3}
+    projectileSpeed: 7
+    projectileHitWidth: 0.8
+    projectileHitHeight: 0.8
+    destroyOnImpact: 1
+    projectileScale: 0.5
+    labelsA: 00000000000000000000000000000000000000000100000000000000000000000000000001000000000000000000000000000000000000000000000000000000
+    labelsB: 00000000000000000000000000000000000000000100000000000000000000000000000001000000000000000000000000000000000000000000000000000000
+    explosionPrefab: {fileID: 0}
+    explosionLifetime: 0
+    explosionScale: 0
+    clipKey: 
+  - pattern16: 1111111100000000
+    timeline:
+    - 1
+    - 1
+    - 1
+    - 1
+    - 1
+    - 1
+    - 1
+    - 1
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    delayBefore: 0.1
+    delayAfter: 0
+    sfx: {fileID: 0}
+    sfxEveryHit: 0
+    vfxPrefab: {fileID: 0}
+    vfxEveryHit: 0
+    vfxLifetime: 0
+    hitDelays: []
+    projectilePrefab: {fileID: 0}
+    projectileSpeed: 0
+    projectileHitWidth: 0
+    projectileHitHeight: 0
+    destroyOnImpact: 0
+    projectileScale: 0
+    labelsA: 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+    labelsB: 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+    explosionPrefab: {fileID: 1027424567744204, guid: b4b0ca79efc9c55478a36d78ff2a5fa2, type: 3}
+    explosionLifetime: 0.2
+    explosionScale: 0.8
+    clipKey: 
