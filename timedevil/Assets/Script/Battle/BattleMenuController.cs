@@ -113,7 +113,7 @@ public class BattleMenuController : MonoBehaviour
         else
         {
             int count = entries.Length;
-            SetFocus((index + (dir > 0 ? 2 : -2) % count + count) % count);
+            SetFocus((index + (dir > 0 ? 2 : -2) % count + count) % counti);
         }
     }
 
@@ -125,6 +125,10 @@ public class BattleMenuController : MonoBehaviour
             var go = entries[i];
             if (!go) continue;
             var img = go.GetComponent<UnityEngine.UI.Image>();
+            var img = go.GetComponent<UnityEngine.UI.Image>();
+
+            var img = go.GetComponent<UnityEngine.UI.Image>();
+
             if (!img) continue;
             img.color = (i == cur) ? new Color(0.7f, 1f, 0.7f, 1f) : Color.white;
         }
