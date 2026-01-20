@@ -4249,13 +4249,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   menuUI: {fileID: 131110990}
-  manager: {fileID: 890267956}
   menuItems:
   - {fileID: 46852543}
   - {fileID: 2034181480}
   - {fileID: 28908130}
   - {fileID: 977312589}
   panelText: {fileID: 511302733}
+  manager: {fileID: 890267956}
+  debugMenu: 1
 --- !u!4 &422075912
 Transform:
   m_ObjectHideFlags: 0
@@ -5067,7 +5068,9 @@ GameObject:
   - component: {fileID: 780439219}
   - component: {fileID: 780439222}
   - component: {fileID: 780439223}
-  - component: {fileID: 780439218}
+  - component: {fileID: 780439226}
+  - component: {fileID: 780439225}
+  - component: {fileID: 780439224}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -5075,22 +5078,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &780439218
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 780439217}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ee0ef7a1599df884688e9a1ee03eb320, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Speed: 5
-  manager: {fileID: 890267956}
-  Next_Scene: {fileID: 0}
-  get_manager: {fileID: 1604570934}
 --- !u!50 &780439219
 Rigidbody2D:
   serializedVersion: 4
@@ -5251,6 +5238,64 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 0.5, y: 0.33968246}
   m_EdgeRadius: 0
+--- !u!114 &780439224
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 780439217}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb9a3dd1f2b64d94783588ce55bb6c4f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  move: {fileID: 780439225}
+  nextScene: {fileID: 0}
+  getManager: {fileID: 0}
+  gameManager: {fileID: 0}
+  raycastOffset: 0.5
+  normalRayDistance: 0.01
+  downRayDistance: 0.25
+  mask:
+    serializedVersion: 2
+    m_Bits: 832
+  debugRay: 0
+--- !u!114 &780439225
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 780439217}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cc96fdd452eeb3048b5cee7bc0bc1cde, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  speed: 5
+  rb: {fileID: 780439219}
+  anim: {fileID: 780439222}
+--- !u!114 &780439226
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 780439217}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9add3cf0b75e8b4ab1f6d5910822e71, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  move: {fileID: 780439225}
+  interactor: {fileID: 780439224}
+  menu: {fileID: 422075911}
+  gameManager: {fileID: 890267956}
+  keyMenu: 113
+  keyInteractOrSubmit: 101
+  keyCloseAlso: 119
+  debugInput: 1
 --- !u!1 &890267955
 GameObject:
   m_ObjectHideFlags: 0
