@@ -1,22 +1,41 @@
 using UnityEngine;
 
-// 대화 한 줄에 필요한 정보들을 담는 클래스
-[System.Serializable] // 이 어트리뷰트를 추가해야 Inspector 창에서 보입니다.
-public class Sentence
+public enum PortraitFocus
 {
-    public string characterName; // 캐릭터 이름
-
-    [TextArea(3, 10)]
-    public string text; // 대사 내용
-
-    public Sprite characterPortrait; // 캐릭터 초상화 (표정)
-
-    public AudioClip voiceClip; // 성우 목소리 오디오 클립
+    None,
+    Left,
+    Right
 }
 
-// 대화 이벤트 하나에 포함될 Sentence들의 배열을 담는 클래스
+[System.Serializable]
+public struct DialogueLine
+{
+    [TextArea(2, 4)]
+    public string text;
+
+    [Tooltip("비우면 Dialogue.name 사용")]
+    public string speakerName;
+
+    [Header("이 줄에서만 바꾸고 싶을 때(비우면 이전/기본 유지)")]
+    public Sprite leftPortrait;
+    public Sprite rightPortrait;
+
+    [Tooltip("누가 말하는지(= 반대쪽을 어둡게)")]
+    public PortraitFocus focus;
+}
+
 [System.Serializable]
 public class Dialogue
 {
-    public Sentence[] sentences;
+    [Header("Legacy")]
+    public string name;
+    [TextArea(2, 4)]
+    public string[] sentences;
+
+    [Header("Portraits (기본 2슬롯)")]
+    public Sprite leftPortrait;
+    public Sprite rightPortrait;
+
+    [Header("Lines (이게 있으면 sentences 대신 이걸 사용)")]
+    public DialogueLine[] lines;
 }
