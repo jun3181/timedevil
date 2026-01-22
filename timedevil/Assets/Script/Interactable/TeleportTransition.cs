@@ -1,18 +1,21 @@
-using System.Collections;
+Ôªøusing System.Collections;
 using UnityEngine;
 
 public class TeleportTransition : MonoBehaviour, IInteractable
 {
-    [Header("Teleport Target")]
+    [Header("Teleport Target (Player)")]
     public Transform targetPoint;
+
+    [Header("Camera Snap Point (ÏÑ†ÌÉù)")]
+    public Transform cameraSnapPoint;
 
     [Header("After Teleport Camera Mode")]
     public CameraModeId afterMode = CameraModeId.FollowConfined;
 
-    [Tooltip("FollowConfined¿œ ∂ß ªÁøÎ«“ Confiner Bounds(PolygonCollider2D µÓ)")]
-    public Collider2D afterConfinerBounds;
+    [Tooltip("FollowConfinedÏùº Îïå Clamp Bounds(ÏΩúÎùºÏù¥Îçî)")]
+    public Collider2D afterBounds;
 
-    [Tooltip("¿Ãµø »ƒ ¡‹(OrthoSize). 0¿Ã∏È ∫Ø∞Ê æ» «‘")]
+    [Tooltip("Ïù¥Îèô ÌõÑ Ï§å(OrthoSize). 0Ïù¥Î©¥ Î≥ÄÍ≤Ω Ïïà Ìï®")]
     public float afterOrthoSize = 0f;
 
     [Header("Lock")]
@@ -28,11 +31,10 @@ public class TeleportTransition : MonoBehaviour, IInteractable
         if (_running) return;
         if (!targetPoint)
         {
-            Debug.LogWarning("[TeleportTransition] targetPoint∞° ∫ÒæÓ¿÷¿Ω");
+            Debug.LogWarning("[TeleportTransition] targetPointÍ∞Ä ÎπÑÏñ¥ÏûàÏùå");
             return;
         }
 
-        // ¥Î»≠ ¡ﬂ¿Ã∏È ≈⁄∑π∆˜∆Æ ±›¡ˆ
         if (DialogueManager.instance != null && DialogueManager.instance.isDialogueActive)
             return;
 
@@ -43,24 +45,30 @@ public class TeleportTransition : MonoBehaviour, IInteractable
     {
         _running = true;
 
-        if (debugLog) Debug.Log($"[TeleportTransition] Start -> {targetPoint.position} mode={afterMode}");
+        Vector3 camPos = (cameraSnapPoint ? cameraSnapPoint.position : targetPoint.position);
 
-        // ¿‘∑¬ ¿·±›
         if (lockPlayerInput && GameManager.Instance) GameManager.Instance.isAction = true;
-
-        // ¿¸»Ø Ω√¿€(ƒ´∏ﬁ∂Û ∞Ì¡§)
         if (CameraManager.Instance) CameraManager.Instance.BeginTransition(lockCamera: true);
 
-        // Fade In (∞À¿∫ »≠∏È)
+        // Fade In
         if (SceneFader.instance != null)
             yield return SceneFader.instance.StartCoroutine(SceneFader.instance.Fade(1f));
 
-        // «√∑π¿ÃæÓ ¿Ãµø
+        // ===== ÌîåÎ†àÏù¥Ïñ¥ Ïù¥Îèô =====
         var player = FindObjectOfType<PlayerMove>(true);
+        Vector3 before = player ? player.transform.position : Vector3.zero;
+
         if (player != null)
             player.transform.position = targetPoint.position;
 
-        // ƒ´∏ﬁ∂Û ∏µÂ ¿˚øÎ(¿Ãµø »ƒ)
+        Vector3 after = player ? player.transform.position : targetPoint.position;
+        Vector3 delta = after - before;
+
+        //  Follow Í≥ÑÏó¥ÏóêÏÑú Ïπ¥Î©îÎùºÍ∞Ä Ïù¥Ï†Ñ ÏúÑÏπòÎ°ú ÎÅåÎ¶¨Îäî ÌòÑÏÉÅ Î∞©ÏßÄÏö© (Ïä§ÎÉÖ ÏïÑÎãò)
+        if (CameraManager.Instance && player != null)
+            CameraManager.Instance.NotifyTargetWarp(player.transform, delta);
+
+        // ===== Ïπ¥Î©îÎùº Î™®Îìú Ï†ÅÏö© =====
         if (CameraManager.Instance != null)
         {
             float? size = (afterOrthoSize > 0f) ? afterOrthoSize : (float?)null;
@@ -68,17 +76,16 @@ public class TeleportTransition : MonoBehaviour, IInteractable
             switch (afterMode)
             {
                 case CameraModeId.Fixed:
-                    CameraManager.Instance.SetFixed(
-                        lockWorldPos: player ? player.transform.position : targetPoint.position,
-                        orthoSize: size,
-                        disableConfiner: true
-                    );
+                    CameraManager.Instance.SetFixed(lockWorldPos: camPos, orthoSize: size);
+
+                    // ‚úÖ FIXEDÏóêÏÑúÎßå Í∞ïÏ†ú Ïä§ÎÉÖ
+                    CameraManager.Instance.SnapCameraTo(camPos);
                     break;
 
                 case CameraModeId.FollowConfined:
                     CameraManager.Instance.SetFollowConfined(
                         followTarget: player ? player.transform : null,
-                        bounds: afterConfinerBounds,
+                        bounds: afterBounds,
                         orthoSize: size
                     );
                     break;
@@ -91,23 +98,17 @@ public class TeleportTransition : MonoBehaviour, IInteractable
                     break;
 
                 case CameraModeId.Cutscene:
-                    CameraManager.Instance.SetCutscene(
-                        worldPos: targetPoint.position,
-                        orthoSize: size,
-                        useConfiner: false,
-                        bounds: null
-                    );
+                    CameraManager.Instance.SetCutscene(worldPos: camPos, orthoSize: size);
                     break;
             }
 
             CameraManager.Instance.EndTransition();
         }
 
-        // Fade Out (π‡æ∆¡¸)
+        // Fade Out
         if (SceneFader.instance != null)
             yield return SceneFader.instance.StartCoroutine(SceneFader.instance.Fade(0f));
 
-        // ¿‘∑¬ «ÿ¡¶
         if (lockPlayerInput && GameManager.Instance) GameManager.Instance.isAction = false;
 
         _running = false;

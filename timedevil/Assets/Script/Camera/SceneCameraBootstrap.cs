@@ -1,7 +1,6 @@
-using System.Collections;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
+[DisallowMultipleComponent]
 public class SceneCameraBootstrap : MonoBehaviour
 {
     [Header("Start Mode")]
@@ -10,84 +9,58 @@ public class SceneCameraBootstrap : MonoBehaviour
     [Header("Follow Target (비우면 PlayerMove 자동 탐색)")]
     public Transform followTarget;
 
-    [Header("Confiner (FollowConfined에서 사용)")]
+    [Header("FollowConfined용 Bounds (BoxCollider2D 권장)")]
     public Collider2D confinerBounds;
 
-    [Header("Zoom")]
-    public float orthoSize = 5f;
+    [Header("Zoom (0이면 기본값 유지)")]
+    public float orthoSize = 0f;
 
-    [Header("Fixed/Cutscene Position (선택)")]
+    [Header("Fixed/Cutscene 위치 (선택)")]
     public Transform fixedOrCutsceneAnchor;
 
     [Header("Debug")]
     public bool debugLog = true;
 
-    private void OnEnable()
+    private void Start()
     {
-        // 씬 로드 직후 오브젝트들 활성화 끝나고 적용(1프레임 뒤)
-        SceneManager.sceneLoaded += OnSceneLoaded;
-        StartCoroutine(ApplyNextFrame());
-    }
+        if (!CameraManager.Instance) return;
 
-    private void OnDisable()
-    {
-        SceneManager.sceneLoaded -= OnSceneLoaded;
-    }
-
-    private void OnSceneLoaded(Scene s, LoadSceneMode m)
-    {
-        StartCoroutine(ApplyNextFrame());
-    }
-
-    private IEnumerator ApplyNextFrame()
-    {
-        yield return null;
-
-        if (!CameraManager.Instance) yield break;
-
-        var target = followTarget;
-        if (!target)
+        if (!followTarget)
         {
             var pm = FindObjectOfType<PlayerMove>(true);
-            if (pm) target = pm.transform;
+            if (pm) followTarget = pm.transform;
         }
 
-        if (debugLog) Debug.Log($"[SceneCameraBootstrap] Apply startMode={startMode} target={(target ? target.name : "(null)")} confiner={(confinerBounds ? confinerBounds.name : "(null)")} ortho={orthoSize}");
+        float? size = (orthoSize > 0f) ? orthoSize : (float?)null;
 
         switch (startMode)
         {
             case CameraModeId.Fixed:
                 CameraManager.Instance.SetFixed(
-                    lockWorldPos: fixedOrCutsceneAnchor ? fixedOrCutsceneAnchor.position : (Vector3?)null,
-                    orthoSize: orthoSize,
-                    disableConfiner: true
-                );
-                break;
-
-            case CameraModeId.FollowConfined:
-                CameraManager.Instance.SetFollowConfined(
-                    followTarget: target,
-                    bounds: confinerBounds,
-                    orthoSize: orthoSize
+                    lockWorldPos: fixedOrCutsceneAnchor ? fixedOrCutsceneAnchor.position :
+                                 (followTarget ? followTarget.position : (Vector3?)null),
+                    orthoSize: size
                 );
                 break;
 
             case CameraModeId.FollowFree:
-                CameraManager.Instance.SetFollowFree(
-                    followTarget: target,
-                    orthoSize: orthoSize
-                );
+                CameraManager.Instance.SetFollowFree(followTarget, size);
+                break;
+
+            case CameraModeId.FollowConfined:
+                CameraManager.Instance.SetFollowConfined(followTarget, confinerBounds, size);
                 break;
 
             case CameraModeId.Cutscene:
-                var pos = fixedOrCutsceneAnchor ? fixedOrCutsceneAnchor.position : Camera.main.transform.position;
                 CameraManager.Instance.SetCutscene(
-                    worldPos: pos,
-                    orthoSize: orthoSize,
-                    useConfiner: false,
-                    bounds: null
+                    fixedOrCutsceneAnchor ? fixedOrCutsceneAnchor.position :
+                    (followTarget ? followTarget.position : transform.position),
+                    size
                 );
                 break;
         }
+
+        if (debugLog)
+            Debug.Log($"[SceneCameraBootstrap] StartMode={startMode} follow={(followTarget ? followTarget.name : "(null)")} bounds={(confinerBounds ? confinerBounds.name : "(null)")} ortho={(size.HasValue ? size.Value.ToString() : "(default)")}");
     }
 }
