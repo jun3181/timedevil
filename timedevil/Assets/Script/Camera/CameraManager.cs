@@ -18,7 +18,7 @@ public class CameraManager : MonoBehaviour
     [Header("Single VCam")]
     [SerializeField] private CinemachineVirtualCamera vcam;
 
-    [Header("Clamp Extension (네가 쓰는 Clamp 후처리)")]
+    [Header("Clamp Extension (Clamp 후처리)")]
     [SerializeField] private CinemachineClamp2D clamp2D;
 
     [Header("Defaults")]
