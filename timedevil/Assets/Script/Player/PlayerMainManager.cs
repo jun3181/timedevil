@@ -1,0 +1,143 @@
+﻿using UnityEngine;
+
+[DisallowMultipleComponent]
+public class PlayerMainManager : MonoBehaviour
+{
+    [Header("Modules")]
+    [SerializeField] private PlayerMove move;
+    [SerializeField] private PlayerInteractor interactor;
+    [SerializeField] private MenuController menu;
+    [SerializeField] private GameManager gameManager;
+
+    [Header("Keys (Q/W/E는 '이동'에 사용하지 않음)")]
+    [SerializeField] private KeyCode keyMenu = KeyCode.Q;
+    [SerializeField] private KeyCode keyInteractOrSubmit = KeyCode.E;
+    [SerializeField] private KeyCode keyBackOrReserved = KeyCode.W; // 메뉴에서는 Back(닫기), 월드에서는 예약
+
+    [Header("Debug")]
+    [SerializeField] private bool debugLog = true;
+
+    private void Reset()
+    {
+        move ??= GetComponent<PlayerMove>();
+        interactor ??= GetComponent<PlayerInteractor>();
+        gameManager ??= GameManager.Instance;
+        menu ??= FindObjectOfType<MenuController>(true);
+    }
+
+    private void Awake()
+    {
+        if (!move) move = GetComponent<PlayerMove>();
+        if (!interactor) interactor = GetComponent<PlayerInteractor>();
+        if (!gameManager) gameManager = GameManager.Instance;
+        if (!menu) menu = FindObjectOfType<MenuController>(true);
+
+        if (!move) Debug.LogError("[PlayerMainManager] PlayerMove가 필요합니다.");
+        if (!interactor) Debug.LogError("[PlayerMainManager] PlayerInteractor가 필요합니다.");
+        if (!menu) Debug.LogError("[PlayerMainManager] MenuController를 찾지 못했습니다. (씬에 1개만 두고 연결 권장)");
+    }
+
+    private void Update()
+    {
+        // =========================
+        // DIALOGUE MODE (E는 대사 넘기기 전용)
+        // =========================
+        if (DialogueManager.instance != null && DialogueManager.instance.isDialogueActive)
+        {
+            move?.SetMoveInput(0, 0, false, false, false, false);
+
+            // 컷씬이면 스킵 금지
+            if (!DialogueManager.instance.blockInput && Input.GetKeyDown(keyInteractOrSubmit))
+            {
+                if (debugLog) Debug.Log("[PlayerMainManager] Dialogue Advance by E");
+                DialogueManager.instance.DisplayNextSentence();
+            }
+
+            // 대화 중엔 메뉴/상호작용으로 절대 안 내려보냄
+            return;
+        }
+
+        // =========================
+        // CUTSCENE / ACTION LOCK (대화는 위에서 처리했으니 여기선 제외)
+        // =========================
+        if (IsInputBlockedByCutsceneOnly())
+        {
+            move?.SetMoveInput(0, 0, false, false, false, false);
+            return;
+        }
+
+        // =========================
+        // MENU MODE
+        // =========================
+        if (menu != null && menu.IsOpen)
+        {
+            move?.SetMoveInput(0, 0, false, false, false, false);
+
+            // 메뉴 닫기: Q 또는 W
+            if (Input.GetKeyDown(keyMenu) || Input.GetKeyDown(keyBackOrReserved))
+            {
+                if (debugLog) Debug.Log("[PlayerMainManager] MENU CLOSE by Q/W");
+                menu.Close();
+                return;
+            }
+
+            if (Input.GetKeyDown(KeyCode.UpArrow)) menu.Navigate(-1);
+            if (Input.GetKeyDown(KeyCode.DownArrow)) menu.Navigate(+1);
+
+            if (Input.GetKeyDown(keyInteractOrSubmit)) menu.SubmitCurrent();
+            return;
+        }
+
+        // =========================
+        // WORLD MODE
+        // =========================
+
+        // 메뉴 열기: Q
+        if (menu != null && Input.GetKeyDown(keyMenu))
+        {
+            if (debugLog) Debug.Log("[PlayerMainManager] MENU OPEN by Q");
+            menu.Open();
+            move?.SetMoveInput(0, 0, false, false, false, false);
+            return;
+        }
+
+        // 이동: Arrow만
+        int h = (Input.GetKey(KeyCode.RightArrow) ? 1 : 0) + (Input.GetKey(KeyCode.LeftArrow) ? -1 : 0);
+        int v = (Input.GetKey(KeyCode.UpArrow) ? 1 : 0) + (Input.GetKey(KeyCode.DownArrow) ? -1 : 0);
+
+        bool hDown = Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.RightArrow);
+        bool vDown = Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.DownArrow);
+        bool hUp = Input.GetKeyUp(KeyCode.LeftArrow) || Input.GetKeyUp(KeyCode.RightArrow);
+        bool vUp = Input.GetKeyUp(KeyCode.UpArrow) || Input.GetKeyUp(KeyCode.DownArrow);
+
+        move?.SetMoveInput(h, v, hDown, vDown, hUp, vUp);
+
+        // 상호작용: E
+        if (Input.GetKeyDown(keyInteractOrSubmit))
+        {
+            if (debugLog) Debug.Log("[PlayerMainManager] INTERACT by E");
+            interactor?.TryInteract();
+        }
+
+        // W: 월드에서는 예약키
+        if (Input.GetKeyDown(keyBackOrReserved))
+        {
+            if (debugLog) Debug.Log("[PlayerMainManager] W pressed (reserved in world)");
+        }
+    }
+
+    // ✅ 여기서는 "대화 활성"은 빼야 함. (대화는 Update 상단에서 처리)
+    private bool IsInputBlockedByCutsceneOnly()
+    {
+        bool gmLock = (gameManager != null && gameManager.isAction);
+
+        bool cutsceneLock = false;
+        if (DialogueManager.instance != null)
+        {
+            // 컷씬에서만 막는 용도
+            cutsceneLock = DialogueManager.instance.blockInput;
+        }
+
+        return gmLock || cutsceneLock;
+    }
+}

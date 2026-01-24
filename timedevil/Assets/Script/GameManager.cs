@@ -3,7 +3,7 @@ using TMPro;
 
 public class GameManager : MonoBehaviour
 {
-    // ✅ 싱글톤 (전역 접근 가능)
+    // 싱글톤 (전역 접근 가능)
     public static GameManager Instance { get; private set; }
 
     [Header("Dialogue UI")]

@@ -1,145 +1,270 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 
-[RequireComponent(typeof(AudioSource))]
 public class DialogueManager : MonoBehaviour
 {
     public static DialogueManager instance;
 
-    [Header("UI Elements")]
-    public GameObject dialogueCanvas;
-    public TextMeshProUGUI nameText;
-    public Image portraitImage;
-    public TextMeshProUGUI dialogueText;
+    [Header("UI Root")]
+    public GameObject uiRoot;            // ì˜ˆ: UI_Dialogue/Panel
+    public TMP_Text nameText;            // Name Text
+    public TMP_Text dialogueText;        // Dialogue Text (TMP)
 
-    private Queue<Sentence> sentenceQueue;
+    [Header("Portraits (2ê°œ)")]
+    public Image leftPortraitImage;
+    public Image rightPortraitImage;
+
+    [Header("Dimming")]
+    public bool dimInactive = true;
+    [Range(0f, 1f)] public float activeAlpha = 1f;
+    [Range(0f, 1f)] public float inactiveAlpha = 0.35f;
+
+    [Header("Typewriter")]
+    public bool useTypewriter = true;
+    [Tooltip("ì´ˆë‹¹ í‘œì‹œ ê¸€ì ìˆ˜")]
+    public float charactersPerSecond = 35f;
+    [Tooltip("ë¬¸ì¥ë¶€í˜¸ì—ì„œ ì¶”ê°€ ëŒ€ê¸°(ë¦¬ë“¬)")]
+    public float punctuationExtraDelay = 0.10f;
+
+    [Header("State")]
     public bool isDialogueActive = false;
-    private Coroutine typingCoroutine;
-    private bool isStartingDialogue = false;
+    public bool blockInput = false; // ì»·ì”¬ì—ì„œ ì‚¬ìš©(ì™¸ë¶€ì—ì„œ ì¼œê³  ë„ëŠ” ìš©ë„)
 
-    public bool blockInput = false;
+    private readonly Queue<DialogueLine> _queue = new();
+    private string _defaultName;
+    private Sprite _currentLeft;
+    private Sprite _currentRight;
 
-    [Header("Sound")]
-    public AudioSource sfxSource;   // ±âÁ¸ audioSource (Å¸ÀÌÇÎ È¿°úÀ½¿ë)
-    public AudioSource voiceSource; // ¡ÚÃß°¡µÊ: ¼º¿ì ¸ñ¼Ò¸® Àü¿ë
-    public AudioClip typingSound;
+    // typing state
+    private Coroutine _typingCo;
+    private bool _isTyping = false;
 
     private void Awake()
     {
-        if (instance == null)
-        {
-            instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
-        {
-            Destroy(gameObject);
-            return;
-        }
+        if (instance != null && instance != this) { Destroy(gameObject); return; }
+        instance = this;
+        DontDestroyOnLoad(gameObject);
 
-        sentenceQueue = new Queue<Sentence>();
-
-        // ÆíÀÇ»ó ÀÚµ¿À¸·Î Ã£¾ÆÁÖ±â (±âÁ¸ ÄÄÆ÷³ÍÆ®)
-        if (sfxSource == null) sfxSource = GetComponent<AudioSource>();
-    }
-
-    void Update()
-    {
-        if (blockInput) return;
-
-        if (isDialogueActive && !isStartingDialogue && Input.GetKeyDown(KeyCode.E))
-        {
-            DisplayNextSentence();
-        }
+        if (uiRoot) uiRoot.SetActive(false);
     }
 
     public void StartDialogue(Dialogue dialogue)
     {
-        isDialogueActive = true;
-        isStartingDialogue = true;
-        dialogueCanvas.SetActive(true);
-        sentenceQueue.Clear();
+        if (dialogue == null) return;
 
-        foreach (Sentence sentence in dialogue.sentences)
+        // UI ON
+        if (uiRoot) uiRoot.SetActive(true);
+
+        isDialogueActive = true;
+
+        // blockInputì€ ì»·ì”¬ì´ ì†Œìœ (ì—¬ê¸°ì„œ ê°•ì œë¡œ falseë¡œ ë°”ê¾¸ì§€ ì•ŠìŒ)
+
+        _queue.Clear();
+
+        _defaultName = dialogue.name;
+        _currentLeft = dialogue.leftPortrait;
+        _currentRight = dialogue.rightPortrait;
+
+        // lines ìš°ì„ 
+        if (dialogue.lines != null && dialogue.lines.Length > 0)
         {
-            sentenceQueue.Enqueue(sentence);
+            foreach (var line in dialogue.lines)
+            {
+                if (string.IsNullOrWhiteSpace(line.text)) continue;
+                _queue.Enqueue(line);
+            }
+        }
+        else
+        {
+            // legacy sentences
+            if (dialogue.sentences != null)
+            {
+                foreach (var s in dialogue.sentences)
+                {
+                    if (string.IsNullOrWhiteSpace(s)) continue;
+                    _queue.Enqueue(new DialogueLine
+                    {
+                        text = s,
+                        speakerName = _defaultName,
+                        leftPortrait = null,
+                        rightPortrait = null,
+                        focus = PortraitFocus.None
+                    });
+                }
+            }
         }
 
-        StartCoroutine(StartDialogueRoutine());
-    }
-
-    private IEnumerator StartDialogueRoutine()
-    {
-        yield return null;
         DisplayNextSentence();
-        isStartingDialogue = false;
     }
 
+    /// <summary>
+    /// E ì…ë ¥ì€ PlayerMainManagerê°€ ì—¬ê¸°ë§Œ í˜¸ì¶œ.
+    /// - íƒ€ì´í•‘ ì¤‘: ì¦‰ì‹œ ì™„ì„±
+    /// - íƒ€ì´í•‘ ë: ë‹¤ìŒ ë¬¸ì¥
+    /// - ë” ì—†ìŒ: ì¢…ë£Œ
+    /// </summary>
     public void DisplayNextSentence()
     {
-        if (sentenceQueue.Count == 0)
+        if (!isDialogueActive) return;
+
+        // 1) íƒ€ì´í•‘ ì¤‘ì´ë©´: "ë‹¤ìŒ"ì´ ì•„ë‹ˆë¼ "ì¦‰ì‹œ ì™„ì„±"
+        if (_isTyping)
         {
-            StartCoroutine(EndDialogueRoutine());
+            CompleteTyping();
             return;
         }
 
-        if (typingCoroutine != null)
+        // 2) ë‹¤ìŒ ì¤„ì´ ì—†ìœ¼ë©´ ì¢…ë£Œ
+        if (_queue.Count == 0)
         {
-            StopCoroutine(typingCoroutine);
+            EndDialogue();
+            return;
         }
 
-        Sentence sentence = sentenceQueue.Dequeue();
-        nameText.text = sentence.characterName;
+        // 3) ë‹¤ìŒ ì¤„ ì ìš©
+        var line = _queue.Dequeue();
 
-        if (portraitImage != null)
+        string speaker = string.IsNullOrEmpty(line.speakerName) ? _defaultName : line.speakerName;
+        if (nameText) nameText.text = speaker;
+
+        // ì´ˆìƒ ì—…ë°ì´íŠ¸(ì¤„ì—ì„œ overrideê°€ ìˆìœ¼ë©´ ê°±ì‹ )
+        if (line.leftPortrait != null) _currentLeft = line.leftPortrait;
+        if (line.rightPortrait != null) _currentRight = line.rightPortrait;
+
+        ApplyPortraits(_currentLeft, _currentRight, line.focus);
+
+        // í…ìŠ¤íŠ¸ ì¶œë ¥(íƒ€ì´í•‘)
+        if (dialogueText)
         {
-            portraitImage.sprite = sentence.characterPortrait;
-            if (sentence.characterPortrait == null) portraitImage.color = new Color(1, 1, 1, 0);
-            else portraitImage.color = new Color(1, 1, 1, 1);
-        }
-
-        // ¡å¡å¡å ¼Ò¸® Àç»ı ·ÎÁ÷ ºĞ¸® ¡å¡å¡å
-
-        // 1. ÀÌÀü ¸ñ¼Ò¸® ²ô±â (¸»ÀÌ °ãÄ¡Áö ¾Ê°Ô)
-        if (voiceSource != null) voiceSource.Stop();
-
-        // 2. »õ ¸ñ¼Ò¸® Àç»ı (Àü¿ë ½ºÇÇÄ¿ »ç¿ë)
-        if (voiceSource != null && sentence.voiceClip != null)
-        {
-            voiceSource.PlayOneShot(sentence.voiceClip);
-        }
-        // ¡ã¡ã¡ã¡ã¡ã¡ã
-
-        typingCoroutine = StartCoroutine(TypeSentence(sentence.text));
-    }
-
-    IEnumerator TypeSentence(string text)
-    {
-        dialogueText.text = "";
-        foreach (char letter in text.ToCharArray())
-        {
-            dialogueText.text += letter;
-
-            // 3. Å¸ÀÌÇÎ ¼Ò¸®´Â È¿°úÀ½ ½ºÇÇÄ¿·Î Àç»ı
-            if (sfxSource != null && typingSound != null)
-                sfxSource.PlayOneShot(typingSound);
-
-            yield return new WaitForSeconds(0.05f);
+            if (!useTypewriter)
+            {
+                dialogueText.text = line.text;
+                dialogueText.maxVisibleCharacters = int.MaxValue;
+            }
+            else
+            {
+                StartTyping(line.text);
+            }
         }
     }
 
-    IEnumerator EndDialogueRoutine()
+    private void StartTyping(string fullText)
     {
-        yield return new WaitForEndOfFrame();
+        if (!dialogueText) return;
+
+        if (_typingCo != null) StopCoroutine(_typingCo);
+        _typingCo = StartCoroutine(CoTypeTMP(fullText));
+    }
+
+    private IEnumerator CoTypeTMP(string fullText)
+    {
+        _isTyping = true;
+
+        // TMPëŠ” ì „ì²´ í…ìŠ¤íŠ¸ë¥¼ ë„£ê³  maxVisibleCharactersë¡œ ì¡°ì ˆí•˜ëŠ” ê²Œ ì œì¼ ì•ˆì „(ë¦¬ì¹˜í…ìŠ¤íŠ¸ë„ ê¹¨ì§ ì—†ìŒ)
+        dialogueText.text = fullText;
+        dialogueText.maxVisibleCharacters = 0;
+
+        // ê¸€ì ìˆ˜ í™•ì •
+        dialogueText.ForceMeshUpdate();
+        int totalChars = dialogueText.textInfo.characterCount;
+
+        if (totalChars <= 0)
+        {
+            dialogueText.maxVisibleCharacters = int.MaxValue;
+            _isTyping = false;
+            _typingCo = null;
+            yield break;
+        }
+
+        float interval = (charactersPerSecond <= 0f) ? 0f : (1f / charactersPerSecond);
+
+        for (int i = 0; i < totalChars; i++)
+        {
+            dialogueText.maxVisibleCharacters = i + 1;
+
+            // ê¸°ë³¸ ì†ë„
+            if (interval > 0f)
+                yield return new WaitForSecondsRealtime(interval);
+
+            // ë¬¸ì¥ë¶€í˜¸ ë¦¬ë“¬(ì„ íƒ)
+            if (punctuationExtraDelay > 0f)
+            {
+                char c = dialogueText.textInfo.characterInfo[i].character;
+                if (c == '.' || c == '!' || c == '?' || c == 'â€¦')
+                    yield return new WaitForSecondsRealtime(punctuationExtraDelay);
+                else if (c == ',' || c == 'ï¼Œ')
+                    yield return new WaitForSecondsRealtime(punctuationExtraDelay * 0.5f);
+            }
+        }
+
+        dialogueText.maxVisibleCharacters = int.MaxValue;
+
+        _isTyping = false;
+        _typingCo = null;
+    }
+
+    private void CompleteTyping()
+    {
+        if (!dialogueText) return;
+
+        if (_typingCo != null)
+        {
+            StopCoroutine(_typingCo);
+            _typingCo = null;
+        }
+
+        dialogueText.maxVisibleCharacters = int.MaxValue;
+        _isTyping = false;
+    }
+
+    private void ApplyPortraits(Sprite left, Sprite right, PortraitFocus focus)
+    {
+        if (leftPortraitImage)
+        {
+            leftPortraitImage.gameObject.SetActive(left != null);
+            leftPortraitImage.sprite = left;
+        }
+        if (rightPortraitImage)
+        {
+            rightPortraitImage.gameObject.SetActive(right != null);
+            rightPortraitImage.sprite = right;
+        }
+
+        float lA = activeAlpha, rA = activeAlpha;
+
+        if (dimInactive)
+        {
+            if (focus == PortraitFocus.Left) { lA = activeAlpha; rA = inactiveAlpha; }
+            else if (focus == PortraitFocus.Right) { lA = inactiveAlpha; rA = activeAlpha; }
+        }
+
+        if (leftPortraitImage) SetAlpha(leftPortraitImage, lA);
+        if (rightPortraitImage) SetAlpha(rightPortraitImage, rA);
+    }
+
+    private void SetAlpha(Image img, float a)
+    {
+        var c = img.color;
+        c.a = a;
+        img.color = c;
+    }
+
+    private void EndDialogue()
+    {
+        // íƒ€ì´í•‘ ì¤‘ì´ë©´ ì •ë¦¬
+        CompleteTyping();
 
         isDialogueActive = false;
-        dialogueCanvas.SetActive(false);
 
-        // Á¾·á ½Ã ¼Ò¸® ²ô±â
-        if (voiceSource != null) voiceSource.Stop();
-        if (sfxSource != null) sfxSource.Stop();
+        if (uiRoot) uiRoot.SetActive(false);
+        if (nameText) nameText.text = "";
+        if (dialogueText)
+        {
+            dialogueText.text = "";
+            dialogueText.maxVisibleCharacters = int.MaxValue;
+        }
     }
 }
