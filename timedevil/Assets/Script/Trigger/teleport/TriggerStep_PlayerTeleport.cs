@@ -9,8 +9,11 @@ public class TriggerStep_PlayerTeleport : TriggerStepBase
     [SerializeField] private Transform targetPoint;
     [SerializeField] private Vector2 offset = Vector2.zero;
 
-    [Header("Fade (optional)")]
+    [Header("Fade (in-scene)")]
     [SerializeField] private bool useFade = false;
+    [SerializeField] private FadePanelFader fadePanel;
+    [SerializeField] private float fadeOutDuration = 0.25f;
+    [SerializeField] private float fadeInDuration = 0.25f;
 
     [Header("Input Lock")]
     [SerializeField] private bool lockPlayerInput = true;
@@ -21,7 +24,7 @@ public class TriggerStep_PlayerTeleport : TriggerStepBase
     [Tooltip("FollowConfined일 때 Clamp bounds로 쓸 Collider2D(보통 BoxCollider2D 추천)")]
     [SerializeField] private Collider2D afterBounds;
 
-    [Tooltip("Fixed/Cutscene일 때 카메라를 고정할 '앵커 위치'. 비면 to(플레이어 위치)로 대체")]
+    [Tooltip("Fixed/Cutscene일 때 카메라 고정 앵커(Indoor)")]
     [SerializeField] private Transform fixedCameraAnchorPoint;
 
     [Tooltip("0이면 변경 안 함")]
@@ -34,6 +37,12 @@ public class TriggerStep_PlayerTeleport : TriggerStepBase
     [Header("Debug")]
     [SerializeField] private bool debugLog = true;
 
+    private void Awake()
+    {
+        if (!fadePanel)
+            fadePanel = FindObjectOfType<FadePanelFader>(true);
+    }
+
     public override IEnumerator Execute(TriggerContext ctx)
     {
         if (!targetPoint)
@@ -42,41 +51,34 @@ public class TriggerStep_PlayerTeleport : TriggerStepBase
             yield break;
         }
 
-        // ctx.player 가 Transform 이므로 Transform으로 받는다
-        Transform playerTr = ctx != null ? ctx.player : null;
-
-        // 혹시 ctx.player가 비어있을 때 폴백
+        Transform playerTr = (ctx != null) ? ctx.player : null;
         if (!playerTr)
         {
             var pm = Object.FindObjectOfType<PlayerMove>(true);
             playerTr = pm ? pm.transform : null;
         }
-
         if (!playerTr)
         {
             Debug.LogWarning("[TriggerStep_PlayerTeleport] 플레이어 Transform을 찾지 못했습니다.");
             yield break;
         }
 
-        GameObject playerGo = playerTr.gameObject;
-
         Vector3 from = playerTr.position;
         Vector3 to = targetPoint.position + (Vector3)offset;
 
         if (debugLog)
-            Debug.Log($"[TriggerStep_PlayerTeleport] Player='{playerGo.name}' from={from} to={to} mode={afterMode}");
+            Debug.Log($"[TriggerStep_PlayerTeleport] from={from} to={to} mode={afterMode}");
 
         if (lockPlayerInput && GameManager.Instance) GameManager.Instance.isAction = true;
-
         if (CameraManager.Instance) CameraManager.Instance.BeginTransition(lockCamera: true);
 
-        if (useFade && SceneFader.instance != null)
-            yield return SceneFader.instance.StartCoroutine(SceneFader.instance.Fade(1f));
+        if (useFade && fadePanel != null)
+            yield return fadePanel.FadeTo(1f, fadeOutDuration);
 
-        // 1) 플레이어 이동
+        // 이동
         playerTr.position = to;
 
-        // 2) 카메라 적용은 CameraManager가 책임지고 처리
+        // 카메라 적용은 CameraManager 책임(Indoor 앵커도 넘김)
         if (CameraManager.Instance != null)
         {
             float? size = (afterOrthoSize > 0f) ? afterOrthoSize : (float?)null;
@@ -96,8 +98,8 @@ public class TriggerStep_PlayerTeleport : TriggerStepBase
             CameraManager.Instance.EndTransition();
         }
 
-        if (useFade && SceneFader.instance != null)
-            yield return SceneFader.instance.StartCoroutine(SceneFader.instance.Fade(0f));
+        if (useFade && fadePanel != null)
+            yield return fadePanel.FadeTo(0f, fadeInDuration);
 
         if (lockPlayerInput && GameManager.Instance) GameManager.Instance.isAction = false;
     }

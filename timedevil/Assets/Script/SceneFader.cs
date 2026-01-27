@@ -1,117 +1,134 @@
+// Assets/Script/Scene/SceneFader.cs
+using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using System.Collections;
-using System;
 
+[DisallowMultipleComponent]
+[RequireComponent(typeof(CanvasGroup))]
 public class SceneFader : MonoBehaviour
 {
-    public static SceneFader instance;
+    [Header("Refs")]
+    [SerializeField] private CanvasGroup canvasGroup;
 
-    public CanvasGroup canvasGroup;
-    public float fadeDuration = 1f;
+    [Header("Scene Start Policy (씬마다 고정)")]
+    [Tooltip("이 씬에 들어올 때 자동으로 페이드 인(검정->투명) 할지")]
+    [SerializeField] private bool fadeInOnSceneStart = true;
 
-    // ★ 추가: 페이드 인 완료 알림 (CameraFollowRebinder가 구독)
+    [Tooltip("씬 시작 시 알파 값(보통 1). fadeInOnSceneStart가 true일 때 적용")]
+    [Range(0f, 1f)]
+    [SerializeField] private float startAlpha = 1f;
+
+    [SerializeField] private float fadeInDuration = 1f;
+
+    [Header("Optional: FadeOut for scene change")]
+    [Tooltip("이 스크립트로 씬 전환 전 FadeOut을 하고 싶으면 사용")]
+    [SerializeField] private float fadeOutDuration = 1f;
+
+    [Header("Time")]
+    [SerializeField] private bool useUnscaledTime = true;
+
+    // 예전 코드 호환: 페이드 인 완료 알림
     public static event Action OnFadeInComplete;
+
+    private Coroutine _running;
+
+    private void Reset()
+    {
+        canvasGroup = GetComponent<CanvasGroup>();
+    }
 
     private void Awake()
     {
-        // 싱글톤 생성
-        if (instance == null)
+        if (!canvasGroup) canvasGroup = GetComponent<CanvasGroup>();
+
+        // 씬 전용이므로 DontDestroyOnLoad / 싱글톤 / AutoLoad 제거
+        // 시작 상태 세팅
+        if (fadeInOnSceneStart)
+            SetImmediate(startAlpha);
+        else
+            SetImmediate(0f);
+
+        canvasGroup.interactable = false;
+    }
+
+    private void Start()
+    {
+        if (fadeInOnSceneStart)
         {
-            instance = this;
-            DontDestroyOnLoad(gameObject);
+            StartCoroutine(FadeTo(0f, fadeInDuration));
+        }
+    }
 
-            // 씬 로드될 때마다 자동 페이드인 실행
-            SceneManager.sceneLoaded += OnSceneLoaded;
+    public void SetImmediate(float alpha)
+    {
+        if (!canvasGroup) return;
 
-            if (canvasGroup == null)
-                Debug.LogWarning("[SceneFader] CanvasGroup이 비어 있습니다. 프리팹에서 연결하세요.");
+        canvasGroup.alpha = Mathf.Clamp01(alpha);
+        canvasGroup.blocksRaycasts = canvasGroup.alpha > 0.0001f;
+        canvasGroup.interactable = false;
+    }
+
+    public IEnumerator FadeTo(float targetAlpha, float duration)
+    {
+        if (!canvasGroup) yield break;
+
+        if (_running != null)
+        {
+            StopCoroutine(_running);
+            _running = null;
+        }
+
+        _running = StartCoroutine(CoFade(targetAlpha, Mathf.Max(0f, duration)));
+        yield return _running;
+    }
+
+    private IEnumerator CoFade(float targetAlpha, float duration)
+    {
+        targetAlpha = Mathf.Clamp01(targetAlpha);
+
+        float start = canvasGroup.alpha;
+        float t = 0f;
+
+        // 페이드 중 입력 차단
+        canvasGroup.blocksRaycasts = true;
+
+        if (duration <= 0f)
+        {
+            canvasGroup.alpha = targetAlpha;
         }
         else
         {
-            Destroy(gameObject);
-        }
-    }
-
-    private void OnDestroy()
-    {
-        if (instance == this)
-        {
-            SceneManager.sceneLoaded -= OnSceneLoaded;
-            instance = null;
-        }
-    }
-
-    // 첫 씬 로드 전 SceneFader 프리팹 항상 보장
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-    static void AutoLoadFaderPrefab()
-    {
-        if (FindObjectOfType<SceneFader>() != null) return;
-
-        SceneFader prefab = Resources.Load<SceneFader>("SceneFader");
-        if (prefab == null)
-        {
-            Debug.LogError("Resources/SceneFader.prefab 을 찾을 수 없음");
-            return;
+            while (t < duration)
+            {
+                t += useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+                canvasGroup.alpha = Mathf.Lerp(start, targetAlpha, t / duration);
+                yield return null;
+            }
+            canvasGroup.alpha = targetAlpha;
         }
 
-        Instantiate(prefab);
-    }
-
-    //-------------------------------------------------------------------
-    // 씬 로드 후 자동 페이드 인
-    //-------------------------------------------------------------------
-    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-    {
-        if (instance != null)
-            instance.StartCoroutine(instance.Fade(0f)); // 투명으로
-    }
-
-    //-------------------------------------------------------------------
-    // 페이드 함수
-    //-------------------------------------------------------------------
-    public IEnumerator Fade(float target)
-    {
-        if (canvasGroup == null) yield break;
-
-        float start = canvasGroup.alpha;
-        float time = 0f;
-
-        // 페이드 중에는 입력 차단
-        canvasGroup.blocksRaycasts = true;
-
-        while (time < fadeDuration)
-        {
-            time += Time.deltaTime;
-            canvasGroup.alpha = Mathf.Lerp(start, target, time / fadeDuration);
-            yield return null;
-        }
-
-        canvasGroup.alpha = target;
-
-        // 완전 투명(페이드 인) 완료 시에는 입력 허용 + 이벤트 발행
-        if (Mathf.Approximately(target, 0f))
+        // 완전 투명해지면 입력 차단 해제 + 이벤트
+        if (Mathf.Approximately(canvasGroup.alpha, 0f))
         {
             canvasGroup.blocksRaycasts = false;
             OnFadeInComplete?.Invoke();
         }
-        // target == 1f(페이드 아웃)일 때는 씬 로드 직전 상태이므로 차단 유지
+
+        _running = null;
     }
 
-    //-------------------------------------------------------------------
-    // 씬 전환
-    //-------------------------------------------------------------------
-    public void LoadSceneWithFade(string sceneName)
+    // -------------------------
+    // Optional: 씬 전환용(현재 씬에서만 사용)
+    // -------------------------
+    public void LoadSceneWithFadeOut(string sceneName)
     {
-        StartCoroutine(FadeAndLoad(sceneName));
+        StartCoroutine(CoFadeOutAndLoad(sceneName));
     }
 
-    IEnumerator FadeAndLoad(string sceneName)
+    private IEnumerator CoFadeOutAndLoad(string sceneName)
     {
-        // 어둡게
-        yield return StartCoroutine(Fade(1f));
-
-        // 씬 로드 (로드 후 자동 페이드 인은 OnSceneLoaded에서 처리)
-        SceneManager.LoadScene(sceneName);
+        yield return FadeTo(1f, fadeOutDuration);
+        SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
     }
 }

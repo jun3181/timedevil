@@ -1,10 +1,17 @@
-﻿using System.Collections;
+﻿// Assets/Script/Interactable/TeleportTransition.cs
+using System.Collections;
 using UnityEngine;
 
 public class TeleportTransition : MonoBehaviour, IInteractable
 {
     [Header("Teleport Target (플레이어 이동 위치)")]
     public Transform targetPoint;
+
+    [Header("Fade (in-scene)")]
+    [Tooltip("Teleport 연출에 쓸 FadePanelFader (없으면 씬에서 자동 탐색)")]
+    public FadePanelFader fadePanel;
+    public float fadeOutDuration = 0.25f;
+    public float fadeInDuration = 0.25f;
 
     [Header("After Teleport Camera Mode")]
     public CameraModeId afterMode = CameraModeId.FollowConfined;
@@ -35,6 +42,12 @@ public class TeleportTransition : MonoBehaviour, IInteractable
 
     private bool _running = false;
 
+    private void Awake()
+    {
+        if (!fadePanel)
+            fadePanel = FindObjectOfType<FadePanelFader>(true);
+    }
+
     public void Interact()
     {
         if (_running) return;
@@ -56,18 +69,19 @@ public class TeleportTransition : MonoBehaviour, IInteractable
         _running = true;
 
         if (lockPlayerInput && GameManager.Instance) GameManager.Instance.isAction = true;
-
         if (CameraManager.Instance) CameraManager.Instance.BeginTransition(lockCamera: true);
 
-        if (SceneFader.instance != null)
-            yield return SceneFader.instance.StartCoroutine(SceneFader.instance.Fade(1f));
+        // ✅ Teleport는 SceneFader가 아니라 FadePanelFader
+        if (fadePanel != null)
+            yield return fadePanel.FadeTo(1f, fadeOutDuration);
 
         var player = FindObjectOfType<PlayerMove>(true);
         if (!player)
         {
             Debug.LogWarning("[TeleportTransition] PlayerMove를 찾지 못했습니다.");
-            if (SceneFader.instance != null)
-                yield return SceneFader.instance.StartCoroutine(SceneFader.instance.Fade(0f));
+            if (fadePanel != null)
+                yield return fadePanel.FadeTo(0f, fadeInDuration);
+
             if (lockPlayerInput && GameManager.Instance) GameManager.Instance.isAction = false;
             _running = false;
             yield break;
@@ -81,7 +95,7 @@ public class TeleportTransition : MonoBehaviour, IInteractable
         // 1) 플레이어 이동
         playerTr.position = to;
 
-        // 2) 카메라 적용은 CameraManager가 책임지고 처리
+        // 2) 카메라 적용 (CameraManager가 책임)
         if (CameraManager.Instance != null)
         {
             float? size = (afterOrthoSize > 0f) ? afterOrthoSize : (float?)null;
@@ -102,13 +116,10 @@ public class TeleportTransition : MonoBehaviour, IInteractable
         }
 
         if (applyDarkOverlay && DarkOverlay.Instance != null)
-        {
             DarkOverlay.Instance.SetAlpha(darkOverlayAlpha, darkOverlayDuration);
-            if (debugLog) Debug.Log($"[TeleportTransition] DarkOverlay -> {darkOverlayAlpha}");
-        }
 
-        if (SceneFader.instance != null)
-            yield return SceneFader.instance.StartCoroutine(SceneFader.instance.Fade(0f));
+        if (fadePanel != null)
+            yield return fadePanel.FadeTo(0f, fadeInDuration);
 
         if (lockPlayerInput && GameManager.Instance) GameManager.Instance.isAction = false;
 
