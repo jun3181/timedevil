@@ -5,7 +5,6 @@ using System.Collections;
 
 public static class SceneLoader
 {
-    // 돌아올 좌표 저장
     public static void SaveReturnPoint(Transform playerT, Transform enemyT)
     {
         PlayerReturnContext.ReturnSceneName = SceneManager.GetActiveScene().name;
@@ -26,16 +25,22 @@ public static class SceneLoader
         }
     }
 
-    // 일반 로드(페이더가 있으면 사용)
+    // ✅ SceneFader는 "현재 씬에 있는 것"만 사용한다 (없으면 즉시 로드)
     public static void Load(string sceneName, bool useFaderIfExists = true)
     {
-        if (useFaderIfExists && SceneFader.instance != null)
-            SceneFader.instance.LoadSceneWithFade(sceneName);
-        else
-            SceneManager.LoadScene(sceneName);
+        if (useFaderIfExists)
+        {
+            var fader = Object.FindObjectOfType<SceneFader>(true);
+            if (fader != null)
+            {
+                fader.LoadSceneWithFadeOut(sceneName);
+                return;
+            }
+        }
+
+        SceneManager.LoadScene(sceneName);
     }
 
-    // 돌아가기(무적시간 옵션)
     public static void GoBackToReturnScene(float graceSeconds = 1.0f, bool useFaderIfExists = true)
     {
         if (string.IsNullOrWhiteSpace(PlayerReturnContext.ReturnSceneName))
@@ -44,26 +49,26 @@ public static class SceneLoader
             return;
         }
 
-        // 트리거 재충돌 방지
         PlayerReturnContext.IsInGracePeriod = graceSeconds > 0f;
-        PlayerReturnContext.GraceSecondsPending = Mathf.Max(0f, graceSeconds); // ⬅️ 추가
+        PlayerReturnContext.GraceSecondsPending = Mathf.Max(0f, graceSeconds);
 
-        SceneLoaderHost.Ensure().StartCoroutine(SceneLoaderHost.Instance.CoClearGrace(graceSeconds));
+        var host = SceneLoaderHost.Ensure();
+        host.StartCoroutine(host.CoClearGrace(graceSeconds));
 
         Load(PlayerReturnContext.ReturnSceneName, useFaderIfExists);
     }
 }
 
-// 내부 코루틴용 호스트
 class SceneLoaderHost : MonoBehaviour
 {
     public static SceneLoaderHost Instance { get; private set; }
+
     public static SceneLoaderHost Ensure()
     {
         if (!Instance)
         {
             var go = new GameObject("[SceneLoaderHost]");
-            DontDestroyOnLoad(go);
+            Object.DontDestroyOnLoad(go);
             Instance = go.AddComponent<SceneLoaderHost>();
         }
         return Instance;

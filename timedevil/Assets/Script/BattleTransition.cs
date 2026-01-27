@@ -1,67 +1,60 @@
+ï»¿// Assets/Script/BattleTransition.cs
 using UnityEngine;
 using System.Collections;
-using UnityEngine.SceneManagement; // ¾À °ü¸®¸¦ À§ÇØ ÇÊ¿ä
+using UnityEngine.SceneManagement;
 
-/// <summary>
-/// ¹®¿¡ ºÙ¾î¼­ ¹èÆ²¾ÀÀ» ·ÎµåÇÏ°í, º¹±Í ÁöÁ¡À» ÀúÀåÇÏ´Â ½ºÅ©¸³Æ®.
-/// IInteractableÀ» ±¸ÇöÇÏ¿© EÅ° »óÈ£ÀÛ¿ëÀ» ¹Ş½À´Ï´Ù.
-/// </summary>
 public class BattleTransition : MonoBehaviour, IInteractable
 {
-    [Header("·ÎµåÇÒ ¹èÆ²¾À")]
-    [Tooltip("·ÎµåÇÒ ¹èÆ²¾ÀÀÇ ÀÌ¸§ (ºôµå ¼¼ÆÃ¿¡ ÀÌ¸§ÀÌ µî·ÏµÇ¾î¾ß ÇÔ)")]
-    public string battleSceneName = "BattleScene"; // ¿¹½Ã ÀÌ¸§
+    [Header("ë¡œë“œí•  ë°°í‹€ì”¬")]
+    [Tooltip("ë¹Œë“œ ì„¸íŒ…ì— ë“±ë¡ëœ ì”¬ ì´ë¦„")]
+    public string battleSceneName = "BattleScene";
 
-    [Header("º¹±Í ÁöÁ¡")]
-    [Tooltip("¹èÆ²ÀÌ ³¡³­ ÈÄ, ÀÌ ¾ÀÀ¸·Î µ¹¾Æ¿ÔÀ» ¶§ ÇÃ·¹ÀÌ¾î°¡ ³ªÅ¸³¯ À§Ä¡")]
-    public Transform returnPoint; // (±âÁ¸ DoorTransitionÀÇ targetPoint ¿ªÇÒ)
+    [Header("ë³µê·€ ì§€ì ")]
+    [Tooltip("ë°°í‹€ ì¢…ë£Œ í›„ ì´ ì”¬ìœ¼ë¡œ ëŒì•„ì™”ì„ ë•Œ í”Œë ˆì´ì–´ê°€ ë‚˜íƒ€ë‚  ìœ„ì¹˜")]
+    public Transform returnPoint;
 
     private bool isTransitioning = false;
 
-    /// <summary>
-    /// ÇÃ·¹ÀÌ¾î°¡ EÅ° µîÀ¸·Î È£ÃâÇÏ´Â ÁøÀÔÁ¡
-    /// </summary>
     public void Interact()
     {
-        // 1. ¼³Á¤ÀÌ ¾ÈµÆ°Å³ª, ÀÌ¹Ì ÀüÈ¯ ÁßÀÌ°Å³ª, ´ëÈ­ ÁßÀÌ¸é ¹«½Ã
         if (string.IsNullOrEmpty(battleSceneName) || returnPoint == null)
         {
-            Debug.LogWarning("[BattleTransition] ¹èÆ²¾À ÀÌ¸§ÀÌ³ª º¹±Í ÁöÁ¡ÀÌ ¼³Á¤µÇÁö ¾Ê¾Ò½À´Ï´Ù.");
-            return;
-        }
-        if (isTransitioning || (DialogueManager.instance != null && DialogueManager.instance.isDialogueActive))
-        {
+            Debug.LogWarning("[BattleTransition] battleSceneName ë˜ëŠ” returnPointê°€ ì„¤ì •ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤.");
             return;
         }
 
-        // 2. ¾À ÀüÈ¯ ÄÚ·çÆ¾ ½ÃÀÛ
+        if (isTransitioning) return;
+        if (DialogueManager.instance != null && DialogueManager.instance.isDialogueActive) return;
+
         StartCoroutine(StartBattleSequence());
     }
 
-    IEnumerator StartBattleSequence()
+    private IEnumerator StartBattleSequence()
     {
         isTransitioning = true;
 
-        // 1. ÇÃ·¹ÀÌ¾î Á¶ÀÛ ºñÈ°¼ºÈ­
+        // (ì„ íƒ) ì…ë ¥ ì ê¸ˆ
         if (GameManager.Instance != null)
-        {
             GameManager.Instance.isAction = true;
-        }
 
-        // --- 2. (°¡Àå Áß¿ä) 'µ¹¾Æ¿Ã Á¤º¸'¸¦ Á¤Àû Å¬·¡½º¿¡ ÀúÀå ---
-        // 2a. ÇöÀç ¾ÀÀÇ ÀÌ¸§À» ÀúÀå
+        // --- ë³µê·€ ì •ë³´ ì €ì¥ ---
         PlayerReturnContext.ReturnSceneName = SceneManager.GetActiveScene().name;
-        // 2b. µ¹¾Æ¿Ã ÁÂÇ¥(¹® ¾Õ)¸¦ ÀúÀå
-        PlayerReturnContext.ReturnPosition = returnPoint.position;
-        // 2c. ÇÃ·¡±×¸¦ ÄÑ¼­ 'º¹±Í µ¥ÀÌÅÍ ÀÖÀ½'À» Ç¥½Ã
+        PlayerReturnContext.ReturnPosition = (Vector2)returnPoint.position;
         PlayerReturnContext.HasReturnPosition = true;
 
-        // 3. È­¸é ¾îµÓ°Ô (ÆäÀÌµå ¾Æ¿ô)
-        yield return StartCoroutine(SceneFader.instance.Fade(1f));
+        // í˜„ì¬ ì”¬ì— ìˆëŠ” SceneFader ì°¾ê¸°
+        var fader = FindObjectOfType<SceneFader>(true);
+        if (fader != null)
+        {
+            // FadeOut -> Load
+            fader.LoadSceneWithFadeOut(battleSceneName);
+        }
+        else
+        {
+            Debug.LogWarning("[BattleTransition] SceneFaderë¥¼ ì°¾ì§€ ëª»í–ˆìŠµë‹ˆë‹¤. ì¦‰ì‹œ LoadScene í•©ë‹ˆë‹¤.");
+            SceneManager.LoadScene(battleSceneName);
+        }
 
-        // 4. ÀúÀåµÈ ¹èÆ²¾ÀÀ¸·Î ÀüÈ¯ (SceneFaderÀÇ ±â´É »ç¿ë)
-        SceneFader.instance.LoadSceneWithFade(battleSceneName);
-
-        // (ÀÌ ¿ÀºêÁ§Æ®´Â ¾ÀÀÌ ÀüÈ¯µÇ¸ç ÆÄ±«µÇ¹Ç·Î, isTransitioningÀ» false·Î ¹Ù²Ü ÇÊ¿ä ¾øÀ½)
+        yield return null;
     }
 }

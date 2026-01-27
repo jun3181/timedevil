@@ -94,13 +94,13 @@ public class CardSceneController : MonoBehaviour
                 // 폴백: 마지막 씬 기록이 있으면 그리로, 아니면 경고
                 if (!string.IsNullOrEmpty(SceneHistory.LastSceneName))
                 {
-                    if (SceneFader.instance) SceneFader.instance.LoadSceneWithFade(SceneHistory.LastSceneName);
-                    else SceneManager.LoadScene(SceneHistory.LastSceneName);
+                    SceneLoader.Load(SceneHistory.LastSceneName, useFaderIfExists);
                 }
                 else
                 {
                     Debug.LogWarning("[CardScene] 복귀 대상(ReturnSceneName)이 설정되지 않았습니다.");
                 }
+
             }
             return;
         }

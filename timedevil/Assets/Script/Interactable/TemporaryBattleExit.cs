@@ -1,69 +1,55 @@
+ï»¿// Assets/Script/Interactable/TemporaryBattleExit.cs
 using UnityEngine;
 using System.Collections;
-using UnityEngine.SceneManagement; // ¾À °ü¸®¸¦ À§ÇØ ÇÊ¿ä
+using UnityEngine.SceneManagement;
 
-/// <summary>
-/// '¹èÆ² ¾À'(ÀÓ½Ã ¾À)¿¡¼­ Æ¯Á¤ »ç¹°°ú »óÈ£ÀÛ¿ë(EÅ°)ÇßÀ» ¶§,
-/// PlayerReturnContext¿¡ ÀúÀåµÈ '¿ø·¡ ¾À'À¸·Î µ¹¾Æ°¡°Ô ÇØÁÖ´Â ½ºÅ©¸³Æ®.
-/// </summary>
 public class TemporaryBattleExit : MonoBehaviour, IInteractable
 {
-    [Header("Fallback ¼³Á¤")]
-    [Tooltip("¸¸¾à ÀúÀåµÈ µ¹¾Æ°¥ ¾À Á¤º¸°¡ ¾øÀ» °æ¿ì, ´ë½Å ÀÌµ¿ÇÒ ¾À ÀÌ¸§")]
-    public string fallbackSceneName = "MainMenu"; // (¿¹: ¸ŞÀÎ¸Ş´º)
+    [Header("Fallback ì„¤ì •")]
+    [Tooltip("ì €ì¥ëœ ëŒì•„ê°ˆ ì”¬ ì •ë³´ê°€ ì—†ì„ ê²½ìš°, ëŒ€ì‹  ì´ë™í•  ì”¬ ì´ë¦„")]
+    public string fallbackSceneName = "MainMenu";
 
     private bool isTransitioning = false;
 
-    /// <summary>
-    /// ÇÃ·¹ÀÌ¾î°¡ EÅ° µîÀ¸·Î È£ÃâÇÏ´Â ÁøÀÔÁ¡
-    /// </summary>
     public void Interact()
     {
-        // 1. Áßº¹ ½ÇÇà ¹æÁö
         if (isTransitioning) return;
 
-        // 2. (¼±ÅÃ »çÇ×) ´ëÈ­°¡ ÁøÇà ÁßÀÌ¸é »óÈ£ÀÛ¿ë ¹«½Ã
         if (DialogueManager.instance != null && DialogueManager.instance.isDialogueActive)
-        {
             return;
-        }
 
-        // 3. (Áß¿ä) UndeadMover°¡ ÀúÀåÇØ µĞ 'µ¹¾Æ°¥ ¾À ÀÌ¸§'À» °¡Á®¿È
         string sceneToLoad = PlayerReturnContext.ReturnSceneName;
-
-        // 4. (¾ÈÀü ÀåÄ¡) ÀúÀåµÈ ¾À ÀÌ¸§ÀÌ ¾ø´Ù¸é(¿¹: ¹èÆ²¾ÀºÎÅÍ Å×½ºÆ®)
         if (string.IsNullOrEmpty(sceneToLoad))
         {
-            Debug.LogWarning("[TemporaryBattleExit] µ¹¾Æ°¥ ¾À(PlayerReturnContext)ÀÌ ÀúÀåµÇÁö ¾Ê¾Ò½À´Ï´Ù. Fallback ¾ÀÀ¸·Î ÀÌµ¿ÇÕ´Ï´Ù.");
+            Debug.LogWarning("[TemporaryBattleExit] ReturnSceneNameì´ ë¹„ì–´ìˆì–´ì„œ Fallback ì”¬ìœ¼ë¡œ ì´ë™í•©ë‹ˆë‹¤.");
             sceneToLoad = fallbackSceneName;
         }
 
-        // 5. ¾À ÀüÈ¯ ÄÚ·çÆ¾ ½ÃÀÛ
         StartCoroutine(ExitBattleSequence(sceneToLoad));
     }
 
-    IEnumerator ExitBattleSequence(string sceneName)
+    private IEnumerator ExitBattleSequence(string sceneName)
     {
         isTransitioning = true;
 
-        // 1. ÇÃ·¹ÀÌ¾î Á¶ÀÛ ºñÈ°¼ºÈ­ (¼±ÅÃ »çÇ×ÀÌÁö¸¸, ÆäÀÌµå Áß ¿òÁ÷ÀÓÀ» ¸·À½)
+        // (ì„ íƒ) ì…ë ¥ ì ê¸ˆ
         if (GameManager.Instance != null)
-        {
             GameManager.Instance.isAction = true;
-        }
 
-        // 2. (¼öÁ¤µÈ) SceneFader¸¦ ÀÌ¿ëÇØ ¾À ÀüÈ¯
-        // (SceneFader°¡ ÆäÀÌµå¾Æ¿ô/·Îµå/ÆäÀÌµåÀÎÀ» ¸ğµÎ ¾Ë¾Æ¼­ ´ã´ç)
-        if (SceneFader.instance != null)
+        // í˜„ì¬ ì”¬ì— ìˆëŠ” SceneFader ì°¾ê¸°
+        var fader = FindObjectOfType<SceneFader>(true);
+        if (fader != null)
         {
-            SceneFader.instance.LoadSceneWithFade(sceneName);
+            // SceneFader ë‚´ë¶€ì—ì„œ FadeOut -> Load ìˆ˜í–‰
+            fader.LoadSceneWithFadeOut(sceneName);
         }
         else
         {
-            Debug.LogError("[TemporaryBattleExit] SceneFader.instance°¡ nullÀÔ´Ï´Ù! ¾À ÀüÈ¯ ½ÇÆĞ.");
-            isTransitioning = false;
+            Debug.LogWarning("[TemporaryBattleExit] SceneFaderë¥¼ ì°¾ì§€ ëª»í–ˆìŠµë‹ˆë‹¤. ì¦‰ì‹œ LoadScene í•©ë‹ˆë‹¤.");
+            SceneManager.LoadScene(sceneName);
         }
 
-        yield return null; // ÄÚ·çÆ¾ À¯Áö¸¦ À§ÇØ
+        // ì”¬ ë¡œë“œë˜ë©´ ì´ ì˜¤ë¸Œì íŠ¸ëŠ” ë³´í†µ íŒŒê´´ë˜ë¯€ë¡œ ì—¬ê¸°ì„œ í•´ì œëŠ” ì„ íƒ
+        yield return null;
     }
 }
