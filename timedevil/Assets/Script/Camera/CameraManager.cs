@@ -1,4 +1,3 @@
-// Assets/Script/Camera/CameraManager.cs
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Cinemachine;
@@ -133,7 +132,6 @@ public class CameraManager : MonoBehaviour
         EnsureFixedAnchor();
         CurrentMode = CameraModeId.Fixed;
 
-        // Fixed는 Clamp 끔
         clamp2D.enabled = false;
         clamp2D.SetBounds(null);
 
@@ -141,7 +139,6 @@ public class CameraManager : MonoBehaviour
         p.z = _fixedAnchor.position.z; // 2D: -10 유지
         _fixedAnchor.position = p;
 
-        // Fixed는 "앵커를 Follow"로 유지 (원하는 고정 위치)
         vcam.Follow = _fixedAnchor;
         vcam.m_Lens.OrthographicSize = orthoSize ?? defaultOrthoSize;
 
@@ -164,7 +161,6 @@ public class CameraManager : MonoBehaviour
             return;
         }
 
-        // Free는 Clamp 끔
         clamp2D.enabled = false;
         clamp2D.SetBounds(null);
 
@@ -191,7 +187,6 @@ public class CameraManager : MonoBehaviour
         vcam.Follow = followTarget;
         vcam.m_Lens.OrthographicSize = orthoSize ?? defaultOrthoSize;
 
-        // Confined는 Clamp 켬
         clamp2D.enabled = true;
         clamp2D.SetBounds(bounds);
 
@@ -208,14 +203,12 @@ public class CameraManager : MonoBehaviour
         EnsureFixedAnchor();
         CurrentMode = CameraModeId.Cutscene;
 
-        // Cutscene는 기본 Clamp 끔 (필요하면 나중에 옵션으로 켤 수 있음)
         clamp2D.enabled = false;
         clamp2D.SetBounds(null);
 
         worldPos.z = _fixedAnchor.position.z;
         _fixedAnchor.position = worldPos;
 
-        // Cutscene도 앵커를 Follow로 (고정 위치)
         vcam.Follow = _fixedAnchor;
         vcam.m_Lens.OrthographicSize = orthoSize ?? defaultOrthoSize;
 
@@ -227,17 +220,71 @@ public class CameraManager : MonoBehaviour
     }
 
     // =========================
-    // ★ Teleport 보정용 API
+    // Teleport/Route 요청(★여기서 책임지고 처리)
+    // =========================
+
+    /// <summary>
+    /// "플레이어가 순간이동한 뒤" 카메라 모드 적용을 CameraManager가 책임지고 처리.
+    /// Fixed일 때는 fixedCameraAnchorPoint가 있으면 그 위치를 사용.
+    /// </summary>
+    public void ApplyAfterTeleport(
+        Transform player,
+        Vector3 fromPos,
+        Vector3 toPos,
+        CameraModeId afterMode,
+        Collider2D afterBounds,
+        float? afterOrthoSize,
+        Transform fixedCameraAnchorPoint,
+        bool notifyWarpToCinemachine = true,
+        bool snapCameraWhenFixed = true
+    )
+    {
+        if (!vcam) return;
+
+        Vector3 delta = toPos - fromPos;
+
+        // Fixed/Cutscene일 때 카메라 고정 위치 결정(플레이어와 분리 가능)
+        Vector3 fixedPos = fixedCameraAnchorPoint ? fixedCameraAnchorPoint.position : toPos;
+
+        if (debugLog)
+        {
+            Debug.Log($"[CameraManager] ApplyAfterTeleport mode={afterMode} from={fromPos} to={toPos} fixedPos={fixedPos} bounds={(afterBounds ? afterBounds.name : "(null)")}");
+        }
+
+        switch (afterMode)
+        {
+            case CameraModeId.Fixed:
+                SetFixed(lockWorldPos: fixedPos, orthoSize: afterOrthoSize);
+                if (snapCameraWhenFixed) SnapCameraTo(fixedPos);
+                break;
+
+            case CameraModeId.FollowConfined:
+                SetFollowConfined(player, afterBounds, afterOrthoSize);
+                if (notifyWarpToCinemachine && player) NotifyTargetWarp(player, delta);
+                break;
+
+            case CameraModeId.FollowFree:
+                SetFollowFree(player, afterOrthoSize);
+                if (notifyWarpToCinemachine && player) NotifyTargetWarp(player, delta);
+                break;
+
+            case CameraModeId.Cutscene:
+                SetCutscene(fixedPos, afterOrthoSize);
+                if (snapCameraWhenFixed) SnapCameraTo(fixedPos);
+                break;
+        }
+    }
+
+    // =========================
+    // Warp / Snap
     // =========================
 
     /// <summary>
     /// Follow 대상이 “순간이동” 했다는걸 Cinemachine에 알려줌
-    /// (카메라가 예전 위치로 끌려가는 현상 방지)
     /// </summary>
     public void NotifyTargetWarp(Transform warpedTarget, Vector3 delta)
     {
         if (!vcam || !warpedTarget) return;
-
         vcam.OnTargetObjectWarped(warpedTarget, delta);
         vcam.PreviousStateIsValid = false;
 
@@ -258,43 +305,6 @@ public class CameraManager : MonoBehaviour
         vcam.ForceCameraPosition(p, vcam.transform.rotation);
 
         if (debugLog) Debug.Log($"[CameraManager] SnapCameraTo pos={p}");
-    }
-
-    // =========================
-    // ★ NEW: Fixed Anchor 외부 제어
-    // =========================
-
-    /// <summary>
-    /// Fixed/Cutscene에서 사용하는 "고정 앵커"를 외부에서 원하는 위치로 이동.
-    /// (필요하면 즉시 카메라도 스냅)
-    /// </summary>
-    public void SetFixedAnchorPosition(Vector3 worldPos, bool snapCamera = true)
-    {
-        if (!vcam) return;
-
-        EnsureFixedAnchor();
-
-        worldPos.z = _fixedAnchor.position.z;   // 앵커 Z 유지
-        _fixedAnchor.position = worldPos;
-
-        // 현재 앵커 Follow 중이면 반영
-        if (vcam.Follow == _fixedAnchor)
-            vcam.PreviousStateIsValid = false;
-
-        if (snapCamera)
-        {
-            Vector3 camPos = new Vector3(worldPos.x, worldPos.y, vcam.transform.position.z);
-            vcam.PreviousStateIsValid = false;
-            vcam.ForceCameraPosition(camPos, vcam.transform.rotation);
-        }
-
-        if (debugLog) Debug.Log($"[CameraManager] SetFixedAnchorPosition pos={_fixedAnchor.position} snap={snapCamera}");
-    }
-
-    public Transform GetFixedAnchor()
-    {
-        EnsureFixedAnchor();
-        return _fixedAnchor;
     }
 
     // =========================

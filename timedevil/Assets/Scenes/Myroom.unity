@@ -310,6 +310,8 @@ MonoBehaviour:
   darkOverlayAlpha: 0
   darkOverlayDuration: 0.15
   lockPlayerInput: 1
+  notifyWarpToCinemachine: 1
+  snapCameraWhenFixed: 1
   debugLog: 1
 --- !u!61 &36373492
 BoxCollider2D:
@@ -19875,12 +19877,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eb4d9c11661aba644834a74b90710af1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetPoint: {fileID: 1654203658}
+  targetPoint: {fileID: 1287217413}
   offset: {x: 0, y: 0}
   useFade: 1
   lockPlayerInput: 1
   afterMode: 0
   afterBounds: {fileID: 0}
+  fixedCameraAnchorPoint: {fileID: 1654203658}
   afterOrthoSize: 0
   notifyWarpToCinemachine: 1
   snapCameraWhenFixed: 1
@@ -21899,6 +21902,8 @@ MonoBehaviour:
   darkOverlayAlpha: 0.35
   darkOverlayDuration: 0.15
   lockPlayerInput: 1
+  notifyWarpToCinemachine: 1
+  snapCameraWhenFixed: 1
   debugLog: 1
 --- !u!1 &2023173058
 GameObject:

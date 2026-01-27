@@ -21,6 +21,9 @@ public class TriggerStep_PlayerTeleport : TriggerStepBase
     [Tooltip("FollowConfined일 때 Clamp bounds로 쓸 Collider2D(보통 BoxCollider2D 추천)")]
     [SerializeField] private Collider2D afterBounds;
 
+    [Tooltip("Fixed/Cutscene일 때 카메라를 고정할 '앵커 위치'. 비면 to(플레이어 위치)로 대체")]
+    [SerializeField] private Transform fixedCameraAnchorPoint;
+
     [Tooltip("0이면 변경 안 함")]
     [SerializeField] private float afterOrthoSize = 0f;
 
@@ -70,40 +73,25 @@ public class TriggerStep_PlayerTeleport : TriggerStepBase
         if (useFade && SceneFader.instance != null)
             yield return SceneFader.instance.StartCoroutine(SceneFader.instance.Fade(1f));
 
-        // 이동
+        // 1) 플레이어 이동
         playerTr.position = to;
 
-        // 워프 보정(예전 위치로 끌려가는 현상 방지)
-        if (notifyWarpToCinemachine && CameraManager.Instance != null)
-        {
-            Vector3 delta = to - from;
-            CameraManager.Instance.NotifyTargetWarp(playerTr, delta);
-        }
-
-        // 카메라 모드 적용
+        // 2) 카메라 적용은 CameraManager가 책임지고 처리
         if (CameraManager.Instance != null)
         {
             float? size = (afterOrthoSize > 0f) ? afterOrthoSize : (float?)null;
 
-            switch (afterMode)
-            {
-                case CameraModeId.Fixed:
-                    CameraManager.Instance.SetFixed(lockWorldPos: to, orthoSize: size);
-                    if (snapCameraWhenFixed) CameraManager.Instance.SnapCameraTo(to);
-                    break;
-
-                case CameraModeId.FollowConfined:
-                    CameraManager.Instance.SetFollowConfined(playerTr, afterBounds, size);
-                    break;
-
-                case CameraModeId.FollowFree:
-                    CameraManager.Instance.SetFollowFree(playerTr, size);
-                    break;
-
-                case CameraModeId.Cutscene:
-                    CameraManager.Instance.SetCutscene(to, size);
-                    break;
-            }
+            CameraManager.Instance.ApplyAfterTeleport(
+                player: playerTr,
+                fromPos: from,
+                toPos: to,
+                afterMode: afterMode,
+                afterBounds: afterBounds,
+                afterOrthoSize: size,
+                fixedCameraAnchorPoint: fixedCameraAnchorPoint,
+                notifyWarpToCinemachine: notifyWarpToCinemachine,
+                snapCameraWhenFixed: snapCameraWhenFixed
+            );
 
             CameraManager.Instance.EndTransition();
         }
