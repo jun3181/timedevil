@@ -9702,7 +9702,6 @@ GameObject:
   m_Component:
   - component: {fileID: 790214225}
   - component: {fileID: 790214224}
-  - component: {fileID: 790214226}
   m_Layer: 0
   m_Name: SceneManager
   m_TagString: Untagged
@@ -9734,29 +9733,11 @@ Transform:
   m_LocalPosition: {x: 10.34898, y: -14.933758, z: 10.891804}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1629847980}
+  - {fileID: 1747505925}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &790214226
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 790214222}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e54350e2231027d4ca64785120db5d08, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  useUnscaledTime: 1
-  group: {fileID: 790214224}
-  enterFromAlpha: 1
-  enterToAlpha: 0
-  enterDuration: 0.35
-  exitToAlpha: 1
-  exitDuration: 0.35
-  blockRaycastsWhileVisible: 1
 --- !u!1 &881014415
 GameObject:
   m_ObjectHideFlags: 0
@@ -19155,7 +19136,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1005693816}
   - component: {fileID: 1005693817}
-  - component: {fileID: 1005693818}
   m_Layer: 8
   m_Name: Bed
   m_TagString: Untagged
@@ -19223,18 +19203,6 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 1, y: 1.3764474}
   m_EdgeRadius: 0
---- !u!114 &1005693818
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1005693815}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2c26372e7e4c48448809261c028ef4fd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1152659370
 GameObject:
   m_ObjectHideFlags: 0
@@ -19914,22 +19882,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 1434851123}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eb4d9c11661aba644834a74b90710af1, type: 3}
+  m_Script: {fileID: 11500000, guid: 61928809365b3f84d88b83091a53fece, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetPoint: {fileID: 1287217413}
-  offset: {x: 0, y: 0}
-  useFade: 1
-  fadePanel: {fileID: 0}
-  fadeOutDuration: 0.25
-  fadeInDuration: 0.25
+  sceneName: Move_Tutorial
+  loadMode: 0
+  useSceneVisitEffectRunner: 1
+  runnerOverride: {fileID: 0}
   lockPlayerInput: 1
-  afterMode: 0
-  afterBounds: {fileID: 0}
-  fixedCameraAnchorPoint: {fileID: 1654203658}
-  afterOrthoSize: 0
-  notifyWarpToCinemachine: 1
-  snapCameraWhenFixed: 1
   debugLog: 1
 --- !u!1 &1454508752
 GameObject:
@@ -20436,6 +20396,71 @@ MonoBehaviour:
   maxCalls: 1
   usePlayerMoveComponentCheck: 1
   debugLog: 1
+--- !u!1 &1629847977
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1629847980}
+  - component: {fileID: 1629847979}
+  - component: {fileID: 1629847978}
+  m_Layer: 0
+  m_Name: SceneEffect
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1629847978
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1629847977}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e54350e2231027d4ca64785120db5d08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  useUnscaledTime: 1
+  group: {fileID: 1945646731}
+  enterFromAlpha: 1
+  enterToAlpha: 0
+  enterDuration: 0.35
+  exitToAlpha: 1
+  exitDuration: 0.35
+  blockRaycastsWhileVisible: 1
+--- !u!225 &1629847979
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1629847977}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
+--- !u!4 &1629847980
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1629847977}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 790214225}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1654203657
 GameObject:
   m_ObjectHideFlags: 0
@@ -20543,6 +20568,53 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1721619758}
   m_CullTransparentMesh: 1
+--- !u!1 &1747505924
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1747505925}
+  - component: {fileID: 1747505926}
+  m_Layer: 0
+  m_Name: SceneRunner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1747505925
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1747505924}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 790214225}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1747505926
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1747505924}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab6cd97974871d34591b809929fc97db, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  effect: {fileID: 1629847978}
+  playEnterOnStart: 1
+  debugLog: 1
 --- !u!1 &1750505926
 GameObject:
   m_ObjectHideFlags: 0
