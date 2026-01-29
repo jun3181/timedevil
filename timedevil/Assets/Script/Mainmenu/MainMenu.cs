@@ -1,22 +1,29 @@
+ï»¿// Assets/Script/Mainmenu/MainMenu.cs
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class MainMenu : MonoBehaviour
 {
-    public AudioSource sfxPlayer;   // ÀÎ½ºÆåÅÍ¿¡¼­ ¿¬°á
-    public AudioClip clickSound;    // ÀÎ½ºÆåÅÍ¿¡¼­ ¿¬°á
+    public AudioSource sfxPlayer;
+    public AudioClip clickSound;
+
+    [Header("Target Scene")]
+    public string myRoomSceneName = "Myroom";
 
     public void LoadMyRoom()
     {
         if (sfxPlayer != null && clickSound != null)
             sfxPlayer.PlayOneShot(clickSound);
 
-        if (SceneFader.instance != null)
+        var fader = FindObjectOfType<SceneFader>(true);
+        if (fader != null)
         {
-            SceneFader.instance.LoadSceneWithFade("Myroom");
+            fader.LoadSceneWithFadeOut(myRoomSceneName);
         }
         else
         {
-            Debug.LogError("SceneFader.instance°¡ nullÀÔ´Ï´Ù! SceneFader ¿ÀºêÁ§Æ®°¡ ¾À¿¡ ¾ø°Å³ª ºñÈ°¼ºÈ­µÈ °Í °°½À´Ï´Ù.");
+            Debug.LogWarning("[MainMenu] SceneFaderë¥¼ ì°¾ì§€ ëª»í–ˆìŠµë‹ˆë‹¤. ì¦‰ì‹œ LoadScene í•©ë‹ˆë‹¤.");
+            SceneManager.LoadScene(myRoomSceneName);
         }
     }
 }

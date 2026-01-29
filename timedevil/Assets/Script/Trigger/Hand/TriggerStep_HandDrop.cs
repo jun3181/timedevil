@@ -3,19 +3,20 @@ using System.Collections;
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public class TriggerStep_HandDrop : MonoBehaviour, ITriggerStep
+public class TriggerStep_HandDrop : TriggerStepBase
 {
     [Header("Hand")]
     [SerializeField] private GameObject handObject;   // 손 오브젝트(비활성 시작 권장)
-    [SerializeField] private Transform hand;          // 비워두면 handObject.transform 사용
 
-    [Header("Move")]
-    [Tooltip("Y로 얼마나 내려갈지(월드 기준). 예: 3이면 아래로 3 내려감")]
-    [SerializeField] private float dropDistanceY = 3f;
+    [Header("Move (X/Y)")]
+    [Tooltip("X로 얼마나 이동할지(월드 기준). +면 오른쪽, -면 왼쪽")]
+    [SerializeField] private float moveDistanceX = 0f;
+
+    [Tooltip("Y로 얼마나 이동할지(월드 기준). +면 위, -면 아래")]
+    [SerializeField] private float moveDistanceY = -3f;
 
     [Header("Timing")]
     [Min(0.01f)][SerializeField] private float dropDuration = 0.12f;
-    [Min(0f)][SerializeField] private float holdSeconds = 0.35f;
     [SerializeField] private bool useUnscaledTime = true;
 
     [Header("Easing")]
@@ -23,68 +24,71 @@ public class TriggerStep_HandDrop : MonoBehaviour, ITriggerStep
 
     [Header("Options")]
     [SerializeField] private bool forceDeactivateThenActivate = true;
-    [SerializeField] private bool deactivateOnEnd = true;
 
     [Header("Debug")]
     [SerializeField] private bool debugLog = false;
 
-    public IEnumerator Execute(TriggerContext ctx)
+    private bool _cachedStart;
+    private Vector3 _startPos;
+
+    private void CacheStartIfNeeded()
     {
-        if (!handObject && !hand)
+        if (_cachedStart) return;
+        if (!handObject) return;
+
+        _startPos = handObject.transform.position;   // 씬에 배치된 시작 위치
+        _cachedStart = true;
+    }
+
+    public override IEnumerator Execute(TriggerContext ctx)
+    {
+        if (!handObject)
         {
-            Debug.LogWarning("[TriggerStep_HandDrop] handObject/hand가 비어있습니다.");
+            Debug.LogWarning("[TriggerStep_HandDrop] handObject가 비어있습니다.");
             yield break;
         }
 
-        if (!hand && handObject) hand = handObject.transform;
+        CacheStartIfNeeded();
 
-        // 시작 위치 = 씬에 배치된 hand의 현재 위치
-        // (비활성 상태여도 transform.position 읽히니까 여기서 잡아두면 됨)
-        Vector3 from = hand.position;
-        Vector3 to = from + Vector3.down * Mathf.Abs(dropDistanceY);
+        var tr = handObject.transform;
+
+        Vector3 from = _startPos;
+        Vector3 to = from + new Vector3(moveDistanceX, moveDistanceY, 0f); // ✅ 부호 그대로
 
         // 1) 비활성 -> 활성
-        if (handObject)
+        if (forceDeactivateThenActivate)
         {
-            if (forceDeactivateThenActivate)
-            {
-                handObject.SetActive(false);
-                handObject.SetActive(true);
-            }
-            else
-            {
-                if (!handObject.activeSelf) handObject.SetActive(true);
-            }
+            handObject.SetActive(false);
+            handObject.SetActive(true);
+        }
+        else
+        {
+            if (!handObject.activeSelf) handObject.SetActive(true);
         }
 
-        // 시작 위치 스냅(혹시 이전 실행에서 내려가있던 상태 방지)
-        hand.position = from;
+        // 시작 위치 스냅
+        tr.position = from;
 
-        if (debugLog) Debug.Log($"[TriggerStep_HandDrop] {hand.name} from={from} to={to}");
+        if (debugLog) Debug.Log($"[TriggerStep_HandDrop] from={from} to={to}");
 
-        // 2) 빠르게 내려감
+        // 2) 이동
         float t = 0f;
-        while (t < dropDuration)
+        while (true)
         {
             float dt = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
             t += dt;
 
-            float u = Mathf.Clamp01(t / dropDuration);
-            float k = (ease != null) ? ease.Evaluate(u) : u;
+            float u = t / dropDuration;
 
-            hand.position = Vector3.LerpUnclamped(from, to, k);
+            if (u >= 1f)
+            {
+                tr.position = to;
+                break;
+            }
+
+            float k = (ease != null) ? ease.Evaluate(u) : u;
+            tr.position = Vector3.LerpUnclamped(from, to, k);
             yield return null;
         }
-        hand.position = to;
-
-        // 3) 유지 후 비활성화
-        if (holdSeconds > 0f)
-        {
-            if (useUnscaledTime) yield return new WaitForSecondsRealtime(holdSeconds);
-            else yield return new WaitForSeconds(holdSeconds);
-        }
-
-        if (deactivateOnEnd && handObject)
-            handObject.SetActive(false);
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿// Assets/Script/Interactable/TeleportTransition.cs
+using System.Collections;
 using UnityEngine;
 
 public class TeleportTransition : MonoBehaviour, IInteractable
@@ -6,13 +7,19 @@ public class TeleportTransition : MonoBehaviour, IInteractable
     [Header("Teleport Target (플레이어 이동 위치)")]
     public Transform targetPoint;
 
+    [Header("Fade (in-scene)")]
+    [Tooltip("Teleport 연출에 쓸 FadePanelFader (없으면 씬에서 자동 탐색)")]
+    public FadePanelFader fadePanel;
+    public float fadeOutDuration = 0.25f;
+    public float fadeInDuration = 0.25f;
+
     [Header("After Teleport Camera Mode")]
     public CameraModeId afterMode = CameraModeId.FollowConfined;
 
     [Tooltip("FollowConfined일 때 사용할 Bounds(BoxCollider2D/PolygonCollider2D 등)")]
     public Collider2D afterBounds;
 
-    [Tooltip("Fixed/Cutscene일 때 카메라를 고정할 '앵커 위치'. 비면 player/targetPoint로 대체")]
+    [Tooltip("Fixed/Cutscene일 때 카메라를 고정할 '앵커 위치'. (Indoor 같은 케이스)")]
     public Transform fixedCameraAnchorPoint;
 
     [Tooltip("이동 후 줌(OrthoSize). 0이면 변경 안 함")]
@@ -26,10 +33,20 @@ public class TeleportTransition : MonoBehaviour, IInteractable
     [Header("Lock")]
     public bool lockPlayerInput = true;
 
+    [Header("Camera Warp Fix")]
+    public bool notifyWarpToCinemachine = true;
+    public bool snapCameraWhenFixed = true;
+
     [Header("Debug")]
     public bool debugLog = true;
 
     private bool _running = false;
+
+    private void Awake()
+    {
+        if (!fadePanel)
+            fadePanel = FindObjectOfType<FadePanelFader>(true);
+    }
 
     public void Interact()
     {
@@ -51,93 +68,59 @@ public class TeleportTransition : MonoBehaviour, IInteractable
     {
         _running = true;
 
-        if (debugLog)
-        {
-            Debug.Log($"[TeleportTransition] Start");
-            Debug.Log($"  - playerTargetPoint={targetPoint.position}");
-            Debug.Log($"  - afterMode={afterMode}, afterBounds={(afterBounds ? afterBounds.name : "(null)")}");
-            Debug.Log($"  - fixedAnchor={(fixedCameraAnchorPoint ? fixedCameraAnchorPoint.name : "(null)")}");
-        }
-
-        // 입력 잠금
         if (lockPlayerInput && GameManager.Instance) GameManager.Instance.isAction = true;
-
-        // 카메라 전환 시작(페이드 중 흔들림 방지)
         if (CameraManager.Instance) CameraManager.Instance.BeginTransition(lockCamera: true);
 
-        // Fade In (검은 화면)
-        if (SceneFader.instance != null)
-            yield return SceneFader.instance.StartCoroutine(SceneFader.instance.Fade(1f));
+        // ✅ Teleport는 SceneFader가 아니라 FadePanelFader
+        if (fadePanel != null)
+            yield return fadePanel.FadeTo(1f, fadeOutDuration);
 
-        // 플레이어 찾기 + 워프 델타 계산(NotifyTargetWarp용)
         var player = FindObjectOfType<PlayerMove>(true);
-        Vector3 oldPos = player ? player.transform.position : Vector3.zero;
+        if (!player)
+        {
+            Debug.LogWarning("[TeleportTransition] PlayerMove를 찾지 못했습니다.");
+            if (fadePanel != null)
+                yield return fadePanel.FadeTo(0f, fadeInDuration);
+
+            if (lockPlayerInput && GameManager.Instance) GameManager.Instance.isAction = false;
+            _running = false;
+            yield break;
+        }
+
+        Transform playerTr = player.transform;
+
+        Vector3 from = playerTr.position;
+        Vector3 to = targetPoint.position;
 
         // 1) 플레이어 이동
-        if (player != null)
-            player.transform.position = targetPoint.position;
+        playerTr.position = to;
 
-        Vector3 newPos = player ? player.transform.position : targetPoint.position;
-        Vector3 delta = newPos - oldPos;
-
-        // 2) 카메라 모드 적용(이동 후)
+        // 2) 카메라 적용 (CameraManager가 책임)
         if (CameraManager.Instance != null)
         {
             float? size = (afterOrthoSize > 0f) ? afterOrthoSize : (float?)null;
 
-            // Fixed/Cutscene에서 쓸 카메라 고정 위치 결정
-            Vector3 fixedPos =
-                fixedCameraAnchorPoint ? fixedCameraAnchorPoint.position :
-                (player ? player.transform.position : targetPoint.position);
-
-            switch (afterMode)
-            {
-                case CameraModeId.Fixed:
-                    // ✅ 앵커 위치를 TeleportTransition에서 넘겨줌
-                    CameraManager.Instance.SetFixed(lockWorldPos: fixedPos, orthoSize: size);
-
-                    // ✅ 즉시 스냅(가끔 이전 상태로 끌리는 현상 방지)
-                    CameraManager.Instance.SnapCameraTo(fixedPos);
-                    break;
-
-                case CameraModeId.FollowConfined:
-                    CameraManager.Instance.SetFollowConfined(
-                        followTarget: player ? player.transform : null,
-                        bounds: afterBounds,
-                        orthoSize: size
-                    );
-                    if (player) CameraManager.Instance.NotifyTargetWarp(player.transform, delta);
-                    break;
-
-                case CameraModeId.FollowFree:
-                    CameraManager.Instance.SetFollowFree(
-                        followTarget: player ? player.transform : null,
-                        orthoSize: size
-                    );
-                    if (player) CameraManager.Instance.NotifyTargetWarp(player.transform, delta);
-                    break;
-
-                case CameraModeId.Cutscene:
-                    CameraManager.Instance.SetCutscene(worldPos: fixedPos, orthoSize: size);
-                    CameraManager.Instance.SnapCameraTo(fixedPos);
-                    break;
-            }
+            CameraManager.Instance.ApplyAfterTeleport(
+                player: playerTr,
+                fromPos: from,
+                toPos: to,
+                afterMode: afterMode,
+                afterBounds: afterBounds,
+                afterOrthoSize: size,
+                fixedCameraAnchorPoint: fixedCameraAnchorPoint,
+                notifyWarpToCinemachine: notifyWarpToCinemachine,
+                snapCameraWhenFixed: snapCameraWhenFixed
+            );
 
             CameraManager.Instance.EndTransition();
         }
 
-        // 어둠 오버레이(상태 유지)
         if (applyDarkOverlay && DarkOverlay.Instance != null)
-        {
             DarkOverlay.Instance.SetAlpha(darkOverlayAlpha, darkOverlayDuration);
-            if (debugLog) Debug.Log($"[TeleportTransition] DarkOverlay -> {darkOverlayAlpha}");
-        }
 
-        // Fade Out (밝아짐)
-        if (SceneFader.instance != null)
-            yield return SceneFader.instance.StartCoroutine(SceneFader.instance.Fade(0f));
+        if (fadePanel != null)
+            yield return fadePanel.FadeTo(0f, fadeInDuration);
 
-        // 입력 해제
         if (lockPlayerInput && GameManager.Instance) GameManager.Instance.isAction = false;
 
         _running = false;

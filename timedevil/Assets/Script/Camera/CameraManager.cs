@@ -142,7 +142,7 @@ public class CameraManager : MonoBehaviour
         vcam.Follow = _fixedAnchor;
         vcam.m_Lens.OrthographicSize = orthoSize ?? defaultOrthoSize;
 
-        // ★ 즉시 반영
+        // 즉시 반영
         vcam.PreviousStateIsValid = false;
         vcam.ForceCameraPosition(new Vector3(p.x, p.y, vcam.transform.position.z), vcam.transform.rotation);
 
@@ -220,11 +220,67 @@ public class CameraManager : MonoBehaviour
     }
 
     // =========================
-    // ★ Teleport 보정용 API
+    // Teleport/Route 요청(★여기서 책임지고 처리)
     // =========================
 
     /// <summary>
-    /// Follow 대상이 “순간이동” 했다는걸 Cinemachine에 알려줌 (카메라가 예전 위치로 끌려가는 현상 방지)
+    /// "플레이어가 순간이동한 뒤" 카메라 모드 적용을 CameraManager가 책임지고 처리.
+    /// Fixed일 때는 fixedCameraAnchorPoint가 있으면 그 위치를 사용.
+    /// </summary>
+    public void ApplyAfterTeleport(
+        Transform player,
+        Vector3 fromPos,
+        Vector3 toPos,
+        CameraModeId afterMode,
+        Collider2D afterBounds,
+        float? afterOrthoSize,
+        Transform fixedCameraAnchorPoint,
+        bool notifyWarpToCinemachine = true,
+        bool snapCameraWhenFixed = true
+    )
+    {
+        if (!vcam) return;
+
+        Vector3 delta = toPos - fromPos;
+
+        // Fixed/Cutscene일 때 카메라 고정 위치 결정(플레이어와 분리 가능)
+        Vector3 fixedPos = fixedCameraAnchorPoint ? fixedCameraAnchorPoint.position : toPos;
+
+        if (debugLog)
+        {
+            Debug.Log($"[CameraManager] ApplyAfterTeleport mode={afterMode} from={fromPos} to={toPos} fixedPos={fixedPos} bounds={(afterBounds ? afterBounds.name : "(null)")}");
+        }
+
+        switch (afterMode)
+        {
+            case CameraModeId.Fixed:
+                SetFixed(lockWorldPos: fixedPos, orthoSize: afterOrthoSize);
+                if (snapCameraWhenFixed) SnapCameraTo(fixedPos);
+                break;
+
+            case CameraModeId.FollowConfined:
+                SetFollowConfined(player, afterBounds, afterOrthoSize);
+                if (notifyWarpToCinemachine && player) NotifyTargetWarp(player, delta);
+                break;
+
+            case CameraModeId.FollowFree:
+                SetFollowFree(player, afterOrthoSize);
+                if (notifyWarpToCinemachine && player) NotifyTargetWarp(player, delta);
+                break;
+
+            case CameraModeId.Cutscene:
+                SetCutscene(fixedPos, afterOrthoSize);
+                if (snapCameraWhenFixed) SnapCameraTo(fixedPos);
+                break;
+        }
+    }
+
+    // =========================
+    // Warp / Snap
+    // =========================
+
+    /// <summary>
+    /// Follow 대상이 “순간이동” 했다는걸 Cinemachine에 알려줌
     /// </summary>
     public void NotifyTargetWarp(Transform warpedTarget, Vector3 delta)
     {
@@ -236,7 +292,7 @@ public class CameraManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 카메라를 즉시 특정 월드 좌표로 “스냅” (Fixed/컷씬/텔레포트 순간 확정용)
+    /// 카메라를 즉시 특정 월드 좌표로 “스냅”
     /// </summary>
     public void SnapCameraTo(Vector3 worldPos)
     {
@@ -245,7 +301,6 @@ public class CameraManager : MonoBehaviour
         Vector3 p = worldPos;
         p.z = vcam.transform.position.z;
 
-        // 강제 반영
         vcam.PreviousStateIsValid = false;
         vcam.ForceCameraPosition(p, vcam.transform.rotation);
 

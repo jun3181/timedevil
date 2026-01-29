@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿// Assets/Script/Player/MenuController.cs
+using UnityEngine;
 using TMPro;
 using UnityEngine.SceneManagement;
 
@@ -11,6 +12,9 @@ public class MenuController : MonoBehaviour
 
     [Header("Refs")]
     public GameManager manager;
+
+    [Header("Scene Transition")]
+    [SerializeField] private bool useFaderIfExists = true;
 
     [Header("Debug")]
     [SerializeField] private bool debugMenu = true;
@@ -81,15 +85,13 @@ public class MenuController : MonoBehaviour
             case 0: // Inventory
                 CacheReturnPoint(current);
                 Close();
-                if (SceneFader.instance) SceneFader.instance.LoadSceneWithFade("InventoryScene");
-                else SceneManager.LoadScene("InventoryScene");
+                SceneLoader.Load("InventoryScene", useFaderIfExists);
                 break;
 
             case 1: // Card
                 CacheReturnPoint(current);
                 Close();
-                if (SceneFader.instance) SceneFader.instance.LoadSceneWithFade("Card");
-                else SceneManager.LoadScene("Card");
+                SceneLoader.Load("Card", useFaderIfExists);
                 break;
 
             case 2: // Option
@@ -122,7 +124,6 @@ public class MenuController : MonoBehaviour
         }
     }
 
-    // PlayerAction 삭제할 거면 여기서 PlayerAction 찾으면 안 됨 → PlayerMove로 변경
     private void CacheReturnPoint(string currentScene)
     {
         var playerMove = FindObjectOfType<PlayerMove>(true);
@@ -134,7 +135,5 @@ public class MenuController : MonoBehaviour
 
         PlayerReturnContext.ReturnSceneName = currentScene;
         PlayerReturnContext.CameraRebindRequested = true;
-
-        // 몬스터 스냅샷 저장 로직이 필요하면 여기에 기존 로직을 다시 붙이면 됨
     }
 }
