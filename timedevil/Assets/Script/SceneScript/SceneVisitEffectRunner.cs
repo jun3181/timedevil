@@ -1,4 +1,4 @@
-// Assets/Script/Scene/VisitEffect/SceneVisitEffectRunner.cs
+ï»¿// Assets/Script/Scene/VisitEffect/SceneVisitEffectRunner.cs
 using System;
 using System.Collections;
 using UnityEngine;
@@ -7,7 +7,6 @@ using UnityEngine.SceneManagement;
 [DisallowMultipleComponent]
 public class SceneVisitEffectRunner : MonoBehaviour
 {
-    // "¾À¸¶´Ù 1°³"¸¸ Á¸ÀçÇÏ´Â Current (½Ì±ÛÅæÃ³·³ ¾²µÇ DontDestroy ¾Æ´Ô)
     public static SceneVisitEffectRunner Current { get; private set; }
 
     [Header("Effect (on this GameObject recommended)")]
@@ -27,11 +26,9 @@ public class SceneVisitEffectRunner : MonoBehaviour
     private void Awake()
     {
         if (Current != null && Current != this)
-        {
-            Debug.LogWarning("[SceneVisitEffectRunner] ¾À¿¡ Runner°¡ 2°³ÀÔ´Ï´Ù. ÇÏ³ª¸¸ ³²±â¼¼¿ä.");
-        }
-        Current = this;
+            Debug.LogWarning("[SceneVisitEffectRunner] ì”¬ì— Runnerê°€ 2ê°œì…ë‹ˆë‹¤. í•˜ë‚˜ë§Œ ë‚¨ê¸°ì„¸ìš”.");
 
+        Current = this;
         if (!effect) effect = GetComponent<SceneVisitEffectBase>();
     }
 
@@ -52,40 +49,32 @@ public class SceneVisitEffectRunner : MonoBehaviour
         _enterPlayed = true;
 
         if (debugLog) Debug.Log("[SceneVisitEffectRunner] Enter start");
-
-        if (effect != null)
-            yield return effect.PlayEnter();
-
+        if (effect != null) yield return effect.PlayEnter();
         if (debugLog) Debug.Log("[SceneVisitEffectRunner] Enter complete");
+
         OnEnterComplete?.Invoke();
     }
 
     public IEnumerator PlayExit()
     {
         if (debugLog) Debug.Log("[SceneVisitEffectRunner] Exit start");
-
-        if (effect != null)
-            yield return effect.PlayExit();
-
+        if (effect != null) yield return effect.PlayExit();
         if (debugLog) Debug.Log("[SceneVisitEffectRunner] Exit complete");
     }
 
-    /// <summary>
-    /// ÇöÀç ¾À¿¡¼­ Exit ¿¬ÃâÀ» Àç»ıÇÑ µÚ ´ÙÀ½ ¾À ·Îµå
-    /// </summary>
-    public void LoadSceneWithExitEffect(string sceneName)
+    // ê¸°ì¡´ í˜¸ì¶œ ìœ ì§€ + LoadModeë„ ì„ íƒ ê°€ëŠ¥
+    public void LoadSceneWithExitEffect(string sceneName, LoadSceneMode mode = LoadSceneMode.Single)
     {
         if (_transitioning) return;
-        StartCoroutine(CoLoadScene(sceneName));
+        StartCoroutine(CoLoadScene(sceneName, mode));
     }
 
-    private IEnumerator CoLoadScene(string sceneName)
+    private IEnumerator CoLoadScene(string sceneName, LoadSceneMode mode)
     {
         _transitioning = true;
 
         yield return PlayExit();
 
-        // ¾À ·Îµå(´ÙÀ½ ¾ÀÀº ±× ¾ÀÀÇ Runner°¡ Enter¸¦ ´ã´ç)
-        SceneManager.LoadScene(sceneName);
+        SceneManager.LoadScene(sceneName, mode);
     }
 }

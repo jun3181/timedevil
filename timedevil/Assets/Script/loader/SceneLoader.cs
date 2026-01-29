@@ -1,10 +1,10 @@
 ﻿// Assets/Script/loader/SceneLoader.cs
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using System.Collections;
 
 public static class SceneLoader
 {
+    // 돌아올 좌표 저장
     public static void SaveReturnPoint(Transform playerT, Transform enemyT)
     {
         PlayerReturnContext.ReturnSceneName = SceneManager.GetActiveScene().name;
@@ -25,22 +25,42 @@ public static class SceneLoader
         }
     }
 
-    // ✅ SceneFader는 "현재 씬에 있는 것"만 사용한다 (없으면 즉시 로드)
-    public static void Load(string sceneName, bool useFaderIfExists = true)
+    /// <summary>
+    /// 일반 로드
+    /// - useFaderIfExists == true 이고
+    /// - 현재 씬에 SceneVisitEffectRunner가 있으면 ExitEffect 후 Load(Single) 처리
+    /// - 그 외에는 SceneManager.LoadScene로 즉시 로드
+    /// </summary>
+    public static void Load(string sceneName, bool useFaderIfExists = true, LoadSceneMode mode = LoadSceneMode.Single)
     {
-        if (useFaderIfExists)
+        if (string.IsNullOrWhiteSpace(sceneName))
         {
-            var fader = Object.FindObjectOfType<SceneFader>(true);
-            if (fader != null)
-            {
-                fader.LoadSceneWithFadeOut(sceneName);
-                return;
-            }
+            Debug.LogWarning("[SceneLoader] sceneName이 비어있습니다.");
+            return;
         }
 
-        SceneManager.LoadScene(sceneName);
+        // Additive는 기본적으로 "현재 씬 나가기 연출" 개념이 애매하니 바로 로드
+        if (mode != LoadSceneMode.Single)
+        {
+            SceneManager.LoadScene(sceneName, mode);
+            return;
+        }
+
+        if (useFaderIfExists && SceneVisitEffectRunner.Current != null)
+        {
+            SceneVisitEffectRunner.Current.LoadSceneWithExitEffect(sceneName);
+            return;
+        }
+
+        // fallback: 효과 없이 즉시 로드
+        SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
     }
 
+    /// <summary>
+    /// 돌아가기(무적시간 옵션)
+    /// - graceSeconds는 "돌아간 씬"에서 PlayerReturnManager가 처리하게 Pending으로만 넘김
+    /// - useFaderIfExists == true면 Runner 있으면 ExitEffect 후 로드
+    /// </summary>
     public static void GoBackToReturnScene(float graceSeconds = 1.0f, bool useFaderIfExists = true)
     {
         if (string.IsNullOrWhiteSpace(PlayerReturnContext.ReturnSceneName))
@@ -49,34 +69,8 @@ public static class SceneLoader
             return;
         }
 
-        PlayerReturnContext.IsInGracePeriod = graceSeconds > 0f;
         PlayerReturnContext.GraceSecondsPending = Mathf.Max(0f, graceSeconds);
 
-        var host = SceneLoaderHost.Ensure();
-        host.StartCoroutine(host.CoClearGrace(graceSeconds));
-
-        Load(PlayerReturnContext.ReturnSceneName, useFaderIfExists);
-    }
-}
-
-class SceneLoaderHost : MonoBehaviour
-{
-    public static SceneLoaderHost Instance { get; private set; }
-
-    public static SceneLoaderHost Ensure()
-    {
-        if (!Instance)
-        {
-            var go = new GameObject("[SceneLoaderHost]");
-            Object.DontDestroyOnLoad(go);
-            Instance = go.AddComponent<SceneLoaderHost>();
-        }
-        return Instance;
-    }
-
-    public IEnumerator CoClearGrace(float sec)
-    {
-        if (sec > 0f) yield return new WaitForSeconds(sec);
-        PlayerReturnContext.IsInGracePeriod = false;
+        Load(PlayerReturnContext.ReturnSceneName, useFaderIfExists, LoadSceneMode.Single);
     }
 }
