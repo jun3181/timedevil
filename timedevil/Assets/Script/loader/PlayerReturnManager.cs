@@ -16,7 +16,7 @@ public class PlayerReturnManager : MonoBehaviour
     [Tooltip("Overlap 탐색 시 사용할 LayerMask. 모르면 Everything 그대로 두면 됨.")]
     [SerializeField] private LayerMask overlapMask = ~0;
 
-    [Tooltip("TriggerGet만 끌지, Collider도 같이 끌지 선택(안전하게는 둘 다 끄는게 재빨려들기 방지에 강함)")]
+    [Tooltip("TriggerGet만 끌지, Collider도 같이 끌지 선택")]
     [SerializeField] private bool disableColliderAlso = true;
 
     [Header("Debug")]
@@ -35,39 +35,38 @@ public class PlayerReturnManager : MonoBehaviour
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        // "복귀 씬"에서만 적용
         bool isReturnScene =
             PlayerReturnContext.HasReturnPosition &&
             !string.IsNullOrWhiteSpace(PlayerReturnContext.ReturnSceneName) &&
             scene.name == PlayerReturnContext.ReturnSceneName;
 
-        if (debugLog)
-        {
-            Debug.Log(
-                $"[PlayerReturnManager] sceneLoaded => scene='{scene.name}', mode={mode}\n" +
-                $"ReturnSceneName='{PlayerReturnContext.ReturnSceneName}', HasReturnPosition={PlayerReturnContext.HasReturnPosition}, ReturnPosition={PlayerReturnContext.ReturnPosition}\n" +
-                $"UseOverlapSuppression={PlayerReturnContext.UseOverlapSuppression}, radius={PlayerReturnContext.OverlapRadiusPending}, sec={PlayerReturnContext.OverlapSecondsPending}\n" +
-                $"GracePending={PlayerReturnContext.GraceSecondsPending}, IsInGracePeriod={PlayerReturnContext.IsInGracePeriod}",
-                this
-            );
-        }
+        if (!isReturnScene) return;
 
-        if (!isReturnScene)
-        {
-            if (debugLog)
-                Debug.Log("[PlayerReturnManager] skip apply (not a return scene)", this);
-            return;
-        }
-
-        // 씬 로드 프레임에 Player가 아직 안 잡힐 수 있어서 코루틴으로 처리
         StartCoroutine(CoApplyReturn());
     }
 
     private IEnumerator CoApplyReturn()
     {
-        // 1) Player 찾기(최대 몇 프레임 대기)
-        PlayerMainManager player = null;
+        // --- 컨텍스트 로컬로 복사(코루틴/클리어 안정) ---
+        Vector2 returnPos2 = PlayerReturnContext.ReturnPosition;
 
+        bool useSupp = PlayerReturnContext.UseOverlapSuppression;
+        float suppRadius = PlayerReturnContext.OverlapRadiusPending;
+        float suppSec = PlayerReturnContext.OverlapSecondsPending;
+
+        float gracePending = PlayerReturnContext.GraceSecondsPending;
+
+        bool needRebind = PlayerReturnContext.CameraRebindRequested;
+        string targetVcamName = PlayerReturnContext.TargetVcamName;
+
+        bool restoreCam = PlayerReturnContext.RestoreCameraStatePending;
+        CameraModeId camMode = PlayerReturnContext.ReturnCameraMode;
+        float camOrtho = PlayerReturnContext.ReturnCameraOrthoSize;
+        Vector2 camFixedPos = PlayerReturnContext.ReturnCameraFixedPos;
+        string camBoundsName = PlayerReturnContext.ReturnCameraBoundsName;
+
+        // 1) Player 찾기
+        PlayerMainManager player = null;
         if (findPlayerMainManager)
         {
             const int maxWaitFrames = 30;
@@ -81,38 +80,44 @@ public class PlayerReturnManager : MonoBehaviour
             if (player == null)
             {
                 Debug.LogError("[PlayerReturnManager] PlayerMainManager not found in return scene!", this);
-                // 실패해도 컨텍스트는 정리(무한 재시도 방지)
                 PlayerReturnContext.ClearReturnCore();
                 yield break;
             }
         }
 
-        // 2) 플레이어 이동
-        var p = PlayerReturnContext.ReturnPosition;
-        if (player != null)
-        {
-            var tr = player.transform;
-            tr.position = new Vector3(p.x, p.y, tr.position.z);
+        // 2) 플레이어 이동 + delta 계산(워프 보정용)
+        Vector3 fromPos = player.transform.position;
+        player.transform.position = new Vector3(returnPos2.x, returnPos2.y, player.transform.position.z);
+        Vector3 toPos = player.transform.position;
+        Vector3 delta = toPos - fromPos;
 
-            if (debugLog)
-                Debug.Log($"[PlayerReturnManager] moved player => ({p.x:F2},{p.y:F2},{tr.position.z:F2})", this);
+        if (debugLog)
+            Debug.Log($"[PlayerReturnManager] moved player => ({returnPos2.x:F2},{returnPos2.y:F2},{player.transform.position.z:F2})", this);
+
+        // 3) 카메라 복원은 "1프레임 뒤" 적용
+        if (needRebind || restoreCam)
+        {
+            StartCoroutine(CoApplyReturnCameraNextFrame(
+                player.transform,
+                delta,
+                targetVcamName,
+                restoreCam,
+                camMode,
+                camOrtho,
+                camFixedPos,
+                camBoundsName
+            ));
         }
 
-        // 3) B Suppression: 복귀 지점 주변 트리거 자동 억제
-        if (PlayerReturnContext.UseOverlapSuppression)
+        // 4) B Suppression
+        if (useSupp && suppRadius > 0f && suppSec > 0f)
         {
-            float radius = PlayerReturnContext.OverlapRadiusPending;
-            float sec = PlayerReturnContext.OverlapSecondsPending;
-
-            if (radius > 0f && sec > 0f)
-            {
-                SuppressNearbyTriggers((Vector2)p, radius, sec);
-                if (debugLog) Debug.Log($"[PlayerReturnManager] suppressed NEAR return point radius={radius:F2}, sec={sec:F2}", this);
-            }
+            SuppressNearbyTriggers((Vector2)toPos, suppRadius, suppSec);
+            if (debugLog) Debug.Log($"[PlayerReturnManager] suppressed NEAR return point radius={suppRadius:F2}, sec={suppSec:F2}", this);
         }
 
-        // 4) Grace
-        float grace = PlayerReturnContext.GraceSecondsPending > 0f ? PlayerReturnContext.GraceSecondsPending : defaultGraceSeconds;
+        // 5) Grace
+        float grace = gracePending > 0f ? gracePending : defaultGraceSeconds;
         if (grace > 0f) StartCoroutine(CoGrace(grace));
         else
         {
@@ -120,8 +125,79 @@ public class PlayerReturnManager : MonoBehaviour
             PlayerReturnContext.GraceSecondsPending = 0f;
         }
 
-        // 5) 1회성 return core 정리
+        // 6) 1회성 데이터 정리
         PlayerReturnContext.ClearReturnCore();
+    }
+
+    private IEnumerator CoApplyReturnCameraNextFrame(
+        Transform playerTr,
+        Vector3 delta,
+        string preferredVcamName,
+        bool restoreCam,
+        CameraModeId camMode,
+        float camOrtho,
+        Vector2 camFixedPos,
+        string camBoundsName
+    )
+    {
+        // 씬의 Start()들(=SceneCameraBootstrap) 먼저 돌게 1프레임 양보
+        yield return null;
+
+        if (!CameraManager.Instance) yield break;
+
+        // vcam 재탐색(배틀씬에 vcam 없었다가 돌아오는 케이스)
+        CameraManager.Instance.ReacquireVcam(preferredVcamName, logWhenMissing: false);
+
+        if (!restoreCam) yield break;
+
+        float? size = (camOrtho > 0f) ? camOrtho : (float?)null;
+
+        // Follow 대상(기본은 Player)
+        Transform follow = playerTr;
+
+        // Confiner bounds는 “이름으로 재탐색”
+        Collider2D bounds = null;
+        if (!string.IsNullOrWhiteSpace(camBoundsName))
+        {
+            var all = FindObjectsOfType<Collider2D>(true);
+            foreach (var c in all)
+            {
+                if (c != null && c.name == camBoundsName) { bounds = c; break; }
+            }
+        }
+
+        if (debugLog)
+            Debug.Log($"[PlayerReturnManager] apply return camera => mode={camMode}, ortho={(size.HasValue ? size.Value.ToString("F2") : "(default)")}, bounds='{camBoundsName}' found={(bounds ? bounds.name : "(null)")}, fixed=({camFixedPos.x:F2},{camFixedPos.y:F2})", this);
+
+        switch (camMode)
+        {
+            case CameraModeId.Fixed:
+                CameraManager.Instance.SetFixed(new Vector3(camFixedPos.x, camFixedPos.y, 0f), size);
+                CameraManager.Instance.SnapCameraTo(new Vector3(camFixedPos.x, camFixedPos.y, 0f));
+                break;
+
+            case CameraModeId.Cutscene:
+                CameraManager.Instance.SetCutscene(new Vector3(camFixedPos.x, camFixedPos.y, 0f), size);
+                CameraManager.Instance.SnapCameraTo(new Vector3(camFixedPos.x, camFixedPos.y, 0f));
+                break;
+
+            case CameraModeId.FollowConfined:
+                if (follow != null)
+                {
+                    if (bounds != null) CameraManager.Instance.SetFollowConfined(follow, bounds, size);
+                    else CameraManager.Instance.SetFollowFree(follow, size); // bounds 못찾으면 FollowFree
+                    CameraManager.Instance.NotifyTargetWarp(follow, delta);
+                }
+                break;
+
+            case CameraModeId.FollowFree:
+                if (follow != null)
+                {
+                    CameraManager.Instance.SetFollowFree(follow, size);
+                    CameraManager.Instance.NotifyTargetWarp(follow, delta);
+                }
+                break;
+        }
     }
 
     private void SuppressNearbyTriggers(Vector2 center, float radius, float seconds)
@@ -129,14 +205,12 @@ public class PlayerReturnManager : MonoBehaviour
         var cols = Physics2D.OverlapCircleAll(center, radius, overlapMask);
         if (cols == null || cols.Length == 0) return;
 
-        // 비활성/활성 섞여있을 수 있으니, 실제로 끌 대상만 수집해서 seconds 후 복구
         var targets = new List<(TriggerGet tg, Collider2D col)>();
 
         foreach (var c in cols)
         {
             if (c == null) continue;
 
-            // TriggerGet(너 프로젝트의 트리거 스크립트) 찾기
             var tg = c.GetComponent<TriggerGet>();
             if (tg == null) tg = c.GetComponentInParent<TriggerGet>();
 
@@ -144,11 +218,9 @@ public class PlayerReturnManager : MonoBehaviour
             {
                 Collider2D toDisableCol = disableColliderAlso ? c : null;
 
-                // 이미 꺼져있으면 스킵(중복 억제 방지)
                 if (!tg.enabled && (toDisableCol == null || !toDisableCol.enabled))
                     continue;
 
-                // 끄기
                 tg.enabled = false;
                 if (toDisableCol != null) toDisableCol.enabled = false;
 

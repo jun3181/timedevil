@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿// Assets/Script/Camera/CameraManager.cs
+using UnityEngine;
 using UnityEngine.SceneManagement;
 using Cinemachine;
 
@@ -15,7 +16,7 @@ public class CameraManager : MonoBehaviour
 {
     public static CameraManager Instance { get; private set; }
 
-    [Header("Single VCam (씬마다 존재 / 배틀씬엔 없을 수 있음)")]
+    [Header("Single VCam")]
     [SerializeField] private CinemachineVirtualCamera vcam;
 
     [Header("Clamp Extension (Clamp 후처리)")]
@@ -25,19 +26,15 @@ public class CameraManager : MonoBehaviour
     [SerializeField] private float defaultOrthoSize = 5f;
     [SerializeField] private bool forceNoDamping = true;
 
-    [Header("Scene Load Behavior")]
-    [Tooltip("씬 로드 때마다 vcam을 다시 찾습니다. (배틀씬처럼 vcam이 없는 씬이 있어도 OK)")]
-    [SerializeField] private bool alwaysReacquireVcamOnSceneLoad = true;
-
-    [Tooltip("이름이 같으면 그 vcam을 우선적으로 잡습니다. 비우면 자동 선택합니다.")]
-    [SerializeField] private string preferVcamNameOnSceneLoad = "";
-
-    [Tooltip("씬 로드 시 Follow를 자동으로 Player로 묶고 싶으면 켜세요. (SceneCameraBootstrap 쓰면 보통 OFF 권장)")]
+    [Header("Auto (옵션)")]
+    [Tooltip("씬 로드될 때마다 Player를 Follow로 자동 바인딩")]
     [SerializeField] private bool autoBindPlayerOnSceneLoad = false;
+
+    [Tooltip("씬 로드될 때마다 vcam을 재탐색 (배틀씬처럼 vcam 없는 씬 왕복 대응)")]
+    [SerializeField] private bool reacquireVcamOnSceneLoad = true;
 
     [Header("Debug")]
     [SerializeField] private bool debugLog = true;
-    [SerializeField] private bool logWhenVcamMissing = false;
 
     public CameraModeId CurrentMode { get; private set; } = CameraModeId.Fixed;
     public bool IsTransitioning { get; private set; } = false;
@@ -45,12 +42,16 @@ public class CameraManager : MonoBehaviour
     private Transform _fixedAnchor;
     private Transform _lastFollow;
 
+    // ✅ FollowConfined 스냅샷용(Clamp2D 내부 private boundsShape에 접근 못하니, 여기서 마지막 bounds를 기억)
+    private Collider2D _lastConfineBounds;
+    private string _lastConfineBoundsName = "";
+
     private void Reset()
     {
-        vcam = FindObjectOfType<CinemachineVirtualCamera>(true);
+        vcam ??= FindObjectOfType<CinemachineVirtualCamera>(true);
         if (vcam)
         {
-            clamp2D = vcam.GetComponent<CinemachineClamp2D>();
+            clamp2D ??= vcam.GetComponent<CinemachineClamp2D>();
             if (!clamp2D) clamp2D = vcam.gameObject.AddComponent<CinemachineClamp2D>();
         }
     }
@@ -63,113 +64,149 @@ public class CameraManager : MonoBehaviour
 
         EnsureFixedAnchor();
 
-        // 초기에도 한번 잡기(첫 씬에 vcam 있으면 연결)
-        ReacquireVcam(string.IsNullOrWhiteSpace(preferVcamNameOnSceneLoad) ? null : preferVcamNameOnSceneLoad, logWhenMissing: false);
+        // ✅ 씬 로드시마다 vcam 재탐색을 위해 항상 구독
+        SceneManager.sceneLoaded += HandleSceneLoaded;
+
+        // 첫 씬에서도 최대한 잡아봄
+        ReacquireVcam(null, logWhenMissing: false);
 
         if (forceNoDamping) ApplyNoDamping();
-
-        // 씬 로드마다 재탐색을 위해 항상 구독
-        SceneManager.sceneLoaded += HandleSceneLoaded;
     }
 
     private void OnDestroy()
     {
-        if (Instance == this) Instance = null;
-        SceneManager.sceneLoaded -= HandleSceneLoaded;
+        if (Instance == this)
+        {
+            SceneManager.sceneLoaded -= HandleSceneLoaded;
+            Instance = null;
+        }
     }
 
     private void HandleSceneLoaded(Scene s, LoadSceneMode m)
     {
-        if (alwaysReacquireVcamOnSceneLoad)
+        // ✅ 배틀씬처럼 vcam이 없는 씬 갔다가 돌아오면 여기서 다시 잡아야 함
+        if (reacquireVcamOnSceneLoad)
+            ReacquireVcam(null, logWhenMissing: false);
+
+        // (옵션) 플레이어 자동 Follow
+        if (autoBindPlayerOnSceneLoad && vcam)
         {
-            ReacquireVcam(
-                preferName: string.IsNullOrWhiteSpace(preferVcamNameOnSceneLoad) ? null : preferVcamNameOnSceneLoad,
-                logWhenMissing: logWhenVcamMissing
-            );
+            var player = FindPlayerTransform();
+            if (player)
+            {
+                vcam.Follow = player;
+                vcam.PreviousStateIsValid = false;
+
+                if (debugLog) Debug.Log($"[CameraManager] AutoBind Follow -> {player.name} (scene={s.name})");
+            }
         }
 
-        if (!autoBindPlayerOnSceneLoad) return;
-        if (!vcam) return;
-
-        var player = FindPlayerTransform();
-        if (!player) return;
-
-        vcam.Follow = player;
-        vcam.PreviousStateIsValid = false;
-
-        if (forceNoDamping) ApplyNoDamping();
-        if (debugLog) Debug.Log($"[CameraManager] AutoBind Follow -> {player.name} (scene={s.name})");
-    }
-
-    // =========================
-    // vcam 재탐색 API
-    // =========================
-    public bool ReacquireVcam(string preferName = null, bool logWhenMissing = false)
-    {
-        var newVcam = FindBestVcam(preferName);
-
-        if (!newVcam)
-        {
-            vcam = null;
-            clamp2D = null;
-
-            if (logWhenMissing)
-                Debug.LogWarning("[CameraManager] VCam not found in this scene. (OK for BattleScene)");
-            return false;
-        }
-
-        bool changed = (vcam != newVcam);
-        vcam = newVcam;
-
-        clamp2D = vcam.GetComponent<CinemachineClamp2D>();
-        if (!clamp2D) clamp2D = vcam.gameObject.AddComponent<CinemachineClamp2D>();
-
-        clamp2D.enabled = false;
-        clamp2D.SetBounds(null);
-
-        vcam.PreviousStateIsValid = false;
         if (forceNoDamping) ApplyNoDamping();
 
         if (debugLog)
-            Debug.Log($"[CameraManager] ReacquireVcam -> {(vcam ? vcam.name : "(null)")} (changed={changed})");
+            Debug.Log($"[CameraManager] sceneLoaded => '{s.name}' vcam={(vcam ? vcam.name : "(null)")} clamp={(clamp2D ? clamp2D.name : "(null)")}");
+
+        // 씬이 바뀌면서 bounds 콜라이더가 파괴됐을 수도 있으니 Unity-null 체크로 정리
+        if (_lastConfineBounds == null) { /* Unity null OK */ }
+    }
+
+    /// <summary>
+    /// ✅ 씬이 바뀌어도 vcam 참조가 깨지지 않게, 현재 씬에서 다시 CinemachineVirtualCamera를 찾는다.
+    /// preferredVcamName이 있으면 그 이름 우선, 없으면 첫 번째 vcam.
+    /// </summary>
+    public bool ReacquireVcam(string preferredVcamName = null, bool logWhenMissing = true)
+    {
+        // 살아있는 참조면 유지 (Unity null 비교)
+        if (vcam != null && vcam.gameObject != null)
+            return true;
+
+        CinemachineVirtualCamera found = null;
+
+        var all = FindObjectsOfType<CinemachineVirtualCamera>(true);
+        if (all != null && all.Length > 0)
+        {
+            // 이름 우선
+            if (!string.IsNullOrWhiteSpace(preferredVcamName))
+            {
+                foreach (var c in all)
+                {
+                    if (c && c.name == preferredVcamName) { found = c; break; }
+                }
+            }
+
+            // 못 찾았으면 첫 번째
+            if (!found)
+            {
+                foreach (var c in all)
+                {
+                    if (c) { found = c; break; }
+                }
+            }
+        }
+
+        vcam = found;
+
+        if (!vcam)
+        {
+            if (logWhenMissing)
+                Debug.LogWarning($"[CameraManager] ReacquireVcam: vcam not found (preferred='{preferredVcamName ?? "null"}')");
+            return false;
+        }
+
+        // clamp2D 보장
+        if (!clamp2D)
+        {
+            clamp2D = vcam.GetComponent<CinemachineClamp2D>();
+            if (!clamp2D) clamp2D = vcam.gameObject.AddComponent<CinemachineClamp2D>();
+        }
+
+        if (forceNoDamping) ApplyNoDamping();
+
+        if (debugLog)
+            Debug.Log($"[CameraManager] ReacquireVcam -> '{vcam.name}' (preferred='{preferredVcamName ?? "null"}')");
 
         return true;
     }
 
-    private CinemachineVirtualCamera FindBestVcam(string preferName)
+    // =========================
+    // ✅ Snapshot API (TriggerStep_Scene에서 쓰는 함수)
+    // =========================
+    public bool TryGetSnapshot(
+        out CameraModeId camMode,
+        out float camOrtho,
+        out Vector3 fixedPos,
+        out string boundsName
+    )
     {
-        var vcams = FindObjectsOfType<CinemachineVirtualCamera>(true);
-        if (vcams == null || vcams.Length == 0) return null;
+        camMode = CurrentMode;
+        camOrtho = 0f;
+        fixedPos = Vector3.zero;
+        boundsName = "";
 
-        // 1) 이름 우선
-        if (!string.IsNullOrWhiteSpace(preferName))
+        if (!vcam) ReacquireVcam(null, logWhenMissing: false);
+        if (!vcam) return false;
+
+        camOrtho = vcam.m_Lens.OrthographicSize;
+
+        // Fixed/Cutscene이면 "고정 앵커"를 저장
+        if (CurrentMode == CameraModeId.Fixed || CurrentMode == CameraModeId.Cutscene)
         {
-            for (int i = 0; i < vcams.Length; i++)
-            {
-                var v = vcams[i];
-                if (v && v.name == preferName) return v;
-            }
+            fixedPos = _fixedAnchor ? _fixedAnchor.position : vcam.State.FinalPosition;
+        }
+        else
+        {
+            // Follow 계열이면 참고용으로 현재 카메라 위치
+            fixedPos = vcam.State.FinalPosition;
         }
 
-        // 2) Priority 가장 높은 것 선택 (동률이면 active 우선)
-        CinemachineVirtualCamera best = null;
-        for (int i = 0; i < vcams.Length; i++)
+        // FollowConfined이면 마지막으로 지정된 bounds 이름 저장
+        if (CurrentMode == CameraModeId.FollowConfined)
         {
-            var v = vcams[i];
-            if (!v) continue;
-
-            if (best == null) { best = v; continue; }
-
-            if (v.Priority > best.Priority) best = v;
-            else if (v.Priority == best.Priority)
-            {
-                bool vActive = v.gameObject.activeInHierarchy;
-                bool bestActive = best.gameObject.activeInHierarchy;
-                if (vActive && !bestActive) best = v;
-            }
+            if (_lastConfineBounds) boundsName = _lastConfineBounds.name;
+            else boundsName = _lastConfineBoundsName ?? "";
         }
 
-        return best;
+        return true;
     }
 
     // =========================
@@ -177,6 +214,7 @@ public class CameraManager : MonoBehaviour
     // =========================
     public void BeginTransition(bool lockCamera = true)
     {
+        if (!vcam) ReacquireVcam(null, logWhenMissing: false);
         if (!vcam) return;
 
         IsTransitioning = true;
@@ -203,16 +241,23 @@ public class CameraManager : MonoBehaviour
     // =========================
     public void SetFixed(Vector3? lockWorldPos = null, float? orthoSize = null)
     {
+        if (!vcam) ReacquireVcam(null, logWhenMissing: false);
         if (!vcam) return;
 
         EnsureFixedAnchor();
         CurrentMode = CameraModeId.Fixed;
 
-        clamp2D.enabled = false;
-        clamp2D.SetBounds(null);
+        _lastConfineBounds = null;
+        _lastConfineBoundsName = "";
+
+        if (clamp2D)
+        {
+            clamp2D.enabled = false;
+            clamp2D.SetBounds(null);
+        }
 
         Vector3 p = lockWorldPos ?? vcam.State.FinalPosition;
-        p.z = _fixedAnchor.position.z;
+        p.z = _fixedAnchor.position.z; // 2D: -10 유지
         _fixedAnchor.position = p;
 
         vcam.Follow = _fixedAnchor;
@@ -227,8 +272,13 @@ public class CameraManager : MonoBehaviour
 
     public void SetFollowFree(Transform followTarget, float? orthoSize = null)
     {
+        if (!vcam) ReacquireVcam(null, logWhenMissing: false);
         if (!vcam) return;
+
         CurrentMode = CameraModeId.FollowFree;
+
+        _lastConfineBounds = null;
+        _lastConfineBoundsName = "";
 
         if (!followTarget)
         {
@@ -236,8 +286,11 @@ public class CameraManager : MonoBehaviour
             return;
         }
 
-        clamp2D.enabled = false;
-        clamp2D.SetBounds(null);
+        if (clamp2D)
+        {
+            clamp2D.enabled = false;
+            clamp2D.SetBounds(null);
+        }
 
         vcam.Follow = followTarget;
         vcam.m_Lens.OrthographicSize = orthoSize ?? defaultOrthoSize;
@@ -250,7 +303,9 @@ public class CameraManager : MonoBehaviour
 
     public void SetFollowConfined(Transform followTarget, Collider2D bounds, float? orthoSize = null)
     {
+        if (!vcam) ReacquireVcam(null, logWhenMissing: false);
         if (!vcam) return;
+
         CurrentMode = CameraModeId.FollowConfined;
 
         if (!followTarget)
@@ -259,11 +314,18 @@ public class CameraManager : MonoBehaviour
             return;
         }
 
+        // ✅ 스냅샷용으로 기억
+        _lastConfineBounds = bounds;
+        _lastConfineBoundsName = bounds ? bounds.name : "";
+
         vcam.Follow = followTarget;
         vcam.m_Lens.OrthographicSize = orthoSize ?? defaultOrthoSize;
 
-        clamp2D.enabled = true;
-        clamp2D.SetBounds(bounds);
+        if (clamp2D)
+        {
+            clamp2D.enabled = true;
+            clamp2D.SetBounds(bounds);
+        }
 
         vcam.PreviousStateIsValid = false;
 
@@ -273,13 +335,20 @@ public class CameraManager : MonoBehaviour
 
     public void SetCutscene(Vector3 worldPos, float? orthoSize = null)
     {
+        if (!vcam) ReacquireVcam(null, logWhenMissing: false);
         if (!vcam) return;
 
         EnsureFixedAnchor();
         CurrentMode = CameraModeId.Cutscene;
 
-        clamp2D.enabled = false;
-        clamp2D.SetBounds(null);
+        _lastConfineBounds = null;
+        _lastConfineBoundsName = "";
+
+        if (clamp2D)
+        {
+            clamp2D.enabled = false;
+            clamp2D.SetBounds(null);
+        }
 
         worldPos.z = _fixedAnchor.position.z;
         _fixedAnchor.position = worldPos;
@@ -295,7 +364,7 @@ public class CameraManager : MonoBehaviour
     }
 
     // =========================
-    // ✅ Teleport After-Apply (네 Teleport 코드들이 요구하는 함수)
+    // Teleport/Route 요청
     // =========================
     public void ApplyAfterTeleport(
         Transform player,
@@ -309,6 +378,7 @@ public class CameraManager : MonoBehaviour
         bool snapCameraWhenFixed = true
     )
     {
+        if (!vcam) ReacquireVcam(null, logWhenMissing: false);
         if (!vcam) return;
 
         Vector3 delta = toPos - fromPos;
@@ -325,13 +395,19 @@ public class CameraManager : MonoBehaviour
                 break;
 
             case CameraModeId.FollowConfined:
-                SetFollowConfined(player, afterBounds, afterOrthoSize);
-                if (notifyWarpToCinemachine && player) NotifyTargetWarp(player, delta);
+                if (player)
+                {
+                    SetFollowConfined(player, afterBounds, afterOrthoSize);
+                    if (notifyWarpToCinemachine) NotifyTargetWarp(player, delta);
+                }
                 break;
 
             case CameraModeId.FollowFree:
-                SetFollowFree(player, afterOrthoSize);
-                if (notifyWarpToCinemachine && player) NotifyTargetWarp(player, delta);
+                if (player)
+                {
+                    SetFollowFree(player, afterOrthoSize);
+                    if (notifyWarpToCinemachine) NotifyTargetWarp(player, delta);
+                }
                 break;
 
             case CameraModeId.Cutscene:
@@ -346,7 +422,9 @@ public class CameraManager : MonoBehaviour
     // =========================
     public void NotifyTargetWarp(Transform warpedTarget, Vector3 delta)
     {
+        if (!vcam) ReacquireVcam(null, logWhenMissing: false);
         if (!vcam || !warpedTarget) return;
+
         vcam.OnTargetObjectWarped(warpedTarget, delta);
         vcam.PreviousStateIsValid = false;
 
@@ -355,6 +433,7 @@ public class CameraManager : MonoBehaviour
 
     public void SnapCameraTo(Vector3 worldPos)
     {
+        if (!vcam) ReacquireVcam(null, logWhenMissing: false);
         if (!vcam) return;
 
         Vector3 p = worldPos;
