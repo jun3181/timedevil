@@ -1,36 +1,58 @@
-ï»¿using UnityEngine;
+// Assets/Script/Cutscene/CutsceneDialogueController.cs
+using System;
+using UnityEngine;
 using UnityEngine.Playables;
 
+[DisallowMultipleComponent]
 public class CutsceneDialogueController : MonoBehaviour
 {
+    [Header("Route (CutSceneManager¿¡¼­ stringÀ¸·Î Ã£À» ¶§ »ç¿ë)")]
+    public string cutsceneId = "intro_01";
+
     [Header("Timeline")]
     public PlayableDirector director;
 
-    [Header("Dialogue")]
+    [Header("Dialogue (Signal¸¶´Ù 1ÁÙ¾¿)")]
     public Dialogue dialogue;
 
     [Header("Input")]
     public KeyCode advanceKey = KeyCode.E;
 
     [Header("Options")]
-    public bool lockPlayerInput = true; // GameManager.isAction ê°™ì€ê±° ì“°ë©´ true
-    public bool startOnAwake = false;
+    public bool oneShot = true;          // 1È¸¼º
+    public bool keepEndState = true;     // A ¹æ½Ä: ³¡³­ Æ÷Áî/»óÅÂ À¯Áö(Hold)
+    public bool lockPlayerInput = true;  // GameManager.isAction Àá±İ
+    public bool startOnAwake = false;    // (³ªÁß¿¡ ÀÚµ¿ ÄÆ¾À¿ë)
+
+    [Header("Debug")]
+    public bool debugLog = true;
+
+    public bool IsRunning => _running;
+    public event Action<CutsceneDialogueController> OnFinished;
 
     private bool _waitingAtMarker = false;
+    private bool _running = false;
+    private bool _played = false;
+
+    private bool _prevGameAction = false;
+    private bool _prevDialogueBlock = false;
 
     private void Awake()
     {
         if (!director) director = GetComponent<PlayableDirector>();
+
+        if (director)
+            director.extrapolationMode = keepEndState ? DirectorWrapMode.Hold : DirectorWrapMode.None;
     }
 
     private void OnEnable()
     {
-        if (director) director.stopped += OnTimelineStopped;
+        if (director) director.stopped += HandleStopped;
     }
 
     private void OnDisable()
     {
-        if (director) director.stopped -= OnTimelineStopped;
+        if (director) director.stopped -= HandleStopped;
     }
 
     private void Start()
@@ -38,72 +60,115 @@ public class CutsceneDialogueController : MonoBehaviour
         if (startOnAwake) StartCutscene();
     }
 
-    public void StartCutscene()
+    /// <summary>¿ÜºÎ(Manager/Interactable/Trigger)¿¡¼­ È£Ãâ</summary>
+    public bool StartCutscene()
     {
-        if (!director || dialogue == null) return;
+        if (_running) return false;
+        if (oneShot && _played) return false;
 
-        if (lockPlayerInput && GameManager.Instance)
-            GameManager.Instance.isAction = true;
+        if (!director || director.playableAsset == null || dialogue == null)
+        {
+            if (debugLog)
+            {
+                Debug.LogWarning(
+                    $"[CutsceneDialogueController] missing refs. " +
+                    $"director={(director ? director.name : "null")}, " +
+                    $"asset={(director && director.playableAsset ? director.playableAsset.name : "null")}, " +
+                    $"dialogue={(dialogue != null)}",
+                    this
+                );
+            }
+            return false;
+        }
 
-        // ì»·ì”¬ ì¤‘ì—” ì›”ë“œ ì…ë ¥ìœ¼ë¡œ ëŒ€ì‚¬ ë„˜ì–´ê°€ì§€ ì•Šê²Œ ì°¨ë‹¨
-        if (DialogueManager.instance)
-            DialogueManager.instance.blockInput = true;
+        _played = true;
+        _running = true;
+        _waitingAtMarker = false;
 
-        // íë§Œ ì±„ìš°ê³ (ì²«ì¤„ ìë™ ì¶œë ¥ì€ blockInput ë•Œë¬¸ì— ë§‰í˜)
-        DialogueManager.instance?.StartDialogue(dialogue);
+        director.extrapolationMode = keepEndState ? DirectorWrapMode.Hold : DirectorWrapMode.None;
+
+        // ÀÔ·Â Àá±İ ¹é¾÷/Àû¿ë
+        if (GameManager.Instance != null)
+        {
+            _prevGameAction = GameManager.Instance.isAction;
+            if (lockPlayerInput) GameManager.Instance.isAction = true;
+        }
+
+        // ´ë»ç: ÄÆ¾À Áß ¿ùµå ÀÔ·ÂÀ¸·Î ³Ñ¾î°¡Áö ¾Ê°Ô blockInput=true
+        var dm = DialogueManager.instance;
+        if (dm != null)
+        {
+            _prevDialogueBlock = dm.blockInput;
+            dm.blockInput = true;
+
+            // Å¥ Ã¤¿ì±â(Ã¹ ÁÙ ÀÚµ¿ Ãâ·ÂÀº blockInput ¶§¹®¿¡ ¸·Çô¼­ ´ë±â »óÅÂ°¡ µÊ)
+            dm.StartDialogue(dialogue);
+        }
 
         director.time = 0;
+        director.Evaluate(); // Ã¹ ÇÁ·¹ÀÓ »óÅÂ ¹İ¿µ
         director.Play();
+
+        if (debugLog) Debug.Log($"[CutsceneDialogueController] Start id='{cutsceneId}'", this);
+        return true;
     }
 
     /// <summary>
-    /// Timeline Signalì—ì„œ í˜¸ì¶œí•  í•¨ìˆ˜:
-    /// - Timeline Pause
-    /// - ëŒ€ì‚¬ 1ì¤„ ì¶œë ¥
+    /// Timeline Signal¿¡¼­ È£Ãâ:
+    /// - Pause
+    /// - ´ë»ç 1ÁÙ Ãâ·Â
     /// </summary>
     public void OnSignal_ShowNextLine()
     {
-        if (!director) return;
+        if (!_running || !director) return;
 
         director.Pause();
         _waitingAtMarker = true;
 
         DialogueManager.instance?.Cutscene_DisplayNextSentence();
+
+        if (debugLog) Debug.Log($"[CutsceneDialogueController] Signal -> show next line (id='{cutsceneId}')", this);
     }
 
     private void Update()
     {
-        if (!_waitingAtMarker) return;
+        if (!_running || !_waitingAtMarker) return;
         if (!Input.GetKeyDown(advanceKey)) return;
 
         var dm = DialogueManager.instance;
-        if (dm == null) return;
 
-        // 1) íƒ€ì´í•‘ ì¤‘ì´ë©´: ì¦‰ì‹œ ì™„ì„±
-        if (dm.IsTyping)
+        // 1) Å¸ÀÌÇÎ ÁßÀÌ¸é Áï½Ã ¿Ï¼º
+        if (dm != null && dm.IsTyping)
         {
             dm.ForceCompleteTyping();
             return;
         }
 
-        // 2) íƒ€ì´í•‘ ëì´ë©´: ë‹¤ìŒ ë§ˆì»¤ê¹Œì§€ ì§„í–‰
+        // 2) Å¸ÀÌÇÎ ³¡ÀÌ¸é ´ÙÀ½ ¸¶Ä¿±îÁö ÁøÇà
         _waitingAtMarker = false;
         director.Play();
     }
 
-    private void OnTimelineStopped(PlayableDirector d)
+    private void HandleStopped(PlayableDirector d)
     {
+        if (!_running) return;
+
+        _running = false;
         _waitingAtMarker = false;
 
-        // ì»·ì”¬ ì¢…ë£Œ ì‹œ ëŒ€í™”ì°½ ì •ë¦¬
+        // ÄÆ¾À Á¾·á ½Ã ´ëÈ­Ã¢ Á¤¸®
         var dm = DialogueManager.instance;
-        if (dm)
+        if (dm != null)
         {
             dm.EndDialogueExternal();
-            dm.blockInput = false;
+            dm.blockInput = _prevDialogueBlock;
         }
 
-        if (lockPlayerInput && GameManager.Instance)
-            GameManager.Instance.isAction = false;
+        if (GameManager.Instance != null && lockPlayerInput)
+            GameManager.Instance.isAction = _prevGameAction;
+
+        if (debugLog) Debug.Log($"[CutsceneDialogueController] End id='{cutsceneId}'", this);
+
+        OnFinished?.Invoke(this);
     }
 }
