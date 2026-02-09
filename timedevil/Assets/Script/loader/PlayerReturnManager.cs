@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿// Assets/Script/loader/PlayerReturnManager.cs
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -88,6 +89,10 @@ public class PlayerReturnManager : MonoBehaviour
         // 2) 플레이어 이동 + delta 계산(워프 보정용)
         Vector3 fromPos = player.transform.position;
         player.transform.position = new Vector3(returnPos2.x, returnPos2.y, player.transform.position.z);
+
+        // ✅ 추가: 워프 직후 물리(콜라이더) 동기화 → 트리거 인식 “한 박자 늦음” 완화
+        Physics2D.SyncTransforms();
+
         Vector3 toPos = player.transform.position;
         Vector3 delta = toPos - fromPos;
 
@@ -109,7 +114,7 @@ public class PlayerReturnManager : MonoBehaviour
             ));
         }
 
-        // 4) B Suppression
+        // 4) B Suppression  (A정책에서는 배틀 복귀 저장 시 강제로 OFF로 저장됨)
         if (useSupp && suppRadius > 0f && suppSec > 0f)
         {
             SuppressNearbyTriggers((Vector2)toPos, suppRadius, suppSec);

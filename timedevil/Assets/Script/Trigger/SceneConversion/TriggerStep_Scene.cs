@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿// Assets/Script/Trigger/Steps/TriggerStep_Scene.cs
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -118,6 +119,13 @@ public class TriggerStep_Scene : TriggerStepBase
                 }
             }
 
+            // ✅ (A) 정책 핵심:
+            // 배틀 복귀 시 "일반 트리거는 즉시 인식"이 목표이므로
+            // Overlap Suppression(TriggerGet/Collider disable) 은 강제 OFF
+            bool overlapSupp = false;
+            float overlapRadius = 0f;
+            float overlapSec = 0f;
+
             PlayerReturnContext.SetReturnFromTrigger(
                 returnSceneName: curScene,
                 returnPosition: pos,
@@ -126,9 +134,9 @@ public class TriggerStep_Scene : TriggerStepBase
                 requestCameraRebind: requestCameraRebind,
                 targetVcamName: worldVcamName,
 
-                useOverlapSuppression: useOverlapSuppression,
-                overlapRadius: suppressOverlapRadius,
-                overlapSeconds: suppressOverlapSeconds,
+                useOverlapSuppression: overlapSupp,
+                overlapRadius: overlapRadius,
+                overlapSeconds: overlapSec,
 
                 // ★ 카메라 복원 저장
                 restoreCameraState: restoreCam,
@@ -141,8 +149,8 @@ public class TriggerStep_Scene : TriggerStepBase
             if (debugLog)
             {
                 Debug.Log(
-                    $"[TriggerStep_Scene] Saved Return: scene='{curScene}', pos=({pos.x:F2},{pos.y:F2}) " +
-                    $"overlap(r={suppressOverlapRadius:F2}, sec={suppressOverlapSeconds:F2}) " +
+                    $"[TriggerStep_Scene] Saved Return(A-Policy): scene='{curScene}', pos=({pos.x:F2},{pos.y:F2}) " +
+                    $"overlapSupp=OFF " +
                     $"camRestore={restoreCam} camMode={camMode} camOrtho={camOrtho:F2} camBounds='{camBoundsName}' camFixed=({camFixedPos.x:F2},{camFixedPos.y:F2})"
                 );
             }
