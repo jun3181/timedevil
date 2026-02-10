@@ -743,19 +743,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 110804743}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0940fb0b80e861441ba92408fb07f27b, type: 3}
+  m_Script: {fileID: 11500000, guid: 3ce93e8c1aea7be47b2ae567f67bd88f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  dialogue:
-    name: 
-    sentences: []
-    leftPortrait: {fileID: 0}
-    rightPortrait: {fileID: 0}
-    lines: []
-  overrideCardId: 
-  disableAfterPickup: 1
-  destroyAfterPickup: 0
-  pickupSfx: {fileID: 0}
+  router: {fileID: 345882304}
+  routeKey: Trigger5
+  blockIfDialogueActive: 1
+  blockIfGameActionLocked: 1
+  debugLog: 1
 --- !u!1 &131110990
 GameObject:
   m_ObjectHideFlags: 0
@@ -874,7 +869,7 @@ GameObject:
   - component: {fileID: 163536248}
   - component: {fileID: 163536249}
   m_Layer: 0
-  m_Name: MoveTrigger
+  m_Name: MoveTrigger1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -907,13 +902,43 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d3ddfcf5fb02e7f4a98fee64a510fff5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  segments: []
-  speed: 3
-  normalizeDirection: 1
+  segments:
+  - direction: 4
+    customDirection: {x: 0, y: 1}
+    distance: 3
+    duration: 0.3
+  direction: 4
+  customDirection: {x: 1, y: 0}
+  distance: 1
+  duration: 0.25
   useUnscaledTime: 1
+  ease:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
   lockPlayerInput: 1
-  disablePlayerMoveWhileMoving: 1
-  preferRigidbodyMove: 1
+  zeroVelocityBefore: 1
+  zeroVelocityAfter: 1
   debugLog: 1
 --- !u!1 &187707310
 GameObject:
@@ -4470,6 +4495,11 @@ MonoBehaviour:
     - {fileID: 163536249}
     - {fileID: 318803556}
     - {fileID: 891191253}
+  - key: Trigger5
+    steps:
+    - {fileID: 1868672054}
+    - {fileID: 891191253}
+    - {fileID: 803076200}
   allowReentrySameKey: 0
   debugLog: 1
 --- !u!4 &345882305
@@ -9282,7 +9312,10 @@ Transform:
   - {fileID: 318803555}
   - {fileID: 1434851124}
   - {fileID: 163536248}
+  - {fileID: 1868672053}
   - {fileID: 891191252}
+  - {fileID: 1889769378}
+  - {fileID: 803076199}
   m_Father: {fileID: 1347604561}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &576516803
@@ -13716,6 +13749,61 @@ Transform:
   - {fileID: 1750505933}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &803076198
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 803076199}
+  - component: {fileID: 803076200}
+  m_Layer: 0
+  m_Name: TriggerDeActive
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &803076199
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 803076198}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 535103414}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &803076200
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 803076198}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89d3a6eb69f351b4daf5768bfb54088a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  op: 0
+  seconds: 0.5
+  useUnscaledTime: 1
+  lockAction: 1
+  unlockAtEnd: 1
+  syncPhysicsAfterEnable: 1
+  waitOneFrameAfterEnable: 1
+  waitFixedUpdateAfterEnable: 0
+  resetVelocity: 1
+  clearMoveInput: 1
+  debugLog: 1
 --- !u!1 &881014415
 GameObject:
   m_ObjectHideFlags: 0
@@ -25415,6 +25503,92 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1533656169}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1868672052
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1868672053}
+  - component: {fileID: 1868672054}
+  m_Layer: 0
+  m_Name: MoveTrigger2
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1868672053
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1868672052}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 535103414}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1868672054
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1868672052}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3ddfcf5fb02e7f4a98fee64a510fff5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  segments:
+  - direction: 4
+    customDirection: {x: 1, y: 1}
+    distance: 1
+    duration: 0.3
+  - direction: 4
+    customDirection: {x: 0, y: -1}
+    distance: 0.5
+    duration: 0.3
+  direction: 4
+  customDirection: {x: 1, y: 0}
+  distance: 1
+  duration: 0.25
+  useUnscaledTime: 1
+  ease:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  lockPlayerInput: 1
+  zeroVelocityBefore: 1
+  zeroVelocityAfter: 1
+  debugLog: 1
 --- !u!1 &1880305973
 GameObject:
   m_ObjectHideFlags: 0
@@ -26240,6 +26414,61 @@ Tilemap:
     e31: 0
     e32: 0
     e33: 1
+--- !u!1 &1889769377
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1889769378}
+  - component: {fileID: 1889769379}
+  m_Layer: 0
+  m_Name: TriggerActive
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1889769378
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1889769377}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 535103414}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1889769379
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1889769377}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89d3a6eb69f351b4daf5768bfb54088a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  op: 1
+  seconds: 0.5
+  useUnscaledTime: 1
+  lockAction: 1
+  unlockAtEnd: 1
+  syncPhysicsAfterEnable: 1
+  waitOneFrameAfterEnable: 1
+  waitFixedUpdateAfterEnable: 0
+  resetVelocity: 1
+  clearMoveInput: 1
+  debugLog: 1
 --- !u!1 &1897669825
 GameObject:
   m_ObjectHideFlags: 0
@@ -26511,6 +26740,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1977150457}
   - component: {fileID: 1977150458}
+  - component: {fileID: 1977150459}
   m_Layer: 0
   m_Name: PlayerReturnManager
   m_TagString: Untagged
@@ -26553,6 +26783,23 @@ MonoBehaviour:
     m_Bits: 4294967295
   disableColliderAlso: 1
   debugLog: 1
+--- !u!114 &1977150459
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1977150456}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0fd10d193cabc9643bf12dc4ad83291e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dontDestroyOnLoad: 1
+  autoFindPlayerOnAwake: 1
+  autoRefindOnSceneLoaded: 1
+  playerRoot: {fileID: 0}
+  debugLog: 0
 --- !u!1 &1991109678
 GameObject:
   m_ObjectHideFlags: 0

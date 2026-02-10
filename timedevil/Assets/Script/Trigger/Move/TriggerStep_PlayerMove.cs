@@ -1,9 +1,9 @@
-// Assets/Script/Trigger/Steps/TriggerStep_PlayerMove.cs
+ï»¿// Assets/Script/Trigger/Steps/TriggerStep_PlayerMove.cs
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum TriggerMoveDir
+public enum ForcedMoveDir
 {
     Up,
     Down,
@@ -13,174 +13,182 @@ public enum TriggerMoveDir
 }
 
 [System.Serializable]
-public struct TriggerMoveSegment
+public struct ForcedMoveSegment
 {
-    public TriggerMoveDir dir;
+    public ForcedMoveDir direction;
 
-    [Tooltip("dir=CustomÀÏ ¶§¸¸ »ç¿ë")]
+    [Tooltip("direction=Custom ì¼ ë•Œë§Œ ì‚¬ìš©(0ì´ë©´ ë¬´ì‹œ)")]
     public Vector2 customDirection;
 
     [Min(0f)]
-    public float seconds;
+    [Tooltip("ì´ êµ¬ê°„ì—ì„œ ì´ë™í•  ê±°ë¦¬(ì›”ë“œ ë‹¨ìœ„)")]
+    public float distance;
+
+    [Min(0f)]
+    [Tooltip("0ì´ë©´ ì¦‰ì‹œ ì´ë™(teleport). 0ë³´ë‹¤ í¬ë©´ í•´ë‹¹ ì‹œê°„ ë™ì•ˆ ê°•ì œ ì´ë™(Lerp).")]
+    public float duration;
 }
 
 [DisallowMultipleComponent]
 public class TriggerStep_PlayerMove : TriggerStepBase
 {
-    [Header("Sequence (¼ø¼­´ë·Î ½ÇÇà)")]
-    public List<TriggerMoveSegment> segments = new();
+    [Header("Sequence (ë¹„ìš°ë©´ Single ì„¤ì • 1íšŒ ì‹¤í–‰)")]
+    [SerializeField] private List<ForcedMoveSegment> segments = new();
 
-    [Header("Move")]
-    [Min(0f)] public float speed = 3f;
-    [Tooltip("¹æÇâ º¤ÅÍ¸¦ Á¤±ÔÈ­ÇØ¼­ ¼Óµµ¸¦ ÀÏÁ¤ÇÏ°Ô À¯Áö")]
-    public bool normalizeDirection = true;
+    // -------------------------
+    // âœ… ê¸°ì¡´(ë ˆê±°ì‹œ) ë‹¨ì¼ ì´ë™ ì„¤ì • (segments ë¹„ì–´ìˆì„ ë•Œë§Œ ì‚¬ìš©)
+    // -------------------------
+    [Header("Single (Legacy)")]
+    [SerializeField] private ForcedMoveDir direction = ForcedMoveDir.Right;
 
-    [Header("Time")]
-    public bool useUnscaledTime = true;
+    [Tooltip("direction=Custom ì¼ ë•Œë§Œ ì‚¬ìš©(0ì´ë©´ ë¬´ì‹œ)")]
+    [SerializeField] private Vector2 customDirection = Vector2.right;
 
-    [Header("Lock")]
-    public bool lockPlayerInput = true;
+    [Min(0f)]
+    [SerializeField] private float distance = 1f;
 
-    [Tooltip("°­Á¦ ÀÌµ¿ Áß PlayerMove¸¦ ²¨¼­(velocity µ¤¾î¾²±â ¹æÁö) Ãæµ¹/¹°¸® ²¿ÀÓÀ» ÁÙÀÓ")]
-    public bool disablePlayerMoveWhileMoving = true;
+    [Min(0f)]
+    [SerializeField] private float duration = 0.25f;
 
-    [Header("Physics")]
-    [Tooltip("Rigidbody2D°¡ ÀÖÀ¸¸é MovePositionÀ¸·Î ÀÌµ¿(±ÇÀå)")]
-    public bool preferRigidbodyMove = true;
+    // -------------------------
+    [Header("Timing")]
+    [SerializeField] private bool useUnscaledTime = true;
+    [SerializeField] private AnimationCurve ease = AnimationCurve.EaseInOut(0, 0, 1, 1);
+
+    [Header("Input Lock")]
+    [SerializeField] private bool lockPlayerInput = true;
+
+    [Header("Rigidbody (optional)")]
+    [SerializeField] private bool zeroVelocityBefore = true;
+    [SerializeField] private bool zeroVelocityAfter = true;
 
     [Header("Debug")]
-    public bool debugLog = false;
+    [SerializeField] private bool debugLog = true;
 
     public override IEnumerator Execute(TriggerContext ctx)
     {
-        if (segments == null || segments.Count == 0)
-        {
-            if (debugLog) Debug.Log("[TriggerStep_PlayerMove] segments ºñ¾îÀÖÀ½");
-            yield break;
-        }
-
-        // Player Transform È®º¸
-        Transform playerTr = (ctx != null) ? ctx.player : null;
+        // 1) Player resolve
         PlayerMove pm = (ctx != null) ? ctx.playerMove : null;
+        Transform playerTr = (ctx != null) ? ctx.player : null;
 
         if (!playerTr)
         {
-            if (!pm) pm = Object.FindObjectOfType<PlayerMove>(true);
+            pm = Object.FindObjectOfType<PlayerMove>(true);
             playerTr = pm ? pm.transform : null;
         }
 
         if (!playerTr)
         {
-            Debug.LogWarning("[TriggerStep_PlayerMove] ÇÃ·¹ÀÌ¾î TransformÀ» Ã£Áö ¸øÇß½À´Ï´Ù.");
+            Debug.LogWarning("[TriggerStep_PlayerMove] Player Transformì„ ì°¾ì§€ ëª»í–ˆìŠµë‹ˆë‹¤.");
             yield break;
         }
 
-        // ÀÔ·Â Àá±İ
-        bool lockedByMe = false;
+        // 2) ì‹¤í–‰í•  êµ¬ê°„ ëª©ë¡ ì¤€ë¹„ (segments ìš°ì„ , ì—†ìœ¼ë©´ ë ˆê±°ì‹œ 1ê°œ)
+        List<ForcedMoveSegment> runList = null;
+        if (segments != null && segments.Count > 0)
+        {
+            runList = segments;
+        }
+        else
+        {
+            runList = new List<ForcedMoveSegment>(1)
+            {
+                new ForcedMoveSegment
+                {
+                    direction = direction,
+                    customDirection = customDirection,
+                    distance = distance,
+                    duration = duration
+                }
+            };
+        }
+
+        // 3) Lock input
+        bool heldLock = false;
         if (lockPlayerInput && GameManager.Instance != null)
         {
             GameManager.Instance.LockAction();
-            lockedByMe = true;
+            heldLock = true;
         }
 
-        // PlayerMove ºñÈ°¼º(¼±ÅÃ)
-        bool pmWasEnabled = false;
-        if (disablePlayerMoveWhileMoving && pm != null)
-        {
-            pmWasEnabled = pm.enabled;
-            pm.enabled = false;
-        }
+        // 4) Stop current move input (ì¤‘ìš”: ì…ë ¥ì´ ë‚¨ì•„ ìˆìœ¼ë©´ FixedUpdateì—ì„œ ê³„ì† ë°€ ìˆ˜ ìˆìŒ)
+        if (pm != null)
+            pm.SetMoveInput(0, 0, false, false, false, false);
 
-        // Rigidbody2D ¿ì¼± ÀÌµ¿(¼±ÅÃ)
-        Rigidbody2D rb = null;
-        if (preferRigidbodyMove)
+        // 5) Rigidbody velocity zero (optional)
+        var rb = playerTr.GetComponent<Rigidbody2D>();
+        if (rb && zeroVelocityBefore) rb.velocity = Vector2.zero;
+
+        // 6) êµ¬ê°„ ìˆœì„œ ì‹¤í–‰
+        for (int i = 0; i < runList.Count; i++)
         {
-            rb = playerTr.GetComponent<Rigidbody2D>();
-            if (rb != null)
+            var seg = runList[i];
+
+            Vector2 dir = ResolveDir(seg.direction, seg.customDirection);
+            if (dir.sqrMagnitude <= 0.000001f || seg.distance <= 0f)
             {
-                // °­Á¦ ÀÌµ¿ ½ÃÀÛ Àü ¼Óµµ Á¦°Å(È¤½Ã ³²¾ÆÀÖÀ¸¸é)
-                rb.velocity = Vector2.zero;
-                rb.angularVelocity = 0f;
-            }
-        }
-
-        // ±¸°£ ¼øÂ÷ ½ÇÇà
-        for (int i = 0; i < segments.Count; i++)
-        {
-            var seg = segments[i];
-            if (seg.seconds <= 0f) continue;
-
-            Vector2 dir = ResolveDir(seg);
-            if (dir == Vector2.zero)
-            {
-                // Á¦ÀÚ¸® ´ë±â(¿øÇÏ¸é ÀÌ·± ½ÄÀ¸·Î ¡°Á¤Áö nÃÊ¡±µµ °¡´É)
-                yield return Wait(seg.seconds);
+                if (debugLog) Debug.Log($"[TriggerStep_PlayerMove] seg[{i}] skipped (dir/distance is zero)");
                 continue;
             }
 
-            if (normalizeDirection) dir = dir.normalized;
+            dir.Normalize();
+            Vector3 delta = (Vector3)(dir * seg.distance);
+
+            Vector3 from = playerTr.position;
+            Vector3 to = from + delta;
 
             if (debugLog)
-                Debug.Log($"[TriggerStep_PlayerMove] seg[{i}] dir={seg.dir} custom={seg.customDirection} sec={seg.seconds:0.00}");
+                Debug.Log($"[TriggerStep_PlayerMove] seg[{i}] from={from} to={to} dur={seg.duration:0.###} (dir={dir}, dist={seg.distance:0.###})");
 
-            float t = 0f;
-            while (t < seg.seconds)
+            // êµ¬ê°„ ì´ë™
+            if (seg.duration <= 0f)
             {
-                float dt = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
-                t += dt;
-
-                Vector2 delta = dir * (speed * dt);
-
-                if (rb != null)
-                {
-                    rb.MovePosition(rb.position + delta);
-                }
-                else
-                {
-                    playerTr.position += (Vector3)delta;
-                }
-
-                yield return null;
+                playerTr.position = to;
             }
+            else
+            {
+                float t = 0f;
+                while (t < seg.duration)
+                {
+                    float dt = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+                    t += dt;
+
+                    float u = Mathf.Clamp01(t / seg.duration);
+                    float k = (ease != null) ? ease.Evaluate(u) : u;
+
+                    playerTr.position = Vector3.LerpUnclamped(from, to, k);
+
+                    // ê³„ì† ì…ë ¥ 0 ìœ ì§€ (ì•ˆì „)
+                    if (pm != null)
+                        pm.SetMoveInput(0, 0, false, false, false, false);
+
+                    yield return null;
+                }
+
+                playerTr.position = to;
+            }
+
+            if (rb && zeroVelocityAfter) rb.velocity = Vector2.zero;
+
+            // ë‹¤ìŒ êµ¬ê°„ ì „ì— 1í”„ë ˆì„ ì •ë¦¬(ì›ì¹˜ ì•Šìœ¼ë©´ ë¹¼ë„ ë¨)
+            yield return null;
         }
 
-        // ¸¶¹«¸®
-        if (rb != null)
-        {
-            rb.velocity = Vector2.zero;
-            rb.angularVelocity = 0f;
-        }
-
-        if (disablePlayerMoveWhileMoving && pm != null)
-        {
-            pm.enabled = pmWasEnabled;
-        }
-
-        if (lockedByMe && GameManager.Instance != null)
-        {
+        // 7) Unlock input
+        if (heldLock && GameManager.Instance != null)
             GameManager.Instance.UnlockAction();
-        }
     }
 
-    private Vector2 ResolveDir(TriggerMoveSegment seg)
+    private Vector2 ResolveDir(ForcedMoveDir dir, Vector2 custom)
     {
-        return seg.dir switch
+        switch (dir)
         {
-            TriggerMoveDir.Up => Vector2.up,
-            TriggerMoveDir.Down => Vector2.down,
-            TriggerMoveDir.Left => Vector2.left,
-            TriggerMoveDir.Right => Vector2.right,
-            TriggerMoveDir.Custom => seg.customDirection,
-            _ => Vector2.zero
-        };
-    }
-
-    private IEnumerator Wait(float seconds)
-    {
-        if (seconds <= 0f) yield break;
-
-        if (useUnscaledTime) yield return new WaitForSecondsRealtime(seconds);
-        else yield return new WaitForSeconds(seconds);
+            case ForcedMoveDir.Up: return Vector2.up;
+            case ForcedMoveDir.Down: return Vector2.down;
+            case ForcedMoveDir.Left: return Vector2.left;
+            case ForcedMoveDir.Right: return Vector2.right;
+            case ForcedMoveDir.Custom: return custom;
+            default: return Vector2.zero;
+        }
     }
 }
-    
