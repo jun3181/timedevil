@@ -122,6 +122,18 @@ public class TurnManager : MonoBehaviour
         ResolvePlayerData();
         ResolveEnemyData();
 
+        // ✅✅✅ 핵심 변경: Move_Tutorial 씬이면 "봤음" 플래그를 매번 지워서 항상 인트로/게이트 실행
+        // (씬이 시작되면 무조건 실행되게 만들기)
+        if (IsMoveTutorial())
+        {
+            PlayerPrefs.DeleteKey(PREF_KEY_MOVE_TUTORIAL_SEEN_V2);
+            PlayerPrefs.DeleteKey(PREF_KEY_MOVE_TUTORIAL_GATE_SEEN_V2);
+            s_MoveTutorialSeenThisSession = false;
+            s_MoveTutorialGateSeenThisSession = false;
+            PlayerPrefs.Save();
+            Debug.LogWarning("[TurnManager] Move_Tutorial start => cleared intro/gate flags (ALWAYS PLAY).");
+        }
+
         // ▶ Move_Tutorial이면 인트로 우선 검사 (한 번만)
         if (IsMoveTutorial() && moveTutorialIntro && ShouldPlayIntroNow())
         {
@@ -263,7 +275,7 @@ public class TurnManager : MonoBehaviour
 
         Debug.Log("🔶 적 턴 종료");
 
-        // ★ 게이트도 "첫 방문 1회만"
+        // ★ 게이트도 "씬 시작마다 1회" (Start()에서 플래그를 지우기 때문에 항상 실행됨)
         if (moveTutorialGate && IsMoveTutorial() && ShouldPlayGateNow())
         {
             if (menu) menu.EnableInput(false);
@@ -365,7 +377,7 @@ public class TurnManager : MonoBehaviour
 
         if (desc) desc.ClearTemporaryMessage();
 
-        // ▶ 게이트 1회 완료 플래그 저장 (v2)
+        // ▶ 게이트 완료 플래그 저장 (v2)
         s_MoveTutorialGateSeenThisSession = true;
         PlayerPrefs.SetInt(PREF_KEY_MOVE_TUTORIAL_GATE_SEEN_V2, 1);
         PlayerPrefs.Save();
