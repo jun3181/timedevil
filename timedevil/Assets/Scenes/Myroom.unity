@@ -156,18 +156,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   useUnscaledTime: 1
   group: {fileID: 493564898}
-  image: {fileID: 16058568}
-  enterFrames:
-  - {fileID: 21300000, guid: 6d3660e46f9243448ab202488511b68a, type: 3}
-  - {fileID: 21300000, guid: e99c3e2ecfbdff040b274d0a794f4991, type: 3}
-  - {fileID: 21300000, guid: 6d3660e46f9243448ab202488511b68a, type: 3}
+  image: {fileID: 493564901}
+  enterFrames: []
   enterTickSeconds: 3
   hideAfterEnter: 1
   exitFrames:
+  - {fileID: 21300000, guid: 2b3b1937cd25e6e44a2ac1b2f85d2ea2, type: 3}
+  - {fileID: 21300000, guid: eab485da86d236c47b130992674dee26, type: 3}
   - {fileID: 21300000, guid: 6d3660e46f9243448ab202488511b68a, type: 3}
-  - {fileID: 21300000, guid: e99c3e2ecfbdff040b274d0a794f4991, type: 3}
-  - {fileID: 21300000, guid: 6d3660e46f9243448ab202488511b68a, type: 3}
-  exitTickSeconds: 3
+  exitTickSeconds: 1
   useEnterFramesIfExitEmpty: 1
   holdLastFrameOnExit: 1
   blockRaycastsWhileVisible: 1
@@ -9119,8 +9116,9 @@ GameObject:
   - component: {fileID: 493564899}
   - component: {fileID: 493564898}
   - component: {fileID: 493564897}
+  - component: {fileID: 493564901}
   m_Layer: 5
-  m_Name: FadePanel (1)
+  m_Name: SleepEye
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -9211,6 +9209,36 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
+--- !u!114 &493564901
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 493564895}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
 --- !u!1 &511302731
 GameObject:
   m_ObjectHideFlags: 0
@@ -9804,12 +9832,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e27120f0e7fe18c49b8e133df30879eb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetTilemap: {fileID: 1422447523}
-  applyToAllTilemapsInScene: 0
-  fromTile: {fileID: 11400000, guid: fbd82062651053f4a96d19dfe58d59c1, type: 2}
-  toTile: {fileID: 11400000, guid: 7345352fd31d32e46a73013b14d425db, type: 2}
-  refreshAllAfterSwap: 1
-  debugLog: 1
 --- !u!114 &548618509
 MonoBehaviour:
   m_ObjectHideFlags: 0
