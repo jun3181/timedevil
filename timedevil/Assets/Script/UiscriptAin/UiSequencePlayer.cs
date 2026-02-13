@@ -1,12 +1,18 @@
 // Assets/Script/UI/UiSequencePlayer.cs
 using System;
 using System.Collections.Generic;
-using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class UiSequencePlayer : MonoBehaviour
 {
+    public enum AutoPlayPolicy
+    {
+        Always,
+        OnlyNewGame,
+        OnlyLoadGame
+    }
+
     [Header("순서대로 보여줄 오브젝트")]
     [SerializeField] private List<GameObject> uiSteps = new List<GameObject>();
 
@@ -16,30 +22,27 @@ public class UiSequencePlayer : MonoBehaviour
     [Header("씬 시작 시 자동 시작")]
     [SerializeField] private bool playOnStart = true;
 
-    [Header("Myroom 1회 정책")]
-    [Tooltip("이 씬에서만 자동 재생")]
+    [Header("자동재생 조건")]
+    [SerializeField] private AutoPlayPolicy autoPlayPolicy = AutoPlayPolicy.OnlyNewGame;
+
+    [Header("Scene 제한(선택)")]
     [SerializeField] private bool restrictToScene = true;
     [SerializeField] private string onlySceneName = "Myroom";
 
-    [Tooltip("저장(세이브 파일)이 있으면 자동 재생 스킵")]
-    [SerializeField] private bool skipIfSaveExists = true;
-
-    [Tooltip("세이브가 있다고 판단하는 파일들(persistentDataPath 기준). 하나라도 있으면 '세이브 있음'")]
-    [SerializeField] private List<string> saveFiles = new List<string> { "player.json", "cards.json" };
-
-    [Tooltip("이미 봤으면(1) 자동 재생 스킵")]
+    [Header("봤음(1회) 정책")]
+    [Tooltip("이미 봤으면(1) 자동 재생 스킵. (LoadGame 쪽에서 주로 유효)")]
     [SerializeField] private string seenPrefKey = "Myroom_UISequence_Seen_v1";
+    [SerializeField] private bool markSeenOnFinish = true;
+
+    [Tooltip("새 게임 버튼을 눌러서 들어온 경우, 이번 1회에 한해 seenPrefKey를 자동 초기화(=무조건 재생 보장)")]
+    [SerializeField] private bool resetSeenOnNewGameStart = true;
 
     [Header("완료 처리")]
-    [SerializeField] private bool markSeenOnFinish = true;
     [SerializeField] private bool hideAllWhenFinished = true;
     [SerializeField] private bool loop = false;
 
     [Header("Input Lock (WASD 완전 차단)")]
-    [Tooltip("UI 시퀀스 동안 GameManager.LockAction()/UnlockAction() 사용")]
     [SerializeField] private bool lockActionViaGameManager = true;
-
-    [Tooltip("UI 시퀀스 동안 PlayerMove 컴포넌트를 꺼서 입력을 완전히 차단")]
     [SerializeField] private bool disablePlayerMoveComponent = true;
 
     public event Action OnFinished;
@@ -52,12 +55,35 @@ public class UiSequencePlayer : MonoBehaviour
     private PlayerMove _pmCached = null;
     private bool _pmWasEnabled = false;
 
+    // NewGame 토큰당 1번만 seen 키 초기화
+    private static int s_lastResetToken = -1;
+
     private void Start()
     {
         SetAllActive(false);
 
-        if (playOnStart && ShouldAutoPlayNow())
-            PlayFromStart();
+        if (!playOnStart) return;
+        if (!ShouldAutoPlayNow()) return;
+
+        // 새 게임에서만: 이번 "버튼 클릭 토큰"에 대해 1회 seen 초기화
+        if (resetSeenOnNewGameStart &&
+            GameStartContext.Mode == GameStartMode.NewGame &&
+            s_lastResetToken != GameStartContext.StartToken)
+        {
+            s_lastResetToken = GameStartContext.StartToken;
+
+            if (!string.IsNullOrEmpty(seenPrefKey))
+            {
+                PlayerPrefs.DeleteKey(seenPrefKey);
+                PlayerPrefs.Save();
+            }
+        }
+
+        // (seen 체크는 초기화 이후에)
+        if (!string.IsNullOrEmpty(seenPrefKey) && PlayerPrefs.GetInt(seenPrefKey, 0) == 1)
+            return;
+
+        PlayFromStart();
     }
 
     private void Update()
@@ -71,43 +97,26 @@ public class UiSequencePlayer : MonoBehaviour
 
     private void OnDestroy()
     {
-        // 씬 전환/파괴 시 잠금이 남아있으면 복구
         EndInputLockIfHeld();
     }
-
-    // ------------------------------------------------------
 
     private bool ShouldAutoPlayNow()
     {
         if (restrictToScene && SceneManager.GetActiveScene().name != onlySceneName)
             return false;
 
-        if (!string.IsNullOrEmpty(seenPrefKey) && PlayerPrefs.GetInt(seenPrefKey, 0) == 1)
-            return false;
-
-        if (skipIfSaveExists && HasAnySaveFile())
-            return false;
-
-        return true;
-    }
-
-    private bool HasAnySaveFile()
-    {
-        if (saveFiles == null || saveFiles.Count == 0) return false;
-
-        string root = Application.persistentDataPath;
-        for (int i = 0; i < saveFiles.Count; i++)
+        switch (autoPlayPolicy)
         {
-            string f = saveFiles[i];
-            if (string.IsNullOrWhiteSpace(f)) continue;
-
-            string full = Path.Combine(root, f);
-            if (File.Exists(full)) return true;
+            case AutoPlayPolicy.Always:
+                return true;
+            case AutoPlayPolicy.OnlyNewGame:
+                return GameStartContext.Mode == GameStartMode.NewGame;
+            case AutoPlayPolicy.OnlyLoadGame:
+                return GameStartContext.Mode == GameStartMode.LoadGame;
+            default:
+                return true;
         }
-        return false;
     }
-
-    // ------------------------------------------------------
 
     public void PlayFromStart()
     {
@@ -118,7 +127,6 @@ public class UiSequencePlayer : MonoBehaviour
         isPlaying = true;
 
         BeginInputLock();
-
         SetStepActive(index, true);
     }
 
@@ -126,11 +134,9 @@ public class UiSequencePlayer : MonoBehaviour
     {
         if (uiSteps == null || uiSteps.Count == 0) return;
 
-        // 현재 끄기
         SetStepActive(index, false);
         index++;
 
-        // 끝 처리
         if (index >= uiSteps.Count)
         {
             if (loop)
@@ -152,12 +158,10 @@ public class UiSequencePlayer : MonoBehaviour
             }
 
             EndInputLockIfHeld();
-
             OnFinished?.Invoke();
             return;
         }
 
-        // 다음 켜기
         SetStepActive(index, true);
     }
 
@@ -168,7 +172,6 @@ public class UiSequencePlayer : MonoBehaviour
         EndInputLockIfHeld();
     }
 
-    // 디버그용: "Myroom 튜토리얼 다시 보기"
     public void ResetSeenFlag()
     {
         if (!string.IsNullOrEmpty(seenPrefKey))
@@ -178,20 +181,14 @@ public class UiSequencePlayer : MonoBehaviour
         }
     }
 
-    // ------------------------------------------------------
-    // Input Lock
-    // ------------------------------------------------------
-
     private void BeginInputLock()
     {
-        // 1) GameManager Action Lock
         if (lockActionViaGameManager && GameManager.Instance != null && !_heldActionLock)
         {
             GameManager.Instance.LockAction();
             _heldActionLock = true;
         }
 
-        // 2) PlayerMove 컴포넌트 disable (확실 차단)
         if (disablePlayerMoveComponent && _pmCached == null)
         {
             _pmCached = FindObjectOfType<PlayerMove>(true);
@@ -205,7 +202,6 @@ public class UiSequencePlayer : MonoBehaviour
 
     private void EndInputLockIfHeld()
     {
-        // PlayerMove 복구
         if (_pmCached != null)
         {
             _pmCached.enabled = _pmWasEnabled;
@@ -213,15 +209,12 @@ public class UiSequencePlayer : MonoBehaviour
             _pmWasEnabled = false;
         }
 
-        // GameManager Action Unlock
         if (_heldActionLock && GameManager.Instance != null)
         {
             GameManager.Instance.UnlockAction();
             _heldActionLock = false;
         }
     }
-
-    // ------------------------------------------------------
 
     private void SetAllActive(bool active)
     {
