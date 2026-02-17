@@ -14,15 +14,27 @@ public class MainMenu : MonoBehaviour
     public void NewGame()
     {
         PlayClick();
+
+        // ✅ 1회성 진입점 지정
+        MyroomEntryContext.SetRoom1();
+
+        // (유지) 기존 컨텍스트도 그대로
         GameStartContext.SetNewGame();
+
         LoadMyRoom();
     }
 
-    // 버튼: 이어하기(지금은 '2번방'으로 가는 분기만)
+    // 버튼: 이어하기 (지금은 "2번방" 진입만)
     public void LoadGame()
     {
         PlayClick();
+
+        // ✅ 1회성 진입점 지정
+        MyroomEntryContext.SetRoom2();
+
+        // (유지) 기존 컨텍스트도 그대로
         GameStartContext.SetLoadGame();
+
         LoadMyRoom();
     }
 
