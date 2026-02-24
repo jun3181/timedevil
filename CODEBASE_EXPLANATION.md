@@ -1,0 +1,739 @@
+# 코드베이스 설명서
+
+- 범위: 저장소 내 `*.cs` 전체
+- 주의: 외부 에셋(TMP/BE3) 스크립트는 프로젝트 핵심 로직이 아니라 참조용입니다.
+
+## 프로젝트 커스텀 스크립트
+
+- `timedevil/Assets/Script/BGMManager.cs`
+  - 클래스: BGMManager
+  - 역할: 공용/기타
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/BattleBootstrap.cs`
+  - 클래스: BattleBootstrap
+  - 역할: 전투/적/플레이어/씬/UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/BattleBootstrapEnsurePlayerData.cs`
+  - 클래스: BattleBootstrapEnsurePlayerData
+  - 역할: 전투/플레이어/씬
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/BattleDeckRuntime.cs`
+  - 클래스: BattleDeckRuntime
+  - 역할: 전투/카드
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/BattleMenuController.cs`
+  - 클래스: BattleMenuController, IntEvent
+  - 역할: 전투/카드
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/Card_script/AttackAnimationController.cs`
+  - 클래스: AttackAnimationController
+  - 역할: 공용/기타
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/Card_script/AttackCardSO.cs`
+  - 클래스: AttackCardSO, Wave
+  - 역할: 카드/카메라
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/Card_script/AttackController.cs`
+  - 클래스: AttackController
+  - 역할: 카드/적/플레이어
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/Card_script/BaseCardSO.cs`
+  - 클래스: BaseCardSO
+  - 역할: 카드
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/Card_script/CardAnimeController.cs`
+  - 클래스: CardAnimeController
+  - 역할: 전투/카드/적/플레이어/UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/Card_script/CardDatabaseSO.cs`
+  - 클래스: CardDatabaseSO
+  - 역할: 카드
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/Card_script/CardSpriteResolver.cs`
+  - 클래스: CardSpriteResolver
+  - 역할: 카드/UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/Card_script/CardType.cs`
+  - 클래스: (없음)
+  - 역할: 카드
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/Card_script/CardUseOrchestrator.cs`
+  - 클래스: CardUseOrchestrator
+  - 역할: 전투/카드/적/플레이어/UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/Card_script/CostController.cs`
+  - 클래스: CostController
+  - 역할: UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/Card_script/DrawCardSO.cs`
+  - 클래스: DrawCardSO
+  - 역할: 카드
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/Card_script/DrawController.cs`
+  - 클래스: DrawController
+  - 역할: 전투/카드/적/플레이어/UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/Card_script/MoveCardSO.cs`
+  - 클래스: MoveCardSO
+  - 역할: 카드
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/Card_script/MoveController.cs`
+  - 클래스: MoveController
+  - 역할: 전투/적/플레이어/UI/트리거
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/Card_script/ShowCardController.cs`
+  - 클래스: ShowCardController
+  - 역할: 카드/UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/Card_script/SupportCardSO.cs`
+  - 클래스: SupportCardSO
+  - 역할: 카드
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/Card_script/SupportController.cs`
+  - 클래스: SupportController
+  - 역할: 카드
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/DescriptionPanelController.cs`
+  - 클래스: DescriptionPanelController
+  - 역할: 전투/카드/적/플레이어/UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/EndController.cs`
+  - 클래스: EndController
+  - 역할: 전투/플레이어
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/EnemyMoveController.cs`
+  - 클래스: EnemyMoveController
+  - 역할: 적
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/Enemy_script/EnemyBootstrapper.cs`
+  - 클래스: EnemyBootstrapper
+  - 역할: 적/플레이어/UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/Enemy_script/EnemyDatabaseSO.cs`
+  - 클래스: EnemyDatabaseSO
+  - 역할: 전투/적
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/Enemy_script/EnemyDeckRuntime.cs`
+  - 클래스: EnemyDeckRuntime
+  - 역할: 전투/적
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/Enemy_script/EnemyHandUI.cs`
+  - 클래스: EnemyHandUI
+  - 역할: 전투/카드/적/UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/Enemy_script/EnemyRuntime.cs`
+  - 클래스: EnemyRuntime
+  - 역할: 적
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/Enemy_script/EnemySO.cs`
+  - 클래스: EnemySO
+  - 역할: 전투/적
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/Enemy_script/EnemyTurnController.cs`
+  - 클래스: EnemyTurnController
+  - 역할: 전투/카드/적/씬
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/Enemy_script/SelectedEnemyRuntime.cs`
+  - 클래스: SelectedEnemyRuntime
+  - 역할: 적
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/HPController.cs`
+  - 클래스: HPController
+  - 역할: 적/플레이어/UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/HPUIBinder.cs`
+  - 클래스: HPUIBinder
+  - 역할: 적/플레이어/UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/HandSelectController.cs`
+  - 클래스: HandSelectController
+  - 역할: 전투/카드/플레이어/UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/HandUI.cs`
+  - 클래스: HandUI
+  - 역할: 전투/카드/UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/ICardPattern.cs`
+  - 클래스: (없음)
+  - 역할: 카드
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/Item_script/ItemHandUI.cs`
+  - 클래스: ItemHandUI
+  - 역할: 전투/카드/적/UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/PlayerAnimeController.cs`
+  - 클래스: PlayerAnimeController
+  - 역할: 플레이어
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/PlayerEvadeController.cs`
+  - 클래스: PlayerEvadeController
+  - 역할: 적/플레이어
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/RunController.cs`
+  - 클래스: RunController
+  - 역할: 전투/카드/플레이어/씬/카메라
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Battle/TurnManager.cs`
+  - 클래스: TurnManager
+  - 역할: 적/플레이어/씬/UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/BattleContext.cs`
+  - 클래스: BattleContext
+  - 역할: 전투/적
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/BattleTransition.cs`
+  - 클래스: BattleTransition
+  - 역할: 전투/플레이어/대화/씬
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Camera/CameraManager.cs`
+  - 클래스: CameraManager
+  - 역할: 플레이어/씬/UI/카메라
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Camera/CinemachineClamp2D.cs`
+  - 클래스: CinemachineClamp2D
+  - 역할: 카메라
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Camera/DarkOverlay.cs`
+  - 클래스: DarkOverlay
+  - 역할: 씬/UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Camera/SceneCameraBootstrap.cs`
+  - 클래스: SceneCameraBootstrap
+  - 역할: 플레이어/씬/카메라
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/CutScene/CutsceneRouter.cs`
+  - 클래스: CutsceneRouter, Route
+  - 역할: 플레이어/씬/트리거
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Dialogue/Dialogue.cs`
+  - 클래스: Dialogue
+  - 역할: 대화
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Dialogue/DialogueInteractable.cs`
+  - 클래스: DialogueInteractable
+  - 역할: 대화
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Dialogue/DialougueManager.cs`
+  - 클래스: DialogueManager
+  - 역할: 대화/씬/UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Dialogue/SceneStartDialogue.cs`
+  - 클래스: SceneStartDialogue
+  - 역할: 대화/씬
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Enemy/EnemyBattleTrigger.cs`
+  - 클래스: EnemyBattleTrigger
+  - 역할: 전투/적/플레이어/씬/UI/트리거
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Enemy/UndeadMover.cs`
+  - 클래스: UndeadMover
+  - 역할: 플레이어/UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Events/KnockScene.cs`
+  - 클래스: KnockSequence
+  - 역할: 대화/씬/UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Events/MonsterTriggerZone.cs`
+  - 클래스: MonsterTriggerZone
+  - 역할: 플레이어/UI/트리거
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/GameManager.cs`
+  - 클래스: GameManager
+  - 역할: 대화/씬/UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/GetManager.cs`
+  - 클래스: GetManager
+  - 역할: 카드/UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/IInteractable.cs`
+  - 클래스: (없음)
+  - 역할: 공용/기타
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Interactable/BedStateController.cs`
+  - 클래스: BedStateController
+  - 역할: 플레이어
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Interactable/InteractTriggerRouteCaller.cs`
+  - 클래스: TriggerRouterInteraction
+  - 역할: 플레이어/대화/트리거
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Interactable/ObjectInteraction.cs`
+  - 클래스: ObjectInteraction
+  - 역할: 카드/대화
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Interactable/TeleportTransition.cs`
+  - 클래스: TeleportTransition
+  - 역할: 플레이어/대화/씬/카메라
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Interactable/TemporaryBattleExit.cs`
+  - 클래스: TemporaryBattleExit
+  - 역할: 전투/플레이어/대화/씬
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Mainmenu/GameStartContext.cs`
+  - 클래스: GameStartContext
+  - 역할: 공용/기타
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Mainmenu/MainMenu.cs`
+  - 클래스: MainMenu
+  - 역할: 플레이어/씬
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Mainmenu/MyroomEntryApplier.cs`
+  - 클래스: MyroomEntryApplier
+  - 역할: 플레이어/씬
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Mainmenu/MyroomEntryContext.cs`
+  - 클래스: MyroomEntryContext
+  - 역할: 씬
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/NPC/BaseNPCSO.cs`
+  - 클래스: BaseNPCSO
+  - 역할: 플레이어/대화
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/NPC/GeneralNPCSO.cs`
+  - 클래스: GeneralNPCData
+  - 역할: 공용/기타
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/NPC/QuestNPCSO.cs`
+  - 클래스: QuestNPCData
+  - 역할: 대화
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/NextScene.cs`
+  - 클래스: NextScene
+  - 역할: 전투/적/씬
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/ObjectNameRuntime.cs`
+  - 클래스: ObjectNameRuntime
+  - 역할: 적
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Player/Card/CardSaveData.cs`
+  - 클래스: CardSaveData
+  - 역할: 카드/저장
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Player/Card/CardSaveStore.cs`
+  - 클래스: CardSaveStore
+  - 역할: 카드/저장
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Player/Card/CardSceneController.cs`
+  - 클래스: CardSceneController
+  - 역할: 카드/플레이어/저장/씬/UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Player/Card/CardSlot.cs`
+  - 클래스: CardSlot
+  - 역할: 카드/UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Player/Card/CardStateRuntime.cs`
+  - 클래스: CardStateRuntime
+  - 역할: 카드/저장/UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Player/MenuController.cs`
+  - 클래스: MenuController
+  - 역할: 플레이어/씬/UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Player/PlayerAction.cs`
+  - 클래스: PlayerAction
+  - 역할: 플레이어/대화/씬
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Player/PlayerDataFolder/PlayerData.cs`
+  - 클래스: PlayerData
+  - 역할: 플레이어
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Player/PlayerDataFolder/PlayerDataRuntime.cs`
+  - 클래스: PlayerDataRuntime
+  - 역할: 플레이어/저장/UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Player/PlayerDataFolder/PlayerDataStore.cs`
+  - 클래스: PlayerDataStore
+  - 역할: 플레이어/저장
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Player/PlayerInteractor.cs`
+  - 클래스: PlayerInteractor
+  - 역할: 플레이어/대화/저장/UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Player/PlayerMainManager.cs`
+  - 클래스: PlayerMainManager
+  - 역할: 플레이어/대화
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Player/PlayerMove.cs`
+  - 클래스: PlayerMove
+  - 역할: 플레이어/UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Player/item/ReturnToPreviousOnQ.cs`
+  - 클래스: ReturnToPreviousOnQ
+  - 역할: 플레이어/씬
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Save/ProgressSaveData.cs`
+  - 클래스: ProgressSaveData
+  - 역할: 플레이어/저장/씬/카메라
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Save/ProgressSaveStore.cs`
+  - 클래스: ProgressSaveStore
+  - 역할: 저장
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Save/SavePointInteractable.cs`
+  - 클래스: SavePointInteractable
+  - 역할: 플레이어/대화/저장/씬/카메라
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Save/SaveSystem.cs`
+  - 클래스: SaveSystem
+  - 역할: 카드/플레이어/저장/씬/카메라
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/SaveButtonHandler.cs`
+  - 클래스: SaveButtonHandler
+  - 역할: 카드/플레이어/저장
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/SceneHistory.cs`
+  - 클래스: SceneHistory
+  - 역할: 카드/씬
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/SceneMusicStarter.cs`
+  - 클래스: SceneMusicStarter
+  - 역할: 플레이어/씬
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/SceneScript/SceneFader.cs`
+  - 클래스: SceneFader
+  - 역할: 씬/UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/SceneScript/SceneVisitEffectBase.cs`
+  - 클래스: SceneVisitEffectBase
+  - 역할: 씬
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/SceneScript/SceneVisitEffectRunner.cs`
+  - 클래스: SceneVisitEffectRunner
+  - 역할: 씬
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/SceneScript/SceneVisitEffect_Fade.cs`
+  - 클래스: SceneVisitEffect_Fade
+  - 역할: 씬/UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/SceneScript/SceneVisitEffect_InstantBlackHold.cs`
+  - 클래스: SceneVisitEffect_InstantBlackHold
+  - 역할: 씬/UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/SceneScript/SceneVisitEffect_None.cs`
+  - 클래스: SceneVisitEffect_None
+  - 역할: 씬
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/SceneScript/SceneVisitEffect_Picture.cs`
+  - 클래스: SceneVisitEffect_Picture
+  - 역할: 씬/UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Tools/CSVLoader.cs`
+  - 클래스: CsvLoader
+  - 역할: 공용/기타
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Trigger/Active/TriggerStep_PlayerSetActive.cs`
+  - 클래스: TriggerStep_PlayerSetActive
+  - 역할: 플레이어/트리거
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Trigger/Dialogue_tirger/TriggerStep_Dialogue.cs`
+  - 클래스: TriggerStep_Dialogue
+  - 역할: 플레이어/대화/씬/트리거
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Trigger/ITriggerStep.cs`
+  - 클래스: (없음)
+  - 역할: 트리거
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Trigger/Move/TriggerStep_HandDrop.cs`
+  - 클래스: TriggerStep_HandDrop
+  - 역할: 트리거
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Trigger/Move/TriggerStep_PlayerMove.cs`
+  - 클래스: TriggerStep_PlayerMove
+  - 역할: 플레이어/트리거
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Trigger/SceneConversion/TriggerStep_Scene.cs`
+  - 클래스: TriggerStep_Scene
+  - 역할: 전투/플레이어/저장/씬/트리거/카메라
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Trigger/TriggerContext.cs`
+  - 클래스: TriggerContext
+  - 역할: 플레이어/트리거
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Trigger/TriggerGet.cs`
+  - 클래스: TriggerGet
+  - 역할: 전투/플레이어/UI/트리거
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Trigger/TriggerRouter.cs`
+  - 클래스: TriggerRouter, Route
+  - 역할: UI/트리거
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Trigger/TriggerStepBase.cs`
+  - 클래스: TriggerStepBase
+  - 역할: 트리거
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Trigger/TriggerSuppressTag.cs`
+  - 클래스: TriggerSuppressTag, TempSuppressRunner
+  - 역할: 트리거
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Trigger/Trigger_UI/TriggerStep_UiSequence.cs`
+  - 클래스: TriggerStep_UiSequence
+  - 역할: 플레이어/UI/트리거
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Trigger/camera_effect/TriggerStep_CameraShake.cs`
+  - 클래스: TriggerStep_CameraShake
+  - 역할: 트리거/카메라
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Trigger/teleport/TriggerStep_PlayerTeleport.cs`
+  - 클래스: TriggerStep_PlayerTeleport
+  - 역할: 플레이어/씬/트리거/카메라
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/Trigger/tilemap/TriggerStep_SetActiveSwap.cs`
+  - 클래스: TriggerStep_SetActiveSwap
+  - 역할: 트리거
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/UiscriptAin/GoToMyRoom.cs`
+  - 클래스: GoToMyRoom
+  - 역할: 씬
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/UiscriptAin/InventoryCursor.cs`
+  - 클래스: InventoryCursor
+  - 역할: 공용/기타
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/UiscriptAin/InventoryDataSource.cs`
+  - 클래스: InventoryDataSource
+  - 역할: 저장/UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/UiscriptAin/InventoryDisplay.cs`
+  - 클래스: ItemSlotUI, InventoryDisplay
+  - 역할: UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/UiscriptAin/InventoryModels.cs`
+  - 클래스: InventoryItemEntry, InventorySaveData
+  - 역할: 저장
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/UiscriptAin/InventoryPageManagerKeys.cs`
+  - 클래스: InventoryPageManagerKeys
+  - 역할: UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/UiscriptAin/ItemDataBaseSO.cs`
+  - 클래스: ItemDataBaseSO
+  - 역할: 공용/기타
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/UiscriptAin/ItemRuntime.cs`
+  - 클래스: ItemRuntime
+  - 역할: 저장
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/UiscriptAin/ItemSO.cs`
+  - 클래스: ItemSO
+  - 역할: 공용/기타
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/UiscriptAin/ItemSave.cs`
+  - 클래스: ItemSave
+  - 역할: 저장
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/UiscriptAin/ItemSaveStore.cs`
+  - 클래스: ItemSaveStore
+  - 역할: 저장
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/UiscriptAin/KeySfxPlayer.cs`
+  - 클래스: KeySfxPlayer
+  - 역할: 플레이어/씬
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/UiscriptAin/UiSequencePlayer.cs`
+  - 클래스: UiSequencePlayer
+  - 역할: 카드/플레이어/저장/씬/UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/loader/BattleEnemyLoader.cs`
+  - 클래스: BattleEnemyLoader
+  - 역할: 전투/적
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/loader/BattleSceneLoader.cs`
+  - 클래스: BattleSceneLoader
+  - 역할: 전투/적/플레이어/저장/씬
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/loader/EnemyInstanceId.cs`
+  - 클래스: EnemyInstanceId
+  - 역할: 적
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/loader/EnemyReturnApplier.cs`
+  - 클래스: EnemyReturnApplier
+  - 역할: 적/플레이어/씬
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/loader/EnemySnapshot.cs`
+  - 클래스: (없음)
+  - 역할: 적
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/loader/FadePanelFader.cs`
+  - 클래스: FadePanelFader
+  - 역할: UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/loader/PlayerActiveService.cs`
+  - 클래스: PlayerActiveService
+  - 역할: 플레이어/씬
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/loader/PlayerReturnContext.cs`
+  - 클래스: PlayerReturnContext
+  - 역할: 플레이어/씬/트리거/카메라
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/loader/PlayerReturnManager.cs`
+  - 클래스: PlayerReturnManager
+  - 역할: 플레이어/씬/트리거/카메라
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/loader/ReturnSpawnApplier.cs`
+  - 클래스: ReturnSpawnApplier
+  - 역할: 적/플레이어/씬
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/loader/SceneLoader.cs`
+  - 클래스: SceneLoader
+  - 역할: 적/플레이어/저장/씬
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/loader/WorldNPCStateService.cs`
+  - 클래스: WorldNPCStateService
+  - 역할: 적/저장
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/test/BattleNextScene.cs`
+  - 클래스: BattleNextScene
+  - 역할: 전투/적/씬
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/Script/test/SceneLoadContext.cs`
+  - 클래스: SceneLoadContext
+  - 역할: 적/씬
+  - 주요 메서드: (데이터 선언/유틸 중심)
+## TMP 예제 스크립트(외부 제공)
+
+- `timedevil/Assets/TextMesh Pro/Examples & Extras/Scripts/Benchmark01.cs`
+  - 클래스: Benchmark01
+  - 역할: 공용/기타
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/TextMesh Pro/Examples & Extras/Scripts/Benchmark01_UGUI.cs`
+  - 클래스: Benchmark01_UGUI
+  - 역할: UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/TextMesh Pro/Examples & Extras/Scripts/Benchmark02.cs`
+  - 클래스: Benchmark02
+  - 역할: 공용/기타
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/TextMesh Pro/Examples & Extras/Scripts/Benchmark03.cs`
+  - 클래스: Benchmark03
+  - 역할: 공용/기타
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/TextMesh Pro/Examples & Extras/Scripts/Benchmark04.cs`
+  - 클래스: Benchmark04
+  - 역할: 카메라
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/TextMesh Pro/Examples & Extras/Scripts/CameraController.cs`
+  - 클래스: CameraController
+  - 역할: 플레이어/카메라
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/TextMesh Pro/Examples & Extras/Scripts/ChatController.cs`
+  - 클래스: ChatController
+  - 역할: UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/TextMesh Pro/Examples & Extras/Scripts/DropdownSample.cs`
+  - 클래스: DropdownSample
+  - 역할: UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/TextMesh Pro/Examples & Extras/Scripts/EnvMapAnimator.cs`
+  - 클래스: EnvMapAnimator
+  - 역할: 공용/기타
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/TextMesh Pro/Examples & Extras/Scripts/ObjectSpin.cs`
+  - 클래스: ObjectSpin
+  - 역할: 공용/기타
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/TextMesh Pro/Examples & Extras/Scripts/ShaderPropAnimator.cs`
+  - 클래스: ShaderPropAnimator
+  - 역할: 공용/기타
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/TextMesh Pro/Examples & Extras/Scripts/SimpleScript.cs`
+  - 클래스: SimpleScript
+  - 역할: 공용/기타
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/TextMesh Pro/Examples & Extras/Scripts/SkewTextExample.cs`
+  - 클래스: SkewTextExample
+  - 역할: 공용/기타
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_DigitValidator.cs`
+  - 클래스: TMP_DigitValidator
+  - 역할: 공용/기타
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_ExampleScript_01.cs`
+  - 클래스: TMP_ExampleScript_01
+  - 역할: UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_FrameRateCounter.cs`
+  - 클래스: TMP_FrameRateCounter
+  - 역할: 카메라
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_PhoneNumberValidator.cs`
+  - 클래스: TMP_PhoneNumberValidator
+  - 역할: 공용/기타
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_TextEventCheck.cs`
+  - 클래스: TMP_TextEventCheck
+  - 역할: 공용/기타
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_TextEventHandler.cs`
+  - 클래스: TMP_TextEventHandler, CharacterSelectionEvent, SpriteSelectionEvent, WordSelectionEvent, LineSelectionEvent, LinkSelectionEvent
+  - 역할: 트리거
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_TextInfoDebugTool.cs`
+  - 클래스: TMP_TextInfoDebugTool
+  - 역할: UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_TextSelector_A.cs`
+  - 클래스: TMP_TextSelector_A
+  - 역할: 카메라
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_TextSelector_B.cs`
+  - 클래스: TMP_TextSelector_B
+  - 역할: UI/카메라
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/TextMesh Pro/Examples & Extras/Scripts/TMP_UiFrameRateCounter.cs`
+  - 클래스: TMP_UiFrameRateCounter
+  - 역할: UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/TextMesh Pro/Examples & Extras/Scripts/TMPro_InstructionOverlay.cs`
+  - 클래스: TMPro_InstructionOverlay
+  - 역할: 카메라
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/TextMesh Pro/Examples & Extras/Scripts/TeleType.cs`
+  - 클래스: TeleType
+  - 역할: 공용/기타
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/TextMesh Pro/Examples & Extras/Scripts/TextConsoleSimulator.cs`
+  - 클래스: TextConsoleSimulator
+  - 역할: 공용/기타
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/TextMesh Pro/Examples & Extras/Scripts/TextMeshProFloatingText.cs`
+  - 클래스: TextMeshProFloatingText
+  - 역할: 카메라
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/TextMesh Pro/Examples & Extras/Scripts/TextMeshSpawner.cs`
+  - 클래스: TextMeshSpawner
+  - 역할: 공용/기타
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/TextMesh Pro/Examples & Extras/Scripts/VertexColorCycler.cs`
+  - 클래스: VertexColorCycler
+  - 역할: 공용/기타
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/TextMesh Pro/Examples & Extras/Scripts/VertexJitter.cs`
+  - 클래스: VertexJitter
+  - 역할: 공용/기타
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/TextMesh Pro/Examples & Extras/Scripts/VertexShakeA.cs`
+  - 클래스: VertexShakeA
+  - 역할: 공용/기타
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/TextMesh Pro/Examples & Extras/Scripts/VertexShakeB.cs`
+  - 클래스: VertexShakeB
+  - 역할: 공용/기타
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/TextMesh Pro/Examples & Extras/Scripts/VertexZoom.cs`
+  - 클래스: VertexZoom
+  - 역할: 공용/기타
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/TextMesh Pro/Examples & Extras/Scripts/WarpTextExample.cs`
+  - 클래스: WarpTextExample
+  - 역할: 공용/기타
+  - 주요 메서드: (데이터 선언/유틸 중심)
+## BE3 에셋 문서 스크립트(외부 제공)
+
+- `timedevil/Assets/TopDown 2D RPG BE3/ReadMe/Scripts/Editor/ReadmeEditorBE3.cs`
+  - 클래스: ReadmeEditorBE3
+  - 역할: UI
+  - 주요 메서드: (데이터 선언/유틸 중심)
+- `timedevil/Assets/TopDown 2D RPG BE3/ReadMe/Scripts/ReadmeBE3.cs`
+  - 클래스: ReadmeBE3, Section
+  - 역할: 공용/기타
+  - 주요 메서드: (데이터 선언/유틸 중심)
