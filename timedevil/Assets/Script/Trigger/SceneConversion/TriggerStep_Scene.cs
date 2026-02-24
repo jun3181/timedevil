@@ -1,6 +1,5 @@
-// Assets/Script/Trigger/Steps/TriggerStep_Scene.cs
+ï»¿// Assets/Script/Trigger/Steps/TriggerStep_Scene.cs
 using System.Collections;
-using System.Reflection;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -12,11 +11,8 @@ public class TriggerStep_Scene : TriggerStepBase
     [SerializeField] private LoadSceneMode loadMode = LoadSceneMode.Single;
 
     [Header("Use SceneVisitEffectRunner (recommended)")]
-    [Tooltip("ÄÑ¸é ÇöÀç ¾ÀÀÇ SceneVisitEffectRunner¸¦ Ã£¾Æ 'Exit->Load'¸¦ ¿äÃ»ÇÕ´Ï´Ù.")]
     [SerializeField] private bool useSceneVisitEffectRunner = true;
-
-    [Tooltip("ÁöÁ¤ÇÏ¸é ÀÌ Runner¸¦ ¿ì¼± »ç¿ë. ºñ¿ì¸é ¾À¿¡¼­ ÀÚµ¿ Å½»ö.")]
-    [SerializeField] private MonoBehaviour runnerOverride; // (SceneVisitEffectRunner ³Ö¾îµµ µÊ)
+    [SerializeField] private MonoBehaviour runnerOverride; // SceneVisitEffectRunner ë„£ì–´ë„ ë¨
 
     [Header("Lock (optional)")]
     [SerializeField] private bool lockPlayerInput = true;
@@ -24,109 +20,170 @@ public class TriggerStep_Scene : TriggerStepBase
     [Header("Debug")]
     [SerializeField] private bool debugLog = true;
 
+    [Header("Return (Battle enter only)")]
+    [Tooltip("ì¼œë©´ 'í˜„ì¬ ì”¬ìœ¼ë¡œ ë³µê·€' ì •ë³´ë¥¼ ì €ì¥í•˜ê³  ë‹¤ìŒ ì”¬ìœ¼ë¡œ ë„˜ì–´ê°‘ë‹ˆë‹¤.")]
+    [SerializeField] private bool saveReturnContext = false;
+
+    [Tooltip("ë³µê·€ ìœ„ì¹˜. ë¹„ìš°ë©´ PlayerMainManager í˜„ì¬ ìœ„ì¹˜ ì €ì¥.")]
+    [SerializeField] private Transform returnPointOverride;
+
+    [Tooltip("ë³µê·€ í›„ ì¬ì§„ì… ë°©ì§€(ì˜µì…˜)")]
+    [SerializeField] private float graceSeconds = 0.5f;
+
+    [Tooltip("ë³µê·€ í›„ ì¹´ë©”ë¼ ì¬ë°”ì¸ë”© ìš”ì²­(ì˜µì…˜)")]
+    [SerializeField] private bool requestCameraRebind = false;
+
+    [SerializeField] private string worldVcamName = "CM vcam1";
+
+    [Header("B Suppression (Overlap)")]
+    [SerializeField] private bool useOverlapSuppression = true;
+    [SerializeField] private float suppressOverlapRadius = 0.6f;
+    [SerializeField] private float suppressOverlapSeconds = 1.5f;
+
+    [Header("Return Camera Override (â˜…ê°•ì œ ì €ì¥)")]
+    [Tooltip("ì²´í¬í•˜ë©´ 'ë³µê·€ ì¹´ë©”ë¼ ìƒíƒœ'ë¥¼ ê°•ì œë¡œ ì•„ë˜ ê°’ìœ¼ë¡œ ì €ì¥í•©ë‹ˆë‹¤.")]
+    [SerializeField] private bool useReturnCameraOverride = false;
+
+    [SerializeField] private CameraModeId returnCameraModeOverride = CameraModeId.FollowFree;
+
+    [Tooltip("Fixed/Cutsceneì¼ ë•Œ ë³µê·€ ì¹´ë©”ë¼ ê³ ì • ìœ„ì¹˜(Anchor). ë¹„ìš°ë©´ ë³µê·€ ìœ„ì¹˜(ReturnPosition)ë¡œ ì €ì¥")]
+    [SerializeField] private Transform returnFixedCameraAnchorOverride;
+
+    [Tooltip("FollowConfinedì¼ ë•Œ ì‚¬ìš©í•  bounds. (ë³µê·€ ì‹œ ì´ë¦„ìœ¼ë¡œ ì¬íƒìƒ‰)")]
+    [SerializeField] private Collider2D returnConfinerBoundsOverride;
+
+    [Tooltip("0ì´ë©´ ë³µê·€ ì‹œ CameraManager ê¸°ë³¸ Ortho ìœ ì§€")]
+    [SerializeField] private float returnOrthoSizeOverride = 0f;
+
+    [Header("Return Camera Snapshot (ì˜µì…˜)")]
+    [Tooltip("Overrideë¥¼ ë„ë©´, ë°°í‹€ ì§„ì… ì§ì „ 'í˜„ì¬ ì¹´ë©”ë¼ ìƒíƒœ'ë¥¼ ìŠ¤ëƒ…ìƒ·ìœ¼ë¡œ ì €ì¥í•©ë‹ˆë‹¤(ê°€ëŠ¥í•œ ê²½ìš°).")]
+    [SerializeField] private bool captureCameraSnapshot = true;
+
     public override IEnumerator Execute(TriggerContext ctx)
     {
         if (string.IsNullOrWhiteSpace(sceneName))
         {
-            Debug.LogWarning("[TriggerStep_Scene] sceneNameÀÌ ºñ¾îÀÖ½À´Ï´Ù.");
+            Debug.LogWarning("[TriggerStep_Scene] sceneNameì´ ë¹„ì–´ìˆìŠµë‹ˆë‹¤.");
             yield break;
         }
 
-        if (lockPlayerInput && GameManager.Instance) GameManager.Instance.isAction = true;
+        if (lockPlayerInput && GameManager.Instance)
+            GameManager.Instance.isAction = true;
 
         if (debugLog)
-            Debug.Log($"[TriggerStep_Scene] Request Load scene='{sceneName}' mode={loadMode} useRunner={useSceneVisitEffectRunner}");
+            Debug.Log($"[TriggerStep_Scene] Request Load '{sceneName}' mode={loadMode} useRunner={useSceneVisitEffectRunner}");
 
-        // 1) Runner·Î Exit È¿°ú + Load¸¦ ¿äÃ» (°¡Àå ±ÇÀå)
-        if (useSceneVisitEffectRunner && loadMode == LoadSceneMode.Single)
+        // ë°°í‹€ ì§„ì…ì´ë¼ë©´ "ë³µê·€ ì •ë³´" ì €ì¥
+        if (saveReturnContext)
         {
-            MonoBehaviour runner = runnerOverride;
+            string curScene = SceneManager.GetActiveScene().name;
 
-            if (!runner)
-                runner = Object.FindObjectOfType<MonoBehaviour>(true) as MonoBehaviour; // ¾ÈÀü¿ë (¾Æ·¡¿¡¼­ ´Ù½Ã Å½»ö)
-
-            if (!runner)
-            {
-                // ½ÇÁ¦·Î´Â SceneVisitEffectRunner¸¦ Ã£¾Æ¾ß ÇÏ¹Ç·Î, Å¸ÀÔÀÌ ÀÖÀ¸¸é °­ÇÏ°Ô Å½»ö
-                // (runnerOverride°¡ ºñ¾îÀÖÀ» ¶§¸¦ ´ëºñ)
-                var any = Object.FindObjectsOfType<MonoBehaviour>(true);
-                foreach (var mb in any)
-                {
-                    if (!mb) continue;
-                    if (mb.GetType().Name == "SceneVisitEffectRunner")
-                    {
-                        runner = mb;
-                        break;
-                    }
-                }
-            }
+            // ë³µê·€ ìœ„ì¹˜ ì €ì¥
+            Vector2 pos;
+            if (returnPointOverride != null) pos = returnPointOverride.position;
             else
             {
-                // runnerOverride°¡ µé¾î¿Ô´Âµ¥ Å¸ÀÔÀÌ ´Ù¸¥ °æ¿ì ¹æÁö
-                if (runner.GetType().Name != "SceneVisitEffectRunner")
+                var player = Object.FindObjectOfType<PlayerMainManager>(true);
+                pos = player ? (Vector2)player.transform.position : Vector2.zero;
+            }
+
+            // ===== ë³µê·€ ì¹´ë©”ë¼ ì €ì¥ (Override ìš°ì„ ) =====
+            bool restoreCam = false;
+            CameraModeId camMode = CameraModeId.Fixed;
+            float camOrtho = 0f;
+            Vector2 camFixedPos = Vector2.zero;
+            string camBoundsName = null;
+
+            if (useReturnCameraOverride)
+            {
+                restoreCam = true;
+                camMode = returnCameraModeOverride;
+                camOrtho = returnOrthoSizeOverride;
+
+                // Fixed/Cutscene: ì•µì»¤ ì—†ìœ¼ë©´ "ë³µê·€ ìœ„ì¹˜"ë¥¼ ê³ ì • ìœ„ì¹˜ë¡œ ì €ì¥
+                Vector2 fixedPos = (returnFixedCameraAnchorOverride != null)
+                    ? (Vector2)returnFixedCameraAnchorOverride.position
+                    : pos;
+                camFixedPos = fixedPos;
+
+                // FollowConfined: boundsëŠ” ì´ë¦„ ì €ì¥(ë³µê·€ ì‹œ ì¬íƒìƒ‰)
+                camBoundsName = (returnConfinerBoundsOverride != null) ? returnConfinerBoundsOverride.name : null;
+            }
+            else if (captureCameraSnapshot && CameraManager.Instance != null)
+            {
+                if (CameraManager.Instance.TryGetSnapshot(out camMode, out camOrtho, out Vector3 fixedPos3, out string boundsName))
                 {
-                    if (debugLog)
-                        Debug.LogWarning($"[TriggerStep_Scene] runnerOverride°¡ SceneVisitEffectRunner°¡ ¾Æ´Õ´Ï´Ù. type={runner.GetType().Name}");
-                    runner = null;
+                    restoreCam = true;
+                    camFixedPos = new Vector2(fixedPos3.x, fixedPos3.y);
+                    camBoundsName = string.IsNullOrWhiteSpace(boundsName) ? null : boundsName;
                 }
             }
 
-            if (runner)
+            // âœ… (A) ì •ì±… í•µì‹¬:
+            // ë°°í‹€ ë³µê·€ ì‹œ "ì¼ë°˜ íŠ¸ë¦¬ê±°ëŠ” ì¦‰ì‹œ ì¸ì‹"ì´ ëª©í‘œì´ë¯€ë¡œ
+            // Overlap Suppression(TriggerGet/Collider disable) ì€ ê°•ì œ OFF
+            bool overlapSupp = false;
+            float overlapRadius = 0f;
+            float overlapSec = 0f;
+
+            PlayerReturnContext.SetReturnFromTrigger(
+                returnSceneName: curScene,
+                returnPosition: pos,
+                graceSeconds: graceSeconds,
+
+                requestCameraRebind: requestCameraRebind,
+                targetVcamName: worldVcamName,
+
+                useOverlapSuppression: overlapSupp,
+                overlapRadius: overlapRadius,
+                overlapSeconds: overlapSec,
+
+                // â˜… ì¹´ë©”ë¼ ë³µì› ì €ì¥
+                restoreCameraState: restoreCam,
+                cameraMode: camMode,
+                cameraOrthoSize: camOrtho,
+                cameraFixedPos: camFixedPos,
+                cameraBoundsName: camBoundsName
+            );
+
+            if (debugLog)
             {
-                // Runner¿¡ ¡°Exit ÈÄ ·Îµå¡±¸¦ ¿äÃ»ÇÏ´Â ¸Ş¼­µå ÀÌ¸§µéÀÌ ÇÁ·ÎÁ§Æ®¸¶´Ù ´Ş¶óÁú ¼ö ÀÖ¾î¼­
-                // ¸®ÇÃ·º¼ÇÀ¸·Î ¿©·¯ ÈÄº¸¸¦ ¼ø¼­´ë·Î ½ÃµµÇÕ´Ï´Ù.
-                const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
-
-                // (1) IEnumerator ÄÚ·çÆ¾ ¹æ½Ä ¸ÕÀú ½Ãµµ (ÀÖÀ¸¸é 'Exit ³¡±îÁö' ±â´Ù¸± ¼ö ÀÖÀ½)
-                string[] coroutineNames =
-                {
-                    "CoExitAndLoad", "CoPlayExitAndLoad", "CoLoadSceneWithExit",
-                    "CoLoadScene", "CoTransitionTo"
-                };
-
-                foreach (var name in coroutineNames)
-                {
-                    var mi = runner.GetType().GetMethod(name, flags, null, new[] { typeof(string) }, null);
-                    if (mi != null && typeof(IEnumerator).IsAssignableFrom(mi.ReturnType))
-                    {
-                        if (debugLog) Debug.Log($"[TriggerStep_Scene] Runner coroutine '{name}(string)' È£Ãâ");
-                        var ie = (IEnumerator)mi.Invoke(runner, new object[] { sceneName });
-                        yield return runner.StartCoroutine(ie);
-                        yield break; // ¾À ·Îµå°¡ ¿©±â¼­ ÀÏ¾î³²
-                    }
-                }
-
-                // (2) void ¸Ş¼­µå ¹æ½Ä ½Ãµµ (È£Ãâ ÈÄ °ğ¹Ù·Î ¾À ·Îµå°¡ ½ÃÀÛµÉ °Í)
-                string[] voidNames =
-                {
-                    "LoadScene", "Load", "RequestLoad",
-                    "LoadSceneWithEffect", "PlayExitAndLoad",
-                    "ExitAndLoad", "TransitionTo"
-                };
-
-                foreach (var name in voidNames)
-                {
-                    var mi = runner.GetType().GetMethod(name, flags, null, new[] { typeof(string) }, null);
-                    if (mi != null && mi.ReturnType == typeof(void))
-                    {
-                        if (debugLog) Debug.Log($"[TriggerStep_Scene] Runner void '{name}(string)' È£Ãâ");
-                        mi.Invoke(runner, new object[] { sceneName });
-                        yield break;
-                    }
-                }
-
-                if (debugLog)
-                    Debug.LogWarning("[TriggerStep_Scene] SceneVisitEffectRunner¸¦ Ã£¾ÒÁö¸¸, È£Ãâ °¡´ÉÇÑ (string) ¸Ş¼­µå¸¦ ¸ø Ã£¾Ò½À´Ï´Ù. fallback ·Îµå·Î ÁøÇàÇÕ´Ï´Ù.");
-            }
-            else
-            {
-                if (debugLog)
-                    Debug.LogWarning("[TriggerStep_Scene] SceneVisitEffectRunner¸¦ Ã£Áö ¸øÇß½À´Ï´Ù. fallback ·Îµå·Î ÁøÇàÇÕ´Ï´Ù.");
+                Debug.Log(
+                    $"[TriggerStep_Scene] Saved Return(A-Policy): scene='{curScene}', pos=({pos.x:F2},{pos.y:F2}) " +
+                    $"overlapSupp=OFF " +
+                    $"camRestore={restoreCam} camMode={camMode} camOrtho={camOrtho:F2} camBounds='{camBoundsName}' camFixed=({camFixedPos.x:F2},{camFixedPos.y:F2})"
+                );
             }
         }
 
-        // 2) Fallback: È¿°ú ¾øÀÌ ¹Ù·Î ·Îµå
+        // RunnerëŠ” Single ì „í™˜ì—ì„œë§Œ
+        if (useSceneVisitEffectRunner && loadMode == LoadSceneMode.Single)
+        {
+            var runner = ResolveRunner();
+            if (runner != null)
+            {
+                if (debugLog) Debug.Log("[TriggerStep_Scene] Runner -> LoadSceneWithExitEffect()");
+                runner.LoadSceneWithExitEffect(sceneName);
+                yield break;
+            }
+        }
+
         SceneManager.LoadScene(sceneName, loadMode);
-        yield break;
+    }
+
+    private SceneVisitEffectRunner ResolveRunner()
+    {
+        if (runnerOverride != null)
+        {
+            if (runnerOverride is SceneVisitEffectRunner r) return r;
+
+            if (debugLog)
+                Debug.LogWarning($"[TriggerStep_Scene] runnerOverride íƒ€ì…ì´ ë‹¤ë¦…ë‹ˆë‹¤: {runnerOverride.GetType().Name}");
+        }
+
+        if (SceneVisitEffectRunner.Current != null)
+            return SceneVisitEffectRunner.Current;
+
+        return Object.FindObjectOfType<SceneVisitEffectRunner>(true);
     }
 }

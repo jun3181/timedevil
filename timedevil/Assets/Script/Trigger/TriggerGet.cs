@@ -1,4 +1,4 @@
-// Assets/Script/Trigger/TriggerGet.cs
+ï»¿// Assets/Script/Trigger/TriggerGet.cs
 using UnityEngine;
 
 [RequireComponent(typeof(Collider2D))]
@@ -12,12 +12,17 @@ public class TriggerGet : MonoBehaviour
     public string routeKey = "Trigger1";
 
     [Header("Call Limit")]
-    [Tooltip("0ÀÌ¸é ¹«Á¦ÇÑ, 1ÀÌ¸é 1È¸¸¸, 2¸é 2È¸±îÁö¸¸ ½ÇÇà")]
+    [Tooltip("0ì´ë©´ ë¬´ì œí•œ, 1ì´ë©´ 1íšŒë§Œ, 2ë©´ 2íšŒê¹Œì§€ë§Œ ì‹¤í–‰")]
     public int maxCalls = 1;
 
     [Header("Detect")]
-    [Tooltip("ÇÃ·¹ÀÌ¾î ÆÇÁ¤: PlayerMove ÄÄÆ÷³ÍÆ®·Î Ã¼Å©")]
+    [Tooltip("í”Œë ˆì´ì–´ íŒì •: PlayerMove ì»´í¬ë„ŒíŠ¸ë¡œ ì²´í¬")]
     public bool usePlayerMoveComponentCheck = true;
+
+    // âœ… (A) ì „íˆ¬ë§Œ ì¬ì§„ì… ë°©ì§€ìš© ì˜µì…˜
+    [Header("Grace Policy (Return from battle)")]
+    [Tooltip("trueë©´ PlayerReturnContext.IsInGracePeriod ë™ì•ˆ ì´ íŠ¸ë¦¬ê±°ëŠ” ë°œë™í•˜ì§€ ì•ŠìŠµë‹ˆë‹¤. (ì „íˆ¬ ì¬ì§„ì… ë°©ì§€ìš©)")]
+    public bool blockDuringGracePeriod = false;
 
     [Header("Debug")]
     public bool debugLog = true;
@@ -36,7 +41,7 @@ public class TriggerGet : MonoBehaviour
         if (!col.isTrigger)
         {
             col.isTrigger = true;
-            if (debugLog) Debug.LogWarning("[TriggerGet] Collider2D.isTrigger°¡ ²¨Á®ÀÖ¾î¼­ Ä×½À´Ï´Ù.");
+            if (debugLog) Debug.LogWarning("[TriggerGet] Collider2D.isTriggerê°€ êº¼ì ¸ìˆì–´ì„œ ì¼°ìŠµë‹ˆë‹¤.");
         }
 
         if (!router) router = FindObjectOfType<TriggerRouter>(true);
@@ -46,14 +51,22 @@ public class TriggerGet : MonoBehaviour
     {
         if (!router)
         {
-            if (debugLog) Debug.LogWarning("[TriggerGet] router°¡ ¿¬°áµÇÁö ¾Ê¾Ò½À´Ï´Ù.");
+            if (debugLog) Debug.LogWarning("[TriggerGet] routerê°€ ì—°ê²°ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤.");
+            return;
+        }
+
+        // ì „íˆ¬ íŠ¸ë¦¬ê±°ë§Œ Grace ë™ì•ˆ ë§‰ê¸°
+        if (blockDuringGracePeriod && PlayerReturnContext.IsInGracePeriod)
+        {
+            if (debugLog)
+                Debug.Log($"[TriggerGet] Suppressed by Grace key='{routeKey}' (by='{other.name}')");
             return;
         }
 
         if (maxCalls > 0 && _called >= maxCalls)
             return;
 
-        // ÇÃ·¹ÀÌ¾î ÆÇÁ¤ + PlayerMove È®º¸
+        // í”Œë ˆì´ì–´ íŒì • + PlayerMove í™•ë³´
         PlayerMove pm = null;
         if (usePlayerMoveComponentCheck)
         {
@@ -64,7 +77,7 @@ public class TriggerGet : MonoBehaviour
         _called++;
 
         if (debugLog)
-            Debug.Log($"[TriggerGet] Fired key='{routeKey}' call={_called}/{(maxCalls <= 0 ? "¡Ä" : maxCalls.ToString())} by='{other.name}'");
+            Debug.Log($"[TriggerGet] Fired key='{routeKey}' call={_called}/{(maxCalls <= 0 ? "âˆ" : maxCalls.ToString())} by='{other.name}'");
 
         var ctx = new TriggerContext(
             trigger: this,

@@ -31,7 +31,9 @@ public class DialogueManager : MonoBehaviour
 
     [Header("State")]
     public bool isDialogueActive = false;
-    public bool blockInput = false; // 컷씬에서 사용(외부에서 켜고 끄는 용도)
+
+    [Tooltip("컷씬에서 사용: true면 '월드 입력(일반 E 호출)'은 대사 넘김이 막힘. 컷씬 컨트롤러는 ignore로 우회 가능.")]
+    public bool blockInput = false;
 
     private readonly Queue<DialogueLine> _queue = new();
     private string _defaultName;
@@ -41,6 +43,25 @@ public class DialogueManager : MonoBehaviour
     // typing state
     private Coroutine _typingCo;
     private bool _isTyping = false;
+
+    // =========================
+    // Cutscene API (추가)
+    // =========================
+    public bool IsTyping => _isTyping;
+
+    /// <summary>컷씬 컨트롤러가 타이핑 즉시 완성할 때 사용</summary>
+    public void ForceCompleteTyping() => CompleteTyping();
+
+    /// <summary>컷씬 컨트롤러 전용: blockInput 무시하고 다음 줄 표시</summary>
+    public void Cutscene_DisplayNextSentence()
+    {
+        DisplayNextSentence(ignoreBlockInput: true);
+    }
+
+    /// <summary>컷씬 종료 시 강제로 UI 닫기</summary>
+    public void EndDialogueExternal() => EndDialogue();
+
+    // =========================
 
     private void Awake()
     {
@@ -60,7 +81,7 @@ public class DialogueManager : MonoBehaviour
 
         isDialogueActive = true;
 
-        // blockInput은 컷씬이 소유(여기서 강제로 false로 바꾸지 않음)
+        // blockInput은 컷씬/외부가 소유(여기서 강제로 false로 바꾸지 않음)
 
         _queue.Clear();
 
@@ -97,7 +118,9 @@ public class DialogueManager : MonoBehaviour
             }
         }
 
-        DisplayNextSentence();
+        // ✅ 기본 동작: 첫 줄 출력 시도
+        // 컷씬에서는 blockInput=true로 해두면 여기서 막혀서 "대기(큐만 채움)" 상태가 됨.
+        DisplayNextSentence(ignoreBlockInput: false);
     }
 
     /// <summary>
@@ -105,10 +128,16 @@ public class DialogueManager : MonoBehaviour
     /// - 타이핑 중: 즉시 완성
     /// - 타이핑 끝: 다음 문장
     /// - 더 없음: 종료
+    ///
+    /// ✅ 컷씬 중에는 blockInput=true로 막아두고,
+    /// 컷씬 컨트롤러가 ignoreBlockInput=true로 우회 호출한다.
     /// </summary>
-    public void DisplayNextSentence()
+    public void DisplayNextSentence(bool ignoreBlockInput = false)
     {
         if (!isDialogueActive) return;
+
+        // ✅ 컷씬 중, 월드 입력(일반 호출) 차단
+        if (blockInput && !ignoreBlockInput) return;
 
         // 1) 타이핑 중이면: "다음"이 아니라 "즉시 완성"
         if (_isTyping)
@@ -163,7 +192,7 @@ public class DialogueManager : MonoBehaviour
     {
         _isTyping = true;
 
-        // TMP는 전체 텍스트를 넣고 maxVisibleCharacters로 조절하는 게 제일 안전(리치텍스트도 깨짐 없음)
+        // TMP는 전체 텍스트를 넣고 maxVisibleCharacters로 조절(리치텍스트 안전)
         dialogueText.text = fullText;
         dialogueText.maxVisibleCharacters = 0;
 
@@ -258,9 +287,11 @@ public class DialogueManager : MonoBehaviour
         CompleteTyping();
 
         isDialogueActive = false;
+        _queue.Clear();
 
         if (uiRoot) uiRoot.SetActive(false);
         if (nameText) nameText.text = "";
+
         if (dialogueText)
         {
             dialogueText.text = "";
@@ -268,3 +299,4 @@ public class DialogueManager : MonoBehaviour
         }
     }
 }
+

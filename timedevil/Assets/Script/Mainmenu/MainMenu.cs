@@ -10,11 +10,36 @@ public class MainMenu : MonoBehaviour
     [Header("Target Scene")]
     public string myRoomSceneName = "Myroom";
 
-    public void LoadMyRoom()
+    // 버튼: 새 게임
+    public void NewGame()
     {
-        if (sfxPlayer != null && clickSound != null)
-            sfxPlayer.PlayOneShot(clickSound);
+        PlayClick();
 
+        // ✅ 1회성 진입점 지정
+        MyroomEntryContext.SetRoom1();
+
+        // (유지) 기존 컨텍스트도 그대로
+        GameStartContext.SetNewGame();
+
+        LoadMyRoom();
+    }
+
+    // 버튼: 이어하기 (지금은 "2번방" 진입만)
+    public void LoadGame()
+    {
+        PlayClick();
+
+        // ✅ 1회성 진입점 지정
+        MyroomEntryContext.SetRoom2();
+
+        // (유지) 기존 컨텍스트도 그대로
+        GameStartContext.SetLoadGame();
+
+        LoadMyRoom();
+    }
+
+    private void LoadMyRoom()
+    {
         var fader = FindObjectOfType<SceneFader>(true);
         if (fader != null)
         {
@@ -25,5 +50,11 @@ public class MainMenu : MonoBehaviour
             Debug.LogWarning("[MainMenu] SceneFader를 찾지 못했습니다. 즉시 LoadScene 합니다.");
             SceneManager.LoadScene(myRoomSceneName);
         }
+    }
+
+    private void PlayClick()
+    {
+        if (sfxPlayer != null && clickSound != null)
+            sfxPlayer.PlayOneShot(clickSound);
     }
 }

@@ -1,16 +1,17 @@
-﻿using UnityEngine;
+﻿// Assets/Script/Player/PlayerInteractor.cs
+using UnityEngine;
 
 public class PlayerInteractor : MonoBehaviour
 {
     [Header("Refs")]
     [SerializeField] private PlayerMove move;
 
-    [Header("CircleCast (짧은 레이저 + 두께)")]
+    [Header("CircleCast")]
     [SerializeField] private float castOffset = 0.25f;
     [SerializeField] private float castDistance = 0.35f;
     [SerializeField] private float castRadius = 0.18f;
 
-    [Header("Layer (Dialog/teleport/item_get)")]
+    [Header("Layer (always included)")]
     [SerializeField] private LayerMask interactMask;
 
     [Header("Debug")]
@@ -21,21 +22,48 @@ public class PlayerInteractor : MonoBehaviour
     private GameObject currentTarget;
     private IInteractable currentInteractable;
 
+    private static readonly string[] RequiredLayers =
+        { "Dialog", "teleport", "item_get", "Object", "Save" };
+
     private void Reset()
     {
         move ??= GetComponent<PlayerMove>();
-
-        // 이름 정확히: 네 프로젝트 레이어 이름이 "teleport", "item_get", "Dialog" 이거 맞아야 함(대소문자 포함)
-        if (interactMask.value == 0)
-            interactMask = LayerMask.GetMask("Dialog", "teleport", "item_get");
+        EnsureMaskIncludesRequired();
     }
 
     private void Awake()
     {
         if (!move) move = GetComponent<PlayerMove>();
+        EnsureMaskIncludesRequired();
+    }
 
-        if (interactMask.value == 0)
-            interactMask = LayerMask.GetMask("Dialog", "teleport", "item_get");
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        // 인스펙터에서 레이어 마스크가 꼬여도 자동으로 포함되게
+        EnsureMaskIncludesRequired();
+    }
+#endif
+
+    private void EnsureMaskIncludesRequired()
+    {
+        int requiredMask = 0;
+
+        for (int i = 0; i < RequiredLayers.Length; i++)
+        {
+            string layerName = RequiredLayers[i];
+            int layer = LayerMask.NameToLayer(layerName);
+            if (layer < 0)
+            {
+                if (debugLog)
+                    Debug.LogWarning($"[PlayerInteractor] Layer '{layerName}' not found. (Project Settings > Tags and Layers 확인)");
+                continue;
+            }
+            requiredMask |= (1 << layer);
+        }
+
+        // ✅ 인스펙터에 뭐가 들어있든, 요구 레이어는 "항상" 포함
+        interactMask |= requiredMask;
     }
 
     private void Update()
@@ -50,7 +78,6 @@ public class PlayerInteractor : MonoBehaviour
         Vector2 dir = (Vector2)move.Facing;
         Vector2 origin = (Vector2)transform.position + dir * castOffset;
 
-        // ✅ 핵심: Dialog만이 아니라 interactMask 전체를 스캔
         var hit = Physics2D.CircleCast(origin, castRadius, dir, castDistance, interactMask);
 
         var nextHit = hit.collider;
@@ -61,7 +88,6 @@ public class PlayerInteractor : MonoBehaviour
             currentHit = nextHit;
             currentTarget = nextTarget;
 
-            // ✅ 스크립트가 부모에 달린 경우가 흔해서 InParent까지
             currentInteractable = currentHit
                 ? (currentHit.GetComponent<IInteractable>() ?? currentHit.GetComponentInParent<IInteractable>())
                 : null;
@@ -71,9 +97,7 @@ public class PlayerInteractor : MonoBehaviour
                 if (currentTarget)
                 {
                     string layerName = LayerMask.LayerToName(currentTarget.layer);
-                    Debug.Log($"[PlayerInteractor] Target -> {currentTarget.name} (layer={layerName}) " +
-                              $"IInteractable={(currentInteractable != null ? "YES" : "NO")} " +
-                              $"hitCollider={currentHit.GetType().Name}");
+                    Debug.Log($"[PlayerInteractor] Target -> {currentTarget.name} (layer={layerName}) IInteractable={(currentInteractable != null ? "YES" : "NO")}");
                 }
                 else
                 {
@@ -97,19 +121,16 @@ public class PlayerInteractor : MonoBehaviour
     {
         if (debugLog)
         {
-            Debug.Log($"[TryInteract] target={(currentTarget ? currentTarget.name : "null")} " +
-                      $"activeDialogue={(DialogueManager.instance && DialogueManager.instance.isDialogueActive)}");
+            Debug.Log($"[TryInteract] target={(currentTarget ? currentTarget.name : "null")} activeDialogue={(DialogueManager.instance && DialogueManager.instance.isDialogueActive)}");
         }
 
         if (!currentTarget) return false;
 
-        // 대화 중이면(넘기기는 PlayerMainManager에서 처리)
         if (DialogueManager.instance != null && DialogueManager.instance.isDialogueActive)
             return false;
 
         if (currentInteractable != null)
         {
-            if (debugLog) Debug.Log($"[TryInteract] Interact -> {((MonoBehaviour)currentInteractable).name}");
             currentInteractable.Interact();
             return true;
         }

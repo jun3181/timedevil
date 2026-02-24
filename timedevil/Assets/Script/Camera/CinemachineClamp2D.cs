@@ -1,11 +1,14 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using Cinemachine;
 
 [DisallowMultipleComponent]
 public class CinemachineClamp2D : CinemachineExtension
 {
-    [SerializeField] private Collider2D boundsShape; // BoxCollider2D ±ÇÀå
+    [SerializeField] private Collider2D boundsShape; // BoxCollider2D ê¶Œìž¥
     [SerializeField] private bool debugDraw = false;
+
+    // ì¶”ê°€: CameraManager ìŠ¤ëƒ…ìƒ·ìš©
+    public Collider2D CurrentBounds => boundsShape;
 
     public void SetBounds(Collider2D shape)
     {
@@ -18,13 +21,11 @@ public class CinemachineClamp2D : CinemachineExtension
         ref CameraState state,
         float deltaTime)
     {
-        // Body ´Ü°è¿¡¼­ ÃÖÁ¾ À§Ä¡¸¦ º¸Á¤
         if (stage != CinemachineCore.Stage.Body) return;
         if (!enabled) return;
         if (!boundsShape) return;
         if (!state.Lens.Orthographic) return;
 
-        // Collider2DÀÇ AABB(bounding box) ±â¹Ý Clamp
         Bounds b = boundsShape.bounds;
 
         float halfH = state.Lens.OrthographicSize;
@@ -35,7 +36,6 @@ public class CinemachineClamp2D : CinemachineExtension
         float minY = b.min.y + halfH;
         float maxY = b.max.y - halfH;
 
-        // ¹Ù¿îµå°¡ Ä«¸Þ¶ó È­¸éº¸´Ù ÀÛÀ¸¸é Áß¾Ó °íÁ¤
         if (minX > maxX)
         {
             float cx = (b.min.x + b.max.x) * 0.5f;
@@ -54,7 +54,6 @@ public class CinemachineClamp2D : CinemachineExtension
             pos.z
         );
 
-        // ÇÙ½É: ÃÖÁ¾ °á°ú¿¡ º¸Á¤°ªÀ» ´õÇØ Ä«¸Þ¶ó¸¦ ¹Ú½º ¾ÈÀ¸·Î ¡°¹Ð¾î³ÖÀ½¡±
         state.PositionCorrection += (clamped - pos);
 
         if (debugDraw)

@@ -1,3 +1,4 @@
+ï»¿// Assets/Script/Camera/CameraManager.cs
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Cinemachine;
@@ -18,15 +19,19 @@ public class CameraManager : MonoBehaviour
     [Header("Single VCam")]
     [SerializeField] private CinemachineVirtualCamera vcam;
 
-    [Header("Clamp Extension (Clamp ÈÄÃ³¸®)")]
+    [Header("Clamp Extension (Clamp í›„ì²˜ë¦¬)")]
     [SerializeField] private CinemachineClamp2D clamp2D;
 
     [Header("Defaults")]
     [SerializeField] private float defaultOrthoSize = 5f;
     [SerializeField] private bool forceNoDamping = true;
 
-    [Header("Auto (¿É¼Ç)")]
+    [Header("Auto (ì˜µì…˜)")]
+    [Tooltip("ì”¬ ë¡œë“œë  ë•Œë§ˆë‹¤ Playerë¥¼ Followë¡œ ìë™ ë°”ì¸ë”©")]
     [SerializeField] private bool autoBindPlayerOnSceneLoad = false;
+
+    [Tooltip("ì”¬ ë¡œë“œë  ë•Œë§ˆë‹¤ vcamì„ ì¬íƒìƒ‰ (ë°°í‹€ì”¬ì²˜ëŸ¼ vcam ì—†ëŠ” ì”¬ ì™•ë³µ ëŒ€ì‘)")]
+    [SerializeField] private bool reacquireVcamOnSceneLoad = true;
 
     [Header("Debug")]
     [SerializeField] private bool debugLog = true;
@@ -36,6 +41,10 @@ public class CameraManager : MonoBehaviour
 
     private Transform _fixedAnchor;
     private Transform _lastFollow;
+
+    // âœ… FollowConfined ìŠ¤ëƒ…ìƒ·ìš©(Clamp2D ë‚´ë¶€ private boundsShapeì— ì ‘ê·¼ ëª»í•˜ë‹ˆ, ì—¬ê¸°ì„œ ë§ˆì§€ë§‰ boundsë¥¼ ê¸°ì–µ)
+    private Collider2D _lastConfineBounds;
+    private string _lastConfineBoundsName = "";
 
     private void Reset()
     {
@@ -53,47 +62,151 @@ public class CameraManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        if (!vcam) vcam = FindObjectOfType<CinemachineVirtualCamera>(true);
-        if (!vcam)
+        EnsureFixedAnchor();
+
+        // âœ… ì”¬ ë¡œë“œì‹œë§ˆë‹¤ vcam ì¬íƒìƒ‰ì„ ìœ„í•´ í•­ìƒ êµ¬ë…
+        SceneManager.sceneLoaded += HandleSceneLoaded;
+
+        // ì²« ì”¬ì—ì„œë„ ìµœëŒ€í•œ ì¡ì•„ë´„
+        ReacquireVcam(null, logWhenMissing: false);
+
+        if (forceNoDamping) ApplyNoDamping();
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
         {
-            Debug.LogError("[CameraManager] CinemachineVirtualCamera(vcam)¸¦ Ã£Áö ¸øÇß½À´Ï´Ù.");
-            return;
+            SceneManager.sceneLoaded -= HandleSceneLoaded;
+            Instance = null;
+        }
+    }
+
+    private void HandleSceneLoaded(Scene s, LoadSceneMode m)
+    {
+        // âœ… ë°°í‹€ì”¬ì²˜ëŸ¼ vcamì´ ì—†ëŠ” ì”¬ ê°”ë‹¤ê°€ ëŒì•„ì˜¤ë©´ ì—¬ê¸°ì„œ ë‹¤ì‹œ ì¡ì•„ì•¼ í•¨
+        if (reacquireVcamOnSceneLoad)
+            ReacquireVcam(null, logWhenMissing: false);
+
+        // (ì˜µì…˜) í”Œë ˆì´ì–´ ìë™ Follow
+        if (autoBindPlayerOnSceneLoad && vcam)
+        {
+            var player = FindPlayerTransform();
+            if (player)
+            {
+                vcam.Follow = player;
+                vcam.PreviousStateIsValid = false;
+
+                if (debugLog) Debug.Log($"[CameraManager] AutoBind Follow -> {player.name} (scene={s.name})");
+            }
         }
 
+        if (forceNoDamping) ApplyNoDamping();
+
+        if (debugLog)
+            Debug.Log($"[CameraManager] sceneLoaded => '{s.name}' vcam={(vcam ? vcam.name : "(null)")} clamp={(clamp2D ? clamp2D.name : "(null)")}");
+
+        // ì”¬ì´ ë°”ë€Œë©´ì„œ bounds ì½œë¼ì´ë”ê°€ íŒŒê´´ëì„ ìˆ˜ë„ ìˆìœ¼ë‹ˆ Unity-null ì²´í¬ë¡œ ì •ë¦¬
+        if (_lastConfineBounds == null) { /* Unity null OK */ }
+    }
+
+    /// <summary>
+    /// âœ… ì”¬ì´ ë°”ë€Œì–´ë„ vcam ì°¸ì¡°ê°€ ê¹¨ì§€ì§€ ì•Šê²Œ, í˜„ì¬ ì”¬ì—ì„œ ë‹¤ì‹œ CinemachineVirtualCameraë¥¼ ì°¾ëŠ”ë‹¤.
+    /// preferredVcamNameì´ ìˆìœ¼ë©´ ê·¸ ì´ë¦„ ìš°ì„ , ì—†ìœ¼ë©´ ì²« ë²ˆì§¸ vcam.
+    /// </summary>
+    public bool ReacquireVcam(string preferredVcamName = null, bool logWhenMissing = true)
+    {
+        // ì‚´ì•„ìˆëŠ” ì°¸ì¡°ë©´ ìœ ì§€ (Unity null ë¹„êµ)
+        if (vcam != null && vcam.gameObject != null)
+            return true;
+
+        CinemachineVirtualCamera found = null;
+
+        var all = FindObjectsOfType<CinemachineVirtualCamera>(true);
+        if (all != null && all.Length > 0)
+        {
+            // ì´ë¦„ ìš°ì„ 
+            if (!string.IsNullOrWhiteSpace(preferredVcamName))
+            {
+                foreach (var c in all)
+                {
+                    if (c && c.name == preferredVcamName) { found = c; break; }
+                }
+            }
+
+            // ëª» ì°¾ì•˜ìœ¼ë©´ ì²« ë²ˆì§¸
+            if (!found)
+            {
+                foreach (var c in all)
+                {
+                    if (c) { found = c; break; }
+                }
+            }
+        }
+
+        vcam = found;
+
+        if (!vcam)
+        {
+            if (logWhenMissing)
+                Debug.LogWarning($"[CameraManager] ReacquireVcam: vcam not found (preferred='{preferredVcamName ?? "null"}')");
+            return false;
+        }
+
+        // clamp2D ë³´ì¥
         if (!clamp2D)
         {
             clamp2D = vcam.GetComponent<CinemachineClamp2D>();
             if (!clamp2D) clamp2D = vcam.gameObject.AddComponent<CinemachineClamp2D>();
         }
 
-        clamp2D.enabled = false;
-        clamp2D.SetBounds(null);
-
-        EnsureFixedAnchor();
-
         if (forceNoDamping) ApplyNoDamping();
 
-        if (autoBindPlayerOnSceneLoad)
-            SceneManager.sceneLoaded += OnSceneLoaded;
+        if (debugLog)
+            Debug.Log($"[CameraManager] ReacquireVcam -> '{vcam.name}' (preferred='{preferredVcamName ?? "null"}')");
+
+        return true;
     }
 
-    private void OnDestroy()
+    // =========================
+    // âœ… Snapshot API (TriggerStep_Sceneì—ì„œ ì“°ëŠ” í•¨ìˆ˜)
+    // =========================
+    public bool TryGetSnapshot(
+        out CameraModeId camMode,
+        out float camOrtho,
+        out Vector3 fixedPos,
+        out string boundsName
+    )
     {
-        if (Instance == this) Instance = null;
-        if (autoBindPlayerOnSceneLoad)
-            SceneManager.sceneLoaded -= OnSceneLoaded;
-    }
+        camMode = CurrentMode;
+        camOrtho = 0f;
+        fixedPos = Vector3.zero;
+        boundsName = "";
 
-    private void OnSceneLoaded(Scene s, LoadSceneMode m)
-    {
-        var player = FindPlayerTransform();
-        if (!player) return;
+        if (!vcam) ReacquireVcam(null, logWhenMissing: false);
+        if (!vcam) return false;
 
-        vcam.Follow = player;
-        vcam.PreviousStateIsValid = false;
+        camOrtho = vcam.m_Lens.OrthographicSize;
 
-        if (forceNoDamping) ApplyNoDamping();
-        if (debugLog) Debug.Log($"[CameraManager] AutoBind Follow -> {player.name} (scene={s.name})");
+        // Fixed/Cutsceneì´ë©´ "ê³ ì • ì•µì»¤"ë¥¼ ì €ì¥
+        if (CurrentMode == CameraModeId.Fixed || CurrentMode == CameraModeId.Cutscene)
+        {
+            fixedPos = _fixedAnchor ? _fixedAnchor.position : vcam.State.FinalPosition;
+        }
+        else
+        {
+            // Follow ê³„ì—´ì´ë©´ ì°¸ê³ ìš©ìœ¼ë¡œ í˜„ì¬ ì¹´ë©”ë¼ ìœ„ì¹˜
+            fixedPos = vcam.State.FinalPosition;
+        }
+
+        // FollowConfinedì´ë©´ ë§ˆì§€ë§‰ìœ¼ë¡œ ì§€ì •ëœ bounds ì´ë¦„ ì €ì¥
+        if (CurrentMode == CameraModeId.FollowConfined)
+        {
+            if (_lastConfineBounds) boundsName = _lastConfineBounds.name;
+            else boundsName = _lastConfineBoundsName ?? "";
+        }
+
+        return true;
     }
 
     // =========================
@@ -101,6 +214,7 @@ public class CameraManager : MonoBehaviour
     // =========================
     public void BeginTransition(bool lockCamera = true)
     {
+        if (!vcam) ReacquireVcam(null, logWhenMissing: false);
         if (!vcam) return;
 
         IsTransitioning = true;
@@ -127,22 +241,28 @@ public class CameraManager : MonoBehaviour
     // =========================
     public void SetFixed(Vector3? lockWorldPos = null, float? orthoSize = null)
     {
+        if (!vcam) ReacquireVcam(null, logWhenMissing: false);
         if (!vcam) return;
 
         EnsureFixedAnchor();
         CurrentMode = CameraModeId.Fixed;
 
-        clamp2D.enabled = false;
-        clamp2D.SetBounds(null);
+        _lastConfineBounds = null;
+        _lastConfineBoundsName = "";
+
+        if (clamp2D)
+        {
+            clamp2D.enabled = false;
+            clamp2D.SetBounds(null);
+        }
 
         Vector3 p = lockWorldPos ?? vcam.State.FinalPosition;
-        p.z = _fixedAnchor.position.z; // 2D: -10 À¯Áö
+        p.z = _fixedAnchor.position.z; // 2D: -10 ìœ ì§€
         _fixedAnchor.position = p;
 
         vcam.Follow = _fixedAnchor;
         vcam.m_Lens.OrthographicSize = orthoSize ?? defaultOrthoSize;
 
-        // Áï½Ã ¹İ¿µ
         vcam.PreviousStateIsValid = false;
         vcam.ForceCameraPosition(new Vector3(p.x, p.y, vcam.transform.position.z), vcam.transform.rotation);
 
@@ -152,17 +272,25 @@ public class CameraManager : MonoBehaviour
 
     public void SetFollowFree(Transform followTarget, float? orthoSize = null)
     {
+        if (!vcam) ReacquireVcam(null, logWhenMissing: false);
         if (!vcam) return;
+
         CurrentMode = CameraModeId.FollowFree;
+
+        _lastConfineBounds = null;
+        _lastConfineBoundsName = "";
 
         if (!followTarget)
         {
-            Debug.LogWarning("[CameraManager] SetFollowFree: followTargetÀÌ null");
+            Debug.LogWarning("[CameraManager] SetFollowFree: followTargetì´ null");
             return;
         }
 
-        clamp2D.enabled = false;
-        clamp2D.SetBounds(null);
+        if (clamp2D)
+        {
+            clamp2D.enabled = false;
+            clamp2D.SetBounds(null);
+        }
 
         vcam.Follow = followTarget;
         vcam.m_Lens.OrthographicSize = orthoSize ?? defaultOrthoSize;
@@ -175,20 +303,29 @@ public class CameraManager : MonoBehaviour
 
     public void SetFollowConfined(Transform followTarget, Collider2D bounds, float? orthoSize = null)
     {
+        if (!vcam) ReacquireVcam(null, logWhenMissing: false);
         if (!vcam) return;
+
         CurrentMode = CameraModeId.FollowConfined;
 
         if (!followTarget)
         {
-            Debug.LogWarning("[CameraManager] SetFollowConfined: followTargetÀÌ null");
+            Debug.LogWarning("[CameraManager] SetFollowConfined: followTargetì´ null");
             return;
         }
+
+        // âœ… ìŠ¤ëƒ…ìƒ·ìš©ìœ¼ë¡œ ê¸°ì–µ
+        _lastConfineBounds = bounds;
+        _lastConfineBoundsName = bounds ? bounds.name : "";
 
         vcam.Follow = followTarget;
         vcam.m_Lens.OrthographicSize = orthoSize ?? defaultOrthoSize;
 
-        clamp2D.enabled = true;
-        clamp2D.SetBounds(bounds);
+        if (clamp2D)
+        {
+            clamp2D.enabled = true;
+            clamp2D.SetBounds(bounds);
+        }
 
         vcam.PreviousStateIsValid = false;
 
@@ -198,13 +335,20 @@ public class CameraManager : MonoBehaviour
 
     public void SetCutscene(Vector3 worldPos, float? orthoSize = null)
     {
+        if (!vcam) ReacquireVcam(null, logWhenMissing: false);
         if (!vcam) return;
 
         EnsureFixedAnchor();
         CurrentMode = CameraModeId.Cutscene;
 
-        clamp2D.enabled = false;
-        clamp2D.SetBounds(null);
+        _lastConfineBounds = null;
+        _lastConfineBoundsName = "";
+
+        if (clamp2D)
+        {
+            clamp2D.enabled = false;
+            clamp2D.SetBounds(null);
+        }
 
         worldPos.z = _fixedAnchor.position.z;
         _fixedAnchor.position = worldPos;
@@ -220,13 +364,8 @@ public class CameraManager : MonoBehaviour
     }
 
     // =========================
-    // Teleport/Route ¿äÃ»(¡Ú¿©±â¼­ Ã¥ÀÓÁö°í Ã³¸®)
+    // Teleport/Route ìš”ì²­
     // =========================
-
-    /// <summary>
-    /// "ÇÃ·¹ÀÌ¾î°¡ ¼ø°£ÀÌµ¿ÇÑ µÚ" Ä«¸Ş¶ó ¸ğµå Àû¿ëÀ» CameraManager°¡ Ã¥ÀÓÁö°í Ã³¸®.
-    /// FixedÀÏ ¶§´Â fixedCameraAnchorPoint°¡ ÀÖÀ¸¸é ±× À§Ä¡¸¦ »ç¿ë.
-    /// </summary>
     public void ApplyAfterTeleport(
         Transform player,
         Vector3 fromPos,
@@ -239,17 +378,14 @@ public class CameraManager : MonoBehaviour
         bool snapCameraWhenFixed = true
     )
     {
+        if (!vcam) ReacquireVcam(null, logWhenMissing: false);
         if (!vcam) return;
 
         Vector3 delta = toPos - fromPos;
-
-        // Fixed/CutsceneÀÏ ¶§ Ä«¸Ş¶ó °íÁ¤ À§Ä¡ °áÁ¤(ÇÃ·¹ÀÌ¾î¿Í ºĞ¸® °¡´É)
         Vector3 fixedPos = fixedCameraAnchorPoint ? fixedCameraAnchorPoint.position : toPos;
 
         if (debugLog)
-        {
             Debug.Log($"[CameraManager] ApplyAfterTeleport mode={afterMode} from={fromPos} to={toPos} fixedPos={fixedPos} bounds={(afterBounds ? afterBounds.name : "(null)")}");
-        }
 
         switch (afterMode)
         {
@@ -259,13 +395,19 @@ public class CameraManager : MonoBehaviour
                 break;
 
             case CameraModeId.FollowConfined:
-                SetFollowConfined(player, afterBounds, afterOrthoSize);
-                if (notifyWarpToCinemachine && player) NotifyTargetWarp(player, delta);
+                if (player)
+                {
+                    SetFollowConfined(player, afterBounds, afterOrthoSize);
+                    if (notifyWarpToCinemachine) NotifyTargetWarp(player, delta);
+                }
                 break;
 
             case CameraModeId.FollowFree:
-                SetFollowFree(player, afterOrthoSize);
-                if (notifyWarpToCinemachine && player) NotifyTargetWarp(player, delta);
+                if (player)
+                {
+                    SetFollowFree(player, afterOrthoSize);
+                    if (notifyWarpToCinemachine) NotifyTargetWarp(player, delta);
+                }
                 break;
 
             case CameraModeId.Cutscene:
@@ -278,24 +420,20 @@ public class CameraManager : MonoBehaviour
     // =========================
     // Warp / Snap
     // =========================
-
-    /// <summary>
-    /// Follow ´ë»óÀÌ ¡°¼ø°£ÀÌµ¿¡± Çß´Ù´Â°É Cinemachine¿¡ ¾Ë·ÁÁÜ
-    /// </summary>
     public void NotifyTargetWarp(Transform warpedTarget, Vector3 delta)
     {
+        if (!vcam) ReacquireVcam(null, logWhenMissing: false);
         if (!vcam || !warpedTarget) return;
+
         vcam.OnTargetObjectWarped(warpedTarget, delta);
         vcam.PreviousStateIsValid = false;
 
         if (debugLog) Debug.Log($"[CameraManager] NotifyTargetWarp target={warpedTarget.name} delta={delta}");
     }
 
-    /// <summary>
-    /// Ä«¸Ş¶ó¸¦ Áï½Ã Æ¯Á¤ ¿ùµå ÁÂÇ¥·Î ¡°½º³À¡±
-    /// </summary>
     public void SnapCameraTo(Vector3 worldPos)
     {
+        if (!vcam) ReacquireVcam(null, logWhenMissing: false);
         if (!vcam) return;
 
         Vector3 p = worldPos;
