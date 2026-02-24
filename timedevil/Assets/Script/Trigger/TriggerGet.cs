@@ -1,4 +1,4 @@
-﻿// Assets/Script/Trigger/TriggerGet.cs
+// Assets/Script/Trigger/TriggerGet.cs
 using UnityEngine;
 
 [RequireComponent(typeof(Collider2D))]
@@ -19,9 +19,8 @@ public class TriggerGet : MonoBehaviour
     [Tooltip("플레이어 판정: PlayerMove 컴포넌트로 체크")]
     public bool usePlayerMoveComponentCheck = true;
 
-    // ✅ (A) 전투만 재진입 방지용 옵션
     [Header("Grace Policy (Return from battle)")]
-    [Tooltip("true면 PlayerReturnContext.IsInGracePeriod 동안 이 트리거는 발동하지 않습니다. (전투 재진입 방지용)")]
+    [Tooltip("true면 PlayerReturnContext.IsInGracePeriod 동안 이 트리거는 발동하지 않습니다.")]
     public bool blockDuringGracePeriod = false;
 
     [Header("Debug")]
@@ -55,7 +54,6 @@ public class TriggerGet : MonoBehaviour
             return;
         }
 
-        // 전투 트리거만 Grace 동안 막기
         if (blockDuringGracePeriod && PlayerReturnContext.IsInGracePeriod)
         {
             if (debugLog)
@@ -66,18 +64,12 @@ public class TriggerGet : MonoBehaviour
         if (maxCalls > 0 && _called >= maxCalls)
             return;
 
-        // 플레이어 판정 + PlayerMove 확보
         PlayerMove pm = null;
         if (usePlayerMoveComponentCheck)
         {
             pm = other.GetComponent<PlayerMove>();
             if (!pm) return;
         }
-
-        _called++;
-
-        if (debugLog)
-            Debug.Log($"[TriggerGet] Fired key='{routeKey}' call={_called}/{(maxCalls <= 0 ? "∞" : maxCalls.ToString())} by='{other.name}'");
 
         var ctx = new TriggerContext(
             trigger: this,
@@ -87,6 +79,13 @@ public class TriggerGet : MonoBehaviour
             playerMove: pm
         );
 
-        router.RequestRoute(routeKey, ctx);
+        bool accepted = router.RequestRoute(routeKey, ctx);
+        if (!accepted)
+            return;
+
+        _called++;
+
+        if (debugLog)
+            Debug.Log($"[TriggerGet] Fired key='{routeKey}' call={_called}/{(maxCalls <= 0 ? "∞" : maxCalls.ToString())} by='{other.name}'");
     }
 }

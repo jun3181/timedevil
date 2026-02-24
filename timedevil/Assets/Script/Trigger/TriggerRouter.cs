@@ -17,7 +17,7 @@ public class TriggerRouter : MonoBehaviour
     public List<Route> routes = new();
 
     [Header("Policy")]
-    [Tooltip("false¸é °°Àº key°¡ ½ÇÇà ÁßÀÏ ¶§ Àç¿äÃ»Àº ¹«½Ã")]
+    [Tooltip("falseë©´ ê°™ì€ keyê°€ ì‹¤í–‰ ì¤‘ì¼ ë•Œ ì¤‘ë³µ ìš”ì²­ì„ ë¬´ì‹œ")]
     public bool allowReentrySameKey = false;
 
     [Header("Debug")]
@@ -33,7 +33,6 @@ public class TriggerRouter : MonoBehaviour
 
     private void OnValidate()
     {
-        // ¿¡µğÅÍ¿¡¼­ Å° Áßº¹ Ã¼Å© µµ¿ò
         BuildMap();
     }
 
@@ -50,13 +49,13 @@ public class TriggerRouter : MonoBehaviour
 
             if (string.IsNullOrWhiteSpace(r.key))
             {
-                if (debugLog) Debug.LogWarning($"[TriggerRouter] routes[{i}] key°¡ ºñ¾îÀÖÀ½");
+                if (debugLog) Debug.LogWarning($"[TriggerRouter] routes[{i}] keyê°€ ë¹„ì—ˆìŠµë‹ˆë‹¤.");
                 continue;
             }
 
             if (_map.ContainsKey(r.key))
             {
-                Debug.LogError($"[TriggerRouter] Route key Áßº¹: '{r.key}' (ÇÏ³ª¸¸ ³²°Ü¾ß ÇÔ)");
+                Debug.LogError($"[TriggerRouter] Route key ì¤‘ë³µ: '{r.key}'");
                 continue;
             }
 
@@ -64,61 +63,87 @@ public class TriggerRouter : MonoBehaviour
         }
     }
 
-    public void RequestRoute(string key, TriggerContext ctx)
+    public bool RequestRoute(string key, TriggerContext ctx)
     {
         if (string.IsNullOrWhiteSpace(key))
         {
-            if (debugLog) Debug.LogWarning("[TriggerRouter] RequestRoute: key°¡ ºñ¾îÀÖÀ½");
-            return;
+            if (debugLog) Debug.LogWarning("[TriggerRouter] RequestRoute: keyê°€ ë¹„ì—ˆìŠµë‹ˆë‹¤.");
+            return false;
         }
 
         if (!_map.TryGetValue(key, out var route) || route == null)
         {
             if (debugLog) Debug.LogWarning($"[TriggerRouter] Route not found: '{key}'");
-            return;
+            return false;
         }
 
         if (!allowReentrySameKey && _runningKeys.Contains(key))
         {
             if (debugLog) Debug.Log($"[TriggerRouter] Ignore (running) key='{key}'");
-            return;
+            return false;
         }
 
         StartCoroutine(CoRunRoute(key, route, ctx));
+        return true;
     }
 
     private IEnumerator CoRunRoute(string key, Route route, TriggerContext ctx)
     {
         _runningKeys.Add(key);
-
         if (debugLog)
             Debug.Log($"[TriggerRouter] START key='{key}' steps={(route.steps != null ? route.steps.Count : 0)} trigger='{(ctx?.trigger ? ctx.trigger.name : "null")}'");
 
-        if (route.steps != null)
+        try
         {
-            for (int i = 0; i < route.steps.Count; i++)
+            if (route.steps != null)
             {
-                var step = route.steps[i];
-                if (!step) continue;
-
-                if (debugLog) Debug.Log($"[TriggerRouter]  step[{i}] -> {step.GetType().Name} ({step.name})");
-
-                IEnumerator it = null;
-                try
+                for (int i = 0; i < route.steps.Count; i++)
                 {
-                    it = step.Execute(ctx);
-                }
-                catch (System.Exception e)
-                {
-                    Debug.LogError($"[TriggerRouter] step[{i}] Execute() throw: {e}");
-                }
+                    var step = route.steps[i];
+                    if (!step) continue;
 
-                if (it != null)
-                    yield return it;
+                    if (debugLog) Debug.Log($"[TriggerRouter]  step[{i}] -> {step.GetType().Name} ({step.name})");
+                    yield return CoRunStepSafe(step, ctx, i, key);
+                }
             }
         }
+        finally
+        {
+            _runningKeys.Remove(key);
+            if (debugLog) Debug.Log($"[TriggerRouter] END key='{key}'");
+        }
+    }
 
-        if (debugLog) Debug.Log($"[TriggerRouter] END key='{key}'");
-        _runningKeys.Remove(key);
+    private IEnumerator CoRunStepSafe(TriggerStepBase step, TriggerContext ctx, int index, string key)
+    {
+        IEnumerator it = null;
+        try
+        {
+            it = step.Execute(ctx);
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[TriggerRouter] key='{key}' step[{index}] Execute() throw: {e}");
+            yield break;
+        }
+
+        if (it == null) yield break;
+
+        while (true)
+        {
+            object current;
+            try
+            {
+                if (!it.MoveNext()) break;
+                current = it.Current;
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"[TriggerRouter] key='{key}' step[{index}] coroutine throw: {e}");
+                yield break;
+            }
+
+            yield return current;
+        }
     }
 }

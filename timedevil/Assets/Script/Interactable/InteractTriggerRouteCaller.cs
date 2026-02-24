@@ -1,13 +1,13 @@
-// Assets/Script/Interactable/TriggerRouterInteraction.cs
+// Assets/Script/Interactable/InteractTriggerRouteCaller.cs
 using UnityEngine;
 
 [DisallowMultipleComponent]
 public class TriggerRouterInteraction : MonoBehaviour, IInteractable
 {
-    [Header("Router (ºñ¿ì¸é ¾À¿¡¼­ ÀÚµ¿ Å½»ö)")]
+    [Header("Router (ë¯¸ì§€ì • ì‹œ ìë™ íƒìƒ‰)")]
     [SerializeField] private TriggerRouter router;
 
-    [Header("Route Key (ÇÊ¼ö)")]
+    [Header("Route Key (í•„ìˆ˜)")]
     [SerializeField] private string routeKey = "Trigger1";
 
     [Header("Policy")]
@@ -26,7 +26,7 @@ public class TriggerRouterInteraction : MonoBehaviour, IInteractable
     {
         if (string.IsNullOrWhiteSpace(routeKey))
         {
-            if (debugLog) Debug.LogWarning("[TriggerRouterInteraction] routeKey°¡ ºñ¾îÀÖ½À´Ï´Ù.", this);
+            if (debugLog) Debug.LogWarning("[TriggerRouterInteraction] routeKeyê°€ ë¹„ì–´ìˆìŠµë‹ˆë‹¤.", this);
             return;
         }
 
@@ -35,7 +35,7 @@ public class TriggerRouterInteraction : MonoBehaviour, IInteractable
             router = FindObjectOfType<TriggerRouter>(true);
             if (!router)
             {
-                if (debugLog) Debug.LogWarning("[TriggerRouterInteraction] TriggerRouter¸¦ Ã£Áö ¸øÇß½À´Ï´Ù.", this);
+                if (debugLog) Debug.LogWarning("[TriggerRouterInteraction] TriggerRouterë¥¼ ì°¾ì§€ ëª»í–ˆìŠµë‹ˆë‹¤.", this);
                 return;
             }
         }
@@ -46,27 +46,33 @@ public class TriggerRouterInteraction : MonoBehaviour, IInteractable
         if (blockIfGameActionLocked && GameManager.Instance != null && GameManager.Instance.isAction)
             return;
 
-        // PlayerMove ±â¹İÀ¸·Î TriggerContext ±¸¼º
         var pm = FindObjectOfType<PlayerMove>(true);
         if (!pm)
         {
-            if (debugLog) Debug.LogWarning("[TriggerRouterInteraction] PlayerMove¸¦ Ã£Áö ¸øÇß½À´Ï´Ù.", this);
+            if (debugLog) Debug.LogWarning("[TriggerRouterInteraction] PlayerMoveë¥¼ ì°¾ì§€ ëª»í–ˆìŠµë‹ˆë‹¤.", this);
             return;
         }
 
-        var col = pm.GetComponent<Collider2D>(); // ¾ø¾îµµ ctx¿¡´Â null·Î µé¾î°¡µµ µÊ
+        var col = pm.GetComponent<Collider2D>();
 
         var ctx = new TriggerContext(
-            trigger: null,                 // TriggerGet ±â¹İÀÌ ¾Æ´Ï¶ó¼­ null
+            trigger: null,
             router: router,
-            instigator: pm.gameObject,     // »óÈ£ÀÛ¿ë ÁÖÃ¼ = ÇÃ·¹ÀÌ¾î
+            instigator: pm.gameObject,
             instigatorCollider: col,
             playerMove: pm
         );
 
-        if (debugLog)
-            Debug.Log($"[TriggerRouterInteraction] RequestRoute key='{routeKey}' by='{pm.name}'", this);
+        bool accepted = router.RequestRoute(routeKey, ctx);
 
-        router.RequestRoute(routeKey, ctx);
+        if (debugLog)
+        {
+            Debug.Log(
+                accepted
+                    ? $"[TriggerRouterInteraction] RequestRoute ACCEPT key='{routeKey}' by='{pm.name}'"
+                    : $"[TriggerRouterInteraction] RequestRoute REJECT key='{routeKey}' by='{pm.name}'",
+                this
+            );
+        }
     }
 }

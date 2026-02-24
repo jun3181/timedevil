@@ -145,3 +145,35 @@
 - 대화/입력 잠금,
 - 저장/복귀/카메라 복원
 을 붙여 **"스토리 진행형 RPG 루프"**를 구현한 프로젝트로 정리할 수 있습니다.
+
+
+---
+
+## 6) 트리거 기반 이벤트 시퀀스 점검 결과
+
+### 현재 구조 평가
+- 장점
+  - `TriggerGet`(감지) - `TriggerRouter`(라우팅) - `TriggerStepBase`(행동)로 책임이 분리되어 확장성이 좋습니다.
+  - `routeKey` 기반으로 step 체인을 인스펙터에서 조합 가능해, 코드 수정 없이 연출 시퀀스 변경이 쉽습니다.
+  - `TriggerContext`를 통해 instigator/player 정보를 step에 전달하는 방식이 일관적입니다.
+
+- 리스크
+  - 기존 구현은 step 코루틴 내부에서 예외가 나면 로그만 남기고 흐름/상태 정리가 애매해질 수 있었습니다.
+  - 기존 구현은 라우트 요청이 실제로 수락되지 않아도 호출 카운트를 먼저 올릴 수 있어, `maxCalls`가 의도보다 빨리 소모될 여지가 있었습니다.
+
+### 이번 리팩토링 반영 사항
+1. `TriggerRouter.RequestRoute`를 `bool` 반환으로 변경
+   - 라우트 수락/거절을 호출자(`TriggerGet`, `TriggerRouterInteraction`)가 알 수 있게 했습니다.
+2. `TriggerRouter`에 step 안전 실행 래퍼(`CoRunStepSafe`) 추가
+   - `Execute()` 호출 예외 + 코루틴 진행 중 예외를 각각 잡아 로그를 남기고 라우트를 안전 종료합니다.
+3. `TriggerRouter.CoRunRoute`에 `try/finally` 적용
+   - 중간 예외가 발생해도 `_runningKeys`가 반드시 해제되도록 보장했습니다.
+4. `TriggerGet` 호출 카운트 정책 보정
+   - 라우트 요청이 **수락된 경우에만** `_called`를 증가시키도록 변경했습니다.
+5. `TriggerRouterInteraction`도 수락/거절 로그를 구분
+   - 디버깅 시 "왜 안 실행됐는지"를 더 빠르게 파악할 수 있습니다.
+
+### 추가로 고려할 만한 후속 개선(권장)
+- `Route`를 ScriptableObject로 분리해 씬 간 재사용성 확보
+- step 단위 타임아웃/취소 토큰을 추가해 무한 대기 방지
+- 라우트 실행 결과(성공/실패/중단) 이벤트를 발행해 QA 로깅 강화
