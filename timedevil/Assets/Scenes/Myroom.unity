@@ -8973,7 +8973,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 366523681}
-  - component: {fileID: 366523680}
   - component: {fileID: 366523682}
   m_Layer: 0
   m_Name: MyroomSpawn
@@ -8982,23 +8981,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &366523680
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 366523679}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f7457d010730dbb4caebe8af316ac02b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  room1Spawn: {fileID: 1654203658}
-  room2Spawn: {fileID: 1441476856}
-  forceClearActionLocksOnStart: 1
-  maxFindPlayerFrames: 60
-  keepPlayerZ: 1
 --- !u!4 &366523681
 Transform:
   m_ObjectHideFlags: 0
@@ -14529,7 +14511,7 @@ MonoBehaviour:
   castRadius: 0.18
   interactMask:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 968
   debugLog: 1
   debugDraw: 1
 --- !u!114 &780439225
@@ -24368,6 +24350,12 @@ MonoBehaviour:
   autoPlayPolicy: 1
   restrictToScene: 1
   onlySceneName: Myroom
+  skipIfSaveExists: 1
+  saveFiles:
+  - player.json
+  - cards.json
+  - progress.json
+  - items_save.json
   seenPrefKey: Myroom_UISequence_Seen_v1
   markSeenOnFinish: 1
   resetSeenOnNewGameStart: 1
@@ -25681,7 +25669,7 @@ GameObject:
   - component: {fileID: 1541091545}
   - component: {fileID: 1541091546}
   m_Layer: 0
-  m_Name: TeleportTrigger (1)
+  m_Name: TeleportDream
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -25714,7 +25702,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61928809365b3f84d88b83091a53fece, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  sceneName: Move_Tutorial
+  sceneName: chapter1
   loadMode: 0
   useSceneVisitEffectRunner: 1
   runnerOverride: {fileID: 221744662}

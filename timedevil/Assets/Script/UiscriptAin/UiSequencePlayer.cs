@@ -1,6 +1,7 @@
-// Assets/Script/UI/UiSequencePlayer.cs
+ï»¿// Assets/Script/UI/UiSequencePlayer.cs
 using System;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -13,35 +14,47 @@ public class UiSequencePlayer : MonoBehaviour
         OnlyLoadGame
     }
 
-    [Header("¼ø¼­´ë·Î º¸¿©ÁÙ ¿ÀºêÁ§Æ®")]
+    [Header("ìˆœì„œëŒ€ë¡œ ë³´ì—¬ì¤„ ì˜¤ë¸Œì íŠ¸")]
     [SerializeField] private List<GameObject> uiSteps = new List<GameObject>();
 
-    [Header("ÀÔ·Â Å°")]
+    [Header("ì…ë ¥ í‚¤")]
     [SerializeField] private KeyCode nextKey = KeyCode.E;
 
-    [Header("¾À ½ÃÀÛ ½Ã ÀÚµ¿ ½ÃÀÛ")]
+    [Header("ì”¬ ì‹œì‘ ì‹œ ìë™ ì‹œì‘")]
     [SerializeField] private bool playOnStart = true;
 
-    [Header("ÀÚµ¿Àç»ı Á¶°Ç")]
+    [Header("ìë™ì¬ìƒ ì¡°ê±´")]
     [SerializeField] private AutoPlayPolicy autoPlayPolicy = AutoPlayPolicy.OnlyNewGame;
 
-    [Header("Scene Á¦ÇÑ(¼±ÅÃ)")]
+    [Header("Scene ì œí•œ(ì„ íƒ)")]
     [SerializeField] private bool restrictToScene = true;
     [SerializeField] private string onlySceneName = "Myroom";
 
-    [Header("ºÃÀ½(1È¸) Á¤Ã¥")]
-    [Tooltip("ÀÌ¹Ì ºÃÀ¸¸é(1) ÀÚµ¿ Àç»ı ½ºÅµ. (LoadGame ÂÊ¿¡¼­ ÁÖ·Î À¯È¿)")]
+    [Header("Save íŒŒì¼ ì¡´ì¬ ì‹œ ìë™ ìŠ¤í‚µ(ì˜µì…˜)")]
+    [SerializeField] private bool skipIfSaveExists = true;
+
+    [SerializeField]
+    private List<string> saveFiles = new List<string>
+    {
+        "player.json",
+        "cards.json",
+        "progress.json",
+        "items_save.json"
+    };
+
+    [Header("ë´¤ìŒ(1íšŒ) ì •ì±…")]
+    [Tooltip("ì´ë¯¸ ë´¤ìœ¼ë©´(1) ìë™ ì¬ìƒ ìŠ¤í‚µ. (LoadGame ìª½ì—ì„œ ì£¼ë¡œ ìœ íš¨)")]
     [SerializeField] private string seenPrefKey = "Myroom_UISequence_Seen_v1";
     [SerializeField] private bool markSeenOnFinish = true;
 
-    [Tooltip("»õ °ÔÀÓ ¹öÆ°À» ´­·¯¼­ µé¾î¿Â °æ¿ì, ÀÌ¹ø 1È¸¿¡ ÇÑÇØ seenPrefKey¸¦ ÀÚµ¿ ÃÊ±âÈ­(=¹«Á¶°Ç Àç»ı º¸Àå)")]
+    [Tooltip("ìƒˆ ê²Œì„ ë²„íŠ¼ì„ ëˆŒëŸ¬ì„œ ë“¤ì–´ì˜¨ ê²½ìš°, ì´ë²ˆ 1íšŒì— í•œí•´ seenPrefKeyë¥¼ ìë™ ì´ˆê¸°í™”(=ë¬´ì¡°ê±´ ì¬ìƒ ë³´ì¥)")]
     [SerializeField] private bool resetSeenOnNewGameStart = true;
 
-    [Header("¿Ï·á Ã³¸®")]
+    [Header("ì™„ë£Œ ì²˜ë¦¬")]
     [SerializeField] private bool hideAllWhenFinished = true;
     [SerializeField] private bool loop = false;
 
-    [Header("Input Lock (WASD ¿ÏÀü Â÷´Ü)")]
+    [Header("Input Lock (WASD ì™„ì „ ì°¨ë‹¨)")]
     [SerializeField] private bool lockActionViaGameManager = true;
     [SerializeField] private bool disablePlayerMoveComponent = true;
 
@@ -55,7 +68,7 @@ public class UiSequencePlayer : MonoBehaviour
     private PlayerMove _pmCached = null;
     private bool _pmWasEnabled = false;
 
-    // NewGame ÅäÅ«´ç 1¹ø¸¸ seen Å° ÃÊ±âÈ­
+    // NewGame í† í°ë‹¹ 1ë²ˆë§Œ seen í‚¤ ì´ˆê¸°í™”
     private static int s_lastResetToken = -1;
 
     private void Start()
@@ -65,7 +78,11 @@ public class UiSequencePlayer : MonoBehaviour
         if (!playOnStart) return;
         if (!ShouldAutoPlayNow()) return;
 
-        // »õ °ÔÀÓ¿¡¼­¸¸: ÀÌ¹ø "¹öÆ° Å¬¸¯ ÅäÅ«"¿¡ ´ëÇØ 1È¸ seen ÃÊ±âÈ­
+        // âœ… ì €ì¥ íŒŒì¼ì´ í•˜ë‚˜ë¼ë„ ìˆìœ¼ë©´ ìë™ ìŠ¤í‚µ
+        if (skipIfSaveExists && HasAnySaveFile())
+            return;
+
+        // âœ… ìƒˆ ê²Œì„ì—ì„œë§Œ: ì´ë²ˆ "ë²„íŠ¼ í´ë¦­ í† í°"ì— ëŒ€í•´ 1íšŒ seen ì´ˆê¸°í™”
         if (resetSeenOnNewGameStart &&
             GameStartContext.Mode == GameStartMode.NewGame &&
             s_lastResetToken != GameStartContext.StartToken)
@@ -79,7 +96,7 @@ public class UiSequencePlayer : MonoBehaviour
             }
         }
 
-        // (seen Ã¼Å©´Â ÃÊ±âÈ­ ÀÌÈÄ¿¡)
+        // âœ… (seen ì²´í¬ëŠ” ì´ˆê¸°í™” ì´í›„ì—)
         if (!string.IsNullOrEmpty(seenPrefKey) && PlayerPrefs.GetInt(seenPrefKey, 0) == 1)
             return;
 
@@ -116,6 +133,22 @@ public class UiSequencePlayer : MonoBehaviour
             default:
                 return true;
         }
+    }
+
+    private bool HasAnySaveFile()
+    {
+        if (saveFiles == null || saveFiles.Count == 0) return false;
+
+        string root = Application.persistentDataPath;
+        for (int i = 0; i < saveFiles.Count; i++)
+        {
+            string f = saveFiles[i];
+            if (string.IsNullOrWhiteSpace(f)) continue;
+
+            string full = Path.Combine(root, f);
+            if (File.Exists(full)) return true;
+        }
+        return false;
     }
 
     public void PlayFromStart()

@@ -11,7 +11,7 @@ public class PlayerInteractor : MonoBehaviour
     [SerializeField] private float castDistance = 0.35f;
     [SerializeField] private float castRadius = 0.18f;
 
-    [Header("Layer (Dialog/teleport/item_get/Object)")]
+    [Header("Layer (always included)")]
     [SerializeField] private LayerMask interactMask;
 
     [Header("Debug")]
@@ -22,22 +22,48 @@ public class PlayerInteractor : MonoBehaviour
     private GameObject currentTarget;
     private IInteractable currentInteractable;
 
+    private static readonly string[] RequiredLayers =
+        { "Dialog", "teleport", "item_get", "Object", "Save" };
+
     private void Reset()
     {
         move ??= GetComponent<PlayerMove>();
-
-        // ✅ Object 추가
-        if (interactMask.value == 0)
-            interactMask = LayerMask.GetMask("Dialog", "teleport", "item_get", "Object");
+        EnsureMaskIncludesRequired();
     }
 
     private void Awake()
     {
         if (!move) move = GetComponent<PlayerMove>();
+        EnsureMaskIncludesRequired();
+    }
 
-        // ✅ Object 추가
-        if (interactMask.value == 0)
-            interactMask = LayerMask.GetMask("Dialog", "teleport", "item_get", "Object");
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        // 인스펙터에서 레이어 마스크가 꼬여도 자동으로 포함되게
+        EnsureMaskIncludesRequired();
+    }
+#endif
+
+    private void EnsureMaskIncludesRequired()
+    {
+        int requiredMask = 0;
+
+        for (int i = 0; i < RequiredLayers.Length; i++)
+        {
+            string layerName = RequiredLayers[i];
+            int layer = LayerMask.NameToLayer(layerName);
+            if (layer < 0)
+            {
+                if (debugLog)
+                    Debug.LogWarning($"[PlayerInteractor] Layer '{layerName}' not found. (Project Settings > Tags and Layers 확인)");
+                continue;
+            }
+            requiredMask |= (1 << layer);
+        }
+
+        // ✅ 인스펙터에 뭐가 들어있든, 요구 레이어는 "항상" 포함
+        interactMask |= requiredMask;
     }
 
     private void Update()
