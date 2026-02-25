@@ -64,22 +64,11 @@ public class PlayerMainManager : MonoBehaviour
         }
 
         // =========================
-        // CUTSCENE / ACTION LOCK (대화는 위에서 처리했으니 여기선 제외)
-        // =========================
-        if (IsInputBlockedByCutsceneOnly(out string blockReason))
-        {
-            LogBlockState(true, blockReason);
-            move?.SetMoveInput(0, 0, false, false, false, false);
-            return;
-        }
-
-        LogBlockState(false, "");
-
-        // =========================
-        // MENU MODE
+        // MENU MODE (메뉴가 열려 있으면 ActionLock보다 우선 처리)
         // =========================
         if (menu != null && menu.IsOpen)
         {
+            LogBlockState(false, "");
             move?.SetMoveInput(0, 0, false, false, false, false);
 
             // 메뉴 닫기: Q 또는 W
@@ -96,6 +85,18 @@ public class PlayerMainManager : MonoBehaviour
             if (Input.GetKeyDown(keyInteractOrSubmit)) menu.SubmitCurrent();
             return;
         }
+
+        // =========================
+        // CUTSCENE / ACTION LOCK (대화/메뉴는 위에서 처리)
+        // =========================
+        if (IsInputBlockedByCutsceneOnly(out string blockReason))
+        {
+            LogBlockState(true, blockReason);
+            move?.SetMoveInput(0, 0, false, false, false, false);
+            return;
+        }
+
+        LogBlockState(false, "");
 
         // =========================
         // WORLD MODE
@@ -154,8 +155,10 @@ public class PlayerMainManager : MonoBehaviour
     {
         reason = "";
 
+        bool menuOpen = (menu != null && menu.IsOpen);
+
         bool gmLock = (gameManager != null && gameManager.isAction);
-        if (gmLock)
+        if (gmLock && !menuOpen)
         {
             reason = "GameManager.isAction=true";
             return true;
