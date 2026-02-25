@@ -43,7 +43,7 @@ public class MenuController : MonoBehaviour
         if (menuUI) menuUI.SetActive(true);
         isPaused = true;
 
-        if (manager != null) manager.isAction = true;
+        if (manager != null) manager.LockAction();
 
         Time.timeScale = 0f;
         HighlightCurrent();
@@ -58,7 +58,7 @@ public class MenuController : MonoBehaviour
         if (menuUI) menuUI.SetActive(false);
         isPaused = false;
 
-        if (manager != null) manager.isAction = false;
+        if (manager != null) manager.UnlockAction();
 
         Time.timeScale = 1f;
     }
