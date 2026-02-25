@@ -8,10 +8,17 @@ public class SavePointInteractable : MonoBehaviour, IInteractable
     [SerializeField] private AudioClip saveClip;
 
     [Header("Progress Save (Scene/Pos/Camera)")]
-    [Tooltip("progress.jsonÀÇ lastSceneName¿¡ ÀúÀåÇÒ ¾À. ºñ¿ì¸é 'ÇöÀç ¾À'")]
+    [Header("Developer Overrides (Priority)")]
+    [Tooltip("Use developer-defined transforms before runtime positions when saving.")]
+    [SerializeField] private bool preferDeveloperOverrides = true;
+
+    [Tooltip("Override player save position. If empty, uses runtime player position.")]
+    [SerializeField] private Transform playerPositionOverride;
+
+    [Tooltip("progress.jsonì˜ lastSceneNameì— ì €ì¥í•  ì”¬. ë¹„ìš°ë©´ 'í˜„ì¬ ì”¬'")]
     [SerializeField] private string overrideSceneName = "";
 
-    [Tooltip("ÇÃ·¹ÀÌ¾î À§Ä¡¸¦ progress.json¿¡ ÀúÀå")]
+    [Tooltip("í”Œë ˆì´ì–´ ìœ„ì¹˜ë¥¼ progress.jsonì— ì €ì¥")]
     [SerializeField] private bool savePlayerPosition = true;
 
     [Header("Camera Save (Inspector Override)")]
@@ -19,13 +26,13 @@ public class SavePointInteractable : MonoBehaviour, IInteractable
 
     [SerializeField] private CameraModeId cameraMode = CameraModeId.FollowFree;
 
-    [Tooltip("0ÀÌ¸é CameraManager ±âº»°ª À¯Áö")]
+    [Tooltip("0ì´ë©´ CameraManager ê¸°ë³¸ê°’ ìœ ì§€")]
     [SerializeField] private float orthoSize = 0f;
 
-    [Tooltip("Fixed/CutsceneÀÏ ¶§ ÀúÀåÇÒ Ä«¸Ş¶ó °íÁ¤ À§Ä¡. ºñ¿ì¸é ÇÃ·¹ÀÌ¾î À§Ä¡ »ç¿ë")]
+    [Tooltip("Fixed/Cutsceneì¼ ë•Œ ì €ì¥í•  ì¹´ë©”ë¼ ê³ ì • ìœ„ì¹˜. ë¹„ìš°ë©´ í”Œë ˆì´ì–´ ìœ„ì¹˜ ì‚¬ìš©")]
     [SerializeField] private Transform fixedCameraAnchor;
 
-    [Tooltip("FollowConfinedÀÏ ¶§ ÀúÀåÇÒ bounds. (ÀÌ¸§À¸·Î ÀúÀåµÊ)")]
+    [Tooltip("FollowConfinedì¼ ë•Œ ì €ì¥í•  bounds. (ì´ë¦„ìœ¼ë¡œ ì €ì¥ë¨)")]
     [SerializeField] private Collider2D confinerBounds;
 
     [Header("Debug")]
@@ -39,13 +46,25 @@ public class SavePointInteractable : MonoBehaviour, IInteractable
         if (gameObject.layer != LayerMask.NameToLayer("Save") && debugLog)
             Debug.LogWarning($"[SavePoint] '{name}' is not on 'Save' layer (but still saving).");
 
-        // 1) progress ÀúÀå
+        // 1) progress ì €ì¥
         SaveProgressOnly();
 
-        // 2) ³ª¸ÓÁö ÀúÀå
-        SaveSystem.SaveCards();
-        SaveSystem.SaveItems();
-        SaveSystem.SavePlayerData();
+            if (preferDeveloperOverrides && playerPositionOverride != null)
+            {
+                data.playerPos = playerPositionOverride.position;
+            }
+            else
+            {
+                var p = SaveSystem.ResolvePlayerTransform();
+                if (p != null) data.playerPos = p.position;
+            }
+                if (preferDeveloperOverrides && playerPositionOverride != null)
+                    fixedPos = playerPositionOverride.position;
+                else
+                {
+                    var p = SaveSystem.ResolvePlayerTransform();
+                    fixedPos = (p != null) ? p.position : Vector3.zero;
+                }
 
         if (sfx && saveClip) sfx.PlayOneShot(saveClip);
 
@@ -56,28 +75,28 @@ public class SavePointInteractable : MonoBehaviour, IInteractable
     {
         var data = ProgressSaveStore.Load();
 
-        // ¾À
+        // ì”¬
         data.lastSceneName = !string.IsNullOrEmpty(overrideSceneName)
             ? overrideSceneName
             : SceneManager.GetActiveScene().name;
 
         data.unixTimeUtc = System.DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
-        // ÇÃ·¹ÀÌ¾î ÁÂÇ¥
+        // í”Œë ˆì´ì–´ ì¢Œí‘œ
         if (savePlayerPosition)
         {
             var p = SaveSystem.ResolvePlayerTransform();
             if (p != null) data.playerPos = p.position;
         }
 
-        // Ä«¸Ş¶ó(ÀÎ½ºÆåÅÍ ÁöÁ¤°ª ÀúÀå)
+        // ì¹´ë©”ë¼(ì¸ìŠ¤í™í„° ì§€ì •ê°’ ì €ì¥)
         if (saveCamera)
         {
             data.hasCamera = true;
             data.cameraMode = cameraMode;
             data.cameraOrthoSize = orthoSize;
 
-            // Fixed/Cutscene °íÁ¤ À§Ä¡
+            // Fixed/Cutscene ê³ ì • ìœ„ì¹˜
             Vector3 fixedPos = Vector3.zero;
             if (fixedCameraAnchor != null) fixedPos = fixedCameraAnchor.position;
             else
@@ -87,7 +106,7 @@ public class SavePointInteractable : MonoBehaviour, IInteractable
             }
             data.cameraFixedPos = fixedPos;
 
-            // Confined bounds ÀÌ¸§ ÀúÀå
+            // Confined bounds ì´ë¦„ ì €ì¥
             data.cameraBoundsName = (confinerBounds != null) ? confinerBounds.name : null;
         }
         else
