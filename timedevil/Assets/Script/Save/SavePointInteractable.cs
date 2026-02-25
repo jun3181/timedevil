@@ -8,6 +8,12 @@ public class SavePointInteractable : MonoBehaviour, IInteractable
     [SerializeField] private AudioClip saveClip;
 
     [Header("Progress Save (Scene/Pos/Camera)")]
+    [Tooltip("If set, saves this scene name to progress.json lastSceneName. Otherwise uses current scene name.")]
+    [SerializeField] private string overrideSceneName = "";
+
+    [Tooltip("Save player position to progress.json")]
+    [SerializeField] private bool savePlayerPosition = true;
+
     [Header("Developer Overrides (Priority)")]
     [Tooltip("Use developer-defined transforms before runtime positions when saving.")]
     [SerializeField] private bool preferDeveloperOverrides = true;
@@ -15,24 +21,17 @@ public class SavePointInteractable : MonoBehaviour, IInteractable
     [Tooltip("Override player save position. If empty, uses runtime player position.")]
     [SerializeField] private Transform playerPositionOverride;
 
-    [Tooltip("progress.json의 lastSceneName에 저장할 씬. 비우면 '현재 씬'")]
-    [SerializeField] private string overrideSceneName = "";
-
-    [Tooltip("플레이어 위치를 progress.json에 저장")]
-    [SerializeField] private bool savePlayerPosition = true;
-
     [Header("Camera Save (Inspector Override)")]
     [SerializeField] private bool saveCamera = true;
-
     [SerializeField] private CameraModeId cameraMode = CameraModeId.FollowFree;
 
-    [Tooltip("0이면 CameraManager 기본값 유지")]
+    [Tooltip("0 keeps CameraManager default size")]
     [SerializeField] private float orthoSize = 0f;
 
-    [Tooltip("Fixed/Cutscene일 때 저장할 카메라 고정 위치. 비우면 플레이어 위치 사용")]
+    [Tooltip("Fixed/Cutscene camera anchor. If empty, uses player position fallback.")]
     [SerializeField] private Transform fixedCameraAnchor;
 
-    [Tooltip("FollowConfined일 때 저장할 bounds. (이름으로 저장됨)")]
+    [Tooltip("Bounds for FollowConfined mode (resolved by name on load)")]
     [SerializeField] private Collider2D confinerBounds;
 
     [Header("Debug")]
@@ -46,25 +45,13 @@ public class SavePointInteractable : MonoBehaviour, IInteractable
         if (gameObject.layer != LayerMask.NameToLayer("Save") && debugLog)
             Debug.LogWarning($"[SavePoint] '{name}' is not on 'Save' layer (but still saving).");
 
-        // 1) progress 저장
+        // 1) Progress save
         SaveProgressOnly();
 
-            if (preferDeveloperOverrides && playerPositionOverride != null)
-            {
-                data.playerPos = playerPositionOverride.position;
-            }
-            else
-            {
-                var p = SaveSystem.ResolvePlayerTransform();
-                if (p != null) data.playerPos = p.position;
-            }
-                if (preferDeveloperOverrides && playerPositionOverride != null)
-                    fixedPos = playerPositionOverride.position;
-                else
-                {
-                    var p = SaveSystem.ResolvePlayerTransform();
-                    fixedPos = (p != null) ? p.position : Vector3.zero;
-                }
+        // 2) Other saves
+        SaveSystem.SaveCards();
+        SaveSystem.SaveItems();
+        SaveSystem.SavePlayerData();
 
         if (sfx && saveClip) sfx.PlayOneShot(saveClip);
 
@@ -75,38 +62,47 @@ public class SavePointInteractable : MonoBehaviour, IInteractable
     {
         var data = ProgressSaveStore.Load();
 
-        // 씬
         data.lastSceneName = !string.IsNullOrEmpty(overrideSceneName)
             ? overrideSceneName
             : SceneManager.GetActiveScene().name;
 
         data.unixTimeUtc = System.DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
-        // 플레이어 좌표
         if (savePlayerPosition)
         {
-            var p = SaveSystem.ResolvePlayerTransform();
-            if (p != null) data.playerPos = p.position;
+            if (preferDeveloperOverrides && playerPositionOverride != null)
+            {
+                data.playerPos = playerPositionOverride.position;
+            }
+            else
+            {
+                var p = SaveSystem.ResolvePlayerTransform();
+                if (p != null) data.playerPos = p.position;
+            }
         }
 
-        // 카메라(인스펙터 지정값 저장)
         if (saveCamera)
         {
             data.hasCamera = true;
             data.cameraMode = cameraMode;
             data.cameraOrthoSize = orthoSize;
 
-            // Fixed/Cutscene 고정 위치
-            Vector3 fixedPos = Vector3.zero;
-            if (fixedCameraAnchor != null) fixedPos = fixedCameraAnchor.position;
+            Vector3 fixedPos;
+            if (fixedCameraAnchor != null)
+            {
+                fixedPos = fixedCameraAnchor.position;
+            }
+            else if (preferDeveloperOverrides && playerPositionOverride != null)
+            {
+                fixedPos = playerPositionOverride.position;
+            }
             else
             {
                 var p = SaveSystem.ResolvePlayerTransform();
                 fixedPos = (p != null) ? p.position : Vector3.zero;
             }
-            data.cameraFixedPos = fixedPos;
 
-            // Confined bounds 이름 저장
+            data.cameraFixedPos = fixedPos;
             data.cameraBoundsName = (confinerBounds != null) ? confinerBounds.name : null;
         }
         else
