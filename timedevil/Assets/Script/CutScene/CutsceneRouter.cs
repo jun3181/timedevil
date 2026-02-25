@@ -248,6 +248,14 @@ public class CutsceneRouter : MonoBehaviour
         }
     }
 
+
+    private void OnDisable()
+    {
+        // 씬 전환/오브젝트 비활성화로 코루틴이 중단될 때 입력 잠금이 남지 않도록 안전 해제
+        EndInputLockIfHeld();
+        _running = false;
+    }
+
     private static string BuildStartKeyFlag(string key)
         => string.IsNullOrWhiteSpace(key) ? string.Empty : $"cutscene.start.used:{key}";
 
