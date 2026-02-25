@@ -1,5 +1,5 @@
-// Assets/Script/Save/SavePointInteractable.cs
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class SavePointInteractable : MonoBehaviour, IInteractable
 {
@@ -7,67 +7,96 @@ public class SavePointInteractable : MonoBehaviour, IInteractable
     [SerializeField] private AudioSource sfx;
     [SerializeField] private AudioClip saveClip;
 
-    [Header("Progress Override (optional)")]
-    [Tooltip("progress.json에 저장할 씬 이름을 강제로 지정. 비우면 현재 씬 이름 저장")]
-    [SerializeField] private bool overrideSceneName = false;
-    [SerializeField] private string sceneNameToSave = "";
+    [Header("Progress Save (Scene/Pos/Camera)")]
+    [Tooltip("progress.json의 lastSceneName에 저장할 씬. 비우면 '현재 씬'")]
+    [SerializeField] private string overrideSceneName = "";
 
-    [Tooltip("플레이어 위치 대신 이 포인트 위치를 저장하고 싶으면 체크")]
-    [SerializeField] private bool overridePlayerPos = false;
-    [SerializeField] private Transform playerPosOverride;
+    [Tooltip("플레이어 위치를 progress.json에 저장")]
+    [SerializeField] private bool savePlayerPosition = true;
 
-    [Header("Cutscene Key (optional)")]
-    [Tooltip("저장할 때 '키를 받았다' 플래그를 progress.json에 추가")]
-    [SerializeField] private bool addCutsceneKeyFlag = false;
-    [SerializeField] private string cutsceneKey = "CutScene1"; // 씬마다 늘어날 키
+    [Header("Camera Save (Inspector Override)")]
+    [SerializeField] private bool saveCamera = true;
 
-    [Header("Camera Save (inspector-defined)")]
-    [SerializeField] private bool overrideCamera = true;
     [SerializeField] private CameraModeId cameraMode = CameraModeId.FollowFree;
-    [SerializeField] private float cameraOrthoSize = 0f;
 
-    [Tooltip("Fixed/Cutscene일 때 저장할 카메라 고정 위치(비우면 이 오브젝트 위치 사용)")]
-    [SerializeField] private Transform fixedCameraPosOverride;
+    [Tooltip("0이면 CameraManager 기본값 유지")]
+    [SerializeField] private float orthoSize = 0f;
 
-    [Tooltip("FollowConfined일 때 저장할 bounds (이름으로 저장됨)")]
-    [SerializeField] private Collider2D confinerBoundsOverride;
+    [Tooltip("Fixed/Cutscene일 때 저장할 카메라 고정 위치. 비우면 플레이어 위치 사용")]
+    [SerializeField] private Transform fixedCameraAnchor;
+
+    [Tooltip("FollowConfined일 때 저장할 bounds. (이름으로 저장됨)")]
+    [SerializeField] private Collider2D confinerBounds;
 
     [Header("Debug")]
     [SerializeField] private bool debugLog = true;
 
     public void Interact()
     {
-        // (선택) 대화 중 저장 막기
         if (DialogueManager.instance != null && DialogueManager.instance.isDialogueActive)
             return;
 
-        var req = new SaveSystem.SaveRequest();
+        if (gameObject.layer != LayerMask.NameToLayer("Save") && debugLog)
+            Debug.LogWarning($"[SavePoint] '{name}' is not on 'Save' layer (but still saving).");
 
-        // 씬 이름
-        req.overrideSceneName = overrideSceneName;
-        req.sceneName = sceneNameToSave;
+        // 1) progress 저장
+        SaveProgressOnly();
 
-        // 좌표
-        req.overridePlayerPos = overridePlayerPos;
-        req.playerPos = playerPosOverride ? playerPosOverride.position : transform.position;
-
-        // 키/플래그
-        req.addFlag = addCutsceneKeyFlag;
-        req.flagKey = cutsceneKey;
-
-        // 카메라
-        req.overrideCamera = overrideCamera;
-        req.cameraMode = cameraMode;
-        req.cameraOrthoSize = cameraOrthoSize;
-
-        Vector3 fixedPos = fixedCameraPosOverride ? fixedCameraPosOverride.position : transform.position;
-        req.cameraFixedPos = fixedPos;
-
-        req.cameraBoundsName = confinerBoundsOverride ? confinerBoundsOverride.name : "";
-
-        SaveSystem.SaveAll(req);
+        // 2) 나머지 저장
+        SaveSystem.SaveCards();
+        SaveSystem.SaveItems();
+        SaveSystem.SavePlayerData();
 
         if (sfx && saveClip) sfx.PlayOneShot(saveClip);
-        if (debugLog) Debug.Log($"[SavePoint] Saved! key='{(addCutsceneKeyFlag ? cutsceneKey : "(none)")}'");
+
+        if (debugLog) Debug.Log("[SavePoint] Saved!");
+    }
+
+    private void SaveProgressOnly()
+    {
+        var data = ProgressSaveStore.Load();
+
+        // 씬
+        data.lastSceneName = !string.IsNullOrEmpty(overrideSceneName)
+            ? overrideSceneName
+            : SceneManager.GetActiveScene().name;
+
+        data.unixTimeUtc = System.DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+        // 플레이어 좌표
+        if (savePlayerPosition)
+        {
+            var p = SaveSystem.ResolvePlayerTransform();
+            if (p != null) data.playerPos = p.position;
+        }
+
+        // 카메라(인스펙터 지정값 저장)
+        if (saveCamera)
+        {
+            data.hasCamera = true;
+            data.cameraMode = cameraMode;
+            data.cameraOrthoSize = orthoSize;
+
+            // Fixed/Cutscene 고정 위치
+            Vector3 fixedPos = Vector3.zero;
+            if (fixedCameraAnchor != null) fixedPos = fixedCameraAnchor.position;
+            else
+            {
+                var p = SaveSystem.ResolvePlayerTransform();
+                fixedPos = (p != null) ? p.position : Vector3.zero;
+            }
+            data.cameraFixedPos = fixedPos;
+
+            // Confined bounds 이름 저장
+            data.cameraBoundsName = (confinerBounds != null) ? confinerBounds.name : null;
+        }
+        else
+        {
+            data.hasCamera = false;
+            data.cameraBoundsName = null;
+            data.cameraOrthoSize = 0f;
+        }
+
+        ProgressSaveStore.Save(data);
     }
 }

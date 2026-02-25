@@ -20,6 +20,22 @@ public class TriggerStep_Scene : TriggerStepBase
     [Header("Debug")]
     [SerializeField] private bool debugLog = true;
 
+    // =========================
+    // ✅ Sleep Load (Bed -> Dream)
+    // =========================
+    [Header("Sleep Load (Bed -> Dream)")]
+    [Tooltip("켜면 씬 전환 직전에 SleepLoadContext.MarkPending()를 호출합니다. (ProgressLoadApplier가 소비)")]
+    [SerializeField] private bool markAsSleepLoad = false;
+
+    [Tooltip("켜면 progress.json(lastSceneName)에서 씬 이름을 읽어서 그 씬으로 이동합니다.")]
+    [SerializeField] private bool loadSceneFromProgress = false;
+
+    [Tooltip("progress.json에 lastSceneName이 비어있을 때 갈 폴백 씬")]
+    [SerializeField] private string fallbackDreamSceneName = "Move_Tutorial";
+
+    // =========================
+    // Battle return context (existing)
+    // =========================
     [Header("Return (Battle enter only)")]
     [Tooltip("켜면 '현재 씬으로 복귀' 정보를 저장하고 다음 씬으로 넘어갑니다.")]
     [SerializeField] private bool saveReturnContext = false;
@@ -61,24 +77,52 @@ public class TriggerStep_Scene : TriggerStepBase
 
     public override IEnumerator Execute(TriggerContext ctx)
     {
-        if (string.IsNullOrWhiteSpace(sceneName))
+        // -------------------------
+        // 1) 이번에 로드할 씬 이름 결정
+        // -------------------------
+        string targetScene = sceneName;
+
+        if (loadSceneFromProgress)
         {
-            Debug.LogWarning("[TriggerStep_Scene] sceneName이 비어있습니다.");
+            // progress.json에서 lastSceneName 읽기
+            var prog = ProgressSaveStore.Load();
+            if (!string.IsNullOrEmpty(prog.lastSceneName))
+                targetScene = prog.lastSceneName;
+            else
+                targetScene = fallbackDreamSceneName;
+        }
+
+        if (string.IsNullOrWhiteSpace(targetScene))
+        {
+            Debug.LogWarning("[TriggerStep_Scene] targetScene이 비어있습니다.");
             yield break;
         }
 
+        // -------------------------
+        // 2) SleepLoad 플래그(원샷) 세팅
+        // -------------------------
+        if (markAsSleepLoad)
+        {
+            SleepLoadContext.MarkPending();
+            if (debugLog) Debug.Log("[TriggerStep_Scene] SleepLoadContext.MarkPending()");
+        }
+
+        // -------------------------
+        // 3) 입력 잠금
+        // -------------------------
         if (lockPlayerInput && GameManager.Instance)
             GameManager.Instance.isAction = true;
 
         if (debugLog)
-            Debug.Log($"[TriggerStep_Scene] Request Load '{sceneName}' mode={loadMode} useRunner={useSceneVisitEffectRunner}");
+            Debug.Log($"[TriggerStep_Scene] Request Load '{targetScene}' mode={loadMode} useRunner={useSceneVisitEffectRunner}");
 
-        // 배틀 진입이라면 "복귀 정보" 저장
+        // -------------------------
+        // 4) (기존) 배틀 진입이라면 복귀 정보 저장
+        // -------------------------
         if (saveReturnContext)
         {
             string curScene = SceneManager.GetActiveScene().name;
 
-            // 복귀 위치 저장
             Vector2 pos;
             if (returnPointOverride != null) pos = returnPointOverride.position;
             else
@@ -87,7 +131,6 @@ public class TriggerStep_Scene : TriggerStepBase
                 pos = player ? (Vector2)player.transform.position : Vector2.zero;
             }
 
-            // ===== 복귀 카메라 저장 (Override 우선) =====
             bool restoreCam = false;
             CameraModeId camMode = CameraModeId.Fixed;
             float camOrtho = 0f;
@@ -100,13 +143,11 @@ public class TriggerStep_Scene : TriggerStepBase
                 camMode = returnCameraModeOverride;
                 camOrtho = returnOrthoSizeOverride;
 
-                // Fixed/Cutscene: 앵커 없으면 "복귀 위치"를 고정 위치로 저장
                 Vector2 fixedPos = (returnFixedCameraAnchorOverride != null)
                     ? (Vector2)returnFixedCameraAnchorOverride.position
                     : pos;
                 camFixedPos = fixedPos;
 
-                // FollowConfined: bounds는 이름 저장(복귀 시 재탐색)
                 camBoundsName = (returnConfinerBoundsOverride != null) ? returnConfinerBoundsOverride.name : null;
             }
             else if (captureCameraSnapshot && CameraManager.Instance != null)
@@ -119,9 +160,7 @@ public class TriggerStep_Scene : TriggerStepBase
                 }
             }
 
-            // ✅ (A) 정책 핵심:
-            // 배틀 복귀 시 "일반 트리거는 즉시 인식"이 목표이므로
-            // Overlap Suppression(TriggerGet/Collider disable) 은 강제 OFF
+            // (A) 정책: 배틀 복귀 시 overlap suppression OFF
             bool overlapSupp = false;
             float overlapRadius = 0f;
             float overlapSec = 0f;
@@ -130,15 +169,11 @@ public class TriggerStep_Scene : TriggerStepBase
                 returnSceneName: curScene,
                 returnPosition: pos,
                 graceSeconds: graceSeconds,
-
                 requestCameraRebind: requestCameraRebind,
                 targetVcamName: worldVcamName,
-
                 useOverlapSuppression: overlapSupp,
                 overlapRadius: overlapRadius,
                 overlapSeconds: overlapSec,
-
-                // ★ 카메라 복원 저장
                 restoreCameraState: restoreCam,
                 cameraMode: camMode,
                 cameraOrthoSize: camOrtho,
@@ -156,19 +191,21 @@ public class TriggerStep_Scene : TriggerStepBase
             }
         }
 
-        // Runner는 Single 전환에서만
+        // -------------------------
+        // 5) 씬 로드
+        // -------------------------
         if (useSceneVisitEffectRunner && loadMode == LoadSceneMode.Single)
         {
             var runner = ResolveRunner();
             if (runner != null)
             {
                 if (debugLog) Debug.Log("[TriggerStep_Scene] Runner -> LoadSceneWithExitEffect()");
-                runner.LoadSceneWithExitEffect(sceneName);
+                runner.LoadSceneWithExitEffect(targetScene);
                 yield break;
             }
         }
 
-        SceneManager.LoadScene(sceneName, loadMode);
+        SceneManager.LoadScene(targetScene, loadMode);
     }
 
     private SceneVisitEffectRunner ResolveRunner()

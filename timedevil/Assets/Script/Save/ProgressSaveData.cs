@@ -1,27 +1,41 @@
-﻿// Assets/Script/Save/ProgressSaveData.cs
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 [Serializable]
 public class ProgressSaveData
 {
-    // 마지막 저장된 씬(꿈/챕터 등)
+    // 마지막 저장된 씬(꿈/챕터)
     public string lastSceneName = "";
 
-    // 마지막 저장된 플레이어 월드 좌표
+    // 체크포인트(저장 시점) 플레이어 위치
     public Vector3 playerPos;
 
-    // ✅ 카메라 복원 (저장 오브젝트 인스펙터에서 지정한 값)
-    public CameraModeId cameraMode = CameraModeId.FollowFree;
-    public float cameraOrthoSize = 0f;       // 0이면 CameraManager 기본값 유지
-    public Vector3 cameraFixedPos;           // Fixed/Cutscene일 때 사용
-    public string cameraBoundsName = "";     // FollowConfined일 때 bounds 이름 저장(복귀 시 재탐색)
+    // 마지막 저장 시간(UTC unix seconds)
+    public long unixTimeUtc = 0;
 
-    // “봤음/해금/컷씬키 수령” 등
+    // -------------------------
+    // Camera (저장 오브젝트 인스펙터에서 "어떤 카메라 상태를 저장할지" 지정)
+    // -------------------------
+    public bool hasCamera = false;
+    public CameraModeId cameraMode = CameraModeId.FollowFree;
+
+    // 0이면 CameraManager 기본값 유지
+    public float cameraOrthoSize = 0f;
+
+    // Fixed/Cutscene일 때 고정 위치
+    public Vector3 cameraFixedPos;
+
+    // FollowConfined일 때 bounds 콜라이더 이름(로드 시 이름으로 재탐색)
+    public string cameraBoundsName = null;
+
+    // -------------------------
+    // Flags (컷씬/트리거 "키 받았나?" 체크)
+    // -------------------------
     public List<string> flags = new List<string>();
 
-    public bool HasFlag(string key) => flags != null && flags.Contains(key);
+    public bool HasFlag(string key)
+        => !string.IsNullOrEmpty(key) && flags != null && flags.Contains(key);
 
     public void AddFlag(string key)
     {
