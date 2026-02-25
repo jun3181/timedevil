@@ -16,6 +16,12 @@ public class PlayerMainManager : MonoBehaviour
 
     [Header("Debug")]
     [SerializeField] private bool debugLog = true;
+    [SerializeField] private bool verboseInputDebug = false;
+    [SerializeField] private float verboseInputDebugInterval = 0.5f;
+
+    private bool _lastBlocked = false;
+    private string _lastBlockReason = "";
+    private float _nextVerboseDebugAt = 0f;
 
     private void Reset()
     {
@@ -60,11 +66,14 @@ public class PlayerMainManager : MonoBehaviour
         // =========================
         // CUTSCENE / ACTION LOCK (대화는 위에서 처리했으니 여기선 제외)
         // =========================
-        if (IsInputBlockedByCutsceneOnly())
+        if (IsInputBlockedByCutsceneOnly(out string blockReason))
         {
+            LogBlockState(true, blockReason);
             move?.SetMoveInput(0, 0, false, false, false, false);
             return;
         }
+
+        LogBlockState(false, "");
 
         // =========================
         // MENU MODE
@@ -110,6 +119,20 @@ public class PlayerMainManager : MonoBehaviour
         bool hUp = Input.GetKeyUp(KeyCode.LeftArrow) || Input.GetKeyUp(KeyCode.RightArrow);
         bool vUp = Input.GetKeyUp(KeyCode.UpArrow) || Input.GetKeyUp(KeyCode.DownArrow);
 
+        if (verboseInputDebug && Time.unscaledTime >= _nextVerboseDebugAt)
+        {
+            bool anyGameplayKey =
+                Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.DownArrow) ||
+                Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.RightArrow) ||
+                Input.GetKey(KeyCode.Q) || Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.E);
+
+            if (anyGameplayKey)
+            {
+                _nextVerboseDebugAt = Time.unscaledTime + Mathf.Max(0.1f, verboseInputDebugInterval);
+                DebugDumpInputState("WORLD_INPUT");
+            }
+        }
+
         move?.SetMoveInput(h, v, hDown, vDown, hUp, vUp);
 
         // 상호작용: E
@@ -127,17 +150,70 @@ public class PlayerMainManager : MonoBehaviour
     }
 
     // ✅ 여기서는 "대화 활성"은 빼야 함. (대화는 Update 상단에서 처리)
-    private bool IsInputBlockedByCutsceneOnly()
+    private bool IsInputBlockedByCutsceneOnly(out string reason)
     {
-        bool gmLock = (gameManager != null && gameManager.isAction);
+        reason = "";
 
-        bool cutsceneLock = false;
-        if (DialogueManager.instance != null)
+        bool gmLock = (gameManager != null && gameManager.isAction);
+        if (gmLock)
         {
-            // 컷씬에서만 막는 용도
-            cutsceneLock = DialogueManager.instance.blockInput;
+            reason = "GameManager.isAction=true";
+            return true;
         }
 
-        return gmLock || cutsceneLock;
+        if (DialogueManager.instance != null)
+        {
+            // 대화가 없는 상태에서 blockInput만 true로 남아도 입력 전체가 영구 차단되지 않게 방어
+            if (DialogueManager.instance.isDialogueActive && DialogueManager.instance.blockInput)
+            {
+                reason = "Dialogue(blockInput=true, isDialogueActive=true)";
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void LogBlockState(bool blocked, string reason)
+    {
+        if (!debugLog) return;
+
+        if (_lastBlocked == blocked && _lastBlockReason == reason)
+            return;
+
+        _lastBlocked = blocked;
+        _lastBlockReason = reason;
+
+        if (blocked)
+            Debug.Log($"[PlayerMainManager] INPUT BLOCKED: {reason}");
+        else
+            Debug.Log("[PlayerMainManager] INPUT UNBLOCKED");
+    }
+
+    [ContextMenu("Debug/Dump Input State")]
+    public void DebugDumpInputState()
+    {
+        DebugDumpInputState("MANUAL");
+    }
+
+    private void DebugDumpInputState(string context)
+    {
+        if (!debugLog && !verboseInputDebug) return;
+
+        bool moveEnabled = (move != null && move.enabled);
+        bool interactorEnabled = (interactor != null && interactor.enabled);
+        bool menuOpen = (menu != null && menu.IsOpen);
+        bool gmAction = (gameManager != null && gameManager.isAction);
+
+        bool dmExists = DialogueManager.instance != null;
+        bool dmActive = dmExists && DialogueManager.instance.isDialogueActive;
+        bool dmBlock = dmExists && DialogueManager.instance.blockInput;
+
+        Debug.Log(
+            "[PlayerMainManager] INPUT STATE " +
+            $"ctx={context}, move.enabled={moveEnabled}, interactor.enabled={interactorEnabled}, " +
+            $"menuOpen={menuOpen}, gm.isAction={gmAction}, dm.active={dmActive}, dm.blockInput={dmBlock}, " +
+            $"keys(←↑→↓/QWE)=({Input.GetKey(KeyCode.LeftArrow)},{Input.GetKey(KeyCode.UpArrow)},{Input.GetKey(KeyCode.RightArrow)},{Input.GetKey(KeyCode.DownArrow)}/{Input.GetKey(KeyCode.Q)},{Input.GetKey(KeyCode.W)},{Input.GetKey(KeyCode.E)})"
+        );
     }
 }
