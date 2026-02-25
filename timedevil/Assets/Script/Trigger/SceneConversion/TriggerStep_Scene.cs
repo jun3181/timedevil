@@ -75,6 +75,9 @@ public class TriggerStep_Scene : TriggerStepBase
     [Tooltip("Override를 끄면, 배틀 진입 직전 '현재 카메라 상태'를 스냅샷으로 저장합니다(가능한 경우).")]
     [SerializeField] private bool captureCameraSnapshot = true;
 
+    private bool _heldActionLock = false;
+    private bool _sceneLoadedHooked = false;
+
     public override IEnumerator Execute(TriggerContext ctx)
     {
         // -------------------------
@@ -111,7 +114,15 @@ public class TriggerStep_Scene : TriggerStepBase
         // 3) 입력 잠금
         // -------------------------
         if (lockPlayerInput && GameManager.Instance)
-            GameManager.Instance.isAction = true;
+        {
+            if (!_heldActionLock)
+            {
+                GameManager.Instance.LockAction();
+                _heldActionLock = true;
+            }
+
+            HookSceneLoadedUnlock();
+        }
 
         if (debugLog)
             Debug.Log($"[TriggerStep_Scene] Request Load '{targetScene}' mode={loadMode} useRunner={useSceneVisitEffectRunner}");
@@ -206,6 +217,39 @@ public class TriggerStep_Scene : TriggerStepBase
         }
 
         SceneManager.LoadScene(targetScene, loadMode);
+    }
+
+    private void OnDisable()
+    {
+        UnhookSceneLoadedUnlock();
+        ReleaseActionLockIfHeld();
+    }
+
+    private void HookSceneLoadedUnlock()
+    {
+        if (_sceneLoadedHooked) return;
+        SceneManager.sceneLoaded += OnSceneLoadedReleaseLock;
+        _sceneLoadedHooked = true;
+    }
+
+    private void UnhookSceneLoadedUnlock()
+    {
+        if (!_sceneLoadedHooked) return;
+        SceneManager.sceneLoaded -= OnSceneLoadedReleaseLock;
+        _sceneLoadedHooked = false;
+    }
+
+    private void OnSceneLoadedReleaseLock(Scene scene, LoadSceneMode mode)
+    {
+        ReleaseActionLockIfHeld();
+        UnhookSceneLoadedUnlock();
+    }
+
+    private void ReleaseActionLockIfHeld()
+    {
+        if (!_heldActionLock || !GameManager.Instance) return;
+        GameManager.Instance.UnlockAction();
+        _heldActionLock = false;
     }
 
     private SceneVisitEffectRunner ResolveRunner()
