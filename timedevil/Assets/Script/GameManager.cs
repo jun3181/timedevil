@@ -1,6 +1,7 @@
 ﻿// Assets/Script/GameManager.cs
 using UnityEngine;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -43,6 +44,28 @@ public class GameManager : MonoBehaviour
         }
         Instance = this;
         DontDestroyOnLoad(gameObject);
+    }
+
+
+    private void OnEnable()
+    {
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private void OnDisable()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (_actionLockCount == 0 && isAction)
+        {
+            if (debugActionLockLog)
+                Debug.Log($"[GameManager] Recovered stale isAction=true after scene load: {scene.name}");
+
+            isAction = false;
+        }
     }
 
     // ✅ Timeline SignalReceiver에서 바로 걸기 좋은 이름
