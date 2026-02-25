@@ -737,3 +737,21 @@
   - 클래스: ReadmeBE3, Section
   - 역할: 공용/기타
   - 주요 메서드: (데이터 선언/유틸 중심)
+
+
+## 빠른 구조 요약 (시나리오/명세 기획용)
+
+- 장르/흐름: **탑다운 탐험 + 대화/상호작용 + 배틀 씬 전환형 카드 전투** 구조입니다.
+- 월드 입력 허브: `PlayerMainManager`가 월드/대화/컷씬/메뉴 모드를 나눠 입력을 단일 제어합니다.
+  - 이동은 방향키, 상호작용/대사 진행은 `E`, 메뉴는 `Q` 중심으로 분기됩니다.
+- 상호작용 방식: `PlayerInteractor`가 플레이어 정면으로 CircleCast를 쏴 `IInteractable` 구현체를 찾아 `Interact()`를 호출합니다.
+- 대화 시스템: `DialogueManager`는 Queue 기반 대사 진행 + 타이핑 효과 + 컷씬 입력 차단(`blockInput`)을 제공합니다.
+- 배틀 진입: 월드 트리거(`EnemyBattleTrigger`/`BattleTransition`)가 배틀 씬 로드를 담당하고, 복귀 좌표는 `PlayerReturnContext`로 전달됩니다.
+- 배틀 초기화: `BattleBootstrap`이 `EnemyDatabaseSO`에서 적 SO를 찾아 `EnemyRuntime`과 HP UI 바인딩을 완료합니다.
+- 턴 진행: `TurnManager`가 속도(SPD) 기반 선턴 결정, 플레이어/적 턴 루프, 튜토리얼 연출 게이트를 관리합니다.
+- 카드 사용 파이프라인: `CardUseOrchestrator`가
+  1) 선택 카드 확인 → 2) 코스트 지불 → 3) 손패/덱 반영 → 4) 프리뷰/효과 실행 → 5) 입력 복구
+  순서로 오케스트레이션합니다.
+- 플레이어 영속 데이터: `PlayerDataRuntime`(DontDestroyOnLoad) + `PlayerDataStore` 조합으로 스탯/HP를 씬 간 유지합니다.
+
+> 위 구조 기준으로 시나리오/명세를 설계하면, 보통 **월드 이벤트(트리거/대화) ↔ 배틀 진입 조건 ↔ 턴/카드 규칙 ↔ 전투 후 복귀 상태**를 한 세트로 정의하는 것이 안전합니다.
