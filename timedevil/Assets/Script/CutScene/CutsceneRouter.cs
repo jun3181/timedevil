@@ -22,6 +22,8 @@ public class CutsceneRouter : MonoBehaviour
     [SerializeField] private string startKey = "CutScene1";
     [Tooltip("Start에서 1프레임 기다린 뒤 실행(다른 매니저 Start 타이밍 보정)")]
     [SerializeField] private bool delayOneFrame = true;
+    [Tooltip("Auto Start key를 저장 플래그로 1회만 실행")]
+    [SerializeField] private bool oneShotStartKey = true;
 
     [Header("Policy")]
     [Tooltip("같은 Key를 다시 실행 허용할지")]
@@ -54,7 +56,17 @@ public class CutsceneRouter : MonoBehaviour
     private IEnumerator Co_AutoStart()
     {
         if (delayOneFrame) yield return null;
+
+        if (oneShotStartKey && IsStartKeyAlreadyConsumed(startKey))
+        {
+            if (debugLog) Debug.Log($"[CutsceneRouter] skip AutoStart('{startKey}') (already consumed)");
+            yield break;
+        }
+
         yield return Co_Play(startKey);
+
+        if (oneShotStartKey && _playedKeys.Contains(startKey))
+            ConsumeStartKey(startKey);
     }
 
     /// <summary>
@@ -234,5 +246,31 @@ public class CutsceneRouter : MonoBehaviour
             GameManager.Instance.UnlockAction();
             _heldActionLock = false;
         }
+    }
+
+    private static string BuildStartKeyFlag(string key)
+        => string.IsNullOrWhiteSpace(key) ? string.Empty : $"cutscene.start.used:{key}";
+
+    private bool IsStartKeyAlreadyConsumed(string key)
+    {
+        string flag = BuildStartKeyFlag(key);
+        if (string.IsNullOrEmpty(flag)) return false;
+
+        var data = ProgressSaveStore.Load();
+        return data.HasFlag(flag);
+    }
+
+    private void ConsumeStartKey(string key)
+    {
+        string flag = BuildStartKeyFlag(key);
+        if (string.IsNullOrEmpty(flag)) return;
+
+        var data = ProgressSaveStore.Load();
+        if (data.HasFlag(flag)) return;
+
+        data.AddFlag(flag);
+        ProgressSaveStore.Save(data);
+
+        if (debugLog) Debug.Log($"[CutsceneRouter] consumed AutoStart key flag '{flag}'");
     }
 }
