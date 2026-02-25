@@ -256,6 +256,19 @@ public class CutsceneRouter : MonoBehaviour
         _running = false;
     }
 
+
+    [ContextMenu("Debug/Dump Lock State")]
+    public void DebugDumpLockState()
+    {
+        bool gmAction = GameManager.Instance != null && GameManager.Instance.isAction;
+        var pm = (_pmCached != null) ? _pmCached : ResolvePlayerMove();
+        bool pmEnabled = (pm != null) && pm.enabled;
+
+        Debug.Log(
+            "[CutsceneRouter] LOCK STATE " +
+            $"running={_running}, heldActionLock={_heldActionLock}, pmCached={(_pmCached != null)}, pmEnabled={pmEnabled}, gm.isAction={gmAction}, startKey='{startKey}', oneShotStartKey={oneShotStartKey}"
+        );
+    }
     private static string BuildStartKeyFlag(string key)
         => string.IsNullOrWhiteSpace(key) ? string.Empty : $"cutscene.start.used:{key}";
 
