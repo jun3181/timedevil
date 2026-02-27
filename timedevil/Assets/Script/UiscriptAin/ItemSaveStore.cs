@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using UnityEngine;
 
 /// <summary>
@@ -60,6 +60,21 @@ public static class ItemSaveStore
         {
             Debug.LogError($"❌ 세이브 파일 읽기/파싱 실패: {ex.Message}");
             return null;
+        }
+    }
+
+    public static void Delete(string fileName)
+    {
+        string path = GetPath(fileName);
+        if (!File.Exists(path)) return;
+
+        try
+        {
+            File.Delete(path);
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"❌ 세이브 파일 삭제 실패: {ex.Message}");
         }
     }
 

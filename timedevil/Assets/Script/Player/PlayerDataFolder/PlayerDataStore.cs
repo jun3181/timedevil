@@ -12,7 +12,7 @@ public static class PlayerDataStore
         var json = JsonUtility.ToJson(data, true);
         File.WriteAllText(Path, json);
 #if UNITY_EDITOR
-        Debug.Log($"[PlayerDataStore] Saved ¡æ {Path}");
+        Debug.Log($"[PlayerDataStore] Saved -> {Path}");
 #endif
     }
 
@@ -22,8 +22,19 @@ public static class PlayerDataStore
         var json = File.ReadAllText(Path);
         var data = JsonUtility.FromJson<PlayerData>(json);
 #if UNITY_EDITOR
-        Debug.Log($"[PlayerDataStore] Loaded ¡ç {Path}");
+        Debug.Log($"[PlayerDataStore] Loaded -> {Path}");
 #endif
         return data;
+    }
+
+    public static void DeleteSave()
+    {
+        if (File.Exists(Path))
+        {
+            File.Delete(Path);
+#if UNITY_EDITOR
+            Debug.Log($"[PlayerDataStore] Deleted -> {Path}");
+#endif
+        }
     }
 }

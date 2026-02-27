@@ -2,6 +2,16 @@ using UnityEngine;
 
 public static class SaveSystem
 {
+    public static void ClearAllSaves()
+    {
+        CardSaveStore.DeleteSave();
+        ItemSaveStore.Delete("items_save.json");
+        PlayerDataStore.DeleteSave();
+        ProgressSaveStore.DeleteSave();
+
+        Debug.Log("[SaveSystem] Cleared all save files for NewGame.");
+    }
+
     // -------------------------
     // Cards
     // -------------------------
@@ -30,7 +40,7 @@ public static class SaveSystem
     public static void SavePlayerData()
     {
         if (PlayerDataRuntime.Instance != null)
-            PlayerDataRuntime.Instance.SaveNow();  // player.json (PlayerData Æ÷¸Ë)
+            PlayerDataRuntime.Instance.SaveNow();  // player.json (PlayerData ëŸ°íƒ€ìž„)
         else
             Debug.LogWarning("[SaveSystem] PlayerDataRuntime.Instance not found. player data skip.");
     }
