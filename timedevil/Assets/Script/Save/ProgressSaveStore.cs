@@ -39,6 +39,17 @@ public static class ProgressSaveStore
 #endif
     }
 
+    public static void DeleteSave()
+    {
+        if (File.Exists(SavePath))
+        {
+            File.Delete(SavePath);
+#if UNITY_EDITOR
+            Debug.Log($"[ProgressSaveStore] Deleted -> {SavePath}");
+#endif
+        }
+    }
+
     public static string GetPath() => SavePath;
 
     private sealed class Vector3JsonConverter : JsonConverter<Vector3>
