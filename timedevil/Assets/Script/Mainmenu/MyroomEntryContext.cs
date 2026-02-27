@@ -10,9 +10,30 @@ public static class MyroomEntryContext
 {
     private static MyroomEntryPoint _next = MyroomEntryPoint.None;
 
-    //  Entry Ǿ  Һϰ true ȯ
+    // Last applied entry for debug/reference.
+    public static MyroomEntryPoint Current { get; private set; }
+
+    static MyroomEntryContext()
+    {
+        Current = MyroomEntryPoint.None;
+    }
+
+    public static void SetRoom1()
+    {
+        _next = MyroomEntryPoint.Room1;
+    }
+
+    public static void SetRoom2()
+    {
+        _next = MyroomEntryPoint.Room2;
+    }
+
+    // Consume only when an explicit entry exists.
     public static bool TryConsume(out MyroomEntryPoint entry)
+    {
         entry = _next;
+        _next = MyroomEntryPoint.None;
+
         if (entry == MyroomEntryPoint.None)
             return false;
 
@@ -20,23 +41,18 @@ public static class MyroomEntryContext
         return true;
     }
 
-    //    fallback (ȣȯ)
+    // Compatibility helper.
     public static MyroomEntryPoint Consume(MyroomEntryPoint fallback)
     {
-        Current = TryConsume(out var v) ? v : fallback;
-    public static void SetRoom2() => _next = MyroomEntryPoint.Room2;
+        MyroomEntryPoint consumed;
+        if (TryConsume(out consumed))
+            Current = consumed;
+        else
+            Current = fallback;
 
-    // 한 번 쓰면 자동 초기화(원샷)
-    public static MyroomEntryPoint Consume(MyroomEntryPoint fallback)
-    {
-        var v = _next;
-        _next = MyroomEntryPoint.None;
-
-        Current = (v == MyroomEntryPoint.None) ? fallback : v;
         return Current;
     }
 
-    // 에디터 테스트용(선택)
     public static void Clear()
     {
         _next = MyroomEntryPoint.None;
