@@ -28581,6 +28581,15 @@ MonoBehaviour:
   - {fileID: 1740833723}
   - {fileID: 545714205}
   nextKey: 101
+  stepDialogues:
+  - name: 
+    sentences:
+    - "\uC73C....\uC544\uCE68\uC778\uAC00....?"
+    leftPortrait: {fileID: 0}
+    rightPortrait: {fileID: 0}
+    lines: []
+  autoStartStepDialogue: 1
+  requireStepDialogueDoneBeforeNext: 1
   playOnStart: 1
   autoPlayPolicy: 1
   restrictToScene: 1
