@@ -28577,19 +28577,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 75f104872cdba4e418fb134fa3a98609, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  uiSteps:
-  - {fileID: 1740833723}
-  - {fileID: 545714205}
+  sequenceSteps:
+  - type: 0
+    uiObject: {fileID: 1740833723}
+    dialogue:
+      name: 
+      sentences: []
+      leftPortrait: {fileID: 0}
+      rightPortrait: {fileID: 0}
+      lines: []
+  - type: 0
+    uiObject: {fileID: 545714205}
+    dialogue:
+      name: 
+      sentences: []
+      leftPortrait: {fileID: 0}
+      rightPortrait: {fileID: 0}
+      lines: []
+  - type: 1
+    uiObject: {fileID: 0}
+    dialogue:
+      name: 
+      sentences:
+      - "\uC73C....\uC544\uCE68\uC774\uAD6C\uB098...."
+      leftPortrait: {fileID: 0}
+      rightPortrait: {fileID: 21300000, guid: 2e0827c2b95c6884bae7ed3ac8a82323, type: 3}
+      lines: []
   nextKey: 101
-  stepDialogues:
-  - name: 
-    sentences:
-    - "\uC73C....\uC544\uCE68\uC778\uAC00....?"
-    leftPortrait: {fileID: 0}
-    rightPortrait: {fileID: 0}
-    lines: []
-  autoStartStepDialogue: 1
-  requireStepDialogueDoneBeforeNext: 1
   playOnStart: 1
   autoPlayPolicy: 1
   restrictToScene: 1
