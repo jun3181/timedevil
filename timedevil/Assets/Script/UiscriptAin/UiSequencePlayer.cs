@@ -20,6 +20,14 @@ public class UiSequencePlayer : MonoBehaviour
     [Header("입력 키")]
     [SerializeField] private KeyCode nextKey = KeyCode.E;
 
+    [Header("Step Dialogue (옵션)")]
+    [Tooltip("각 UI Step에 대응되는 Dialogue(비워두면 해당 Step은 대사 없음)")]
+    [SerializeField] private List<Dialogue> stepDialogues = new List<Dialogue>();
+    [Tooltip("true면 UI Step이 보일 때 해당 Step 대사를 자동 시작")]
+    [SerializeField] private bool autoStartStepDialogue = true;
+    [Tooltip("true면 현재 Step 대화가 끝나기 전에는 다음 UI Step으로 넘어가지 않음")]
+    [SerializeField] private bool requireStepDialogueDoneBeforeNext = true;
+
     [Header("씬 시작 시 자동 시작")]
     [SerializeField] private bool playOnStart = true;
 
@@ -62,6 +70,7 @@ public class UiSequencePlayer : MonoBehaviour
 
     private int index = 0;
     private bool isPlaying = false;
+    private bool _startedDialogueForCurrentStep = false;
 
     // lock runtime
     private bool _heldActionLock = false;
@@ -107,6 +116,22 @@ public class UiSequencePlayer : MonoBehaviour
     {
         if (!isPlaying) return;
         if (uiSteps == null || uiSteps.Count == 0) return;
+
+        // 현재 Step 대화가 있으면, 대화가 끝나기 전에는 UI Step 진행 차단
+        if (requireStepDialogueDoneBeforeNext && HasStepDialogue(index))
+        {
+            var dm = DialogueManager.instance;
+
+            // Step이 시작됐는데 아직 대사가 안 떠있다면 자동 시작
+            if (autoStartStepDialogue && !_startedDialogueForCurrentStep)
+            {
+                TryStartDialogueForCurrentStep();
+            }
+
+            // 대화가 진행 중이면 E는 PlayerMainManager -> DialogueManager가 소비
+            if (dm != null && dm.isDialogueActive)
+                return;
+        }
 
         if (Input.GetKeyDown(nextKey))
             Next();
@@ -158,14 +183,33 @@ public class UiSequencePlayer : MonoBehaviour
         SetAllActive(false);
         index = 0;
         isPlaying = true;
+        _startedDialogueForCurrentStep = false;
 
         BeginInputLock();
         SetStepActive(index, true);
+
+        if (autoStartStepDialogue)
+            TryStartDialogueForCurrentStep();
     }
 
     public void Next()
     {
         if (uiSteps == null || uiSteps.Count == 0) return;
+
+        // 현재 Step에 대사가 있으면, 대화가 끝나기 전에는 다음 Step으로 못 넘어감
+        if (requireStepDialogueDoneBeforeNext && HasStepDialogue(index))
+        {
+            var dm = DialogueManager.instance;
+
+            if (autoStartStepDialogue && !_startedDialogueForCurrentStep)
+            {
+                TryStartDialogueForCurrentStep();
+                return;
+            }
+
+            if (dm != null && dm.isDialogueActive)
+                return;
+        }
 
         SetStepActive(index, false);
         index++;
@@ -195,7 +239,11 @@ public class UiSequencePlayer : MonoBehaviour
             return;
         }
 
+        _startedDialogueForCurrentStep = false;
         SetStepActive(index, true);
+
+        if (autoStartStepDialogue)
+            TryStartDialogueForCurrentStep();
     }
 
     public void StopAndHideAll()
@@ -267,5 +315,33 @@ public class UiSequencePlayer : MonoBehaviour
 
         if (uiSteps[stepIndex] != null)
             uiSteps[stepIndex].SetActive(active);
+    }
+
+    private bool HasStepDialogue(int stepIndex)
+    {
+        if (stepDialogues == null) return false;
+        if (stepIndex < 0 || stepIndex >= stepDialogues.Count) return false;
+        return stepDialogues[stepIndex] != null;
+    }
+
+    private void TryStartDialogueForCurrentStep()
+    {
+        if (!HasStepDialogue(index))
+        {
+            _startedDialogueForCurrentStep = true;
+            return;
+        }
+
+        var dm = DialogueManager.instance;
+        if (dm == null)
+        {
+            Debug.LogWarning("[UiSequencePlayer] DialogueManager.instance not found.");
+            return;
+        }
+
+        if (dm.isDialogueActive) return;
+
+        dm.StartDialogue(stepDialogues[index]);
+        _startedDialogueForCurrentStep = true;
     }
 }
