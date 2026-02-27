@@ -11,8 +11,9 @@ public class MyroomEntryApplier : MonoBehaviour
     [SerializeField] private Transform room1Spawn;
     [SerializeField] private Transform room2Spawn;
 
-    [Header("Fallback (컨텍스트가 없을 때)")]
-    [Tooltip("대부분의 경우(꿈 갔다가 돌아오기 등) Room2가 기본이 되도록 권장")]
+    [Header("Fallback (when no explicit context)")]
+    [Tooltip("If enabled, fallbackPoint is applied when MyroomEntryContext is empty. If disabled, no forced reposition occurs.")]
+    [SerializeField] private bool applyFallbackWhenNoContext = false;
     [SerializeField] private MyroomEntryPoint fallbackPoint = MyroomEntryPoint.Room2;
 
     [Header("Options")]
@@ -24,17 +25,20 @@ public class MyroomEntryApplier : MonoBehaviour
     [SerializeField] private bool debugLog = true;
 
     private static int s_appliedSceneHandle = -1;
-    private MyroomEntryPoint _entry;
+    private MyroomEntryPoint _entry = MyroomEntryPoint.None;
 
     private void Awake()
     {
-        // 같은 씬에서 중복 적용 방지
         int handle = SceneManager.GetActiveScene().handle;
         if (s_appliedSceneHandle == handle) return;
         s_appliedSceneHandle = handle;
 
-        // 여기서 1회성 Consume
-        _entry = MyroomEntryContext.Consume(fallbackPoint);
+        MyroomEntryPoint consumed;
+        bool hasExplicitEntry = MyroomEntryContext.TryConsume(out consumed);
+        _entry = hasExplicitEntry ? consumed : MyroomEntryPoint.None;
+
+        if (!hasExplicitEntry && applyFallbackWhenNoContext)
+            _entry = fallbackPoint;
     }
 
     private IEnumerator Start()
@@ -42,7 +46,6 @@ public class MyroomEntryApplier : MonoBehaviour
         if (forceClearActionLocksOnStart && GameManager.Instance != null)
             GameManager.Instance.ForceClearActionLocks();
 
-        // 플레이어 스폰/Enable 타이밍 때문에 몇 프레임 기다리기
         Transform player = null;
         for (int i = 0; i < maxFindPlayerFrames; i++)
         {
@@ -53,14 +56,21 @@ public class MyroomEntryApplier : MonoBehaviour
 
         if (player == null)
         {
-            Debug.LogWarning("[MyroomEntryApplier] Player를 찾지 못했습니다.");
+            Debug.LogWarning("[MyroomEntryApplier] Player not found.");
+            yield break;
+        }
+
+        if (_entry == MyroomEntryPoint.None)
+        {
+            if (debugLog)
+                Debug.Log("[MyroomEntryApplier] No entry context -> skip forced spawn override.");
             yield break;
         }
 
         Transform target = ResolveTarget(_entry);
         if (target == null)
         {
-            Debug.LogWarning("[MyroomEntryApplier] SpawnPoint가 비어있습니다. (Room1/Room2)");
+            Debug.LogWarning("[MyroomEntryApplier] SpawnPoint missing. (Room1/Room2)");
             yield break;
         }
 
@@ -70,7 +80,7 @@ public class MyroomEntryApplier : MonoBehaviour
         player.position = pos;
 
         if (debugLog)
-            Debug.Log($"[MyroomEntryApplier] entry={_entry} -> '{target.name}' pos={pos}");
+            Debug.Log("[MyroomEntryApplier] entry=" + _entry + " -> '" + target.name + "' pos=" + pos);
     }
 
     private Transform ResolveTarget(MyroomEntryPoint entry)
@@ -79,7 +89,7 @@ public class MyroomEntryApplier : MonoBehaviour
         {
             case MyroomEntryPoint.Room1: return room1Spawn;
             case MyroomEntryPoint.Room2: return room2Spawn;
-            default: return (fallbackPoint == MyroomEntryPoint.Room1) ? room1Spawn : room2Spawn;
+            default: return null;
         }
     }
 

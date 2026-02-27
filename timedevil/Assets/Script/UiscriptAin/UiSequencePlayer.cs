@@ -14,8 +14,27 @@ public class UiSequencePlayer : MonoBehaviour
         OnlyLoadGame
     }
 
-    [Header("순서대로 보여줄 오브젝트")]
-    [SerializeField] private List<GameObject> uiSteps = new List<GameObject>();
+    [Serializable]
+    private class SequenceStep
+    {
+        public enum StepType
+        {
+            Image,
+            Dialogue
+        }
+
+        [Tooltip("이 Step의 타입")]
+        public StepType type = StepType.Image;
+
+        [Tooltip("type=Image일 때 표시할 오브젝트")]
+        public GameObject uiObject;
+
+        [Tooltip("type=Dialogue일 때 실행할 Dialogue")]
+        public Dialogue dialogue;
+    }
+
+    [Header("순서대로 보여줄 Step (Image/Dialogue)")]
+    [SerializeField] private List<SequenceStep> sequenceSteps = new List<SequenceStep>();
 
     [Header("입력 키")]
     [SerializeField] private KeyCode nextKey = KeyCode.E;
@@ -62,6 +81,8 @@ public class UiSequencePlayer : MonoBehaviour
 
     private int index = 0;
     private bool isPlaying = false;
+    private bool _stepEntered = false;
+    private bool _waitingKeyReleaseAfterDialogue = false;
 
     // lock runtime
     private bool _heldActionLock = false;
@@ -73,7 +94,7 @@ public class UiSequencePlayer : MonoBehaviour
 
     private void Start()
     {
-        SetAllActive(false);
+        SetAllImagesActive(false);
 
         if (!playOnStart) return;
         if (!ShouldAutoPlayNow()) return;
@@ -106,7 +127,25 @@ public class UiSequencePlayer : MonoBehaviour
     private void Update()
     {
         if (!isPlaying) return;
-        if (uiSteps == null || uiSteps.Count == 0) return;
+        if (sequenceSteps == null || sequenceSteps.Count == 0) return;
+
+        EnterCurrentStepIfNeeded();
+
+        // Dialogue Step 진행 중이면 E는 DialogueManager 쪽에서 소비
+        if (IsCurrentStepDialogue())
+        {
+            var dm = DialogueManager.instance;
+
+            if (dm != null && dm.isDialogueActive)
+                return;
+
+            // 대화 종료 직후 같은 E 입력으로 다음 Step이 스킵되지 않도록 키를 한번 떼게 함
+            if (_waitingKeyReleaseAfterDialogue)
+            {
+                if (Input.GetKey(nextKey)) return;
+                _waitingKeyReleaseAfterDialogue = false;
+            }
+        }
 
         if (Input.GetKeyDown(nextKey))
             Next();
@@ -153,36 +192,51 @@ public class UiSequencePlayer : MonoBehaviour
 
     public void PlayFromStart()
     {
-        if (uiSteps == null || uiSteps.Count == 0) return;
+        if (sequenceSteps == null || sequenceSteps.Count == 0) return;
 
-        SetAllActive(false);
+        SetAllImagesActive(false);
         index = 0;
         isPlaying = true;
+        _stepEntered = false;
+        _waitingKeyReleaseAfterDialogue = false;
 
         BeginInputLock();
-        SetStepActive(index, true);
+        EnterCurrentStepIfNeeded();
     }
 
     public void Next()
     {
-        if (uiSteps == null || uiSteps.Count == 0) return;
+        if (sequenceSteps == null || sequenceSteps.Count == 0) return;
 
-        SetStepActive(index, false);
+        if (IsCurrentStepDialogue())
+        {
+            var dm = DialogueManager.instance;
+            if (dm != null && dm.isDialogueActive)
+                return;
+        }
+        else
+        {
+            SetImageStepActive(index, false);
+        }
+
         index++;
 
-        if (index >= uiSteps.Count)
+        if (index >= sequenceSteps.Count)
         {
             if (loop)
             {
                 index = 0;
-                SetStepActive(index, true);
+                SetAllImagesActive(false);
+                _stepEntered = false;
+                _waitingKeyReleaseAfterDialogue = false;
+                EnterCurrentStepIfNeeded();
                 return;
             }
 
             isPlaying = false;
 
             if (hideAllWhenFinished)
-                SetAllActive(false);
+                SetAllImagesActive(false);
 
             if (markSeenOnFinish && !string.IsNullOrEmpty(seenPrefKey))
             {
@@ -195,13 +249,17 @@ public class UiSequencePlayer : MonoBehaviour
             return;
         }
 
-        SetStepActive(index, true);
+        _stepEntered = false;
+        _waitingKeyReleaseAfterDialogue = false;
+        EnterCurrentStepIfNeeded();
     }
 
     public void StopAndHideAll()
     {
         isPlaying = false;
-        SetAllActive(false);
+        SetAllImagesActive(false);
+        _stepEntered = false;
+        _waitingKeyReleaseAfterDialogue = false;
         EndInputLockIfHeld();
     }
 
@@ -249,23 +307,76 @@ public class UiSequencePlayer : MonoBehaviour
         }
     }
 
-    private void SetAllActive(bool active)
+    private void SetAllImagesActive(bool active)
     {
-        if (uiSteps == null) return;
+        if (sequenceSteps == null) return;
 
-        for (int i = 0; i < uiSteps.Count; i++)
+        for (int i = 0; i < sequenceSteps.Count; i++)
         {
-            if (uiSteps[i] != null)
-                uiSteps[i].SetActive(active);
+            if (sequenceSteps[i] != null && sequenceSteps[i].type == SequenceStep.StepType.Image && sequenceSteps[i].uiObject != null)
+                sequenceSteps[i].uiObject.SetActive(active);
         }
     }
 
-    private void SetStepActive(int stepIndex, bool active)
+    private void SetImageStepActive(int stepIndex, bool active)
     {
-        if (uiSteps == null) return;
-        if (stepIndex < 0 || stepIndex >= uiSteps.Count) return;
+        if (sequenceSteps == null) return;
+        if (stepIndex < 0 || stepIndex >= sequenceSteps.Count) return;
+        if (sequenceSteps[stepIndex] == null) return;
+        if (sequenceSteps[stepIndex].type != SequenceStep.StepType.Image) return;
 
-        if (uiSteps[stepIndex] != null)
-            uiSteps[stepIndex].SetActive(active);
+        if (sequenceSteps[stepIndex].uiObject != null)
+            sequenceSteps[stepIndex].uiObject.SetActive(active);
+    }
+
+    private bool IsCurrentStepDialogue()
+    {
+        if (sequenceSteps == null) return false;
+        if (index < 0 || index >= sequenceSteps.Count) return false;
+
+        var step = sequenceSteps[index];
+        return step != null && step.type == SequenceStep.StepType.Dialogue;
+    }
+
+    private void EnterCurrentStepIfNeeded()
+    {
+        if (_stepEntered) return;
+        if (sequenceSteps == null) return;
+        if (index < 0 || index >= sequenceSteps.Count) return;
+
+        var step = sequenceSteps[index];
+        if (step == null)
+        {
+            _stepEntered = true;
+            return;
+        }
+
+        if (step.type == SequenceStep.StepType.Image)
+        {
+            if (step.uiObject != null)
+                step.uiObject.SetActive(true);
+
+            _stepEntered = true;
+            return;
+        }
+
+        var dm = DialogueManager.instance;
+        if (dm == null)
+        {
+            Debug.LogWarning("[UiSequencePlayer] DialogueManager.instance not found.");
+            return;
+        }
+
+        if (step.dialogue == null)
+        {
+            _stepEntered = true;
+            return;
+        }
+
+        if (dm.isDialogueActive) return;
+
+        dm.StartDialogue(step.dialogue);
+        _stepEntered = true;
+        _waitingKeyReleaseAfterDialogue = true;
     }
 }
