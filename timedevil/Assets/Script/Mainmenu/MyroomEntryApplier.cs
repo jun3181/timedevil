@@ -10,6 +10,7 @@ public class MyroomEntryApplier : MonoBehaviour
     [Header("Spawn Points")]
     [SerializeField] private Transform room1Spawn;
     [SerializeField] private Transform room2Spawn;
+    [SerializeField] private Transform room3Spawn;
 
     [Header("Fallback (when no explicit context)")]
     [Tooltip("If enabled, fallbackPoint is applied when MyroomEntryContext is empty. If disabled, no forced reposition occurs.")]
@@ -70,7 +71,7 @@ public class MyroomEntryApplier : MonoBehaviour
         Transform target = ResolveTarget(_entry);
         if (target == null)
         {
-            Debug.LogWarning("[MyroomEntryApplier] SpawnPoint missing. (Room1/Room2)");
+            Debug.LogWarning("[MyroomEntryApplier] SpawnPoint missing. (Room1/Room2/Room3)");
             yield break;
         }
 
@@ -89,6 +90,7 @@ public class MyroomEntryApplier : MonoBehaviour
         {
             case MyroomEntryPoint.Room1: return room1Spawn;
             case MyroomEntryPoint.Room2: return room2Spawn;
+            case MyroomEntryPoint.Room3: return room3Spawn;
             default: return null;
         }
     }
