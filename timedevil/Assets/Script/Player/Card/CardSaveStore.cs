@@ -1,4 +1,4 @@
-﻿// CardSaveStore.cs (수정 버전)
+// CardSaveStore.cs (수정 버전)
 using System.IO;
 using UnityEngine;
 using Newtonsoft.Json;
@@ -26,6 +26,17 @@ public static class CardSaveStore
 #if UNITY_EDITOR
         Debug.Log($"[CardSaveStore] Saved → {SavePath}\n{json}");
 #endif
+    }
+
+    public static void DeleteSave()
+    {
+        if (File.Exists(SavePath))
+        {
+            File.Delete(SavePath);
+#if UNITY_EDITOR
+            Debug.Log($"[CardSaveStore] Deleted -> {SavePath}");
+#endif
+        }
     }
 
     public static string GetPath() => SavePath;
