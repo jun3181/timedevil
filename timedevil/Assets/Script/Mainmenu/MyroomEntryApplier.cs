@@ -11,11 +11,22 @@ public class MyroomEntryApplier : MonoBehaviour
     [SerializeField] private Transform room1Spawn;
     [SerializeField] private Transform room2Spawn;
 
-    [Header("Fallback (ÄÁÅØ½ºÆ®°¡ ¾øÀ» ¶§)")]
-    [Tooltip("´ëºÎºĞÀÇ °æ¿ì(²Ş °¬´Ù°¡ µ¹¾Æ¿À±â µî) Room2°¡ ±âº»ÀÌ µÇµµ·Ï ±ÇÀå")]
-    [SerializeField] private MyroomEntryPoint fallbackPoint = MyroomEntryPoint.Room2;
+    [Tooltip("Ã¼Å©  EntryContext  fallbackPoint  Õ´Ï´.\nÃ¼Å©  Ø½Æ®   Ä¡ Çµå¸® Ê½Ï´.")]
+    [SerializeField] private bool applyFallbackWhenNoContext = false;
+    private MyroomEntryPoint _entry = MyroomEntryPoint.None;
+        bool hasExplicitEntry = MyroomEntryContext.TryConsume(out _entry);
 
-    [Header("Options")]
+        if (!hasExplicitEntry && applyFallbackWhenNoContext)
+            _entry = fallbackPoint;
+
+        if (_entry == MyroomEntryPoint.None)
+        {
+            if (debugLog)
+                Debug.Log("[MyroomEntryApplier] EntryContext  ->   Ìµ ");
+            yield break;
+        }
+
+            default: return null;
     [SerializeField] private bool forceClearActionLocksOnStart = true;
     [SerializeField] private int maxFindPlayerFrames = 60;
     [SerializeField] private bool keepPlayerZ = true;
@@ -28,12 +39,12 @@ public class MyroomEntryApplier : MonoBehaviour
 
     private void Awake()
     {
-        // °°Àº ¾À¿¡¼­ Áßº¹ Àû¿ë ¹æÁö
+        // ê°™ì€ ì”¬ì—ì„œ ì¤‘ë³µ ì ìš© ë°©ì§€
         int handle = SceneManager.GetActiveScene().handle;
         if (s_appliedSceneHandle == handle) return;
         s_appliedSceneHandle = handle;
 
-        // ¿©±â¼­ 1È¸¼º Consume
+        // ì—¬ê¸°ì„œ 1íšŒì„± Consume
         _entry = MyroomEntryContext.Consume(fallbackPoint);
     }
 
@@ -42,7 +53,7 @@ public class MyroomEntryApplier : MonoBehaviour
         if (forceClearActionLocksOnStart && GameManager.Instance != null)
             GameManager.Instance.ForceClearActionLocks();
 
-        // ÇÃ·¹ÀÌ¾î ½ºÆù/Enable Å¸ÀÌ¹Ö ¶§¹®¿¡ ¸î ÇÁ·¹ÀÓ ±â´Ù¸®±â
+        // í”Œë ˆì´ì–´ ìŠ¤í°/Enable íƒ€ì´ë° ë•Œë¬¸ì— ëª‡ í”„ë ˆì„ ê¸°ë‹¤ë¦¬ê¸°
         Transform player = null;
         for (int i = 0; i < maxFindPlayerFrames; i++)
         {
@@ -53,14 +64,14 @@ public class MyroomEntryApplier : MonoBehaviour
 
         if (player == null)
         {
-            Debug.LogWarning("[MyroomEntryApplier] Player¸¦ Ã£Áö ¸øÇß½À´Ï´Ù.");
+            Debug.LogWarning("[MyroomEntryApplier] Playerë¥¼ ì°¾ì§€ ëª»í–ˆìŠµë‹ˆë‹¤.");
             yield break;
         }
 
         Transform target = ResolveTarget(_entry);
         if (target == null)
         {
-            Debug.LogWarning("[MyroomEntryApplier] SpawnPoint°¡ ºñ¾îÀÖ½À´Ï´Ù. (Room1/Room2)");
+            Debug.LogWarning("[MyroomEntryApplier] SpawnPointê°€ ë¹„ì–´ìˆìŠµë‹ˆë‹¤. (Room1/Room2)");
             yield break;
         }
 
