@@ -10,13 +10,23 @@ public static class MyroomEntryContext
 {
     private static MyroomEntryPoint _next = MyroomEntryPoint.None;
 
-    // (¼±ÅÃ) ÀÌ¹ø Myroom ÁøÀÔ¿¡¼­ ½ÇÁ¦·Î »ç¿ëµÈ Entry ±â·Ï(µğ¹ö±×/´Ù¸¥ ½ºÅ©¸³Æ® ÂüÁ¶¿ë)
-    public static MyroomEntryPoint Current { get; private set; } = MyroomEntryPoint.None;
+    //  Entry Ç¾  ÒºÏ° true È¯
+    public static bool TryConsume(out MyroomEntryPoint entry)
+        entry = _next;
+        if (entry == MyroomEntryPoint.None)
+            return false;
 
-    public static void SetRoom1() => _next = MyroomEntryPoint.Room1;
+        Current = entry;
+        return true;
+    }
+
+    //    fallback (È£È¯)
+    public static MyroomEntryPoint Consume(MyroomEntryPoint fallback)
+    {
+        Current = TryConsume(out var v) ? v : fallback;
     public static void SetRoom2() => _next = MyroomEntryPoint.Room2;
 
-    // ÇÑ ¹ø ¾²¸é ÀÚµ¿ ÃÊ±âÈ­(¿ø¼¦)
+    // í•œ ë²ˆ ì“°ë©´ ìë™ ì´ˆê¸°í™”(ì›ìƒ·)
     public static MyroomEntryPoint Consume(MyroomEntryPoint fallback)
     {
         var v = _next;
@@ -26,7 +36,7 @@ public static class MyroomEntryContext
         return Current;
     }
 
-    // ¿¡µğÅÍ Å×½ºÆ®¿ë(¼±ÅÃ)
+    // ì—ë””í„° í…ŒìŠ¤íŠ¸ìš©(ì„ íƒ)
     public static void Clear()
     {
         _next = MyroomEntryPoint.None;
