@@ -25,6 +25,7 @@ public class TurnManager : MonoBehaviour
     [SerializeField] private bool introRequireKey = false;
     [SerializeField] private KeyCode introKey = KeyCode.E;
     [SerializeField, Min(1f)] private float introCharactersPerSecond = 24f;
+    [SerializeField, Min(0f)] private float introSkipInputDelay = 0.12f;
 
     [Header("Intro SFX (optional)")]
     [SerializeField] private AudioClip introSfx1;
@@ -421,6 +422,7 @@ public class TurnManager : MonoBehaviour
 
         float started = Time.unscaledTime;
         float cps = Mathf.Max(1f, introCharactersPerSecond);
+        bool completedByKeyDuringTyping = false;
 
         if (desc == null)
         {
@@ -440,9 +442,11 @@ public class TurnManager : MonoBehaviour
         int shown = 0;
         while (shown < full.Length)
         {
-            if (Input.GetKeyDown(introKey))
+            bool canSkipByKey = (Time.unscaledTime - started) >= introSkipInputDelay;
+            if (canSkipByKey && Input.GetKeyDown(introKey))
             {
                 shown = full.Length;
+                completedByKeyDuringTyping = true;
                 break;
             }
 
@@ -457,6 +461,18 @@ public class TurnManager : MonoBehaviour
         }
 
         desc.ShowTemporaryExplanation(full);
+
+        // 타이핑 중 E로 완성했으면, 같은 입력으로 바로 다음 문장으로 넘어가지 않게
+        // 키를 떼고(E up) -> E를 한 번 더 눌러야 다음 문장으로 진행.
+        if (completedByKeyDuringTyping)
+        {
+            yield return null;
+            while (Input.GetKey(introKey)) yield return null;
+            while (!Input.GetKeyDown(introKey)) yield return null;
+            yield return null;
+            while (Input.GetKey(introKey)) yield return null;
+            yield break;
+        }
 
         if (introRequireKey)
         {
