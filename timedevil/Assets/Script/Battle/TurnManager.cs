@@ -134,6 +134,17 @@ public class TurnManager : MonoBehaviour
             Debug.LogWarning("[TurnManager] Move_Tutorial start => cleared intro/gate flags (ALWAYS PLAY).");
         }
 
+        // ▶ Move_Tutorial에서 UiSequencePlayer가 먼저 재생 중이면, 완료 후 인트로/턴 시작
+        if (IsMoveTutorial())
+        {
+            var uiSequence = FindObjectOfType<UiSequencePlayer>(true);
+            if (uiSequence != null && uiSequence.IsPlayingSequence)
+            {
+                StartCoroutine(Co_WaitUiSequenceThenBoot(uiSequence));
+                return;
+            }
+        }
+
         // ▶ Move_Tutorial이면 인트로 우선 검사 (한 번만)
         if (IsMoveTutorial() && moveTutorialIntro && ShouldPlayIntroNow())
         {
@@ -169,6 +180,23 @@ public class TurnManager : MonoBehaviour
         Debug.Log($"[TurnManager] Gate  check: global={seenGlobally}, session={seenSession}, play={!(seenGlobally || seenSession)}");
 #endif
         return !(seenGlobally || seenSession);
+    }
+
+    private System.Collections.IEnumerator Co_WaitUiSequenceThenBoot(UiSequencePlayer uiSequence)
+    {
+        Debug.Log("[TurnManager] Waiting for UiSequencePlayer to finish before tutorial intro.");
+
+        while (uiSequence != null && uiSequence.IsPlayingSequence)
+            yield return null;
+
+        if (moveTutorialIntro && ShouldPlayIntroNow())
+        {
+            Debug.Log("[TurnManager] Move_Tutorial intro start (after UiSequencePlayer)");
+            yield return StartCoroutine(Co_MoveTutorialIntroBoot());
+            yield break;
+        }
+
+        DecideFirstTurn();
     }
 
     void ResolvePlayerData()
