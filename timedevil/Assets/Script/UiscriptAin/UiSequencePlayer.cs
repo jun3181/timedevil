@@ -51,6 +51,8 @@ public class UiSequencePlayer : MonoBehaviour
     [SerializeField] private string onlySceneName = "Myroom";
     [Tooltip("추가 허용 씬 이름들 (예: Move_Tutorial)")]
     [SerializeField] private List<string> additionalAllowedScenes = new List<string> { "Move_Tutorial" };
+    [Tooltip("Move_Tutorial 씬에서는 저장/봤음(1회) 체크를 무시하고 자동 재생을 강제")]
+    [SerializeField] private bool alwaysPlayInMoveTutorial = true;
 
     [Header("Save 파일 존재 시 자동 스킵(옵션)")]
     [SerializeField] private bool skipIfSaveExists = true;
@@ -82,6 +84,8 @@ public class UiSequencePlayer : MonoBehaviour
 
     public event Action OnFinished;
 
+    public bool IsPlayingSequence => isPlaying;
+
     private int index = 0;
     private bool isPlaying = false;
     private bool _stepEntered = false;
@@ -102,27 +106,32 @@ public class UiSequencePlayer : MonoBehaviour
         if (!playOnStart) return;
         if (!ShouldAutoPlayNow()) return;
 
-        // ✅ 먼저 시작하더라도 저장 파일이 하나라도 있으면 자동 스킵
-        if (skipIfSaveExists && HasAnySaveFile())
-            return;
+        bool forcePlayInMoveTutorial = alwaysPlayInMoveTutorial && SceneManager.GetActiveScene().name == "Move_Tutorial";
 
-        // ✅ 새 게임에서만: 이번 "버튼 클릭 토큰"에 대해 1회 seen 초기화
-        if (resetSeenOnNewGameStart &&
-            GameStartContext.Mode == GameStartMode.NewGame &&
-            s_lastResetToken != GameStartContext.StartToken)
+        if (!forcePlayInMoveTutorial)
         {
-            s_lastResetToken = GameStartContext.StartToken;
+            // ✅ 먼저 시작하더라도 저장 파일이 하나라도 있으면 자동 스킵
+            if (skipIfSaveExists && HasAnySaveFile())
+                return;
 
-            if (!string.IsNullOrEmpty(seenPrefKey))
+            // ✅ 새 게임에서만: 이번 "버튼 클릭 토큰"에 대해 1회 seen 초기화
+            if (resetSeenOnNewGameStart &&
+                GameStartContext.Mode == GameStartMode.NewGame &&
+                s_lastResetToken != GameStartContext.StartToken)
             {
-                PlayerPrefs.DeleteKey(seenPrefKey);
-                PlayerPrefs.Save();
-            }
-        }
+                s_lastResetToken = GameStartContext.StartToken;
 
-        // ✅ (seen 체크는 초기화 이후에)
-        if (!string.IsNullOrEmpty(seenPrefKey) && PlayerPrefs.GetInt(seenPrefKey, 0) == 1)
-            return;
+                if (!string.IsNullOrEmpty(seenPrefKey))
+                {
+                    PlayerPrefs.DeleteKey(seenPrefKey);
+                    PlayerPrefs.Save();
+                }
+            }
+
+            // ✅ (seen 체크는 초기화 이후에)
+            if (!string.IsNullOrEmpty(seenPrefKey) && PlayerPrefs.GetInt(seenPrefKey, 0) == 1)
+                return;
+        }
 
         PlayFromStart();
     }
