@@ -29690,12 +29690,13 @@ MonoBehaviour:
   autoPlayPolicy: 1
   restrictToScene: 1
   onlySceneName: Myroom
+  additionalAllowedScenes:
+  - Move_Tutorial
   skipIfSaveExists: 1
   saveFiles:
   - player.json
   - cards.json
   - progress.json
-  - items_save.json
   seenPrefKey: Myroom_UISequence_Seen_v1
   markSeenOnFinish: 1
   resetSeenOnNewGameStart: 1
