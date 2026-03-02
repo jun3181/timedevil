@@ -28,6 +28,8 @@ public class DialogueManager : MonoBehaviour
     public float charactersPerSecond = 35f;
     [Tooltip("문장부호에서 추가 대기(리듬)")]
     public float punctuationExtraDelay = 0.10f;
+    [Tooltip("새 문장이 시작된 직후 입력 무시 시간(초). 같은 프레임 입력으로 타이핑이 즉시 완료되는 문제를 방지")]
+    public float lineAdvanceLockSeconds = 0.08f;
 
     [Header("State")]
     public bool isDialogueActive = false;
@@ -43,6 +45,7 @@ public class DialogueManager : MonoBehaviour
     // typing state
     private Coroutine _typingCo;
     private bool _isTyping = false;
+    private float _nextAdvanceAllowedUnscaledTime = 0f;
 
     // =========================
     // Cutscene API (추가)
@@ -139,6 +142,10 @@ public class DialogueManager : MonoBehaviour
         // ✅ 컷씬 중, 월드 입력(일반 호출) 차단
         if (blockInput && !ignoreBlockInput) return;
 
+        // 새 문장 시작 직후에는 같은 키 입력/같은 프레임 재호출을 잠깐 무시
+        if (!ignoreBlockInput && Time.unscaledTime < _nextAdvanceAllowedUnscaledTime)
+            return;
+
         // 1) 타이핑 중이면: "다음"이 아니라 "즉시 완성"
         if (_isTyping)
         {
@@ -166,6 +173,8 @@ public class DialogueManager : MonoBehaviour
         ApplyPortraits(_currentLeft, _currentRight, line.focus);
 
         // 텍스트 출력(타이핑)
+        _nextAdvanceAllowedUnscaledTime = Time.unscaledTime + Mathf.Max(0f, lineAdvanceLockSeconds);
+
         if (dialogueText)
         {
             if (!useTypewriter)

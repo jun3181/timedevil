@@ -24,6 +24,8 @@ public class TurnManager : MonoBehaviour
     [SerializeField] private float introMsg2Seconds = 1.2f;
     [SerializeField] private bool introRequireKey = false;
     [SerializeField] private KeyCode introKey = KeyCode.E;
+    [SerializeField, Min(1f)] private float introCharactersPerSecond = 24f;
+    [SerializeField, Min(0f)] private float introSkipInputDelay = 0.12f;
 
     [Header("Intro SFX (optional)")]
     [SerializeField] private AudioClip introSfx1;
@@ -134,6 +136,17 @@ public class TurnManager : MonoBehaviour
             Debug.LogWarning("[TurnManager] Move_Tutorial start => cleared intro/gate flags (ALWAYS PLAY).");
         }
 
+        // ▶ Move_Tutorial에서 UiSequencePlayer가 먼저 재생 중이면, 완료 후 인트로/턴 시작
+        if (IsMoveTutorial())
+        {
+            var uiSequence = FindObjectOfType<UiSequencePlayer>(true);
+            if (uiSequence != null && uiSequence.IsPlayingSequence)
+            {
+                StartCoroutine(Co_WaitUiSequenceThenBoot(uiSequence));
+                return;
+            }
+        }
+
         // ▶ Move_Tutorial이면 인트로 우선 검사 (한 번만)
         if (IsMoveTutorial() && moveTutorialIntro && ShouldPlayIntroNow())
         {
@@ -169,6 +182,23 @@ public class TurnManager : MonoBehaviour
         Debug.Log($"[TurnManager] Gate  check: global={seenGlobally}, session={seenSession}, play={!(seenGlobally || seenSession)}");
 #endif
         return !(seenGlobally || seenSession);
+    }
+
+    private System.Collections.IEnumerator Co_WaitUiSequenceThenBoot(UiSequencePlayer uiSequence)
+    {
+        Debug.Log("[TurnManager] Waiting for UiSequencePlayer to finish before tutorial intro.");
+
+        while (uiSequence != null && uiSequence.IsPlayingSequence)
+            yield return null;
+
+        if (moveTutorialIntro && ShouldPlayIntroNow())
+        {
+            Debug.Log("[TurnManager] Move_Tutorial intro start (after UiSequencePlayer)");
+            yield return StartCoroutine(Co_MoveTutorialIntroBoot());
+            yield break;
+        }
+
+        DecideFirstTurn();
     }
 
     void ResolvePlayerData()
@@ -385,6 +415,79 @@ public class TurnManager : MonoBehaviour
         BeginPlayerTurn();
     }
 
+    private System.Collections.IEnumerator Co_PlayIntroTypedLine(string line, float minDuration, AudioClip sfx, float sfxVolume)
+    {
+        string full = line ?? string.Empty;
+        PlaySfx(sfx, sfxVolume);
+
+        float started = Time.unscaledTime;
+        float cps = Mathf.Max(1f, introCharactersPerSecond);
+        bool completedByKeyDuringTyping = false;
+
+        if (desc == null)
+        {
+            if (introRequireKey)
+            {
+                while (!Input.GetKeyDown(introKey)) yield return null;
+                yield return null;
+                while (Input.GetKey(introKey)) yield return null;
+            }
+            else if (minDuration > 0f)
+            {
+                yield return new WaitForSeconds(minDuration);
+            }
+            yield break;
+        }
+
+        int shown = 0;
+        while (shown < full.Length)
+        {
+            bool canSkipByKey = (Time.unscaledTime - started) >= introSkipInputDelay;
+            if (canSkipByKey && Input.GetKeyDown(introKey))
+            {
+                shown = full.Length;
+                completedByKeyDuringTyping = true;
+                break;
+            }
+
+            int target = Mathf.Clamp(Mathf.FloorToInt((Time.unscaledTime - started) * cps), 0, full.Length);
+            if (target != shown)
+            {
+                shown = target;
+                desc.ShowTemporaryExplanation(full.Substring(0, shown));
+            }
+
+            yield return null;
+        }
+
+        desc.ShowTemporaryExplanation(full);
+
+        // 타이핑 중 E로 완성했으면, 같은 입력으로 바로 다음 문장으로 넘어가지 않게
+        // 키를 떼고(E up) -> E를 한 번 더 눌러야 다음 문장으로 진행.
+        if (completedByKeyDuringTyping)
+        {
+            yield return null;
+            while (Input.GetKey(introKey)) yield return null;
+            while (!Input.GetKeyDown(introKey)) yield return null;
+            yield return null;
+            while (Input.GetKey(introKey)) yield return null;
+            yield break;
+        }
+
+        if (introRequireKey)
+        {
+            while (!Input.GetKeyDown(introKey)) yield return null;
+            yield return null;
+            while (Input.GetKey(introKey)) yield return null;
+            yield break;
+        }
+
+        float elapsed = Time.unscaledTime - started;
+        float remain = minDuration - elapsed;
+        if (remain > 0f)
+            yield return new WaitForSeconds(remain);
+    }
+
     private System.Collections.IEnumerator Co_MoveTutorialIntroBoot()
     {
         // 인트로 동안 입력 잠금/적 턴 차단
@@ -394,33 +497,17 @@ public class TurnManager : MonoBehaviour
 
         tutorialIntroPlayed = true;
 
-        // 1) 첫 문장 + 사운드
-        if (desc) desc.ShowTemporaryExplanation(introMsg1);
+        // 1) 첫 문장 + 사운드 (타자 효과)
         float w1 = introMsg1Seconds;
         if (!introRequireKey) // 자동 진행 모드에서만 클립 길이 고려
             w1 = Mathf.Max(w1, introSfx1 ? introSfx1.length : 0f);
-        PlaySfx(introSfx1, introSfx1Volume);
+        yield return StartCoroutine(Co_PlayIntroTypedLine(introMsg1, w1, introSfx1, introSfx1Volume));
 
-        if (introRequireKey)
-        {
-            while (!Input.GetKeyDown(introKey)) yield return null;
-            yield return null; while (Input.GetKey(introKey)) yield return null;
-        }
-        else if (w1 > 0f) yield return new WaitForSeconds(w1);
-
-        // 2) 둘째 문장 + 사운드
-        if (desc) desc.ShowTemporaryExplanation(introMsg2);
+        // 2) 둘째 문장 + 사운드 (타자 효과)
         float w2 = introMsg2Seconds;
         if (!introRequireKey)
             w2 = Mathf.Max(w2, introSfx2 ? introSfx2.length : 0f);
-        PlaySfx(introSfx2, introSfx2Volume);
-
-        if (introRequireKey)
-        {
-            while (!Input.GetKeyDown(introKey)) yield return null;
-            yield return null; while (Input.GetKey(introKey)) yield return null;
-        }
-        else if (w2 > 0f) yield return new WaitForSeconds(w2);
+        yield return StartCoroutine(Co_PlayIntroTypedLine(introMsg2, w2, introSfx2, introSfx2Volume));
 
         if (desc) desc.ClearTemporaryMessage();
 
