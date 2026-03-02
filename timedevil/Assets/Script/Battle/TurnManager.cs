@@ -24,6 +24,7 @@ public class TurnManager : MonoBehaviour
     [SerializeField] private float introMsg2Seconds = 1.2f;
     [SerializeField] private bool introRequireKey = false;
     [SerializeField] private KeyCode introKey = KeyCode.E;
+    [SerializeField, Min(1f)] private float introCharactersPerSecond = 24f;
 
     [Header("Intro SFX (optional)")]
     [SerializeField] private AudioClip introSfx1;
@@ -413,6 +414,64 @@ public class TurnManager : MonoBehaviour
         BeginPlayerTurn();
     }
 
+    private System.Collections.IEnumerator Co_PlayIntroTypedLine(string line, float minDuration, AudioClip sfx, float sfxVolume)
+    {
+        string full = line ?? string.Empty;
+        PlaySfx(sfx, sfxVolume);
+
+        float started = Time.unscaledTime;
+        float cps = Mathf.Max(1f, introCharactersPerSecond);
+
+        if (desc == null)
+        {
+            if (introRequireKey)
+            {
+                while (!Input.GetKeyDown(introKey)) yield return null;
+                yield return null;
+                while (Input.GetKey(introKey)) yield return null;
+            }
+            else if (minDuration > 0f)
+            {
+                yield return new WaitForSeconds(minDuration);
+            }
+            yield break;
+        }
+
+        int shown = 0;
+        while (shown < full.Length)
+        {
+            if (Input.GetKeyDown(introKey))
+            {
+                shown = full.Length;
+                break;
+            }
+
+            int target = Mathf.Clamp(Mathf.FloorToInt((Time.unscaledTime - started) * cps), 0, full.Length);
+            if (target != shown)
+            {
+                shown = target;
+                desc.ShowTemporaryExplanation(full.Substring(0, shown));
+            }
+
+            yield return null;
+        }
+
+        desc.ShowTemporaryExplanation(full);
+
+        if (introRequireKey)
+        {
+            while (!Input.GetKeyDown(introKey)) yield return null;
+            yield return null;
+            while (Input.GetKey(introKey)) yield return null;
+            yield break;
+        }
+
+        float elapsed = Time.unscaledTime - started;
+        float remain = minDuration - elapsed;
+        if (remain > 0f)
+            yield return new WaitForSeconds(remain);
+    }
+
     private System.Collections.IEnumerator Co_MoveTutorialIntroBoot()
     {
         // 인트로 동안 입력 잠금/적 턴 차단
@@ -422,33 +481,17 @@ public class TurnManager : MonoBehaviour
 
         tutorialIntroPlayed = true;
 
-        // 1) 첫 문장 + 사운드
-        if (desc) desc.ShowTemporaryExplanation(introMsg1);
+        // 1) 첫 문장 + 사운드 (타자 효과)
         float w1 = introMsg1Seconds;
         if (!introRequireKey) // 자동 진행 모드에서만 클립 길이 고려
             w1 = Mathf.Max(w1, introSfx1 ? introSfx1.length : 0f);
-        PlaySfx(introSfx1, introSfx1Volume);
+        yield return StartCoroutine(Co_PlayIntroTypedLine(introMsg1, w1, introSfx1, introSfx1Volume));
 
-        if (introRequireKey)
-        {
-            while (!Input.GetKeyDown(introKey)) yield return null;
-            yield return null; while (Input.GetKey(introKey)) yield return null;
-        }
-        else if (w1 > 0f) yield return new WaitForSeconds(w1);
-
-        // 2) 둘째 문장 + 사운드
-        if (desc) desc.ShowTemporaryExplanation(introMsg2);
+        // 2) 둘째 문장 + 사운드 (타자 효과)
         float w2 = introMsg2Seconds;
         if (!introRequireKey)
             w2 = Mathf.Max(w2, introSfx2 ? introSfx2.length : 0f);
-        PlaySfx(introSfx2, introSfx2Volume);
-
-        if (introRequireKey)
-        {
-            while (!Input.GetKeyDown(introKey)) yield return null;
-            yield return null; while (Input.GetKey(introKey)) yield return null;
-        }
-        else if (w2 > 0f) yield return new WaitForSeconds(w2);
+        yield return StartCoroutine(Co_PlayIntroTypedLine(introMsg2, w2, introSfx2, introSfx2Volume));
 
         if (desc) desc.ClearTemporaryMessage();
 
