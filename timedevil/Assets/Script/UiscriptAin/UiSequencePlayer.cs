@@ -5,6 +5,7 @@ using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+[DefaultExecutionOrder(-30000)]
 public class UiSequencePlayer : MonoBehaviour
 {
     public enum AutoPlayPolicy
@@ -48,6 +49,8 @@ public class UiSequencePlayer : MonoBehaviour
     [Header("Scene 제한(선택)")]
     [SerializeField] private bool restrictToScene = true;
     [SerializeField] private string onlySceneName = "Myroom";
+    [Tooltip("추가 허용 씬 이름들 (예: Move_Tutorial)")]
+    [SerializeField] private List<string> additionalAllowedScenes = new List<string> { "Move_Tutorial" };
 
     [Header("Save 파일 존재 시 자동 스킵(옵션)")]
     [SerializeField] private bool skipIfSaveExists = true;
@@ -99,7 +102,7 @@ public class UiSequencePlayer : MonoBehaviour
         if (!playOnStart) return;
         if (!ShouldAutoPlayNow()) return;
 
-        // ✅ 저장 파일이 하나라도 있으면 자동 스킵
+        // ✅ 먼저 시작하더라도 저장 파일이 하나라도 있으면 자동 스킵
         if (skipIfSaveExists && HasAnySaveFile())
             return;
 
@@ -158,7 +161,7 @@ public class UiSequencePlayer : MonoBehaviour
 
     private bool ShouldAutoPlayNow()
     {
-        if (restrictToScene && SceneManager.GetActiveScene().name != onlySceneName)
+        if (restrictToScene && !IsAllowedScene(SceneManager.GetActiveScene().name))
             return false;
 
         switch (autoPlayPolicy)
@@ -172,6 +175,28 @@ public class UiSequencePlayer : MonoBehaviour
             default:
                 return true;
         }
+    }
+
+
+    private bool IsAllowedScene(string sceneName)
+    {
+        if (string.IsNullOrEmpty(sceneName))
+            return false;
+
+        if (sceneName == onlySceneName)
+            return true;
+
+        if (additionalAllowedScenes == null)
+            return false;
+
+        for (int i = 0; i < additionalAllowedScenes.Count; i++)
+        {
+            var allowed = additionalAllowedScenes[i];
+            if (!string.IsNullOrWhiteSpace(allowed) && sceneName == allowed)
+                return true;
+        }
+
+        return false;
     }
 
     private bool HasAnySaveFile()
