@@ -12338,6 +12338,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   room1Spawn: {fileID: 424224157}
   room2Spawn: {fileID: 1685952716}
+  room3Spawn: {fileID: 1206097170}
+  applyFallbackWhenNoContext: 0
   fallbackPoint: 2
   forceClearActionLocksOnStart: 1
   maxFindPlayerFrames: 60
