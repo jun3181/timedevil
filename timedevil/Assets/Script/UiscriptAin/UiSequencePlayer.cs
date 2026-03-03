@@ -32,6 +32,9 @@ public class UiSequencePlayer : MonoBehaviour
 
         [Tooltip("type=Dialogue일 때 실행할 Dialogue")]
         public Dialogue dialogue;
+
+        [Tooltip("이 Step을 넘길 때 사용할 키. None이면 기본 nextKey 사용")]
+        public KeyCode advanceKey = KeyCode.None;
     }
 
     [Header("순서대로 보여줄 Step (Image/Dialogue)")]
@@ -143,7 +146,9 @@ public class UiSequencePlayer : MonoBehaviour
 
         EnterCurrentStepIfNeeded();
 
-        // Dialogue Step 진행 중이면 E는 DialogueManager 쪽에서 소비
+        KeyCode currentAdvanceKey = GetCurrentStepAdvanceKey();
+
+        // Dialogue Step 진행 중이면 진행 키 입력은 DialogueManager 쪽에서 소비
         if (IsCurrentStepDialogue())
         {
             var dm = DialogueManager.instance;
@@ -151,15 +156,15 @@ public class UiSequencePlayer : MonoBehaviour
             if (dm != null && dm.isDialogueActive)
                 return;
 
-            // 대화 종료 직후 같은 E 입력으로 다음 Step이 스킵되지 않도록 키를 한번 떼게 함
+            // 대화 종료 직후 같은 키 입력으로 다음 Step이 스킵되지 않도록 키를 한번 떼게 함
             if (_waitingKeyReleaseAfterDialogue)
             {
-                if (Input.GetKey(nextKey)) return;
+                if (Input.GetKey(currentAdvanceKey)) return;
                 _waitingKeyReleaseAfterDialogue = false;
             }
         }
 
-        if (Input.GetKeyDown(nextKey))
+        if (Input.GetKeyDown(currentAdvanceKey))
             Next();
     }
 
@@ -206,6 +211,18 @@ public class UiSequencePlayer : MonoBehaviour
         }
 
         return false;
+    }
+
+    private KeyCode GetCurrentStepAdvanceKey()
+    {
+        if (sequenceSteps != null && index >= 0 && index < sequenceSteps.Count)
+        {
+            var step = sequenceSteps[index];
+            if (step != null && step.advanceKey != KeyCode.None)
+                return step.advanceKey;
+        }
+
+        return nextKey;
     }
 
     private bool HasAnySaveFile()
