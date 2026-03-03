@@ -5,6 +5,7 @@ using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+[DefaultExecutionOrder(-30000)]
 public class UiSequencePlayer : MonoBehaviour
 {
     public enum AutoPlayPolicy
@@ -31,6 +32,9 @@ public class UiSequencePlayer : MonoBehaviour
 
         [Tooltip("type=Dialogue일 때 실행할 Dialogue")]
         public Dialogue dialogue;
+
+        [Tooltip("이 Step을 넘길 때 사용할 키. None이면 기본 nextKey 사용")]
+        public KeyCode advanceKey = KeyCode.None;
     }
 
     [Header("순서대로 보여줄 Step (Image/Dialogue)")]
@@ -48,6 +52,10 @@ public class UiSequencePlayer : MonoBehaviour
     [Header("Scene 제한(선택)")]
     [SerializeField] private bool restrictToScene = true;
     [SerializeField] private string onlySceneName = "Myroom";
+    [Tooltip("추가 허용 씬 이름들 (예: Move_Tutorial)")]
+    [SerializeField] private List<string> additionalAllowedScenes = new List<string> { "Move_Tutorial" };
+    [Tooltip("Move_Tutorial 씬에서는 저장/봤음(1회) 체크를 무시하고 자동 재생을 강제")]
+    [SerializeField] private bool alwaysPlayInMoveTutorial = true;
 
     [Header("Save 파일 존재 시 자동 스킵(옵션)")]
     [SerializeField] private bool skipIfSaveExists = true;
@@ -79,6 +87,8 @@ public class UiSequencePlayer : MonoBehaviour
 
     public event Action OnFinished;
 
+    public bool IsPlayingSequence => isPlaying;
+
     private int index = 0;
     private bool isPlaying = false;
     private bool _stepEntered = false;
@@ -99,27 +109,32 @@ public class UiSequencePlayer : MonoBehaviour
         if (!playOnStart) return;
         if (!ShouldAutoPlayNow()) return;
 
-        // ✅ 저장 파일이 하나라도 있으면 자동 스킵
-        if (skipIfSaveExists && HasAnySaveFile())
-            return;
+        bool forcePlayInMoveTutorial = alwaysPlayInMoveTutorial && SceneManager.GetActiveScene().name == "Move_Tutorial";
 
-        // ✅ 새 게임에서만: 이번 "버튼 클릭 토큰"에 대해 1회 seen 초기화
-        if (resetSeenOnNewGameStart &&
-            GameStartContext.Mode == GameStartMode.NewGame &&
-            s_lastResetToken != GameStartContext.StartToken)
+        if (!forcePlayInMoveTutorial)
         {
-            s_lastResetToken = GameStartContext.StartToken;
+            // ✅ 먼저 시작하더라도 저장 파일이 하나라도 있으면 자동 스킵
+            if (skipIfSaveExists && HasAnySaveFile())
+                return;
 
-            if (!string.IsNullOrEmpty(seenPrefKey))
+            // ✅ 새 게임에서만: 이번 "버튼 클릭 토큰"에 대해 1회 seen 초기화
+            if (resetSeenOnNewGameStart &&
+                GameStartContext.Mode == GameStartMode.NewGame &&
+                s_lastResetToken != GameStartContext.StartToken)
             {
-                PlayerPrefs.DeleteKey(seenPrefKey);
-                PlayerPrefs.Save();
-            }
-        }
+                s_lastResetToken = GameStartContext.StartToken;
 
-        // ✅ (seen 체크는 초기화 이후에)
-        if (!string.IsNullOrEmpty(seenPrefKey) && PlayerPrefs.GetInt(seenPrefKey, 0) == 1)
-            return;
+                if (!string.IsNullOrEmpty(seenPrefKey))
+                {
+                    PlayerPrefs.DeleteKey(seenPrefKey);
+                    PlayerPrefs.Save();
+                }
+            }
+
+            // ✅ (seen 체크는 초기화 이후에)
+            if (!string.IsNullOrEmpty(seenPrefKey) && PlayerPrefs.GetInt(seenPrefKey, 0) == 1)
+                return;
+        }
 
         PlayFromStart();
     }
@@ -131,7 +146,9 @@ public class UiSequencePlayer : MonoBehaviour
 
         EnterCurrentStepIfNeeded();
 
-        // Dialogue Step 진행 중이면 E는 DialogueManager 쪽에서 소비
+        KeyCode currentAdvanceKey = GetCurrentStepAdvanceKey();
+
+        // Dialogue Step 진행 중이면 진행 키 입력은 DialogueManager 쪽에서 소비
         if (IsCurrentStepDialogue())
         {
             var dm = DialogueManager.instance;
@@ -139,15 +156,15 @@ public class UiSequencePlayer : MonoBehaviour
             if (dm != null && dm.isDialogueActive)
                 return;
 
-            // 대화 종료 직후 같은 E 입력으로 다음 Step이 스킵되지 않도록 키를 한번 떼게 함
+            // 대화 종료 직후 같은 키 입력으로 다음 Step이 스킵되지 않도록 키를 한번 떼게 함
             if (_waitingKeyReleaseAfterDialogue)
             {
-                if (Input.GetKey(nextKey)) return;
+                if (Input.GetKey(currentAdvanceKey)) return;
                 _waitingKeyReleaseAfterDialogue = false;
             }
         }
 
-        if (Input.GetKeyDown(nextKey))
+        if (Input.GetKeyDown(currentAdvanceKey))
             Next();
     }
 
@@ -158,7 +175,7 @@ public class UiSequencePlayer : MonoBehaviour
 
     private bool ShouldAutoPlayNow()
     {
-        if (restrictToScene && SceneManager.GetActiveScene().name != onlySceneName)
+        if (restrictToScene && !IsAllowedScene(SceneManager.GetActiveScene().name))
             return false;
 
         switch (autoPlayPolicy)
@@ -172,6 +189,40 @@ public class UiSequencePlayer : MonoBehaviour
             default:
                 return true;
         }
+    }
+
+
+    private bool IsAllowedScene(string sceneName)
+    {
+        if (string.IsNullOrEmpty(sceneName))
+            return false;
+
+        if (sceneName == onlySceneName)
+            return true;
+
+        if (additionalAllowedScenes == null)
+            return false;
+
+        for (int i = 0; i < additionalAllowedScenes.Count; i++)
+        {
+            var allowed = additionalAllowedScenes[i];
+            if (!string.IsNullOrWhiteSpace(allowed) && sceneName == allowed)
+                return true;
+        }
+
+        return false;
+    }
+
+    private KeyCode GetCurrentStepAdvanceKey()
+    {
+        if (sequenceSteps != null && index >= 0 && index < sequenceSteps.Count)
+        {
+            var step = sequenceSteps[index];
+            if (step != null && step.advanceKey != KeyCode.None)
+                return step.advanceKey;
+        }
+
+        return nextKey;
     }
 
     private bool HasAnySaveFile()

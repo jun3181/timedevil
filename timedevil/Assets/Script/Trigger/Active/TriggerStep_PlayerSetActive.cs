@@ -1,5 +1,6 @@
 // Assets/Script/Trigger/Steps/TriggerStep_PlayerSetActive.cs
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public enum PlayerActiveOp
@@ -9,23 +10,35 @@ public enum PlayerActiveOp
     DeactivateForSeconds
 }
 
+public enum ActiveTargetScope
+{
+    Player,
+    Objects,
+    PlayerAndObjects
+}
+
 [DisallowMultipleComponent]
 public class TriggerStep_PlayerSetActive : TriggerStepBase
 {
     [Header("Operation")]
     [SerializeField] private PlayerActiveOp op = PlayerActiveOp.DeactivateForSeconds;
 
-    [Tooltip("op=DeactivateForSeconds ÀÏ ¶§¸¸ »ç¿ë")]
+    [Header("Target")]
+    [SerializeField] private ActiveTargetScope targetScope = ActiveTargetScope.Player;
+    [Tooltip("targetScopeê°€ Objects ë˜ëŠ” PlayerAndObjectsì¼ ë•Œ í™œì„±/ë¹„í™œì„±í•  ì˜¤ë¸Œì íŠ¸")]
+    [SerializeField] private List<GameObject> targetObjects = new();
+
+    [Tooltip("op=DeactivateForSeconds ì¼ ë•Œë§Œ ì‚¬ìš©")]
     [Min(0f)][SerializeField] private float seconds = 0.5f;
 
     [Header("Time")]
     [SerializeField] private bool useUnscaledTime = true;
 
     [Header("Game Lock (optional)")]
-    [Tooltip("ºñÈ°¼ºÈ­ Áß ÀÔ·Â/Çàµ¿±îÁö ¸·°í ½ÍÀ¸¸é ÄÔ")]
+    [Tooltip("ë¹„í™œì„±í™” ë™ì•ˆ ì…ë ¥/í–‰ë™ì„ ì ê¸€ì§€")]
     [SerializeField] private bool lockAction = true;
 
-    [Tooltip("ÀÌ Step ³¡¿¡¼­ UnlockAction ÇÒÁö")]
+    [Tooltip("ì´ Step ì¢…ë£Œ ì‹œ UnlockAction í˜¸ì¶œ")]
     [SerializeField] private bool unlockAtEnd = true;
 
     [Header("Physics Fix")]
@@ -42,12 +55,16 @@ public class TriggerStep_PlayerSetActive : TriggerStepBase
 
     public override IEnumerator Execute(TriggerContext ctx)
     {
-        // Service È®º¸(¾øÀ¸¸é ¸¸µé¾îµµ µÊ)
-        var svc = PlayerActiveService.Instance;
-        if (svc == null)
+        // Player ëŒ€ìƒì¼ ë•Œë§Œ Service í™•ë³´
+        PlayerActiveService svc = null;
+        if (ShouldAffectPlayer())
         {
-            var go = new GameObject("PlayerActiveService");
-            svc = go.AddComponent<PlayerActiveService>();
+            svc = PlayerActiveService.Instance;
+            if (svc == null)
+            {
+                var go = new GameObject("PlayerActiveService");
+                svc = go.AddComponent<PlayerActiveService>();
+            }
         }
 
         bool held = false;
@@ -61,30 +78,61 @@ public class TriggerStep_PlayerSetActive : TriggerStepBase
         {
             case PlayerActiveOp.Deactivate:
                 if (debugLog) Debug.Log("[TriggerStep_PlayerSetActive] Deactivate");
-                svc.SetActive(false, syncPhysics: false, resetVelocity: resetVelocity, clearMoveInput: clearMoveInput);
+                ApplyActive(false, svc);
                 break;
 
             case PlayerActiveOp.Activate:
                 if (debugLog) Debug.Log("[TriggerStep_PlayerSetActive] Activate");
-                svc.SetActive(true, syncPhysics: syncPhysicsAfterEnable, resetVelocity: resetVelocity, clearMoveInput: clearMoveInput);
+                ApplyActive(true, svc);
                 yield return PostEnableFix();
                 break;
 
             case PlayerActiveOp.DeactivateForSeconds:
                 if (debugLog) Debug.Log($"[TriggerStep_PlayerSetActive] DeactivateForSeconds {seconds:0.###}s");
 
-                svc.SetActive(false, syncPhysics: false, resetVelocity: resetVelocity, clearMoveInput: clearMoveInput);
+                ApplyActive(false, svc);
 
                 if (seconds > 0f)
                     yield return WaitSeconds(seconds, useUnscaledTime);
 
-                svc.SetActive(true, syncPhysics: syncPhysicsAfterEnable, resetVelocity: resetVelocity, clearMoveInput: clearMoveInput);
+                ApplyActive(true, svc);
                 yield return PostEnableFix();
                 break;
         }
 
         if (held && unlockAtEnd && GameManager.Instance != null)
             GameManager.Instance.UnlockAction();
+    }
+
+    private bool ShouldAffectPlayer()
+    {
+        return targetScope == ActiveTargetScope.Player || targetScope == ActiveTargetScope.PlayerAndObjects;
+    }
+
+    private bool ShouldAffectObjects()
+    {
+        return targetScope == ActiveTargetScope.Objects || targetScope == ActiveTargetScope.PlayerAndObjects;
+    }
+
+    private void ApplyActive(bool active, PlayerActiveService svc)
+    {
+        if (ShouldAffectPlayer() && svc != null)
+        {
+            svc.SetActive(active, syncPhysics: active && syncPhysicsAfterEnable, resetVelocity: resetVelocity, clearMoveInput: clearMoveInput);
+        }
+
+        if (!ShouldAffectObjects() || targetObjects == null)
+            return;
+
+        for (int i = 0; i < targetObjects.Count; i++)
+        {
+            var go = targetObjects[i];
+            if (!go) continue;
+            go.SetActive(active);
+
+            if (debugLog)
+                Debug.Log($"[TriggerStep_PlayerSetActive] Object {(active ? "Activate" : "Deactivate")} -> {go.name}");
+        }
     }
 
     private IEnumerator PostEnableFix()
