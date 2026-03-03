@@ -29668,6 +29668,7 @@ MonoBehaviour:
       leftPortrait: {fileID: 0}
       rightPortrait: {fileID: 0}
       lines: []
+    advanceKey: 0
   - type: 0
     uiObject: {fileID: 545714205}
     dialogue:
@@ -29676,6 +29677,7 @@ MonoBehaviour:
       leftPortrait: {fileID: 0}
       rightPortrait: {fileID: 0}
       lines: []
+    advanceKey: 0
   - type: 1
     uiObject: {fileID: 0}
     dialogue:
@@ -29685,6 +29687,7 @@ MonoBehaviour:
       leftPortrait: {fileID: 0}
       rightPortrait: {fileID: 21300000, guid: 2e0827c2b95c6884bae7ed3ac8a82323, type: 3}
       lines: []
+    advanceKey: 0
   nextKey: 101
   playOnStart: 1
   autoPlayPolicy: 1
@@ -29692,6 +29695,7 @@ MonoBehaviour:
   onlySceneName: Myroom
   additionalAllowedScenes:
   - Move_Tutorial
+  alwaysPlayInMoveTutorial: 1
   skipIfSaveExists: 1
   saveFiles:
   - player.json
@@ -30794,6 +30798,7 @@ MonoBehaviour:
   useTypewriter: 1
   charactersPerSecond: 35
   punctuationExtraDelay: 0.1
+  lineAdvanceLockSeconds: 0.08
   isDialogueActive: 0
   blockInput: 0
 --- !u!4 &1503988287
@@ -33205,7 +33210,7 @@ TilemapRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 2
+  m_SortingOrder: 1
   m_ChunkSize: {x: 32, y: 32, z: 32}
   m_ChunkCullingBounds: {x: 0, y: 0, z: 0}
   m_MaxChunkCount: 16
