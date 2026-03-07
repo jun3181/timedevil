@@ -73,6 +73,8 @@ public class TriggerStep_PlayerMove : TriggerStepBase
     [Header("Input Lock")]
     [SerializeField] private bool lockPlayerInput = true;
 
+    [SerializeField] private bool disablePlayerMainManagerWhileRunning = true;
+
     [Header("Animation")]
     [SerializeField] private bool setIdleAtEnd = true;
     [SerializeField] private string paramIsChange = "isChange";
@@ -107,6 +109,9 @@ public class TriggerStep_PlayerMove : TriggerStepBase
         Animator anim = playerTr.GetComponent<Animator>();
         bool canDriveAnim = HasAnimParams(anim);
 
+        PlayerMainManager pmm = null;
+        bool pmmPrevEnabled = false;
+
         // 2) 실행할 구간 목록 준비 (segments 우선, 없으면 레거시 1개)
         List<ForcedMoveSegment> runList = null;
         if (segments != null && segments.Count > 0)
@@ -136,8 +141,20 @@ public class TriggerStep_PlayerMove : TriggerStepBase
             heldLock = true;
         }
 
+        if (disablePlayerMainManagerWhileRunning)
+        {
+            pmm = playerTr.GetComponent<PlayerMainManager>();
+            if (!pmm) pmm = Object.FindObjectOfType<PlayerMainManager>(true);
+
+            if (pmm != null)
+            {
+                pmmPrevEnabled = pmm.enabled;
+                pmm.enabled = false;
+            }
+        }
+
         // 4) Stop current move input (중요: 입력이 남아 있으면 FixedUpdate에서 계속 밀 수 있음)
-        if (pm != null)
+        if (pm != null && !canDriveAnim)
             pm.SetMoveInput(0, 0, false, false, false, false);
 
         // 5) Rigidbody velocity zero (optional)
@@ -170,7 +187,7 @@ public class TriggerStep_PlayerMove : TriggerStepBase
                         if (canDriveAnim)
                             ApplyWalkAnimation(anim, resolvedAnim, false);
 
-                        if (pm != null)
+                        if (pm != null && !canDriveAnim)
                             pm.SetMoveInput(0, 0, false, false, false, false);
 
                         float dt = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
@@ -213,7 +230,7 @@ public class TriggerStep_PlayerMove : TriggerStepBase
                         ApplyWalkAnimation(anim, resolvedAnim, false);
 
                     // 계속 입력 0 유지 (안전)
-                    if (pm != null)
+                    if (pm != null && !canDriveAnim)
                         pm.SetMoveInput(0, 0, false, false, false, false);
 
                     yield return null;
@@ -230,6 +247,9 @@ public class TriggerStep_PlayerMove : TriggerStepBase
 
         if (canDriveAnim && setIdleAtEnd)
             SetIdle(anim, lastAnim);
+
+        if (pmm != null)
+            pmm.enabled = pmmPrevEnabled;
 
         // 7) Unlock input
         if (heldLock && GameManager.Instance != null)
