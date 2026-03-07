@@ -180,7 +180,11 @@ public class TriggerStep_PlayerMove : TriggerStepBase
             lastAnim = resolvedAnim;
 
             if (canDriveAnim)
+            {
                 ApplyWalkAnimation(anim, resolvedAnim, true);
+                // Any State 전이 조건(isChange=true)을 Animator가 한 프레임 인지할 시간 보장
+                yield return null;
+            }
 
             if (dir.sqrMagnitude <= 0.000001f || seg.distance <= 0f)
             {
