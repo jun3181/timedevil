@@ -12,6 +12,16 @@ public enum ForcedMoveDir
     Custom
 }
 
+public enum ForcedWalkAnimType
+{
+    AutoFromMove,
+    DownWalk,
+    UpWalk,
+    LeftWalk,
+    RightWalk,
+    None
+}
+
 [System.Serializable]
 public struct ForcedMoveSegment
 {
@@ -27,6 +37,9 @@ public struct ForcedMoveSegment
     [Min(0f)]
     [Tooltip("0이면 즉시 이동(teleport). 0보다 크면 해당 시간 동안 강제 이동(Lerp).")]
     public float duration;
+
+    [Tooltip("이 구간에서 재생할 걷기 애니메이션. AutoFromMove면 direction/customDirection을 기준으로 자동 선택")]
+    public ForcedWalkAnimType walkAnimation;
 }
 
 [DisallowMultipleComponent]
@@ -50,6 +63,8 @@ public class TriggerStep_PlayerMove : TriggerStepBase
     [Min(0f)]
     [SerializeField] private float duration = 0.25f;
 
+    [SerializeField] private ForcedWalkAnimType walkAnimation = ForcedWalkAnimType.AutoFromMove;
+
     // -------------------------
     [Header("Timing")]
     [SerializeField] private bool useUnscaledTime = true;
@@ -57,6 +72,12 @@ public class TriggerStep_PlayerMove : TriggerStepBase
 
     [Header("Input Lock")]
     [SerializeField] private bool lockPlayerInput = true;
+
+    [Header("Animation")]
+    [SerializeField] private bool setIdleAtEnd = true;
+    [SerializeField] private string paramIsChange = "isChange";
+    [SerializeField] private string paramHAxisRaw = "hAxisRaw";
+    [SerializeField] private string paramVAxisRaw = "vAxisRaw";
 
     [Header("Rigidbody (optional)")]
     [SerializeField] private bool zeroVelocityBefore = true;
@@ -83,6 +104,9 @@ public class TriggerStep_PlayerMove : TriggerStepBase
             yield break;
         }
 
+        Animator anim = playerTr.GetComponent<Animator>();
+        bool canDriveAnim = HasAnimParams(anim);
+
         // 2) 실행할 구간 목록 준비 (segments 우선, 없으면 레거시 1개)
         List<ForcedMoveSegment> runList = null;
         if (segments != null && segments.Count > 0)
@@ -98,7 +122,8 @@ public class TriggerStep_PlayerMove : TriggerStepBase
                     direction = direction,
                     customDirection = customDirection,
                     distance = distance,
-                    duration = duration
+                    duration = duration,
+                    walkAnimation = walkAnimation
                 }
             };
         }
@@ -119,15 +144,41 @@ public class TriggerStep_PlayerMove : TriggerStepBase
         var rb = playerTr.GetComponent<Rigidbody2D>();
         if (rb && zeroVelocityBefore) rb.velocity = Vector2.zero;
 
+        ForcedWalkAnimType lastAnim = ForcedWalkAnimType.DownWalk;
+
         // 6) 구간 순서 실행
         for (int i = 0; i < runList.Count; i++)
         {
             var seg = runList[i];
 
             Vector2 dir = ResolveDir(seg.direction, seg.customDirection);
+            ForcedWalkAnimType resolvedAnim = ResolveAnim(seg.walkAnimation, dir);
+            lastAnim = resolvedAnim;
+
+            if (canDriveAnim)
+                ApplyWalkAnimation(anim, resolvedAnim, true);
+
             if (dir.sqrMagnitude <= 0.000001f || seg.distance <= 0f)
             {
-                if (debugLog) Debug.Log($"[TriggerStep_PlayerMove] seg[{i}] skipped (dir/distance is zero)");
+                if (debugLog) Debug.Log($"[TriggerStep_PlayerMove] seg[{i}] skipped move (dir/distance is zero), anim={resolvedAnim}");
+
+                if (seg.duration > 0f)
+                {
+                    float wait = 0f;
+                    while (wait < seg.duration)
+                    {
+                        if (canDriveAnim)
+                            ApplyWalkAnimation(anim, resolvedAnim, false);
+
+                        if (pm != null)
+                            pm.SetMoveInput(0, 0, false, false, false, false);
+
+                        float dt = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+                        wait += dt;
+                        yield return null;
+                    }
+                }
+
                 continue;
             }
 
@@ -138,7 +189,7 @@ public class TriggerStep_PlayerMove : TriggerStepBase
             Vector3 to = from + delta;
 
             if (debugLog)
-                Debug.Log($"[TriggerStep_PlayerMove] seg[{i}] from={from} to={to} dur={seg.duration:0.###} (dir={dir}, dist={seg.distance:0.###})");
+                Debug.Log($"[TriggerStep_PlayerMove] seg[{i}] from={from} to={to} dur={seg.duration:0.###} (dir={dir}, dist={seg.distance:0.###}, anim={resolvedAnim})");
 
             // 구간 이동
             if (seg.duration <= 0f)
@@ -158,6 +209,9 @@ public class TriggerStep_PlayerMove : TriggerStepBase
 
                     playerTr.position = Vector3.LerpUnclamped(from, to, k);
 
+                    if (canDriveAnim)
+                        ApplyWalkAnimation(anim, resolvedAnim, false);
+
                     // 계속 입력 0 유지 (안전)
                     if (pm != null)
                         pm.SetMoveInput(0, 0, false, false, false, false);
@@ -173,6 +227,9 @@ public class TriggerStep_PlayerMove : TriggerStepBase
             // 다음 구간 전에 1프레임 정리(원치 않으면 빼도 됨)
             yield return null;
         }
+
+        if (canDriveAnim && setIdleAtEnd)
+            SetIdle(anim, lastAnim);
 
         // 7) Unlock input
         if (heldLock && GameManager.Instance != null)
@@ -190,5 +247,89 @@ public class TriggerStep_PlayerMove : TriggerStepBase
             case ForcedMoveDir.Custom: return custom;
             default: return Vector2.zero;
         }
+    }
+
+    private ForcedWalkAnimType ResolveAnim(ForcedWalkAnimType selected, Vector2 dir)
+    {
+        if (selected != ForcedWalkAnimType.AutoFromMove)
+            return selected;
+
+        if (Mathf.Abs(dir.x) >= Mathf.Abs(dir.y))
+            return (dir.x >= 0f) ? ForcedWalkAnimType.RightWalk : ForcedWalkAnimType.LeftWalk;
+
+        return (dir.y >= 0f) ? ForcedWalkAnimType.UpWalk : ForcedWalkAnimType.DownWalk;
+    }
+
+    private bool HasAnimParams(Animator anim)
+    {
+        if (!anim) return false;
+
+        bool hasChange = false;
+        bool hasH = false;
+        bool hasV = false;
+
+        var pars = anim.parameters;
+        for (int i = 0; i < pars.Length; i++)
+        {
+            var p = pars[i];
+            if (p.name == paramIsChange && p.type == AnimatorControllerParameterType.Bool) hasChange = true;
+            else if (p.name == paramHAxisRaw && p.type == AnimatorControllerParameterType.Int) hasH = true;
+            else if (p.name == paramVAxisRaw && p.type == AnimatorControllerParameterType.Int) hasV = true;
+        }
+
+        if (!hasChange || !hasH || !hasV)
+        {
+            if (debugLog)
+                Debug.LogWarning($"[TriggerStep_PlayerMove] Animator 파라미터 누락: '{paramIsChange}', '{paramHAxisRaw}', '{paramVAxisRaw}'");
+            return false;
+        }
+
+        return true;
+    }
+
+    private void ApplyWalkAnimation(Animator anim, ForcedWalkAnimType animType, bool isChange)
+    {
+        if (!anim || animType == ForcedWalkAnimType.None)
+        {
+            if (anim) anim.SetBool(paramIsChange, false);
+            return;
+        }
+
+        int h = 0;
+        int v = 0;
+
+        switch (animType)
+        {
+            case ForcedWalkAnimType.DownWalk: v = -1; break;
+            case ForcedWalkAnimType.UpWalk: v = 1; break;
+            case ForcedWalkAnimType.LeftWalk: h = -1; break;
+            case ForcedWalkAnimType.RightWalk: h = 1; break;
+        }
+
+        anim.SetInteger(paramHAxisRaw, h);
+        anim.SetInteger(paramVAxisRaw, v);
+        anim.SetBool(paramIsChange, isChange);
+    }
+
+    private void SetIdle(Animator anim, ForcedWalkAnimType fromAnim)
+    {
+        if (!anim) return;
+
+        switch (fromAnim)
+        {
+            case ForcedWalkAnimType.DownWalk:
+            case ForcedWalkAnimType.UpWalk:
+                anim.SetInteger(paramHAxisRaw, 0);
+                anim.SetInteger(paramVAxisRaw, 0);
+                break;
+
+            case ForcedWalkAnimType.LeftWalk:
+            case ForcedWalkAnimType.RightWalk:
+                anim.SetInteger(paramHAxisRaw, 0);
+                anim.SetInteger(paramVAxisRaw, 0);
+                break;
+        }
+
+        anim.SetBool(paramIsChange, false);
     }
 }
