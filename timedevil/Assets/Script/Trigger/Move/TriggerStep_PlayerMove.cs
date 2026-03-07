@@ -45,6 +45,10 @@ public struct ForcedMoveSegment
 [DisallowMultipleComponent]
 public class TriggerStep_PlayerMove : TriggerStepBase
 {
+    private const string DefaultParamIsChange = "isChange";
+    private const string DefaultParamHAxisRaw = "hAxisRaw";
+    private const string DefaultParamVAxisRaw = "vAxisRaw";
+
     [Header("Sequence (비우면 Single 설정 1회 실행)")]
     [SerializeField] private List<ForcedMoveSegment> segments = new();
 
@@ -72,6 +76,8 @@ public class TriggerStep_PlayerMove : TriggerStepBase
 
     [Header("Input Lock")]
     [SerializeField] private bool lockPlayerInput = true;
+
+    [SerializeField] private bool disablePlayerMainManagerWhileRunning = true;
 
     [Header("Animation")]
     [SerializeField] private bool setIdleAtEnd = true;
@@ -107,6 +113,9 @@ public class TriggerStep_PlayerMove : TriggerStepBase
         Animator anim = playerTr.GetComponent<Animator>();
         bool canDriveAnim = HasAnimParams(anim);
 
+        PlayerMainManager pmm = null;
+        bool pmmPrevEnabled = false;
+
         // 2) 실행할 구간 목록 준비 (segments 우선, 없으면 레거시 1개)
         List<ForcedMoveSegment> runList = null;
         if (segments != null && segments.Count > 0)
@@ -136,8 +145,23 @@ public class TriggerStep_PlayerMove : TriggerStepBase
             heldLock = true;
         }
 
+        // 기존 씬의 직렬화 값이 false여도, 애니메이션 강제 구동 시에는 PlayerMainManager가
+        // Animator 파라미터를 덮어쓰지 않도록 안전하게 비활성화한다.
+        bool shouldDisablePmm = disablePlayerMainManagerWhileRunning || canDriveAnim;
+        if (shouldDisablePmm)
+        {
+            pmm = playerTr.GetComponent<PlayerMainManager>();
+            if (!pmm) pmm = Object.FindObjectOfType<PlayerMainManager>(true);
+
+            if (pmm != null)
+            {
+                pmmPrevEnabled = pmm.enabled;
+                pmm.enabled = false;
+            }
+        }
+
         // 4) Stop current move input (중요: 입력이 남아 있으면 FixedUpdate에서 계속 밀 수 있음)
-        if (pm != null)
+        if (pm != null && !canDriveAnim)
             pm.SetMoveInput(0, 0, false, false, false, false);
 
         // 5) Rigidbody velocity zero (optional)
@@ -170,7 +194,7 @@ public class TriggerStep_PlayerMove : TriggerStepBase
                         if (canDriveAnim)
                             ApplyWalkAnimation(anim, resolvedAnim, false);
 
-                        if (pm != null)
+                        if (pm != null && !canDriveAnim)
                             pm.SetMoveInput(0, 0, false, false, false, false);
 
                         float dt = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
@@ -213,7 +237,7 @@ public class TriggerStep_PlayerMove : TriggerStepBase
                         ApplyWalkAnimation(anim, resolvedAnim, false);
 
                     // 계속 입력 0 유지 (안전)
-                    if (pm != null)
+                    if (pm != null && !canDriveAnim)
                         pm.SetMoveInput(0, 0, false, false, false, false);
 
                     yield return null;
@@ -230,6 +254,9 @@ public class TriggerStep_PlayerMove : TriggerStepBase
 
         if (canDriveAnim && setIdleAtEnd)
             SetIdle(anim, lastAnim);
+
+        if (pmm != null)
+            pmm.enabled = pmmPrevEnabled;
 
         // 7) Unlock input
         if (heldLock && GameManager.Instance != null)
@@ -264,6 +291,10 @@ public class TriggerStep_PlayerMove : TriggerStepBase
     {
         if (!anim) return false;
 
+        string pChange = string.IsNullOrWhiteSpace(paramIsChange) ? DefaultParamIsChange : paramIsChange;
+        string pH = string.IsNullOrWhiteSpace(paramHAxisRaw) ? DefaultParamHAxisRaw : paramHAxisRaw;
+        string pV = string.IsNullOrWhiteSpace(paramVAxisRaw) ? DefaultParamVAxisRaw : paramVAxisRaw;
+
         bool hasChange = false;
         bool hasH = false;
         bool hasV = false;
@@ -272,15 +303,15 @@ public class TriggerStep_PlayerMove : TriggerStepBase
         for (int i = 0; i < pars.Length; i++)
         {
             var p = pars[i];
-            if (p.name == paramIsChange && p.type == AnimatorControllerParameterType.Bool) hasChange = true;
-            else if (p.name == paramHAxisRaw && p.type == AnimatorControllerParameterType.Int) hasH = true;
-            else if (p.name == paramVAxisRaw && p.type == AnimatorControllerParameterType.Int) hasV = true;
+            if (p.name == pChange && p.type == AnimatorControllerParameterType.Bool) hasChange = true;
+            else if (p.name == pH && p.type == AnimatorControllerParameterType.Int) hasH = true;
+            else if (p.name == pV && p.type == AnimatorControllerParameterType.Int) hasV = true;
         }
 
         if (!hasChange || !hasH || !hasV)
         {
             if (debugLog)
-                Debug.LogWarning($"[TriggerStep_PlayerMove] Animator 파라미터 누락: '{paramIsChange}', '{paramHAxisRaw}', '{paramVAxisRaw}'");
+                Debug.LogWarning($"[TriggerStep_PlayerMove] Animator 파라미터 누락: '{pChange}', '{pH}', '{pV}'");
             return false;
         }
 
@@ -289,9 +320,13 @@ public class TriggerStep_PlayerMove : TriggerStepBase
 
     private void ApplyWalkAnimation(Animator anim, ForcedWalkAnimType animType, bool isChange)
     {
+        string pChange = string.IsNullOrWhiteSpace(paramIsChange) ? DefaultParamIsChange : paramIsChange;
+        string pH = string.IsNullOrWhiteSpace(paramHAxisRaw) ? DefaultParamHAxisRaw : paramHAxisRaw;
+        string pV = string.IsNullOrWhiteSpace(paramVAxisRaw) ? DefaultParamVAxisRaw : paramVAxisRaw;
+
         if (!anim || animType == ForcedWalkAnimType.None)
         {
-            if (anim) anim.SetBool(paramIsChange, false);
+            if (anim) anim.SetBool(pChange, false);
             return;
         }
 
@@ -306,30 +341,34 @@ public class TriggerStep_PlayerMove : TriggerStepBase
             case ForcedWalkAnimType.RightWalk: h = 1; break;
         }
 
-        anim.SetInteger(paramHAxisRaw, h);
-        anim.SetInteger(paramVAxisRaw, v);
-        anim.SetBool(paramIsChange, isChange);
+        anim.SetInteger(pH, h);
+        anim.SetInteger(pV, v);
+        anim.SetBool(pChange, isChange);
     }
 
     private void SetIdle(Animator anim, ForcedWalkAnimType fromAnim)
     {
         if (!anim) return;
 
+        string pChange = string.IsNullOrWhiteSpace(paramIsChange) ? DefaultParamIsChange : paramIsChange;
+        string pH = string.IsNullOrWhiteSpace(paramHAxisRaw) ? DefaultParamHAxisRaw : paramHAxisRaw;
+        string pV = string.IsNullOrWhiteSpace(paramVAxisRaw) ? DefaultParamVAxisRaw : paramVAxisRaw;
+
         switch (fromAnim)
         {
             case ForcedWalkAnimType.DownWalk:
             case ForcedWalkAnimType.UpWalk:
-                anim.SetInteger(paramHAxisRaw, 0);
-                anim.SetInteger(paramVAxisRaw, 0);
+                anim.SetInteger(pH, 0);
+                anim.SetInteger(pV, 0);
                 break;
 
             case ForcedWalkAnimType.LeftWalk:
             case ForcedWalkAnimType.RightWalk:
-                anim.SetInteger(paramHAxisRaw, 0);
-                anim.SetInteger(paramVAxisRaw, 0);
+                anim.SetInteger(pH, 0);
+                anim.SetInteger(pV, 0);
                 break;
         }
 
-        anim.SetBool(paramIsChange, false);
+        anim.SetBool(pChange, false);
     }
 }
