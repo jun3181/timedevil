@@ -4529,10 +4529,12 @@ MonoBehaviour:
     customDirection: {x: 0, y: 1}
     distance: 3
     duration: 0.3
+    walkAnimation: 5
   direction: 4
   customDirection: {x: 1, y: 0}
   distance: 1
   duration: 0.25
+  walkAnimation: 0
   useUnscaledTime: 1
   ease:
     serializedVersion: 2
@@ -4559,6 +4561,11 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   lockPlayerInput: 1
+  disablePlayerMainManagerWhileRunning: 1
+  setIdleAtEnd: 1
+  paramIsChange: isChange
+  paramHAxisRaw: hAxisRaw
+  paramVAxisRaw: vAxisRaw
   zeroVelocityBefore: 1
   zeroVelocityAfter: 1
   debugLog: 1
@@ -18471,6 +18478,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   op: 0
+  targetScope: 0
+  targetObjects: []
   seconds: 0.5
   useUnscaledTime: 1
   lockAction: 1
@@ -32194,14 +32203,17 @@ MonoBehaviour:
     customDirection: {x: 1, y: 1}
     distance: 1
     duration: 0.3
+    walkAnimation: 0
   - direction: 4
     customDirection: {x: 0, y: -1}
     distance: 0.5
     duration: 0.3
+    walkAnimation: 0
   direction: 4
   customDirection: {x: 1, y: 0}
   distance: 1
   duration: 0.25
+  walkAnimation: 0
   useUnscaledTime: 1
   ease:
     serializedVersion: 2
@@ -32228,6 +32240,11 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   lockPlayerInput: 1
+  disablePlayerMainManagerWhileRunning: 1
+  setIdleAtEnd: 1
+  paramIsChange: isChange
+  paramHAxisRaw: hAxisRaw
+  paramVAxisRaw: vAxisRaw
   zeroVelocityBefore: 1
   zeroVelocityAfter: 1
   debugLog: 1
@@ -33081,6 +33098,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   op: 1
+  targetScope: 0
+  targetObjects: []
   seconds: 0.5
   useUnscaledTime: 1
   lockAction: 1
