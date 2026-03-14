@@ -150,7 +150,7 @@ public class PlayerMainManager : MonoBehaviour
         }
     }
 
-    // ✅ 여기서는 "대화 활성"은 빼야 함. (대화는 Update 상단에서 처리)
+    //  여기서는 "대화 활성"은 빼야 함. (대화는 Update 상단에서 처리)
     private bool IsInputBlockedByCutsceneOnly(out string reason)
     {
         reason = "";

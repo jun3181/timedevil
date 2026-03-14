@@ -17,7 +17,7 @@ public class HandUI : MonoBehaviour
     [Header("Select Overlay")]
     [SerializeField] private RectTransform select;
 
-    // ★ Select 고정 크기
+    //  Select 고정 크기
     [Header("Select Overlay Fixed Size")]
     [SerializeField] private bool useFixedSelectSize = true;
     [SerializeField] private Vector2 fixedSelectSize = new Vector2(113.2803f, 161.15f);
@@ -180,15 +180,15 @@ public class HandUI : MonoBehaviour
             // 부모/앵커 설정
             select.SetParent(row, false);
 
-            // ✔ 선택 박스는 중앙 pivot 사용
+            //  선택 박스는 중앙 pivot 사용
             select.anchorMin = select.anchorMax = new Vector2(0f, 0.5f); // 행의 좌중앙 기준
             select.pivot = new Vector2(0.5f, 0.5f);
 
-            // ✔ 카드 pivot(0,0.5) → 중앙 좌표 = anchoredX + cardWidth/2
+            //  카드 pivot(0,0.5) → 중앙 좌표 = anchoredX + cardWidth/2
             float centerX = target.anchoredPosition.x + target.sizeDelta.x * 0.5f;
             select.anchoredPosition = new Vector2(centerX, 0f);
 
-            // ✔ 크기 고정
+            //  크기 고정
             if (useFixedSelectSize)
             {
                 select.sizeDelta = fixedSelectSize;

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;    // 🔥 TextMeshPro 사용
+using TMPro;    //  TextMeshPro 사용
 
 #region UI 슬롯 구조
 [System.Serializable]
@@ -11,21 +11,21 @@ public class ItemSlotUI
     public Text quantityText;  // QTY 열
     public Image iconImage;    // ITEM 칸의 아이콘 이미지 (ItemDesc 오브젝트의 Image)
 
-    // 🔥 이 슬롯에 어떤 아이템이 들어있는지 기억
+    //  이 슬롯에 어떤 아이템이 들어있는지 기억
     [HideInInspector] public ItemSO currentItemSO;
 }
 #endregion
 
 public class InventoryDisplay : MonoBehaviour
 {
-    // 🔥 어디서든 확인 가능한 "설명창 열려 있음" 상태 플래그
+    //  어디서든 확인 가능한 "설명창 열려 있음" 상태 플래그
     public static bool IsAnyDescriptionOpen { get; private set; } = false;
 
     [Header("슬롯 6개 연결 (Inspector에서 드래그)")]
     public ItemSlotUI[] slots;
 
     [Header("데이터 소스 (런타임 인벤토리)")]
-    public InventoryDataSource dataSource;   // 🔥 ItemRuntime.CurrentData 래핑
+    public InventoryDataSource dataSource;   //  ItemRuntime.CurrentData 래핑
 
     [Header("아이템 데이터베이스(SO)")]
     public ItemDataBaseSO itemDatabase;     // ItemDatabase SO 드래그
@@ -37,7 +37,7 @@ public class InventoryDisplay : MonoBehaviour
 
     [Header("설명 패널")]
     public GameObject descriptionPanel;   // 설명 창 전체 (처음엔 비활성화)
-    public TMP_Text descriptionText;      // 🔥 TMP용 설명 텍스트
+    public TMP_Text descriptionText;      //  TMP용 설명 텍스트
 
     [Header("커서 참조")]
     public InventoryCursor cursor;        // 인벤토리 커서
@@ -48,10 +48,10 @@ public class InventoryDisplay : MonoBehaviour
 
     private void Start()
     {
-        // 🔥 데이터 소스가 제대로 연결되었는지 확인
+        //  데이터 소스가 제대로 연결되었는지 확인
         if (dataSource == null)
         {
-            Debug.LogError("❌ InventoryDisplay에 InventoryDataSource가 연결되어 있지 않습니다!");
+            Debug.LogError(" InventoryDisplay에 InventoryDataSource가 연결되어 있지 않습니다!");
         }
 
         DisplayCurrentPage();
@@ -81,12 +81,12 @@ public class InventoryDisplay : MonoBehaviour
     /// <summary>현재 pageIndex 기준으로 페이지 내용을 슬롯에 표시</summary>
     public void DisplayCurrentPage()
     {
-        // 🔥 데이터 소스에서 데이터 가져오기
+        //  데이터 소스에서 데이터 가져오기
         InventorySaveData inventoryData = (dataSource != null) ? dataSource.InventoryData : null;
 
         if (inventoryData == null || inventoryData.items == null)
         {
-            Debug.LogWarning("⚠️ InventorySaveData가 비어 있습니다. 표시할 아이템이 없습니다.");
+            Debug.LogWarning(" InventorySaveData가 비어 있습니다. 표시할 아이템이 없습니다.");
             ClearAllSlots();
             return;
         }
@@ -101,7 +101,7 @@ public class InventoryDisplay : MonoBehaviour
 
         if (currentFiltered.Count == 0)
         {
-            Debug.Log("ℹ️ 표시할 아이템이 없습니다. (모두 수량 0)");
+            Debug.Log(" 표시할 아이템이 없습니다. (모두 수량 0)");
             ClearAllSlots();
             return;
         }
@@ -127,7 +127,7 @@ public class InventoryDisplay : MonoBehaviour
 
                 if (def == null)
                 {
-                    Debug.LogWarning($"⚠️ ItemDatabase에서 id '{entry.id}'에 해당하는 ItemSO를 찾지 못했습니다.");
+                    Debug.LogWarning($" ItemDatabase에서 id '{entry.id}'에 해당하는 ItemSO를 찾지 못했습니다.");
                     ClearSlot(slots[i]);
                     continue;
                 }
@@ -136,7 +136,7 @@ public class InventoryDisplay : MonoBehaviour
                 Sprite icon = def.icon;
                 int quantity = entry.quantity; // 실제 수량은 JSON/런타임 기준
 
-                // 🔥 이 슬롯이 어떤 아이템을 들고 있는지 기록
+                //  이 슬롯이 어떤 아이템을 들고 있는지 기록
                 slots[i].currentItemSO = def;
 
                 if (slots[i].nameText) slots[i].nameText.text = displayName;
@@ -193,7 +193,7 @@ public class InventoryDisplay : MonoBehaviour
             return;
         }
 
-        // 🔥 SO에 적힌 설명 사용
+        //  SO에 적힌 설명 사용
         descriptionText.text = def.description;
         descriptionPanel.SetActive(true);
         IsAnyDescriptionOpen = true;
@@ -227,7 +227,7 @@ public class InventoryDisplay : MonoBehaviour
     {
         if (slot == null) return;
 
-        // 🔥 SO 정보도 같이 비우기
+        //  SO 정보도 같이 비우기
         slot.currentItemSO = null;
 
         if (slot.nameText) slot.nameText.text = "";

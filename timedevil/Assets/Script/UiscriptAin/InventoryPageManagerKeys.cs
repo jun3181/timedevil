@@ -25,7 +25,7 @@ public class InventoryPageManagerKeys : MonoBehaviour
 
     private void Update()
     {
-        // 🔥 설명창 열려 있으면 페이지 전환 입력 무시
+        //  설명창 열려 있으면 페이지 전환 입력 무시
         if (InventoryDisplay.IsAnyDescriptionOpen)
             return;
 

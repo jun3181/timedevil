@@ -20,7 +20,7 @@ public static class PlayerReturnContext
     public static float OverlapRadiusPending = 0f;
     public static float OverlapSecondsPending = 0f;
 
-    // --- Return Camera Restore (★추가) ---
+    // --- Return Camera Restore (추가) ---
     public static bool RestoreCameraStatePending = false;
     public static CameraModeId ReturnCameraMode = CameraModeId.Fixed;
     public static float ReturnCameraOrthoSize = 0f;          // 0이면 CameraManager 기본값 유지
@@ -45,7 +45,7 @@ public static class PlayerReturnContext
         float overlapRadius,
         float overlapSeconds,
 
-        // ===== (★추가) 복귀 카메라 복원 데이터 =====
+        // ===== (추가) 복귀 카메라 복원 데이터 =====
         bool restoreCameraState = false,
         CameraModeId cameraMode = CameraModeId.Fixed,
         float cameraOrthoSize = 0f,
@@ -78,7 +78,7 @@ public static class PlayerReturnContext
         OverlapRadiusPending = overlapRadius;
         OverlapSecondsPending = overlapSeconds;
 
-        // Return Camera Restore (★추가)
+        // Return Camera Restore (추가)
         RestoreCameraStatePending = restoreCameraState;
         ReturnCameraMode = cameraMode;
         ReturnCameraOrthoSize = cameraOrthoSize;
@@ -102,7 +102,7 @@ public static class PlayerReturnContext
         OverlapRadiusPending = 0f;
         OverlapSecondsPending = 0f;
 
-        // ★추가
+        // 추가
         RestoreCameraStatePending = false;
         ReturnCameraMode = CameraModeId.Fixed;
         ReturnCameraOrthoSize = 0f;

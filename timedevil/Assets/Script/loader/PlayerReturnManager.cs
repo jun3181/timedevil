@@ -90,7 +90,7 @@ public class PlayerReturnManager : MonoBehaviour
         Vector3 fromPos = player.transform.position;
         player.transform.position = new Vector3(returnPos2.x, returnPos2.y, player.transform.position.z);
 
-        // ✅ 추가: 워프 직후 물리(콜라이더) 동기화 → 트리거 인식 “한 박자 늦음” 완화
+        //  추가: 워프 직후 물리(콜라이더) 동기화 → 트리거 인식 “한 박자 늦음” 완화
         Physics2D.SyncTransforms();
 
         Vector3 toPos = player.transform.position;

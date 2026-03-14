@@ -11,10 +11,10 @@ public class EnemyTurnController : MonoBehaviour
     [SerializeField] private ShowCardController showCard;
     [SerializeField] private DescriptionPanelController desc;
 
-    // 👇 추가: 적도 Draw 효과를 실행하기 위해 DrawController 참조
+    //  추가: 적도 Draw 효과를 실행하기 위해 DrawController 참조
     [Header("Effect Controllers")]
     [SerializeField] private DrawController drawController;
-    [SerializeField] private MoveController moveController;   // ⭐ 추가: Move 실행
+    [SerializeField] private MoveController moveController;   //  추가: Move 실행
     [SerializeField] private AttackController attackController;
 
 
@@ -33,9 +33,9 @@ public class EnemyTurnController : MonoBehaviour
         if (!cost) cost = FindObjectOfType<CostController>(true);
         if (!showCard) showCard = FindObjectOfType<ShowCardController>(true);
         if (!desc) desc = FindObjectOfType<DescriptionPanelController>(true);
-        if (!drawController) drawController = FindObjectOfType<DrawController>(true); // ⭐ 자동 결선
-        if (!moveController) moveController = FindObjectOfType<MoveController>(true);   // ⭐ 자동 결선
-        if (!attackController) attackController = FindObjectOfType<AttackController>(true); // ✅ 자동 결선
+        if (!drawController) drawController = FindObjectOfType<DrawController>(true); //  자동 결선
+        if (!moveController) moveController = FindObjectOfType<MoveController>(true);   //  자동 결선
+        if (!attackController) attackController = FindObjectOfType<AttackController>(true); //  자동 결선
 
 
 
@@ -89,7 +89,7 @@ public class EnemyTurnController : MonoBehaviour
             // SO 가져오기 (타입 분기용)
             BaseCardSO so = cardDatabase ? cardDatabase.GetById(playableId) : null;
 
-            // ▶ 설명(explanation) 고정: (explanation > display > displayName > id)
+            //  설명(explanation) 고정: (explanation > display > displayName > id)
             if (desc && so)
             {
                 string line =
@@ -99,7 +99,7 @@ public class EnemyTurnController : MonoBehaviour
                 desc.ShowTemporaryExplanation(line);
             }
 
-            // ▶ 효과 실행: Draw 카드면 적 진영으로 실행 (cap 무시)
+            //  효과 실행: Draw 카드면 적 진영으로 실행 (cap 무시)
             if (so is DrawCardSO dso && drawController != null)
             {
                 // (권장 UX) 먼저 프리뷰를 보여주고 …
@@ -109,20 +109,20 @@ public class EnemyTurnController : MonoBehaviour
                 // … 그 다음 Draw 효과를 '완료될 때까지' 실행
                 yield return drawController.Execute(dso, Faction.Enemy);
             }
-            else if (so is MoveCardSO mso && moveController != null)   // ⭐⭐ 추가된 분기
+            else if (so is MoveCardSO mso && moveController != null)   //  추가된 분기
             {
                 if (showCard != null) yield return showCard.PreviewById(playableId, previewSeconds);
                 else yield return null;
 
-                // 🔶 적이 자신을 움직임: self=Enemy, foe=Player
+                //  적이 자신을 움직임: self=Enemy, foe=Player
                 yield return moveController.Execute(mso, Faction.Enemy, Faction.Player);
             }
-            else if (so is AttackCardSO aso && attackController != null)   // ✅ 추가된 부분
+            else if (so is AttackCardSO aso && attackController != null)   //  추가된 부분
             {
                 if (showCard != null) yield return showCard.PreviewById(playableId, previewSeconds);
                 else yield return null;
 
-                // 🔥 핵심: 적이 공격 → self=Enemy, foe=Player
+                //  핵심: 적이 공격 → self=Enemy, foe=Player
                 OnEnemyAttackWindowChanged?.Invoke(true);
                 yield return attackController.Execute(aso, Faction.Enemy, Faction.Player);
                 OnEnemyAttackWindowChanged?.Invoke(false);
@@ -134,10 +134,10 @@ public class EnemyTurnController : MonoBehaviour
                 else yield return null;
             }
 
-            // ▶ 설명 해제
+            //  설명 해제
             if (desc) desc.ClearTemporaryMessage();
 
-            // ▶ 사용한 카드는 덱 맨 아래로
+            //  사용한 카드는 덱 맨 아래로
             enemyDeck.UseCardToBottom(playableIndex);
 
             // (선택) 적 손패 UI 새로고침이 필요하면 여기서 호출

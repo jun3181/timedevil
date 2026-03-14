@@ -68,11 +68,11 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // ✅ Timeline SignalReceiver에서 바로 걸기 좋은 이름
+    //  Timeline SignalReceiver에서 바로 걸기 좋은 이름
     public void DisableControls() => LockAction();
     public void EnableControls() => UnlockAction();
 
-    // ✅ 직접 잠금/해제 API (isAction은 여기서만 변하게)
+    //  직접 잠금/해제 API (isAction은 여기서만 변하게)
     public void LockAction()
     {
         _actionLockCount++;
@@ -140,7 +140,7 @@ public class GameManager : MonoBehaviour
         talkText.text = $"{scanObj.name} 과(와) 상호작용!";
         talkPanel.SetActive(true);
 
-        // ✅ 상호작용 중에도 이동/행동 불가를 원하면 LockAction 사용(직접 isAction=true 금지)
+        //  상호작용 중에도 이동/행동 불가를 원하면 LockAction 사용(직접 isAction=true 금지)
         if (!_interactionLockHeld)
         {
             LockAction();
@@ -155,7 +155,7 @@ public class GameManager : MonoBehaviour
 
         talkPanel.SetActive(false);
 
-        // ✅ 열 때 잡았던 잠금만 정확히 반환
+        //  열 때 잡았던 잠금만 정확히 반환
         if (_interactionLockHeld)
         {
             UnlockAction();

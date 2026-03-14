@@ -106,7 +106,7 @@ public class CutsceneRouter : MonoBehaviour
         BeginInputLock();
 
         // -----------------------------
-        // ✅ TriggerContext는 "필수 생성자"로 만들어야 함
+        //  TriggerContext는 "필수 생성자"로 만들어야 함
         // TriggerContext(TriggerGet trigger, TriggerRouter router, GameObject actor, Collider2D hit, PlayerMove playerMove)
         // 여기서는 trigger/router가 없으니 null로 넣고,
         // actor는 Player(=playerMove.gameObject)로 넣어서 ctx.player가 잡히게 함.

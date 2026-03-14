@@ -10,7 +10,7 @@ public static class CardSaveStore
 
     public static CardSaveData Load()
     {
-        // ❌ 기본 카드 자동 생성 제거
+        //  기본 카드 자동 생성 제거
         if (!File.Exists(SavePath))
             return new CardSaveData();  // 비어 있는 상태 반환
 

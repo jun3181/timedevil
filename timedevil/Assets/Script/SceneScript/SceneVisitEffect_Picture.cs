@@ -43,8 +43,8 @@ public class SceneVisitEffect_Picture : SceneVisitEffectBase
         group.blocksRaycasts = false;
         group.alpha = 0f;
 
-        image.enabled = true;                 // ✅ 스프라이트 교체하려면 켜져있어야 안전
-        var c = image.color; c.a = 1f; image.color = c; // ✅ 알파 1 강제
+        image.enabled = true;                 //  스프라이트 교체하려면 켜져있어야 안전
+        var c = image.color; c.a = 1f; image.color = c; //  알파 1 강제
         image.raycastTarget = false;
     }
 

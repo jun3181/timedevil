@@ -27,7 +27,7 @@ public class BattleMenuController : MonoBehaviour
 
     void OnEnable()
     {
-        // ✅ 구독 타이밍과 상관없이 항상 현재 포커스 1회 통지
+        //  구독 타이밍과 상관없이 항상 현재 포커스 1회 통지
         onFocusChanged?.Invoke(index);
     }
 
@@ -59,7 +59,7 @@ public class BattleMenuController : MonoBehaviour
     {
         inputEnabled = on;
 
-        // ✅ 입력 가능/불가 전환 시에도 현재 포커스를 통지해
+        //  입력 가능/불가 전환 시에도 현재 포커스를 통지해
         // (ItemHand/Hand/설명 패널이 즉시 숨김/표시를 반영)
         onFocusChanged?.Invoke(index);
     }
