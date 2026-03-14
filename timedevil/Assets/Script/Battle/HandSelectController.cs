@@ -46,7 +46,7 @@ public class HandSelectController : MonoBehaviour
     {
         if (!menu || !hand) return;
 
-        // ❗ 강제 버림 단계 중에는 메뉴 인덱스와 무관하게 손패 선택 유지
+        //  강제 버림 단계 중에는 메뉴 인덱스와 무관하게 손패 선택 유지
         bool inDiscard = TurnManager.Instance && TurnManager.Instance.IsPlayerDiscardPhase;
 
         // 일반 진입(카드 탭) — 단, 버림 단계가 아닐 때만
@@ -73,7 +73,7 @@ public class HandSelectController : MonoBehaviour
         {
             if (inDiscard)
             {
-                // ✅ 버림 수행
+                //  버림 수행
                 var bdr = BattleDeckRuntime.Instance;
                 if (bdr != null && hand.CurrentSelectIndex >= 0)
                 {

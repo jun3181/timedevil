@@ -121,7 +121,7 @@ public class DialogueManager : MonoBehaviour
             }
         }
 
-        // ✅ 기본 동작: 첫 줄 출력 시도
+        //  기본 동작: 첫 줄 출력 시도
         // 컷씬에서는 blockInput=true로 해두면 여기서 막혀서 "대기(큐만 채움)" 상태가 됨.
         DisplayNextSentence(ignoreBlockInput: false);
     }
@@ -132,14 +132,14 @@ public class DialogueManager : MonoBehaviour
     /// - 타이핑 끝: 다음 문장
     /// - 더 없음: 종료
     ///
-    /// ✅ 컷씬 중에는 blockInput=true로 막아두고,
+    ///  컷씬 중에는 blockInput=true로 막아두고,
     /// 컷씬 컨트롤러가 ignoreBlockInput=true로 우회 호출한다.
     /// </summary>
     public void DisplayNextSentence(bool ignoreBlockInput = false)
     {
         if (!isDialogueActive) return;
 
-        // ✅ 컷씬 중, 월드 입력(일반 호출) 차단
+        //  컷씬 중, 월드 입력(일반 호출) 차단
         if (blockInput && !ignoreBlockInput) return;
 
         // 새 문장 시작 직후에는 같은 키 입력/같은 프레임 재호출을 잠깐 무시

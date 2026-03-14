@@ -5,7 +5,7 @@ public class CardStateRuntime : MonoBehaviour
 {
     public static CardStateRuntime Instance { get; private set; }
 
-    // ✅ 덱 최대 장수
+    //  덱 최대 장수
     public const int MAX_DECK = 13;
 
     [Header("자동 저장 옵션 (기본 꺼짐)")]

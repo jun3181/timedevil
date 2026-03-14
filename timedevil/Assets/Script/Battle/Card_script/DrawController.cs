@@ -14,10 +14,10 @@ public class DrawController : MonoBehaviour
 
     [Header("Anime & UI Refs")]
     [SerializeField] private CardAnimeController cardAnime;
-    [SerializeField] private BattleMenuController menu;                 // 👈 추가
-    [SerializeField] private DescriptionPanelController desc;           // 👈 추가 (관전모드 토글용)
-    [SerializeField] private HandUI playerHandUI;                       // 👈 추가
-    [SerializeField] private EnemyHandUI enemyHandUI;                   // 👈 추가
+    [SerializeField] private BattleMenuController menu;                 //  추가
+    [SerializeField] private DescriptionPanelController desc;           //  추가 (관전모드 토글용)
+    [SerializeField] private HandUI playerHandUI;                       //  추가
+    [SerializeField] private EnemyHandUI enemyHandUI;                   //  추가
 
     public IEnumerator Execute(DrawCardSO so, Faction self)
     {
@@ -167,7 +167,7 @@ public class DrawController : MonoBehaviour
                 }
             }
 
-            // 🔁 적이 사용한 경우: 적 턴 화면으로 즉시 복귀 보장
+            //  적이 사용한 경우: 적 턴 화면으로 즉시 복귀 보장
             if (self == Faction.Enemy && desc) desc.SetEnemyTurn(true);
 
             // 플레이어가 사용한 경우만 카드 선택모드로 복귀

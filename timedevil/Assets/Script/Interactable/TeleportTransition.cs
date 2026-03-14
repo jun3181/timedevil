@@ -71,7 +71,7 @@ public class TeleportTransition : MonoBehaviour, IInteractable
         if (lockPlayerInput && GameManager.Instance) GameManager.Instance.isAction = true;
         if (CameraManager.Instance) CameraManager.Instance.BeginTransition(lockCamera: true);
 
-        // ✅ Teleport는 SceneFader가 아니라 FadePanelFader
+        //  Teleport는 SceneFader가 아니라 FadePanelFader
         if (fadePanel != null)
             yield return fadePanel.FadeTo(1f, fadeOutDuration);
 

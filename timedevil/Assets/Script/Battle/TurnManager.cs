@@ -124,7 +124,7 @@ public class TurnManager : MonoBehaviour
         ResolvePlayerData();
         ResolveEnemyData();
 
-        // ✅✅✅ 핵심 변경: Move_Tutorial 씬이면 "봤음" 플래그를 매번 지워서 항상 인트로/게이트 실행
+        //  핵심 변경: Move_Tutorial 씬이면 "봤음" 플래그를 매번 지워서 항상 인트로/게이트 실행
         // (씬이 시작되면 무조건 실행되게 만들기)
         if (IsMoveTutorial())
         {
@@ -136,7 +136,7 @@ public class TurnManager : MonoBehaviour
             Debug.LogWarning("[TurnManager] Move_Tutorial start => cleared intro/gate flags (ALWAYS PLAY).");
         }
 
-        // ▶ Move_Tutorial에서 UiSequencePlayer가 먼저 재생 중이면, 완료 후 인트로/턴 시작
+        //  Move_Tutorial에서 UiSequencePlayer가 먼저 재생 중이면, 완료 후 인트로/턴 시작
         if (IsMoveTutorial())
         {
             var uiSequence = FindObjectOfType<UiSequencePlayer>(true);
@@ -147,7 +147,7 @@ public class TurnManager : MonoBehaviour
             }
         }
 
-        // ▶ Move_Tutorial이면 인트로 우선 검사 (한 번만)
+        //  Move_Tutorial이면 인트로 우선 검사 (한 번만)
         if (IsMoveTutorial() && moveTutorialIntro && ShouldPlayIntroNow())
         {
             Debug.Log("[TurnManager] Move_Tutorial intro start");
@@ -241,7 +241,7 @@ public class TurnManager : MonoBehaviour
             StartCoroutine(Co_RevealPlayerInitialAfterFrame());
         }
 
-        Debug.Log("🔷 플레이어 턴 시작");
+        Debug.Log(" 플레이어 턴 시작");
     }
 
     public void BeginEnemyTurn()
@@ -265,7 +265,7 @@ public class TurnManager : MonoBehaviour
             StartCoroutine(Co_RevealEnemyInitialAfterFrame());
         }
 
-        Debug.Log("🔶 적 턴 시작");
+        Debug.Log(" 적 턴 시작");
         StartCoroutine(Co_RunEnemyTurnThenBack());
     }
 
@@ -303,9 +303,9 @@ public class TurnManager : MonoBehaviour
             }
         }
 
-        Debug.Log("🔶 적 턴 종료");
+        Debug.Log(" 적 턴 종료");
 
-        // ★ 게이트도 "씬 시작마다 1회" (Start()에서 플래그를 지우기 때문에 항상 실행됨)
+        //  게이트도 "씬 시작마다 1회" (Start()에서 플래그를 지우기 때문에 항상 실행됨)
         if (moveTutorialGate && IsMoveTutorial() && ShouldPlayGateNow())
         {
             if (menu) menu.EnableInput(false);
@@ -407,7 +407,7 @@ public class TurnManager : MonoBehaviour
 
         if (desc) desc.ClearTemporaryMessage();
 
-        // ▶ 게이트 완료 플래그 저장 (v2)
+        //  게이트 완료 플래그 저장 (v2)
         s_MoveTutorialGateSeenThisSession = true;
         PlayerPrefs.SetInt(PREF_KEY_MOVE_TUTORIAL_GATE_SEEN_V2, 1);
         PlayerPrefs.Save();
@@ -511,7 +511,7 @@ public class TurnManager : MonoBehaviour
 
         if (desc) desc.ClearTemporaryMessage();
 
-        // ▶ 인트로 완료 플래그 저장 (v2)
+        //  인트로 완료 플래그 저장 (v2)
         s_MoveTutorialSeenThisSession = true;
         PlayerPrefs.SetInt(PREF_KEY_MOVE_TUTORIAL_SEEN_V2, 1);
         PlayerPrefs.Save();

@@ -12,7 +12,7 @@ public class DescriptionPanelController : MonoBehaviour
     [SerializeField] private CardDatabaseSO database;
 
     [Header("Enemy Hand (for End focus view)")]
-    [SerializeField] private EnemyHandUI enemyHand;           // 👈 추가
+    [SerializeField] private EnemyHandUI enemyHand;           //  추가
     [SerializeField] private CanvasGroup enemyHandCanvasGroup; // (선택) 적 손패용 CG
 
     [Header("Messages")]
@@ -29,10 +29,10 @@ public class DescriptionPanelController : MonoBehaviour
 
     private int _lastIndex = -1;
     private bool _forceEnemyTurn = false;   // TurnManager에서 on/off
-    private string _forcedMessage = null;   // 👈 발동 중(explanation) 임시 고정 문구
-    private bool _forcePlayerDiscard = false; // 🔸 강제 버림 모드
+    private string _forcedMessage = null;   //  발동 중(explanation) 임시 고정 문구
+    private bool _forcePlayerDiscard = false; //  강제 버림 모드
 
-    // ⬇️ 클래스 필드에 추가
+    //  클래스 필드에 추가
     private bool _spectate = false;                    // 관전 플래그
     private Faction _spectateSide = Faction.Enemy;     // 관전 시 보여줄 손패 쪽
 
@@ -42,7 +42,7 @@ public class DescriptionPanelController : MonoBehaviour
         if (!descriptionText) descriptionText = GetComponentInChildren<TMP_Text>(true);
         if (!menu) menu = FindObjectOfType<BattleMenuController>(true);
         if (!hand) hand = FindObjectOfType<HandUI>(true);
-        if (!enemyHand) enemyHand = FindObjectOfType<EnemyHandUI>(true);                 // 👈 추가
+        if (!enemyHand) enemyHand = FindObjectOfType<EnemyHandUI>(true);                 //  추가
 
     }
 
@@ -51,7 +51,7 @@ public class DescriptionPanelController : MonoBehaviour
         if (!descriptionText) descriptionText = GetComponentInChildren<TMP_Text>(true);
         if (!menu) menu = FindObjectOfType<BattleMenuController>(true);
         if (!hand) hand = FindObjectOfType<HandUI>(true);
-        if (!enemyHand) enemyHand = FindObjectOfType<EnemyHandUI>(true);                 // 👈 추가
+        if (!enemyHand) enemyHand = FindObjectOfType<EnemyHandUI>(true);                 //  추가
 
     }
 
@@ -90,7 +90,7 @@ public class DescriptionPanelController : MonoBehaviour
             RefreshNow();
         }
     }
-    // ⬇️ 공개 API 추가
+    //  공개 API 추가
     public void EnterSpectate(Faction showSide, string message = null)
     {
         _spectate = true;
@@ -127,7 +127,7 @@ public class DescriptionPanelController : MonoBehaviour
                 if (idx == 0) hand.ShowCards(); else hand.HideCards();
             }
         }
-        // ✅ 적 턴엔 EnemyHand 표시, 플레이어 턴엔 나머지 로직(RefreshNow)에서 결정
+        //  적 턴엔 EnemyHand 표시, 플레이어 턴엔 나머지 로직(RefreshNow)에서 결정
         if (enemyHand != null)
         {
             if (on) enemyHand.ShowAll();
@@ -144,7 +144,7 @@ public class DescriptionPanelController : MonoBehaviour
         RefreshNow();
     }
 
-    // 👇 카드 발동(관전 모드) 동안 임시 문구를 고정 표시
+    //  카드 발동(관전 모드) 동안 임시 문구를 고정 표시
     public void ShowTemporaryExplanation(string text)
     {
         _forcedMessage = text;
@@ -166,7 +166,7 @@ public class DescriptionPanelController : MonoBehaviour
         int index = menu ? menu.Index : 0;
 
 
-        // ✅ 0) 관전 모드가 최우선
+        //  0) 관전 모드가 최우선
         if (_spectate)
         {
             // 보여줄 쪽만 ON, 나머지는 OFF (클릭/레이캐스트 모두 차단)
@@ -250,7 +250,7 @@ public class DescriptionPanelController : MonoBehaviour
             }
         }
 
-        // ★★★ 텍스트 결정부: 강제 문구가 있으면 항상 최우선으로 사용 ★★★
+        //  텍스트 결정부: 강제 문구가 있으면 항상 최우선으로 사용 
         string text;
         if (!string.IsNullOrEmpty(_forcedMessage))
         {

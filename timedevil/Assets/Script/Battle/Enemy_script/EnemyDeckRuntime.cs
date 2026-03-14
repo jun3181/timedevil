@@ -20,7 +20,7 @@ public class EnemyDeckRuntime : MonoBehaviour
     public event Action OnHandChanged;
     public int MaxHandSize => maxHandSize;
 
-    // ✅ 추가: 현재 초과량
+    //  추가: 현재 초과량
     public int OverCapCount => Mathf.Max(0, hand.Count - maxHandSize);
 
     void Awake()
@@ -93,7 +93,7 @@ public class EnemyDeckRuntime : MonoBehaviour
         if (hand.Count < maxHandSize) Draw(1);
     }
 
-    // ✅ 새 오버로드: cap을 무시할지 선택 가능
+    //  새 오버로드: cap을 무시할지 선택 가능
     public int Draw(int n, bool ignoreHandCap)
     {
         int drawn = 0;
@@ -113,7 +113,7 @@ public class EnemyDeckRuntime : MonoBehaviour
 
 
 
-    // ✅ 기존 시그니처는 유지하되, 기본적으로 cap을 지킴
+    //  기존 시그니처는 유지하되, 기본적으로 cap을 지킴
     public void Draw(int n)
     {
         Draw(n, ignoreHandCap: false);

@@ -88,7 +88,7 @@ public class BattleDeckRuntime : MonoBehaviour
     // 기본 드로우(최대치 적용)
     public void Draw(int n) => Draw(n, ignoreHandCap: false);
 
-    // ✅ 카드 효과용: 최대치 무시 드로우
+    //  카드 효과용: 최대치 무시 드로우
     public int Draw(int n, bool ignoreHandCap)
     {
         int drawn = 0;
@@ -117,7 +117,7 @@ public class BattleDeckRuntime : MonoBehaviour
         return true;
     }
 
-    // ✅ 버리기(엔드 초과 처리): 선택 카드 덱 맨 밑으로
+    //  버리기(엔드 초과 처리): 선택 카드 덱 맨 밑으로
     public bool DiscardToBottom(int handIndex)
     {
         return UseCardToBottom(handIndex);
