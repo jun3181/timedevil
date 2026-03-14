@@ -28,7 +28,7 @@ public class InventoryDisplay : MonoBehaviour
     public InventoryDataSource dataSource;   //  ItemRuntime.CurrentData 래핑
 
     [Header("아이템 데이터베이스(SO)")]
-    public ItemDataBaseSO itemDatabase;     // ItemDatabase SO 드래그
+    public ItemDatabaseSO itemDatabase;     // ItemDatabase SO 드래그
 
     [Header("페이지 설정")]
     [Tooltip("0=첫 페이지, 1=두 번째 페이지...")]
