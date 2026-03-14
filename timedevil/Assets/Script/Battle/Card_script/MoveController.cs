@@ -8,7 +8,7 @@ public class MoveController : MonoBehaviour
     [SerializeField] private int cols = 4;
     [SerializeField] private float cell = 1.3f;
 
-    // (r0,c0): originÀÌ °¡¸®Å°´Â ±âÁØ ¼¿(¿¹: (4,1))
+    // (r0,c0): originì´ ê°€ë¦¬í‚¤ëŠ” ê¸°ì¤€ ì…€(ì˜ˆ: (4,1))
     [SerializeField] private int originRow_Player = 4;
     [SerializeField] private int originCol_Player = 1;
     [SerializeField] private int originRow_Enemy  = 4;
@@ -49,13 +49,13 @@ public class MoveController : MonoBehaviour
         {
             playerRC = rc;
             if (snap && playerPawn && playerGridOrigin)
-                playerPawn.position = RCToWorld(rc, playerGridOrigin, originRow_Player, originCol_Player, playerPawn.position.z); // ¡Ú
+                playerPawn.position = RCToWorld(rc, playerGridOrigin, originRow_Player, originCol_Player, playerPawn.position.z); // â˜…
         }
         else
         {
             enemyRC = rc;
             if (snap && enemyPawn && enemyGridOrigin)
-                enemyPawn.position = RCToWorld(rc, enemyGridOrigin, originRow_Enemy, originCol_Enemy, enemyPawn.position.z);       // ¡Ú
+                enemyPawn.position = RCToWorld(rc, enemyGridOrigin, originRow_Enemy, originCol_Enemy, enemyPawn.position.z);       // â˜…
         }
     }
 
@@ -82,7 +82,7 @@ public class MoveController : MonoBehaviour
 
         if (!pawn || !origin)
         {
-            Debug.LogWarning("[MoveController] Pawn/Origin ´©¶ô");
+            Debug.LogWarning("[MoveController] Pawn/Origin ëˆ„ë½");
             if (desc) desc.ClearTemporaryMessage();
             if (menu) menu.EnableInput(true);
             yield break;
@@ -105,10 +105,10 @@ public class MoveController : MonoBehaviour
         Vector2Int endRC = WorldToNearestRC(clampedEndPos, origin, oRow, oCol);
         endRC = ClampRC(endRC);
 
-        // ¢º ÀÌµ¿ Ä­ ¼ö °è»ê(¾Ö´Ï/Æ®À© °ø¿ë)
+        // â–¶ ì´ë™ ì¹¸ ìˆ˜ ê³„ì‚°(ì• ë‹ˆ/íŠ¸ìœˆ ê³µìš©)
         int cellsDistance = Mathf.Abs(endRC.x - curRC.x) + Mathf.Abs(endRC.y - curRC.y);
 
-        // ¢º ½ÇÁ¦ ÀÌµ¿ ¾øÀ¸¸é ¾Ö´Ï/Æ®¸®°Åµµ ½ºÅµ
+        // â–¶ ì‹¤ì œ ì´ë™ ì—†ìœ¼ë©´ ì• ë‹ˆ/íŠ¸ë¦¬ê±°ë„ ìŠ¤í‚µ
         if (cellsDistance == 0)
         {
             yield return new WaitForSeconds(0.05f);
@@ -117,7 +117,7 @@ public class MoveController : MonoBehaviour
             yield break;
         }
 
-        // ¢º ¾Ö´Ï ÆÄ¶ó¹ÌÅÍ ¼¼ÆÃ(º¯¼ö ÀÌ¸§ Ãæµ¹ ¹æÁö)
+        // â–¶ ì• ë‹ˆ íŒŒë¼ë¯¸í„° ì„¸íŒ…(ë³€ìˆ˜ ì´ë¦„ ì¶©ëŒ ë°©ì§€)
         int animDir;
         if (endRC.y < curRC.y) animDir = 2; // Left
         else if (endRC.y > curRC.y) animDir = 3; // Right
@@ -159,8 +159,8 @@ public class MoveController : MonoBehaviour
     }
 
 
-    // ===== À¯Æ¿ =====
-    // 1) À¯Æ¿: Dir4 -> Animator Dir(Int) ¸ÅÇÎ
+    // ===== ìœ í‹¸ =====
+    // 1) ìœ í‹¸: Dir4 -> Animator Dir(Int) ë§¤í•‘
     private static int DirToAnimInt(Dir4 d) => d switch
     {
         Dir4.Up => 0,
@@ -170,7 +170,7 @@ public class MoveController : MonoBehaviour
         _ => 0
     };
 
-    // ¹æÇâ ¡æ ±×¸®µå µ¨Å¸ (ºÎÈ£ ¼öÁ¤: Left -, Right +)
+    // ë°©í–¥ â†’ ê·¸ë¦¬ë“œ ë¸íƒ€ (ë¶€í˜¸ ìˆ˜ì •: Left -, Right +)
     private static Vector2Int DirToDelta(Dir4 d) => d switch
     {
         Dir4.Left  => new Vector2Int(0, -1),
@@ -180,37 +180,37 @@ public class MoveController : MonoBehaviour
         _ => Vector2Int.zero
     };
 
-    // º¸µå ¿ùµå °æ°è °è»ê(±×¸®µå ÇÑ°è ¡æ ¿ùµå ÁÂÇ¥)
+    // ë³´ë“œ ì›”ë“œ ê²½ê³„ ê³„ì‚°(ê·¸ë¦¬ë“œ í•œê³„ â†’ ì›”ë“œ ì¢Œí‘œ)
     private (float minX, float maxX, float minY, float maxY) ComputeWorldBounds(Transform origin, int oRow, int oCol)
     {
         float minX = origin.position.x + (1    - oCol) * cell;
         float maxX = origin.position.x + (cols - oCol) * cell;
-        float maxY = origin.position.y + (oRow - 1   ) * cell;   // row=1(À­ÁÙ)ÀÌ +Y ÃÖ´ë
-        float minY = origin.position.y + (oRow - rows) * cell;   // row=rows(¾Æ·§ÁÙ)ÀÌ -Y ÃÖ¼Ò
+        float maxY = origin.position.y + (oRow - 1   ) * cell;   // row=1(ìœ—ì¤„)ì´ +Y ìµœëŒ€
+        float minY = origin.position.y + (oRow - rows) * cell;   // row=rows(ì•„ë«ì¤„)ì´ -Y ìµœì†Œ
         if (minX > maxX) (minX, maxX) = (maxX, minX);
         if (minY > maxY) (minY, maxY) = (maxY, minY);
         return (minX, maxX, minY, maxY);
     }
 
-    // (r,c) ¡æ ¿ùµå ÁÂÇ¥
+    // (r,c) â†’ ì›”ë“œ ì¢Œí‘œ
     private Vector3 RCToWorld(Vector2Int rc, Transform origin, int oRow, int oCol, float baseZ)
     {
         float x = origin.position.x + (rc.y - oCol) * cell;
         float y = origin.position.y + (oRow - rc.x) * cell;
-        return new Vector3(x, y, baseZ);   // ¡ç Àü´Ş¹ŞÀº z¸¦ ±×´ë·Î »ç¿ë
+        return new Vector3(x, y, baseZ);   // â† ì „ë‹¬ë°›ì€ zë¥¼ ê·¸ëŒ€ë¡œ ì‚¬ìš©
     }
 
-    // ¿ùµå µ¨Å¸ °è»ê: ±×¸®µå µ¨Å¸¸¦ ¿ùµå º¤ÅÍ·Î (Pawn ±âÁØ »ó´ë ÀÌµ¿)
+    // ì›”ë“œ ë¸íƒ€ ê³„ì‚°: ê·¸ë¦¬ë“œ ë¸íƒ€ë¥¼ ì›”ë“œ ë²¡í„°ë¡œ (Pawn ê¸°ì¤€ ìƒëŒ€ ì´ë™)
     private Vector3 RCDeltaToWorldDelta(Vector2Int dRC, Transform origin, int oRow, int oCol)
     {
-        // ¿­(+1) ¡æ +X, ¿­(-1) ¡æ -X
-        // Çà(-1: Up) ¡æ +Y, Çà(+1: Down) ¡æ -Y
+        // ì—´(+1) â†’ +X, ì—´(-1) â†’ -X
+        // í–‰(-1: Up) â†’ +Y, í–‰(+1: Down) â†’ -Y
         float dx = dRC.y * cell;
         float dy = (-dRC.x) * cell;
         return new Vector3(dx, dy, 0f);
     }
 
-    // ¿ùµå ÁÂÇ¥ ¡æ °¡Àå °¡±î¿î ±×¸®µå (¹İ¿Ã¸²)
+    // ì›”ë“œ ì¢Œí‘œ â†’ ê°€ì¥ ê°€ê¹Œìš´ ê·¸ë¦¬ë“œ (ë°˜ì˜¬ë¦¼)
     private Vector2Int WorldToNearestRC(Vector3 world, Transform origin, int oRow, int oCol)
     {
         float relX = (world.x - origin.position.x) / cell;
