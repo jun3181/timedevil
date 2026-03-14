@@ -1565,7 +1565,7 @@ Transform:
   m_GameObject: {fileID: 600749772}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 4.6689, y: -6.5759, z: 0}
+  m_LocalPosition: {x: 2.56, y: -3.94, z: -1}
   m_LocalScale: {x: 12.4179, y: 12.4179, z: 12.4179}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2041,6 +2041,7 @@ MonoBehaviour:
       leftPortrait: {fileID: 0}
       rightPortrait: {fileID: 0}
       lines: []
+    advanceKey: 0
   - type: 0
     uiObject: {fileID: 2057449667}
     dialogue:
@@ -2049,6 +2050,7 @@ MonoBehaviour:
       leftPortrait: {fileID: 0}
       rightPortrait: {fileID: 0}
       lines: []
+    advanceKey: 0
   nextKey: 101
   playOnStart: 1
   autoPlayPolicy: 0
@@ -10209,6 +10211,8 @@ MonoBehaviour:
   introMsg2Seconds: 1.2
   introRequireKey: 1
   introKey: 101
+  introCharactersPerSecond: 24
+  introSkipInputDelay: 0.12
   introSfx1: {fileID: 0}
   introSfx1Volume: 1
   introSfx2: {fileID: 0}
@@ -10418,7 +10422,7 @@ Transform:
   m_GameObject: {fileID: 2057449667}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -3.18, y: -1.22, z: 0}
+  m_LocalPosition: {x: -3.18, y: -1.22, z: -1}
   m_LocalScale: {x: 12.4179, y: 12.4179, z: 12.4179}
   m_ConstrainProportionsScale: 0
   m_Children: []
