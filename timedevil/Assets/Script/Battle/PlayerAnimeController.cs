@@ -43,7 +43,7 @@ public class PlayerAnimeController : MonoBehaviour
     {
         IsPlaying = true;
         float t = 0f;
-        var curve = (customEase != null) ? customEase : ease;   // 🔧 FIX
+        var curve = (customEase != null) ? customEase : ease;   //  FIX
         duration = Mathf.Max(0.01f, duration);
 
         while (t < duration)
@@ -62,7 +62,7 @@ public class PlayerAnimeController : MonoBehaviour
     IEnumerator Co_PingPong(Vector3 start, Vector3 end, float half, float hold, AnimationCurve customEase)
     {
         IsPlaying = true;
-        var curve = (customEase != null) ? customEase : ease;   // 🔧 FIX
+        var curve = (customEase != null) ? customEase : ease;   //  FIX
         half = Mathf.Max(0.01f, half);
 
         // go

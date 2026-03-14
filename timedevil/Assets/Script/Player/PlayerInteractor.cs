@@ -62,7 +62,7 @@ public class PlayerInteractor : MonoBehaviour
             requiredMask |= (1 << layer);
         }
 
-        // ✅ 인스펙터에 뭐가 들어있든, 요구 레이어는 "항상" 포함
+        //  인스펙터에 뭐가 들어있든, 요구 레이어는 "항상" 포함
         interactMask |= requiredMask;
     }
 

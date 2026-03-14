@@ -8,7 +8,7 @@ public abstract class BaseCardSO : ScriptableObject
     public string displayName;  // 표시용 이름
     public CardType type;
     [TextArea] public string display; // 설명문
-    [TextArea] public string explanation;  // ✅ 발동 대사(우선 노출)
+    [TextArea] public string explanation;  //  발동 대사(우선 노출)
 
 
     [Header("Cost & Rating")]

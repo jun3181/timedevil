@@ -22,7 +22,7 @@ public class TriggerSuppressTag : MonoBehaviour
     private readonly List<Behaviour> _cached = new();
 
     // ----------------------------
-    // ✅ 레거시: key로 억제
+    //  레거시: key로 억제
     // ----------------------------
     public static void SuppressByKey(string suppressKey, float seconds)
     {
@@ -53,7 +53,7 @@ public class TriggerSuppressTag : MonoBehaviour
     }
 
     // ----------------------------
-    // ✅ B방식: key 없이 "그냥" 억제
+    //  B방식: key 없이 "그냥" 억제
     // ----------------------------
     public void Suppress(float seconds)
     {

@@ -13,7 +13,7 @@ public class InventoryCursor : MonoBehaviour
     [Header("상태")]
     [SerializeField] private int currentIndex = 0;
 
-    // 🔥 InventoryDisplay에서 현재 선택된 슬롯 번호를 가져가기 위해 추가한 프로퍼티
+    //  InventoryDisplay에서 현재 선택된 슬롯 번호를 가져가기 위해 추가한 프로퍼티
     public int CurrentIndex => currentIndex;
 
     private void Reset()
@@ -28,7 +28,7 @@ public class InventoryCursor : MonoBehaviour
 
     private void Update()
     {
-        // 🔥 설명창 열려 있으면 커서 이동 입력 무시
+        //  설명창 열려 있으면 커서 이동 입력 무시
         if (InventoryDisplay.IsAnyDescriptionOpen)
             return;
 
@@ -50,7 +50,7 @@ public class InventoryCursor : MonoBehaviour
         highlight.anchoredPosition = pos;
     }
 
-    // ★ 페이지가 바뀔 때 호출: 맨 윗칸으로 이동
+    //  페이지가 바뀔 때 호출: 맨 윗칸으로 이동
     public void ResetToTop()
     {
         currentIndex = 0;

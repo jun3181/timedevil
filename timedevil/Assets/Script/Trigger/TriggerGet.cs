@@ -19,7 +19,7 @@ public class TriggerGet : MonoBehaviour
     [Tooltip("플레이어 판정: PlayerMove 컴포넌트로 체크")]
     public bool usePlayerMoveComponentCheck = true;
 
-    // ✅ (A) 전투만 재진입 방지용 옵션
+    //  (A) 전투만 재진입 방지용 옵션
     [Header("Grace Policy (Return from battle)")]
     [Tooltip("true면 PlayerReturnContext.IsInGracePeriod 동안 이 트리거는 발동하지 않습니다. (전투 재진입 방지용)")]
     public bool blockDuringGracePeriod = false;

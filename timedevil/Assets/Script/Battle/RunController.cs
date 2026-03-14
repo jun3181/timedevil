@@ -10,7 +10,7 @@ public class RunController : MonoBehaviour
     [Header("Options")]
     [SerializeField] private float graceSeconds = 1.0f;
 
-    // ★ (선택) 월드 씬의 vcam 이름을 지정하면 정확히 그 vcam을 찾음
+    //  (선택) 월드 씬의 vcam 이름을 지정하면 정확히 그 vcam을 찾음
     [SerializeField] private string worldVcamName = "CM vcam1";
 
     private bool isReturning = false;
@@ -53,7 +53,7 @@ public class RunController : MonoBehaviour
         isReturning = true;
         if (menu) menu.EnableInput(false);
 
-        // ★★★ 핵심: 돌아가면 카메라를 Player에 재바인딩하라는 플래그 세팅
+        //  핵심: 돌아가면 카메라를 Player에 재바인딩하라는 플래그 세팅
         PlayerReturnContext.CameraRebindRequested = true;
         PlayerReturnContext.TargetVcamName = string.IsNullOrWhiteSpace(worldVcamName) ? null : worldVcamName;
 

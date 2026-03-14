@@ -1,18 +1,18 @@
-// ±âÁ¸ ÆÄÀÏ ±³Ã¼: Assets/Script/loader/ReturnSpawnApplier.cs
+// ê¸°ì¡´ íŒŒì¼ êµì²´: Assets/Script/loader/ReturnSpawnApplier.cs
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class ReturnSpawnApplier : MonoBehaviour
 {
     [SerializeField] private Transform playerTransform;
-    [Header("¿É¼Ç")]
+    [Header("ì˜µì…˜")]
     [SerializeField] private bool restoreMonster = true;
 
     private void Start()
     {
         if (!PlayerReturnContext.HasReturnPosition) return;
 
-        // °°Àº ¾ÀÀ¸·Î µ¹¾Æ¿Â °æ¿ì¿¡¸¸ Àû¿ë
+        // ê°™ì€ ì”¬ìœ¼ë¡œ ëŒì•„ì˜¨ ê²½ìš°ì—ë§Œ ì ìš©
         if (PlayerReturnContext.ReturnSceneName == SceneManager.GetActiveScene().name)
         {
             if (playerTransform) playerTransform.position = PlayerReturnContext.ReturnPosition;
@@ -23,7 +23,7 @@ public class ReturnSpawnApplier : MonoBehaviour
                 if (enemyObj) enemyObj.transform.position = PlayerReturnContext.MonsterReturnPosition;
             }
         }
-        // ÇÊ¿ä ½Ã ÇÑ ¹ø Àû¿ë ÈÄ ÃÊ±âÈ­
+        // í•„ìš” ì‹œ í•œ ë²ˆ ì ìš© í›„ ì´ˆê¸°í™”
         // PlayerReturnContext.HasReturnPosition = false;
     }
 }

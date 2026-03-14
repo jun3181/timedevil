@@ -17,7 +17,7 @@ public class EndController : MonoBehaviour
         {
             if (TurnManager.Instance != null)
             {
-                // ✅ 먼저 강제 버림 단계 진입 시도
+                //  먼저 강제 버림 단계 진입 시도
                 TurnManager.Instance.OnPlayerPressedEnd();
             }
         }

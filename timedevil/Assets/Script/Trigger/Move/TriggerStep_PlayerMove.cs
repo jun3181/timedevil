@@ -53,7 +53,7 @@ public class TriggerStep_PlayerMove : TriggerStepBase
     [SerializeField] private List<ForcedMoveSegment> segments = new();
 
     // -------------------------
-    // ✅ 기존(레거시) 단일 이동 설정 (segments 비어있을 때만 사용)
+    //  기존(레거시) 단일 이동 설정 (segments 비어있을 때만 사용)
     // -------------------------
     [Header("Single (Legacy)")]
     [SerializeField] private ForcedMoveDir direction = ForcedMoveDir.Right;

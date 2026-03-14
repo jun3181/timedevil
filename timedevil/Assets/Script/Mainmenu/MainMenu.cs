@@ -15,10 +15,10 @@ public class MainMenu : MonoBehaviour
     {
         PlayClick();
 
-        // ✅ 저장 유무와 무관하게 "완전 새 시작" 보장
+        //  저장 유무와 무관하게 "완전 새 시작" 보장
         SaveSystem.ClearAllSaves();
 
-        // ✅ 1회성 진입점 지정
+        //  1회성 진입점 지정
         MyroomEntryContext.SetRoom1();
 
         // (유지) 기존 컨텍스트도 그대로
@@ -32,7 +32,7 @@ public class MainMenu : MonoBehaviour
     {
         PlayClick();
 
-        // ✅ 1회성 진입점 지정 (Load는 Room3 스폰 사용)
+        //  1회성 진입점 지정 (Load는 Room3 스폰 사용)
         MyroomEntryContext.SetRoom3();
 
         // (유지) 기존 컨텍스트도 그대로

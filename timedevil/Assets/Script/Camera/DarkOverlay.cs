@@ -7,7 +7,7 @@ using UnityEngine.SceneManagement;
 [RequireComponent(typeof(CanvasGroup))]
 public class DarkOverlay : MonoBehaviour
 {
-    // ✅ 사용 방식 유지: DarkOverlay.Instance.SetAlpha(...)
+    //  사용 방식 유지: DarkOverlay.Instance.SetAlpha(...)
     private static DarkOverlay _instance;
     public static DarkOverlay Instance
     {
@@ -48,7 +48,7 @@ public class DarkOverlay : MonoBehaviour
 
         ownerSceneName = gameObject.scene.name;
 
-        // ✅ 기존 인스턴스가 남아있다면(특히 DontDestroy로 살아있던 경우) 제거
+        //  기존 인스턴스가 남아있다면(특히 DontDestroy로 살아있던 경우) 제거
         if (Instance != null && Instance != this)
         {
             Destroy(Instance.gameObject);
@@ -73,7 +73,7 @@ public class DarkOverlay : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        // ✅ 씬 로컬 정책: 내 씬이 아닌 씬이 로드됐는데 내가 살아있다?
+        //  씬 로컬 정책: 내 씬이 아닌 씬이 로드됐는데 내가 살아있다?
         // = DontDestroy로 살아남았던 케이스 -> 즉시 제거
         if (sceneLocal && scene.name != ownerSceneName)
         {

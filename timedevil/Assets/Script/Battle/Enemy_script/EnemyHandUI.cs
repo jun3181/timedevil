@@ -13,7 +13,7 @@ public class EnemyHandUI : MonoBehaviour
 
     [Header("Layout")]
     [SerializeField] private float leftPadding = 8f;
-    [SerializeField] private float rightPadding = 8f; // 👈 추가
+    [SerializeField] private float rightPadding = 8f; //  추가
 
     [SerializeField] private float cardWidth = 120f;
 

@@ -21,7 +21,7 @@ public class HPController : MonoBehaviour
         if (binder != null) _hpUI = binder;
 
     }
-    // ÇÊ¿ä ½Ã °³º° ÁÖÀÔµµ °¡´ÉÇÏµµ·Ï
+    // í•„ìš” ì‹œ ê°œë³„ ì£¼ì…ë„ ê°€ëŠ¥í•˜ë„ë¡
     public void SetEnemyRuntime(EnemyRuntime er) => enemyData = er;
     public void SetPlayerDataRuntime(PlayerDataRuntime pdr) => playerData = pdr;
     void Awake()
@@ -47,7 +47,7 @@ public class HPController : MonoBehaviour
     {
         if (who == Faction.Player)
         {
-            // ÇÃ·¹ÀÌ¾î ÂÊÀº ÇÊµå¸íÀÌ ÇÁ·ÎÁ§Æ®¸¶´Ù ´Ù¸¦ ¼ö ÀÖÀ¸¹Ç·Î Æú¹éÀ¸·Î Å½»ö
+            // í”Œë ˆì´ì–´ ìª½ì€ í•„ë“œëª…ì´ í”„ë¡œì íŠ¸ë§ˆë‹¤ ë‹¤ë¥¼ ìˆ˜ ìˆìœ¼ë¯€ë¡œ í´ë°±ìœ¼ë¡œ íƒìƒ‰
             return ReadIntFrom(playerData?.Data, "atk", "attack", "ATK");
         }
         return enemyData != null ? enemyData.attack : 0;
@@ -75,7 +75,7 @@ public class HPController : MonoBehaviour
         amount = Mathf.Max(0, amount);
         CurrentDamageTarget = target;
 
-        // ¡Ú È¤½Ã ÁÖÀÔÀÌ ¾ÆÁ÷ ¾ÈµÆÀ¸¸é ÇÑ ¹ø ´õ Áö¿¬ÇØ°á ½Ãµµ
+        // â˜… í˜¹ì‹œ ì£¼ì…ì´ ì•„ì§ ì•ˆëìœ¼ë©´ í•œ ë²ˆ ë” ì§€ì—°í•´ê²° ì‹œë„
         if (enemyData == null) enemyData = EnemyRuntime.Instance ?? FindObjectOfType<EnemyRuntime>(true);
         if (playerData == null) playerData = PlayerDataRuntime.Instance ?? FindObjectOfType<PlayerDataRuntime>(true);
         if (_hpUI == null) _hpUI = FindObjectOfType<HPUIBinder>(true);
@@ -89,7 +89,7 @@ public class HPController : MonoBehaviour
                 int max = ReadIntFrom(pd, "maxHP");
                 cur = Mathf.Clamp(cur - amount, 0, Mathf.Max(1, max));
                 WriteIntFieldOrProp(pd, "currentHP", cur);
-                Debug.Log($"[HP] Player -{amount} ¡æ {cur}");
+                Debug.Log($"[HP] Player -{amount} â†’ {cur}");
                 _hpUI?.Refresh();
             }
             else
@@ -101,10 +101,10 @@ public class HPController : MonoBehaviour
         {
             if (enemyData != null)
             {
-                // amount´Â ÃÖÁ¾ µ¥¹ÌÁöÀÌ¹Ç·Î EnemyRuntime.TakeDamage()¿¡ raw º¸Á¤
+                // amountëŠ” ìµœì¢… ë°ë¯¸ì§€ì´ë¯€ë¡œ EnemyRuntime.TakeDamage()ì— raw ë³´ì •
                 int raw = amount + Mathf.Max(0, enemyData.defense);
-                enemyData.TakeDamage(raw);   // ³»ºÎ¿¡¼­ OnChanged È£Ãâ ¡æ HPUI ÀÚµ¿ °»½Å
-                Debug.Log($"[HP] Enemy -{amount} ¡æ {enemyData.currentHP}");
+                enemyData.TakeDamage(raw);   // ë‚´ë¶€ì—ì„œ OnChanged í˜¸ì¶œ â†’ HPUI ìë™ ê°±ì‹ 
+                Debug.Log($"[HP] Enemy -{amount} â†’ {enemyData.currentHP}");
             }
             else
             {
@@ -125,7 +125,7 @@ public class HPController : MonoBehaviour
         CurrentDamageTarget = target;
     }
 
-    // ---------- ¸®ÇÃ·º¼Ç º¸Á¶ ----------
+    // ---------- ë¦¬í”Œë ‰ì…˜ ë³´ì¡° ----------
     private int ReadIntFrom(object obj, params string[] names)
     {
         if (obj == null || names == null) return 0;
@@ -163,7 +163,7 @@ public class HPController : MonoBehaviour
         var p = t.GetProperty(name, BF);
         if (p != null && p.PropertyType == typeof(int) && p.CanWrite) { p.SetValue(obj, value); return; }
 
-        Debug.LogWarning($"[HPController] '{t.Name}'¿¡ '{name}'(int) ¾²±â ½ÇÆĞ.");
+        Debug.LogWarning($"[HPController] '{t.Name}'ì— '{name}'(int) ì“°ê¸° ì‹¤íŒ¨.");
     }
 
 }

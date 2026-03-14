@@ -53,7 +53,7 @@ public class TriggerStep_HandDrop : TriggerStepBase
         var tr = handObject.transform;
 
         Vector3 from = _startPos;
-        Vector3 to = from + new Vector3(moveDistanceX, moveDistanceY, 0f); // ✅ 부호 그대로
+        Vector3 to = from + new Vector3(moveDistanceX, moveDistanceY, 0f); //  부호 그대로
 
         // 1) 비활성 -> 활성
         if (forceDeactivateThenActivate)

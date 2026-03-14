@@ -16,7 +16,7 @@ public class CardUseOrchestrator : MonoBehaviour
     [SerializeField] private float totalSeconds = 3f;   // 페이드 포함 총 시간
 
     [Header("UI Hooks")]
-    [SerializeField] private DescriptionPanelController desc; // 👈 관전 모드 대사 표시용
+    [SerializeField] private DescriptionPanelController desc; //  관전 모드 대사 표시용
     [SerializeField] private bool logDebug = false; // ← 옵션 로그
 
     // (효과 실행은 타이밍 안정화 후 다시 연결)
@@ -31,7 +31,7 @@ public class CardUseOrchestrator : MonoBehaviour
 
     void Awake()
     {
-        // 💡 런타임에서도 안전하게 참조 보강
+        //  런타임에서도 안전하게 참조 보강
         if (!hand) hand = FindObjectOfType<HandUI>(true);
         if (!menu) menu = FindObjectOfType<BattleMenuController>(true);
         if (!database) database = Resources.Load<CardDatabaseSO>("CardDatabase");
@@ -93,7 +93,7 @@ public class CardUseOrchestrator : MonoBehaviour
             desc.ShowTemporaryExplanation(line);
         }
 
-        // ==== ★ 여기부터 효과 실행 분기(프리뷰/효과 타이밍) ====
+        // ====  여기부터 효과 실행 분기(프리뷰/효과 타이밍) ====
         if (attackController != null && so is AttackCardSO aso)
         {
             // --- 동시에 실행하고, 둘 다 끝날 때까지 대기 ---
@@ -128,7 +128,7 @@ public class CardUseOrchestrator : MonoBehaviour
             if (showCard != null) yield return showCard.PreviewById(so.id, totalSeconds);
             else yield return null;
         }
-        // ==== ★ 분기 끝 ====
+        // ====  분기 끝 ====
 
         // E. 설명 해제 및 선택 모드 복귀
         if (desc) desc.ClearTemporaryMessage();

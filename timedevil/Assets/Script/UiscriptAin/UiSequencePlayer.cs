@@ -113,11 +113,11 @@ public class UiSequencePlayer : MonoBehaviour
 
         if (!forcePlayInMoveTutorial)
         {
-            // ✅ 먼저 시작하더라도 저장 파일이 하나라도 있으면 자동 스킵
+            //  먼저 시작하더라도 저장 파일이 하나라도 있으면 자동 스킵
             if (skipIfSaveExists && HasAnySaveFile())
                 return;
 
-            // ✅ 새 게임에서만: 이번 "버튼 클릭 토큰"에 대해 1회 seen 초기화
+            //  새 게임에서만: 이번 "버튼 클릭 토큰"에 대해 1회 seen 초기화
             if (resetSeenOnNewGameStart &&
                 GameStartContext.Mode == GameStartMode.NewGame &&
                 s_lastResetToken != GameStartContext.StartToken)
@@ -131,7 +131,7 @@ public class UiSequencePlayer : MonoBehaviour
                 }
             }
 
-            // ✅ (seen 체크는 초기화 이후에)
+            //  (seen 체크는 초기화 이후에)
             if (!string.IsNullOrEmpty(seenPrefKey) && PlayerPrefs.GetInt(seenPrefKey, 0) == 1)
                 return;
         }

@@ -42,7 +42,7 @@ public class CameraManager : MonoBehaviour
     private Transform _fixedAnchor;
     private Transform _lastFollow;
 
-    // ✅ FollowConfined 스냅샷용(Clamp2D 내부 private boundsShape에 접근 못하니, 여기서 마지막 bounds를 기억)
+    //  FollowConfined 스냅샷용(Clamp2D 내부 private boundsShape에 접근 못하니, 여기서 마지막 bounds를 기억)
     private Collider2D _lastConfineBounds;
     private string _lastConfineBoundsName = "";
 
@@ -64,7 +64,7 @@ public class CameraManager : MonoBehaviour
 
         EnsureFixedAnchor();
 
-        // ✅ 씬 로드시마다 vcam 재탐색을 위해 항상 구독
+        //  씬 로드시마다 vcam 재탐색을 위해 항상 구독
         SceneManager.sceneLoaded += HandleSceneLoaded;
 
         // 첫 씬에서도 최대한 잡아봄
@@ -84,7 +84,7 @@ public class CameraManager : MonoBehaviour
 
     private void HandleSceneLoaded(Scene s, LoadSceneMode m)
     {
-        // ✅ 배틀씬처럼 vcam이 없는 씬 갔다가 돌아오면 여기서 다시 잡아야 함
+        //  배틀씬처럼 vcam이 없는 씬 갔다가 돌아오면 여기서 다시 잡아야 함
         if (reacquireVcamOnSceneLoad)
             ReacquireVcam(null, logWhenMissing: false);
 
@@ -111,7 +111,7 @@ public class CameraManager : MonoBehaviour
     }
 
     /// <summary>
-    /// ✅ 씬이 바뀌어도 vcam 참조가 깨지지 않게, 현재 씬에서 다시 CinemachineVirtualCamera를 찾는다.
+    ///  씬이 바뀌어도 vcam 참조가 깨지지 않게, 현재 씬에서 다시 CinemachineVirtualCamera를 찾는다.
     /// preferredVcamName이 있으면 그 이름 우선, 없으면 첫 번째 vcam.
     /// </summary>
     public bool ReacquireVcam(string preferredVcamName = null, bool logWhenMissing = true)
@@ -169,7 +169,7 @@ public class CameraManager : MonoBehaviour
     }
 
     // =========================
-    // ✅ Snapshot API (TriggerStep_Scene에서 쓰는 함수)
+    //  Snapshot API (TriggerStep_Scene에서 쓰는 함수)
     // =========================
     public bool TryGetSnapshot(
         out CameraModeId camMode,
@@ -314,7 +314,7 @@ public class CameraManager : MonoBehaviour
             return;
         }
 
-        // ✅ 스냅샷용으로 기억
+        //  스냅샷용으로 기억
         _lastConfineBounds = bounds;
         _lastConfineBoundsName = bounds ? bounds.name : "";
 

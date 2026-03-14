@@ -21,7 +21,7 @@ public class TriggerStep_Scene : TriggerStepBase
     [SerializeField] private bool debugLog = true;
 
     // =========================
-    // ✅ Sleep Load (Bed -> Dream)
+    //  Sleep Load (Bed -> Dream)
     // =========================
     [Header("Sleep Load (Bed -> Dream)")]
     [Tooltip("켜면 씬 전환 직전에 SleepLoadContext.MarkPending()를 호출합니다. (ProgressLoadApplier가 소비)")]
@@ -56,7 +56,7 @@ public class TriggerStep_Scene : TriggerStepBase
     [SerializeField] private float suppressOverlapRadius = 0.6f;
     [SerializeField] private float suppressOverlapSeconds = 1.5f;
 
-    [Header("Return Camera Override (★강제 저장)")]
+    [Header("Return Camera Override (강제 저장)")]
     [Tooltip("체크하면 '복귀 카메라 상태'를 강제로 아래 값으로 저장합니다.")]
     [SerializeField] private bool useReturnCameraOverride = false;
 
