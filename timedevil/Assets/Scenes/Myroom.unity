@@ -19181,7 +19181,12 @@ MonoBehaviour:
     - "\uC5ED\uC2DC \uB098\uAC00\uAE30 \uBB34\uC11C\uC6CC.."
     leftPortrait: {fileID: 0}
     rightPortrait: {fileID: 21300000, guid: 92cf3209a5e8da8428197ddd7d97fb2b, type: 3}
-    lines: []
+    lines:
+    - text: 
+      speakerName: 
+      leftPortrait: {fileID: 0}
+      rightPortrait: {fileID: 0}
+      focus: 0
   waitUntilDone: 1
   lockPlayerInput: 1
   blockWorldAdvance: 0
@@ -33099,7 +33104,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   op: 1
   targetScope: 0
-  targetObjects: []
+  targetObjects:
+  - {fileID: 0}
   seconds: 0.5
   useUnscaledTime: 1
   lockAction: 1
