@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(BoxCollider2D))]
 public class ItemInteraction: MonoBehaviour, IInteractable
 {
     [System.Serializable]
@@ -20,8 +21,9 @@ public class ItemInteraction: MonoBehaviour, IInteractable
 
         if(debuged) PrintInventory();
 
-        for(int i = 0; i < itemInfos.Count; i++)
+        for(int i = 0; i < itemInfos.Count; i++) {
             ItemRuntime.Instance.AddQuantity(itemInfos[i].id, itemInfos[i].quantity);
+        }
 
         if(debuged) PrintInventory();
     }
