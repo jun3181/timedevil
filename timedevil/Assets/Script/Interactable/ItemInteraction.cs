@@ -33,7 +33,6 @@ public class ItemInteraction: MonoBehaviour, IInteractable
 
             found = false;
             for(int j = 0; j < db.items.Count; j++) {
-                Debug.Log(itemInfos[i].itemSO.id + " " + db.items[j].id);
                 if(itemInfos[i].itemSO.id == db.items[j].id) {
                     found = true;
                     break;
