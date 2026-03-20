@@ -7,12 +7,45 @@ public class ItemInteraction: MonoBehaviour, IInteractable
 {
     [System.Serializable]
     private struct ItemInfo {
-        public string id;
+        public ItemSO itemSO;
         public int quantity;
     }
 
+    [SerializeField] ItemDatabaseSO db;
+
     [SerializeField] private List<ItemInfo> itemInfos = new();
     [SerializeField] private bool debuged = true;
+    
+    // 설정한 ItemSO가 ItemDatabaseSO에 등록되어 있는지 확인
+    void Awake() {
+        if(db==null || itemInfos==null || itemInfos.Count==0) {
+            if(debuged) Debug.Log("아직 설정되지 않음");
+            return;
+        }
+
+        bool found;
+        for(int i=0; i<itemInfos.Count; i++) {
+            if(itemInfos[i].itemSO == null) {
+                itemInfos.RemoveAt(i);
+                i--;
+                continue;
+            }
+
+            found = false;
+            for(int j = 0; j < db.items.Count; j++) {
+                Debug.Log(itemInfos[i].itemSO.id + " " + db.items[j].id);
+                if(itemInfos[i].itemSO.id == db.items[j].id) {
+                    found = true;
+                    break;
+                }
+            }
+
+            if(!found) {
+                itemInfos.RemoveAt(i);
+                i--;
+            }
+        }
+    }
 
 
     public void Interact() {
@@ -22,7 +55,7 @@ public class ItemInteraction: MonoBehaviour, IInteractable
         if(debuged) PrintInventory();
 
         for(int i = 0; i < itemInfos.Count; i++) {
-            ItemRuntime.Instance.AddQuantity(itemInfos[i].id, itemInfos[i].quantity);
+            ItemRuntime.Instance.AddQuantity(itemInfos[i].itemSO.id, itemInfos[i].quantity);
         }
 
         if(debuged) PrintInventory();
