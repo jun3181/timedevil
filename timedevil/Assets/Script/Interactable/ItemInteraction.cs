@@ -11,15 +11,18 @@ public class ItemInteraction: MonoBehaviour, IInteractable
         public int quantity;
     }
 
-    [SerializeField] ItemDatabaseSO db;
+    [SerializeField] private ItemDatabaseSO db;
 
     [SerializeField] private List<ItemInfo> itemInfos = new();
     [SerializeField] private bool debuged = true;
     
     // 설정한 ItemSO가 ItemDatabaseSO에 등록되어 있는지 확인
     void Awake() {
-        if(db==null || itemInfos==null || itemInfos.Count==0) {
-            if(debuged) Debug.Log("아직 설정되지 않음");
+        if(db==null) {
+            if(debuged) Debug.LogWarning("ItemDatabaseSO가 설정되지 않았습니다.");
+            return;
+        } else if(itemInfos==null) {
+            if(debuged) Debug.LogWarning("ItemInfos가 설정되지 않았습니다.");
             return;
         }
 
@@ -43,6 +46,10 @@ public class ItemInteraction: MonoBehaviour, IInteractable
                 itemInfos.RemoveAt(i);
                 i--;
             }
+        }
+
+        if(itemInfos.Count==0 && debuged) {
+            Debug.LogWarning($"{gameObject.name}과 상호작용시 지급될 아이템이 존재하지 않습니다.");
         }
     }
 
