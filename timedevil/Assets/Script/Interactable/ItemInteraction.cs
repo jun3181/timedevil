@@ -22,11 +22,11 @@ public class ItemInteraction: MonoBehaviour, IInteractable
     [Header("디버그 메시지 출력 여부")]
     [SerializeField] private bool debuged = true;
 
-    private bool inited;
+    private bool _inited;
     
     // 설정한 ItemSO가 ItemDatabaseSO에 등록되어 있는지 확인
     void Awake() {
-        inited = false;
+        _inited = false;
         if(db==null) {
             if(debuged) Debug.LogWarning("ItemDatabaseSO가 설정되지 않았습니다.");
             return;
@@ -77,12 +77,12 @@ public class ItemInteraction: MonoBehaviour, IInteractable
 
         dialogue.lines = defaultDialogueLine;
 
-        inited = true;
+        _inited = true;
     }
 
 
     public void Interact() {
-        if(!inited) {
+        if(!_inited) {
             if(debuged) Debug.LogWarning($"{gameObject.name}의 ItemInteraction이 정상적으로 초기화되지 않은 상태입니다.");
             return;
         }
@@ -96,10 +96,8 @@ public class ItemInteraction: MonoBehaviour, IInteractable
         }
 
         if(debuged) PrintInventory();
-    
-        if(dialogue.lines.Length!=0 || dialogue.sentences.Length!=0) {
-            DialogueManager.instance?.StartDialogue(dialogue);
-        }
+
+        if(DialogueManager.instance != null) DialogueManager.instance.StartDialogue(dialogue);
     }
 
     private void PrintInventory() {
