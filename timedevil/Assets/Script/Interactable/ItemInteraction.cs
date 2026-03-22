@@ -15,9 +15,12 @@ public class ItemInteraction: MonoBehaviour, IInteractable
 
     [SerializeField] private List<ItemInfo> itemInfos = new();
     [SerializeField] private bool debuged = true;
+
+    private bool inited;
     
     // 설정한 ItemSO가 ItemDatabaseSO에 등록되어 있는지 확인
     void Awake() {
+        inited = false;
         if(db==null) {
             if(debuged) Debug.LogWarning("ItemDatabaseSO가 설정되지 않았습니다.");
             return;
@@ -50,11 +53,19 @@ public class ItemInteraction: MonoBehaviour, IInteractable
 
         if(itemInfos.Count==0 && debuged) {
             Debug.LogWarning($"{gameObject.name}과 상호작용시 지급될 아이템이 존재하지 않습니다.");
+            return;
         }
+
+        inited = true;
     }
 
 
     public void Interact() {
+        if(!inited) {
+            if(debuged) Debug.LogWarning($"{gameObject.name}의 ItemInteraction이 정상적으로 초기화되지 않은 상태입니다.");
+            return;
+        }
+
         if(ItemRuntime.Instance == null) return;
 
         if(debuged) PrintInventory();
