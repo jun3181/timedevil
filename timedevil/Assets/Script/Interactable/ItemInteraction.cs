@@ -11,12 +11,16 @@ public class ItemInteraction: MonoBehaviour, IInteractable
         public int quantity;
     }
 
+    [Header("아이템 DB")]
+    [Tooltip("아이템이 게임내 존재하는지 검사하는 용도")]
     [SerializeField] private ItemDatabaseSO db;
 
+    [Header("아이템 정보")]
+    [Tooltip("획득될 아이템")]
     [SerializeField] private List<ItemInfo> itemInfos = new();
 
-    [Header("아이템 획득 후 추가적인 대사")]
-    [Tooltip("기본적인 획득 대사는 따로 설정할 필요가 없으며 Legacy 속성을 사용하지 말 것")]
+    [Header("아이템 획득 대사 후 추가적인 대사")]
+    [Tooltip("기본적인 획득 대사는 따로 설정할 필요가 없으며 Legacy 속성은 건들지 말 것")]
     [SerializeField] private Dialogue dialogue;
 
     [Header("디버그 메시지 출력 여부")]
