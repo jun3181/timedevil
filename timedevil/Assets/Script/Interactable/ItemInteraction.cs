@@ -14,6 +14,11 @@ public class ItemInteraction: MonoBehaviour, IInteractable
     [SerializeField] private ItemDatabaseSO db;
 
     [SerializeField] private List<ItemInfo> itemInfos = new();
+
+    [Header("아이템 획득시 대사(선택적)")]
+    [SerializeField] private Dialogue dialogue;
+
+    [Header("디버그 메시지 출력 여부")]
     [SerializeField] private bool debuged = true;
 
     private bool inited;
@@ -75,6 +80,10 @@ public class ItemInteraction: MonoBehaviour, IInteractable
         }
 
         if(debuged) PrintInventory();
+    
+        if(dialogue.lines.Length!=0 || dialogue.sentences.Length!=0) {
+            DialogueManager.instance?.StartDialogue(dialogue);
+        }
     }
 
     private void PrintInventory() {
