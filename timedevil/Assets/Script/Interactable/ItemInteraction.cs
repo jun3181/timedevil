@@ -48,7 +48,6 @@ public class ItemInteraction: MonoBehaviour, IInteractable
 
 
     public void Interact() {
-        Debug.Log("Actived");
         if(ItemRuntime.Instance == null) return;
 
         if(debuged) PrintInventory();

@@ -29905,7 +29905,8 @@ GameObject:
   - component: {fileID: 1256341811}
   - component: {fileID: 1256341810}
   - component: {fileID: 1256341809}
-  m_Layer: 0
+  - component: {fileID: 1256341813}
+  m_Layer: 6
   m_Name: MUSTREMOVETHIS
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -29924,11 +29925,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5910ebe2f9e28540ba2843f17604b86, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  db: {fileID: 11400000, guid: e13b2b2f1c3ccab48851303d3588f4d9, type: 2}
   itemInfos:
-  - id: potion
-    quantity: 5
-  - id: ain
-    quantity: 1
+  - itemSO: {fileID: 11400000, guid: cf0fb564f484f8348a4b22e350a56c80, type: 2}
+    quantity: 3
+  - itemSO: {fileID: 11400000, guid: 03e70a30d6ffce345baafe87c4a5eb31, type: 2}
+    quantity: 2
+  - itemSO: {fileID: 0}
+    quantity: 2
   debuged: 1
 --- !u!61 &1256341810
 BoxCollider2D:
@@ -30042,6 +30046,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1256341813
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1256341808}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b3a394bbc14279645a79aeadbee325d2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  defaultJsonName: items
+  currentData:
+    items: []
 --- !u!1 &1277462738
 GameObject:
   m_ObjectHideFlags: 0
