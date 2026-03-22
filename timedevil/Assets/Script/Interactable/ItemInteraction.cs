@@ -15,7 +15,8 @@ public class ItemInteraction: MonoBehaviour, IInteractable
 
     [SerializeField] private List<ItemInfo> itemInfos = new();
 
-    [Header("아이템 획득시 대사(선택적)")]
+    [Header("아이템 획득 후 추가적인 대사")]
+    [Tooltip("기본적인 획득 대사는 따로 설정할 필요가 없으며 Legacy 속성을 사용하지 말 것")]
     [SerializeField] private Dialogue dialogue;
 
     [Header("디버그 메시지 출력 여부")]
@@ -60,6 +61,21 @@ public class ItemInteraction: MonoBehaviour, IInteractable
             Debug.LogWarning($"{gameObject.name}과 상호작용시 지급될 아이템이 존재하지 않습니다.");
             return;
         }
+
+        int newLength = itemInfos.Count;
+        newLength += dialogue.lines?.Length ?? 0;
+
+        DialogueLine[] defaultDialogueLine = new DialogueLine[newLength];
+        for(int i=0; i<itemInfos.Count; i++) {
+            defaultDialogueLine[i] = new DialogueLine();
+            defaultDialogueLine[i].text = $"루시는 '{itemInfos[i].itemSO.displayName}'을 획득하였다!";
+        }
+
+        for(int i=itemInfos.Count; i<newLength; i++) {
+            defaultDialogueLine[i] = dialogue.lines[i - itemInfos.Count];
+        }
+
+        dialogue.lines = defaultDialogueLine;
 
         inited = true;
     }
