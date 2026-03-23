@@ -1297,7 +1297,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   sfxPlayer: {fileID: 2063149943}
   clickSound: {fileID: 8300000, guid: 70cbbd69eeefc4841aef5f9432895e57, type: 3}
-  myRoomSceneName: Myroom
+  myRoomSceneName: testmyroom
 --- !u!4 &1523359872
 Transform:
   m_ObjectHideFlags: 0
