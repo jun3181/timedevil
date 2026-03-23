@@ -1,53 +1,84 @@
 using UnityEngine;
 
 /// <summary>
-/// 2D Tilemap È¯°æ¿¡¼­ ÇÃ·¹ÀÌ¾î¸¦ ¹«Á¶°Ç µû¶ó¿À´Â Àû ½ºÅ©¸³Æ®
-/// Rigidbody2D + Collider2D »ç¿ë
-/// ±âÁ¸ UndeadMover È£Ãâ°ú Ãæµ¹ ¾øÀÌ »ç¿ë °¡´É
+/// Rigidbody2D ê¸°ë°˜ìœ¼ë¡œ í”Œë ˆì´ì–´ë¥¼ ì¶”ì í•˜ëŠ” ì  ì´ë™ ìŠ¤í¬ë¦½íŠ¸ì…ë‹ˆë‹¤.
 /// </summary>
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(Collider2D))]
 public class UndeadMover : MonoBehaviour
 {
-    [Header("ÃßÀû ´ë»ó")]
-    public Transform player;
+    [Header("Follow Target")]
+    [SerializeField] private Transform player;
+    [SerializeField] private bool autoFindPlayerOnStartPatrol = true;
 
-    [Header("ÀÌµ¿ ¼³Á¤")]
-    public float moveSpeed = 3f;
+    [Header("Movement")]
+    [SerializeField] private float moveSpeed = 3f;
 
     private Rigidbody2D rb;
     private SpriteRenderer spriteRenderer;
+    private bool isFollowing;
 
-    void Awake()
+    public Transform Player => player;
+
+    private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
-        rb.gravityScale = 0; // 2D Æò¸é¿¡¼­ Áß·Â ¹«½Ã
+        rb.gravityScale = 0f;
         rb.constraints = RigidbodyConstraints2D.FreezeRotation;
 
         spriteRenderer = GetComponent<SpriteRenderer>();
     }
 
-    void FixedUpdate()
+    private void FixedUpdate()
     {
-        if (player == null) return;
+        if (!isFollowing || player == null)
+            return;
 
-        // ÇÃ·¹ÀÌ¾î ¹æÇâ °è»ê
-        Vector2 direction = (player.position - transform.position).normalized;
-
-        // Rigidbody2D ÀÌµ¿
-        Vector2 newPos = (Vector2)transform.position + direction * moveSpeed * Time.fixedDeltaTime;
+        Vector2 direction = ((Vector2)player.position - rb.position).normalized;
+        Vector2 newPos = rb.position + direction * moveSpeed * Time.fixedDeltaTime;
         rb.MovePosition(newPos);
 
-        // ½ºÇÁ¶óÀÌÆ® ÁÂ¿ì ¹İÀü
         if (spriteRenderer != null)
-        {
             spriteRenderer.flipX = player.position.x < transform.position.x;
-        }
     }
 
-    // ±âÁ¸ ÄÚµå¿Í È£È¯À» À§ÇØ StartPatrol ÇÔ¼ö À¯Áö (È£ÃâÇØµµ ¿µÇâ ¾øÀ½)
+    private void OnDisable()
+    {
+        if (rb != null)
+            rb.velocity = Vector2.zero;
+    }
+
+    public void SetPlayer(Transform target)
+    {
+        player = target;
+    }
+
     public void StartPatrol()
     {
-        // ¼øÂû °ü·Ã ¾øÀ½
+        if (player == null && autoFindPlayerOnStartPatrol)
+            player = ResolvePlayer();
+
+        isFollowing = player != null;
+
+        if (!isFollowing && rb != null)
+            rb.velocity = Vector2.zero;
+    }
+
+    public void StopPatrol()
+    {
+        isFollowing = false;
+
+        if (rb != null)
+            rb.velocity = Vector2.zero;
+    }
+
+    private static Transform ResolvePlayer()
+    {
+        var playerMove = Object.FindObjectOfType<PlayerMove>(true);
+        if (playerMove != null)
+            return playerMove.transform;
+
+        var playerAction = Object.FindObjectOfType<PlayerAction>(true);
+        return playerAction != null ? playerAction.transform : null;
     }
 }
