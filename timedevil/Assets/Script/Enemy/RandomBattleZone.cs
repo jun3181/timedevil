@@ -2,9 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+
 [RequireComponent(typeof(Collider2D))]
 public class RandomBattleZone : MonoBehaviour
 {
+    private const string BATTLE_SCENE = "battle";
+
     [System.Serializable]
     public struct EnemyInfo {
         public EnemySO enemySO;
@@ -18,7 +21,7 @@ public class RandomBattleZone : MonoBehaviour
 
     [Header("조우 가능 횟수")]
     [Tooltip("참일 경우 오직 한번만 작동함")]
-    [SerializeField] bool onlyOnce = false;
+    [SerializeField] bool onlyOnce = true;
 
     [Header("적 DB")]
     [SerializeField] EnemyDatabaseSO db;
@@ -27,14 +30,15 @@ public class RandomBattleZone : MonoBehaviour
     [SerializeField] List<EnemyInfo> enemyInfos = new();
 
     [Header("디버그 용")]
-    [SerializeField] bool debuged;
+    [SerializeField] bool debuged = true;
 
-    private bool triggered = false;
     private uint totalWeight = 0;
 
+    private Collider2D collider2d;
+
     void Awake() {
-        Collider2D collider = GetComponent<Collider2D>();
-        collider.isTrigger = true;
+        collider2d = GetComponent<Collider2D>();
+        collider2d.enabled = true;
 
         if(possibility <= 0) {
             if(debuged) Debug.LogWarning($"{gameObject.name} 영역의 적 조우 확률이 0이하입니다.");
@@ -59,5 +63,20 @@ public class RandomBattleZone : MonoBehaviour
             gameObject.SetActive(false);
             return;
         }
+    }
+
+    void OnTriggerStay2D(Collider2D other) {
+        if(!other.CompareTag("Player")) return;
+
+        collider2d.enabled = false;
+
+        if(debuged) Debug.Log($"{gameObject.name}에 의하여 적 조우함.");
+
+        Transform player = other.GetComponent<Transform>();
+        BattleSceneLoader.Go(BATTLE_SCENE, enemyInfos[0].enemySO.enemyId, player, null);
+
+        if(debuged) Debug.Log($"{gameObject.name}에 의한 적 조우 종료");
+        if(!onlyOnce)
+            collider2d.enabled = true;
     }
 }
