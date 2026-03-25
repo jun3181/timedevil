@@ -13,7 +13,7 @@ using UnityEngine;
 /// - enemyTargets: 아래로 내려가 화면 밖으로 이동
 /// - gameplayTargets: 위로 올라와 화면에 보임
 /// </summary>
-public class BattlePanelViewToggle : MonoBehaviour
+public class PanelController : MonoBehaviour
 {
     public enum EaseType
     {
