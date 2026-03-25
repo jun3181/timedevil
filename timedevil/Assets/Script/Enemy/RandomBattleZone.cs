@@ -17,9 +17,16 @@ public class RandomBattleZone : MonoBehaviour
         public float weight;
     }
 
-    [Header("조우 확률")]
-    [Tooltip("1초를 기준으로 영역내에 존재해 있을 때 배틀에 참가될 확률(0~100%)")]
+    [Header("조우 확률(%)")]
+    [Tooltip("기준 시간을 단위로 영역내에 존재해 있을 때 배틀에 참가될 확률(0~100%)")]
     [SerializeField] float probability;
+
+    [Header("조우 확률 기준 시간(초)")]
+    [SerializeField] float unitSecs = 5f;
+
+    [Header("조우 결정 단위 시간(초)")]
+    [Tooltip("적과의 매칭을 결정하는 로직이 몇 초 단위로 작동하는지 나타냄(조우 확률에 영향을 미치지 않음)")]
+    [SerializeField] float coroutineWaitSecs = 0.5f;
 
     [Header("적 DB")]
     [SerializeField] EnemyDatabaseSO db;
@@ -31,8 +38,9 @@ public class RandomBattleZone : MonoBehaviour
     [SerializeField] bool debuged = true;
 
     private const string BATTLE_SCENE = "battle";
-    private const float WAIT_SECS = 0.5f;
-    private readonly WaitForSeconds WAIT_INTERVAL = new(WAIT_SECS);
+    private WaitForSeconds WAIT_INTERVAL;
+
+    private float adjustedProb = 0f;
 
     private float totalWeight = 0;
 
@@ -67,6 +75,14 @@ public class RandomBattleZone : MonoBehaviour
             gameObject.SetActive(false);
             return;
         }
+
+        if(coroutineWaitSecs>unitSecs) {
+            if(debuged) Debug.LogWarning($"{gameObject.name}의 조우 결정 단위 시간이 조우 확률 기준 시간보다 큽니다.");
+            coroutineWaitSecs = unitSecs;
+        }
+
+        WAIT_INTERVAL = new WaitForSeconds(coroutineWaitSecs);
+        adjustedProb = (1 - Mathf.Pow(1 - probability / 100, 1 / (unitSecs / coroutineWaitSecs))) * 100;
     }
 
     void OnTriggerEnter2D(Collider2D other) {
@@ -86,18 +102,25 @@ public class RandomBattleZone : MonoBehaviour
     }
 
     private IEnumerator MatchBattle(Transform player) {
-        float adjustedProb = (1 - Mathf.Pow(1 - probability/100, WAIT_SECS)) * 100;
         float matchFactor, enemyFactor, scale = 0;
-        if(debuged) Debug.Log($"{gameObject.name}의 {WAIT_SECS}초당 적 조우 확률은 {adjustedProb}");
+        
+        if(debuged) Debug.Log($"{gameObject.name}의 {coroutineWaitSecs}초당 적 조우 확률은 {adjustedProb}%");
+        
         while(true) {
             yield return WAIT_INTERVAL;
 
             matchFactor = Random.Range(0f,100f);
             if(matchFactor<=adjustedProb) {
                 enemyFactor = Random.Range(0f, totalWeight);
+                if(debuged) {
+                    Debug.Log($"{gameObject.name}의 총 가중치는 {totalWeight}, 적 매칭 인자는 {enemyFactor}");
+                }
+               
                 for(int i=0; i<enemyInfos.Count; i++) {
                     scale += enemyInfos[i].weight;
                     if(scale>=enemyFactor) {
+                        if(debuged) Debug.Log($"{gameObject.name}에서 매칭된 적의 이름은 {enemyInfos[i].enemySO.enemyId}");
+                        
                         BattleSceneLoader.Go(BATTLE_SCENE, enemyInfos[i].enemySO.enemyId, player, null);
                         matchRoutine = null;
                         yield break;
