@@ -6,16 +6,16 @@ public class SceneCameraBootstrap : MonoBehaviour
     [Header("Start Mode")]
     public CameraModeId startMode = CameraModeId.Fixed;
 
-    [Header("Follow Target (ºñ¿ì¸é PlayerMove ÀÚµ¿ Å½»ö)")]
+    [Header("Follow Target (ë¹„ìš°ë©´ PlayerMove ìë™ íƒìƒ‰)")]
     public Transform followTarget;
 
-    [Header("FollowConfined¿ë Bounds (BoxCollider2D ±ÇÀå)")]
+    [Header("FollowConfinedìš© Bounds (BoxCollider2D ê¶Œì¥)")]
     public Collider2D confinerBounds;
 
-    [Header("Zoom (0ÀÌ¸é ±âº»°ª À¯Áö)")]
-    public float orthoSize = 0f;
+                // Fixed Ã·Ì¾ fallback ,  Ä¡ Ä¿(  Æ® Ä¡) 
+                    lockWorldPos: fixedOrCutsceneAnchor ? fixedOrCutsceneAnchor.position : transform.position,
 
-    [Header("Fixed/Cutscene À§Ä¡ (¼±ÅÃ)")]
+    [Header("Fixed/Cutscene ìœ„ì¹˜ (ì„ íƒ)")]
     public Transform fixedOrCutsceneAnchor;
 
     [Header("Debug")]
