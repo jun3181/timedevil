@@ -13,19 +13,20 @@ public class RandomBattleZone : MonoBehaviour
     [System.Serializable]
     public struct EnemyInfo {
         public EnemySO enemySO;
-        [Tooltip("트리거 발동시 해당 적과 싸우게 될 가능성(가중치로 표현)")]
+        [Tooltip("트리거 발동시 해당 적과 싸우게 될 가능성(상대적 확률)")]
         public float weight;
     }
 
     [Header("조우 확률(%)")]
-    [Tooltip("기준 시간을 단위로 영역내에 존재해 있을 때 배틀에 참가될 확률(0~100%)")]
+    [Tooltip("플래이어가 '조우 확률 기준 시간' 동안 영역 내에 존재할 때 설정된 적들과 조우할 확률(0~100%)")]
     [SerializeField] float probability;
 
     [Header("조우 확률 기준 시간(초)")]
+    [Tooltip("조우 확률의 기준이 되는 시간")]
     [SerializeField] float unitSecs = 5f;
 
     [Header("조우 결정 단위 시간(초)")]
-    [Tooltip("적과의 매칭을 결정하는 로직이 몇 초 단위로 작동하는지 나타냄(조우 확률에 영향을 미치지 않음)")]
+    [Tooltip("조우 확률에 따라 적과의 조우를 결정하는 코루틴이 재개되는 시간(조우 확률에 영향을 미치지 않음)")]
     [SerializeField] float coroutineWaitSecs = 0.5f;
 
     [Header("적 DB")]
@@ -75,6 +76,9 @@ public class RandomBattleZone : MonoBehaviour
             gameObject.SetActive(false);
             return;
         }
+
+        if(unitSecs == 0) unitSecs = 5f;
+        if(coroutineWaitSecs == 0) coroutineWaitSecs = 0.5f;
 
         if(coroutineWaitSecs>unitSecs) {
             if(debuged) Debug.LogWarning($"{gameObject.name}의 조우 결정 단위 시간이 조우 확률 기준 시간보다 큽니다.");
