@@ -1,29 +1,62 @@
 using UnityEngine;
 
-// Dialog ·¹ÀÌ¾î ¿ÀºêÁ§Æ®¿¡ ÀÌ ÄÄÆ÷³ÍÆ®¸¦ ºÙÀÌ°í, ÀÎ½ºÆåÅÍ¿¡¼­ Dialogue¸¦ ³Ö´Â´Ù.
+// Dialog ë ˆì´ì–´ ì˜¤ë¸Œì íŠ¸ ë“±ì— ë¶™ì—¬ì„œ, ìƒí˜¸ìž‘ìš© ì‹œ Dialogueë¥¼ ìž¬ìƒí•œë‹¤.
 public class DialogueInteractable : MonoBehaviour, IInteractable
 {
-    [Header("ÀÌ ¿ÀºêÁ§Æ®°¡ °¡Áø ´ëÈ­ µ¥ÀÌÅÍ")]
+    [Header("ê¸°ë³¸ ëŒ€í™”")]
+    [Tooltip("ì¡°ê±´ì„ ì‚¬ìš©í•˜ì§€ ì•Šê±°ë‚˜, ì¡°ê±´ ë¯¸ë‹¬ ì‹œ ìž¬ìƒë˜ëŠ” ëŒ€í™”")]
     public Dialogue dialogue;
+
+    [Header("ì¡°ê±´ë¶€ ì™„ë£Œ ëŒ€í™” (ì„ íƒ)")]
+    [Tooltip("ì²´í¬ë¥¼ ì¼œë©´ itemId ìˆ˜ëŸ‰ì´ requiredQuantity ì´ìƒì¼ ë•Œ completeDialogueë¥¼ ìž¬ìƒ")]
+    [SerializeField] private bool useInventoryCondition = false;
+
+    [SerializeField] private string itemId = "piece";
+
+    [Min(1)]
+    [SerializeField] private int requiredQuantity = 3;
+
+    [Tooltip("ì¡°ê±´ ì¶©ì¡± ì‹œ ìž¬ìƒí•  ëŒ€í™”. ë¹„ì–´ ìžˆìœ¼ë©´ ê¸°ë³¸ ëŒ€í™”ë¥¼ ì‚¬ìš©")]
+    [SerializeField] private Dialogue completeDialogue;
 
     [Header("Debug")]
     public bool debugLog = true;
 
     public void Interact()
     {
-        if (dialogue == null)
-        {
-            Debug.LogWarning($"[DialogueInteractable] dialogue°¡ ºñ¾îÀÖÀ½: {name}");
-            return;
-        }
-
         if (DialogueManager.instance == null)
         {
-            Debug.LogError("[DialogueInteractable] DialogueManager.instance°¡ ¾ø½À´Ï´Ù!");
+            Debug.LogError("[DialogueInteractable] DialogueManager.instanceê°€ ì—†ìŠµë‹ˆë‹¤.");
             return;
         }
 
-        if (debugLog) Debug.Log($"[DialogueInteractable] StartDialogue: {name}");
-        DialogueManager.instance.StartDialogue(dialogue);
+        Dialogue selectedDialogue = SelectDialogue();
+        if (selectedDialogue == null)
+        {
+            Debug.LogWarning($"[DialogueInteractable] ìž¬ìƒí•  dialogueê°€ ë¹„ì—ˆìŠµë‹ˆë‹¤: {name}");
+            return;
+        }
+
+        if (debugLog)
+            Debug.Log($"[DialogueInteractable] StartDialogue: {name} (selected={selectedDialogue.name})");
+
+        DialogueManager.instance.StartDialogue(selectedDialogue);
+    }
+
+    private Dialogue SelectDialogue()
+    {
+        if (!useInventoryCondition)
+            return dialogue;
+
+        if (ItemRuntime.Instance == null || string.IsNullOrEmpty(itemId))
+            return dialogue;
+
+        int quantity = ItemRuntime.Instance.GetQuantity(itemId);
+        bool isComplete = quantity >= requiredQuantity;
+
+        if (isComplete && completeDialogue != null)
+            return completeDialogue;
+
+        return dialogue;
     }
 }
