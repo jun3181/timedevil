@@ -23,7 +23,7 @@ public class PlayerInteractor : MonoBehaviour
     private IInteractable currentInteractable;
 
     private static readonly string[] RequiredLayers =
-        { "Dialog", "teleport", "item_get", "Object", "Save" };
+        { "Default", "Dialog", "teleport", "item_get", "Object", "Save" };
 
     private void Reset()
     {
@@ -123,6 +123,9 @@ public class PlayerInteractor : MonoBehaviour
         {
             Debug.Log($"[TryInteract] target={(currentTarget ? currentTarget.name : "null")} activeDialogue={(DialogueManager.instance && DialogueManager.instance.isDialogueActive)}");
         }
+
+        // 입력 시점에 즉시 한 번 더 스캔해서 Update 순서 영향으로 target=null이 되는 문제를 줄인다.
+        ScanTarget();
 
         if (!currentTarget) return false;
 
