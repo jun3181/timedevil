@@ -56,6 +56,7 @@ public class RandomBattleZone : MonoBehaviour
         if(probability <= 0) {
             if(debuged) Debug.LogWarning($"{gameObject.name} 영역의 적 조우 확률이 0이하입니다.");
             gameObject.SetActive(false);
+            return;
         } else if(probability > 100) {
             if(debuged) Debug.LogWarning($"{gameObject.name} 영역의 적 조우 확률이 100초과 입니다.");
             probability = 100f;
