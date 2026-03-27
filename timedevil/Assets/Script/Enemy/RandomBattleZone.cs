@@ -62,7 +62,7 @@ public class RandomBattleZone : MonoBehaviour
         }
 
         for(int i = 0; i < enemyInfos.Count; i++) {
-            if(db.GetById(enemyInfos[i].enemySO.enemyId) == null || enemyInfos[i].weight == 0) {
+            if(enemyInfos[i].enemySO==null || db.GetById(enemyInfos[i].enemySO.enemyId) == null || enemyInfos[i].weight == 0) {
                 enemyInfos.RemoveAt(i);
                 i--;
                 continue;
