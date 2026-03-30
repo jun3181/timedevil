@@ -5,7 +5,7 @@ public class RunController : MonoBehaviour
 {
     [Header("Bindings")]
     [SerializeField] private BattleMenuController menu;
-    [SerializeField] private int runIndex = 3;
+    [SerializeField] private int runIndex = 4;
 
     [Header("Options")]
     [SerializeField] private float graceSeconds = 1.0f;
