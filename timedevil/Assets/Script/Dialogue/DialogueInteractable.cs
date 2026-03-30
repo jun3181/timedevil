@@ -1,9 +1,10 @@
 using UnityEngine;
 
-// Dialog ·¹ÀÌ¾î ¿ÀºêÁ§Æ®¿¡ ÀÌ ÄÄÆ÷³ÍÆ®¸¦ ºÙÀÌ°í, ÀÎ½ºÆåÅÍ¿¡¼­ Dialogue¸¦ ³Ö´Â´Ù.
+// Dialog ë ˆì´ì–´ ì˜¤ë¸Œì íŠ¸ ë“±ì— ë¶™ì—¬ì„œ, ìƒí˜¸ì‘ìš© ì‹œ Dialogueë¥¼ ì¬ìƒí•œë‹¤.
 public class DialogueInteractable : MonoBehaviour, IInteractable
 {
-    [Header("ÀÌ ¿ÀºêÁ§Æ®°¡ °¡Áø ´ëÈ­ µ¥ÀÌÅÍ")]
+    [Header("ê¸°ë³¸ ëŒ€í™”")]
+    [Tooltip("ìƒí˜¸ì‘ìš© ì‹œ ì¬ìƒë˜ëŠ” ëŒ€í™”")]
     public Dialogue dialogue;
 
     [Header("Debug")]
@@ -11,19 +12,21 @@ public class DialogueInteractable : MonoBehaviour, IInteractable
 
     public void Interact()
     {
-        if (dialogue == null)
-        {
-            Debug.LogWarning($"[DialogueInteractable] dialogue°¡ ºñ¾îÀÖÀ½: {name}");
-            return;
-        }
-
         if (DialogueManager.instance == null)
         {
-            Debug.LogError("[DialogueInteractable] DialogueManager.instance°¡ ¾ø½À´Ï´Ù!");
+            Debug.LogError("[DialogueInteractable] DialogueManager.instanceê°€ ì—†ìŠµë‹ˆë‹¤.");
             return;
         }
 
-        if (debugLog) Debug.Log($"[DialogueInteractable] StartDialogue: {name}");
+        if (dialogue == null)
+        {
+            Debug.LogWarning($"[DialogueInteractable] ì¬ìƒí•  dialogueê°€ ë¹„ì—ˆìŠµë‹ˆë‹¤: {name}");
+            return;
+        }
+
+        if (debugLog)
+            Debug.Log($"[DialogueInteractable] StartDialogue: {name} (selected={dialogue.name})");
+
         DialogueManager.instance.StartDialogue(dialogue);
     }
 }
