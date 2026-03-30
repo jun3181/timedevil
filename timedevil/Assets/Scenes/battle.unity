@@ -4989,12 +4989,58 @@ MonoBehaviour:
   - {fileID: 1345401700}
   - {fileID: 1064948988}
   useLocalPosition: 1
-  enemyHiddenOffset: {x: 0, y: -650, z: 0}
-  gameplayHiddenOffset: {x: 0, y: -650, z: 0}
-  enemyDuration: 0.35
-  enemyEase: 6
-  gameplayDuration: 0.35
-  gameplayEase: 6
+  enemyHiddenOffset: {x: 0, y: -50, z: 0}
+  gameplayHiddenOffset: {x: 0, y: -50, z: 0}
+  enemyDuration: 0.4
+  enemyEase:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  gameplayDuration: 0.4
+  gameplayEase:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
   startInGameplayView: 0
 --- !u!1 &1201525408
 GameObject:
@@ -9798,7 +9844,7 @@ Transform:
   m_GameObject: {fileID: 1727393880}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 21.858805, y: 76.54854, z: 0}
+  m_LocalPosition: {x: 21.858805, y: 76.84, z: 0}
   m_LocalScale: {x: 8.47, y: 8.47, z: 8.47}
   m_ConstrainProportionsScale: 1
   m_Children: []

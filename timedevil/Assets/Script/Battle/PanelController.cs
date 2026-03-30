@@ -15,17 +15,6 @@ using UnityEngine;
 /// </summary>
 public class PanelController : MonoBehaviour
 {
-    public enum EaseType
-    {
-        Linear,
-        EaseInQuad,
-        EaseOutQuad,
-        EaseInOutQuad,
-        EaseInCubic,
-        EaseOutCubic,
-        EaseInOutCubic
-    }
-
     [Header("Trigger")]
     [SerializeField] private BattleMenuController menu;
     [SerializeField] private int triggerMenuIndex = 2;
@@ -48,11 +37,11 @@ public class PanelController : MonoBehaviour
 
     [Header("Animation - Enemy")]
     [SerializeField, Min(0.01f)] private float enemyDuration = 0.35f;
-    [SerializeField] private EaseType enemyEase = EaseType.EaseInOutCubic;
+    [SerializeField] private AnimationCurve enemyEase = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
     [Header("Animation - Gameplay")]
     [SerializeField, Min(0.01f)] private float gameplayDuration = 0.35f;
-    [SerializeField] private EaseType gameplayEase = EaseType.EaseInOutCubic;
+    [SerializeField] private AnimationCurve gameplayEase = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
     [Header("State")]
     [Tooltip("체크 시 시작부터 게임플레이 요소가 보이는 상태로 시작")]
@@ -154,8 +143,8 @@ public class PanelController : MonoBehaviour
             float enemyT = enemyDuration <= 0f ? 1f : Mathf.Clamp01(t / enemyDuration);
             float gameplayT = gameplayDuration <= 0f ? 1f : Mathf.Clamp01(t / gameplayDuration);
 
-            float enemyK = EvaluateEase(enemyEase, enemyT);
-            float gameplayK = EvaluateEase(gameplayEase, gameplayT);
+            float enemyK = EvaluateCurve(enemyEase, enemyT);
+            float gameplayK = EvaluateCurve(gameplayEase, gameplayT);
 
             ApplyLerp(enemyTargets, enemyFrom, enemyTo, enemyK);
             ApplyLerp(gameplayTargets, gameplayFrom, gameplayTo, gameplayK);
@@ -241,21 +230,9 @@ public class PanelController : MonoBehaviour
         else t.position = value;
     }
 
-    private static float EvaluateEase(EaseType type, float x)
+    private static float EvaluateCurve(AnimationCurve curve, float t)
     {
-        switch (type)
-        {
-            case EaseType.EaseInQuad: return x * x;
-            case EaseType.EaseOutQuad: return 1f - (1f - x) * (1f - x);
-            case EaseType.EaseInOutQuad:
-                return x < 0.5f ? 2f * x * x : 1f - Mathf.Pow(-2f * x + 2f, 2f) * 0.5f;
-
-            case EaseType.EaseInCubic: return x * x * x;
-            case EaseType.EaseOutCubic: return 1f - Mathf.Pow(1f - x, 3f);
-            case EaseType.EaseInOutCubic:
-                return x < 0.5f ? 4f * x * x * x : 1f - Mathf.Pow(-2f * x + 2f, 3f) * 0.5f;
-
-            default: return x;
-        }
+        if (curve == null || curve.length == 0) return t;
+        return curve.Evaluate(t);
     }
 }
