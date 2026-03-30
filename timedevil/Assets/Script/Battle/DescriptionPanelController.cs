@@ -18,6 +18,8 @@ public class DescriptionPanelController : MonoBehaviour
     [Header("Messages")]
     [TextArea] public string msgCard = "Card를 선택합니다.";
     [TextArea] public string msgItem = "Item을 선택합니다.";
+    [TextArea] public string msgPanel = "Panel";
+
     [TextArea] public string msgEnd = "턴엔드합니다.";
     [TextArea] public string msgRun = "도망칩니다.";
     [TextArea] public string msgEnemyTurn = "상대턴입니다."; // 적턴 고정 안내
@@ -237,10 +239,10 @@ public class DescriptionPanelController : MonoBehaviour
             else hand.HideCards();
         }
 
-        // EnemyHand: End(2)에서만 표시
+        // EnemyHand: End(3)에서만 표시
         if (enemyHand != null)
         {
-            bool showEnemy = (index == 2);
+            bool showEnemy = (index == 3);
             if (showEnemy) enemyHand.ShowAll(); else enemyHand.HideAll();
             if (enemyHandCanvasGroup)
             {
@@ -266,8 +268,9 @@ public class DescriptionPanelController : MonoBehaviour
             {
                 0 => msgCard,
                 1 => msgItem,
-                2 => msgEnd,
-                3 => msgRun,
+                2 => msgPanel,
+                3 => msgEnd,
+                4 => msgRun,
                 _ => string.Empty
             };
         }

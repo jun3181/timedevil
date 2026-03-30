@@ -5,7 +5,8 @@ public class BattleMenuController : MonoBehaviour
 {
     [System.Serializable] public class IntEvent : UnityEvent<int> { }
 
-    [Header("Order (2x2 grid): 0=Card, 1=Item / 2=End, 3=Run")]
+    //[Header("Order (2x2 grid): 0=Card, 1=Item / 2=End, 3=Run")] UI배치 수정 전
+    [Header("Order: 0=Card, 1=Item 2=Panel 3=End, 4=Run")] //배치 수정 후
     [SerializeField] private GameObject[] entries;
 
     [Header("Input")]
@@ -44,12 +45,12 @@ public class BattleMenuController : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.RightArrow)) MoveHoriz(+1);
         if (Input.GetKeyDown(KeyCode.LeftArrow)) MoveHoriz(-1);
-        if (Input.GetKeyDown(KeyCode.DownArrow)) MoveVert(+1);
-        if (Input.GetKeyDown(KeyCode.UpArrow)) MoveVert(-1);
+        //if (Input.GetKeyDown(KeyCode.DownArrow)) MoveVert(+1);
+        //if (Input.GetKeyDown(KeyCode.UpArrow)) MoveVert(-1);
 
         if (Input.GetKeyDown(KeyCode.E))
         {
-            string name = index switch { 0 => "Card", 1 => "Item", 2 => "End", 3 => "Run", _ => $"Idx{index}" };
+            string name = index switch { 0 => "Card", 1 => "Item", 2 =>"Panel", 3 => "End", 4 => "Run", _ => $"Idx{index}" };
             Debug.Log($"[BattleMenu] E pressed → {name} selected (index={index})");
             onSubmit?.Invoke(index);
         }
@@ -59,7 +60,7 @@ public class BattleMenuController : MonoBehaviour
     {
         inputEnabled = on;
 
-        //  입력 가능/불가 전환 시에도 현재 포커스를 통지해
+        //  입력 가능/ 불가 전환 시에도 현재 포커스를 통지해
         // (ItemHand/Hand/설명 패널이 즉시 숨김/표시를 반영)
         onFocusChanged?.Invoke(index);
     }
