@@ -13,7 +13,7 @@ public class EndController : MonoBehaviour
     {
         if (!menu) return;
 
-        if (menu.Index == 2 && Input.GetKeyDown(KeyCode.E))
+        if (menu.Index == 3 && Input.GetKeyDown(KeyCode.E))
         {
             if (TurnManager.Instance != null)
             {

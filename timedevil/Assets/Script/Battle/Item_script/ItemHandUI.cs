@@ -1,14 +1,14 @@
-// Assets/Script/Battle/Item_script/ItemHandUI.cs  (Æú´õ´Â ÆíÇÑ °÷¿¡)
+// Assets/Script/Battle/Item_script/ItemHandUI.cs  (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
 using UnityEngine;
 
 [RequireComponent(typeof(CanvasGroup))]
 public class ItemHandUI : MonoBehaviour
 {
     [Header("Refs")]
-    [SerializeField] private BattleMenuController menu;   // 0=Card, 1=Item, 2=End, 3=Run
+    [SerializeField] private BattleMenuController menu;   // 0=Card, 1=Item,2=Panel, 3=End, 4=Run
     private CanvasGroup cg;
 
-    // ÀûÅÏÀÌ¸é ¹«Á¶°Ç ¼û±è
+    // ï¿½ï¿½ï¿½ï¿½ï¿½Ì¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     private bool enemyTurn = false;
 
     void Reset()
@@ -28,7 +28,7 @@ public class ItemHandUI : MonoBehaviour
         if (menu)
         {
             menu.onFocusChanged.AddListener(OnMenuFocusChanged);
-            // ÇöÀç ÀÎµ¦½º·Î ÇÑ ¹ø µ¿±âÈ­
+            // ï¿½ï¿½ï¿½ï¿½ ï¿½Îµï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½È­
             OnMenuFocusChanged(menu.Index);
         }
     }
@@ -47,7 +47,7 @@ public class ItemHandUI : MonoBehaviour
             return;
         }
 
-        // 1 = Item Æ÷Ä¿½ºÀÏ ¶§¸¸ Ç¥½Ã
+        // 1 = Item ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ç¥ï¿½ï¿½
         if (idx == 1) Show();
         else Hide();
     }
@@ -58,7 +58,7 @@ public class ItemHandUI : MonoBehaviour
         if (on) Hide();
         else
         {
-            // ÇÃ·¹ÀÌ¾î ÅÏ º¹±Í ½Ã ÇöÀç Æ÷Ä¿½º ±âÁØÀ¸·Î ´Ù½Ã µ¿±âÈ­
+            // ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¿ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ù½ï¿½ ï¿½ï¿½ï¿½ï¿½È­
             if (menu) OnMenuFocusChanged(menu.Index);
             else Hide();
         }
@@ -79,6 +79,6 @@ public class ItemHandUI : MonoBehaviour
         cg.alpha = 0f;
         cg.interactable = false;
         cg.blocksRaycasts = false;
-        gameObject.SetActive(true); // CanvasGroup¸¸ ²ô°í ¿ÀºêÁ§Æ®´Â À¯Áö(·¹ÀÌ¾Æ¿ô ¾ÈÁ¤)
+        gameObject.SetActive(true); // CanvasGroupï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½ï¿½Ì¾Æ¿ï¿½ ï¿½ï¿½ï¿½ï¿½)
     }
 }
