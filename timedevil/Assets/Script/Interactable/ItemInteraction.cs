@@ -2,7 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(BoxCollider2D))]
+[RequireComponent(typeof(Collider2D))]
+[RequireComponent(typeof(SpriteRenderer))]
 public class ItemInteraction: MonoBehaviour, IInteractable
 {
     [System.Serializable]
@@ -27,10 +28,17 @@ public class ItemInteraction: MonoBehaviour, IInteractable
     [SerializeField] private bool debuged = true;
 
     private bool _inited;
+    private SpriteRenderer _spriteRenderer;
     
     // 설정한 ItemSO가 ItemDatabaseSO에 등록되어 있는지 확인
     void Awake() {
         _inited = false;
+        _spriteRenderer = GetComponent<SpriteRenderer>();
+
+        Collider2D collider = GetComponent<Collider2D>();
+        collider.isTrigger = true;
+        collider.enabled = true;
+
         if(db==null) {
             if(debuged) Debug.LogWarning("ItemDatabaseSO가 설정되지 않았습니다.");
             return;
@@ -91,7 +99,10 @@ public class ItemInteraction: MonoBehaviour, IInteractable
             return;
         }
 
-        if(ItemRuntime.Instance == null) return;
+        if(ItemRuntime.Instance == null) {
+            if(debuged) Debug.LogWarning($"ItemRuntime의 인스턴스가 Scene내 존재하지 않습니다.");
+            return;
+        }
 
         if(debuged) PrintInventory();
 
@@ -101,7 +112,11 @@ public class ItemInteraction: MonoBehaviour, IInteractable
 
         if(debuged) PrintInventory();
 
+        _spriteRenderer.enabled = false;
+
         if(DialogueManager.instance != null) DialogueManager.instance.StartDialogue(dialogue);
+
+        Destroy(gameObject);
     }
 
     private void PrintInventory() {
