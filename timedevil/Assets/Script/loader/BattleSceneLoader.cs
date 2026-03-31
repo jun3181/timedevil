@@ -18,6 +18,9 @@ public static class BattleSceneLoader
         // 2) 복귀 정보를 저장
         SceneLoader.SaveReturnPoint(playerT, enemyT);
 
+        if(SceneLoadContext.Instance != null)
+            SceneLoadContext.Instance.pendingEnemyName = enemyIdToLoad;
+
         if (enemyT && WorldNPCStateService.Instance != null)
             WorldNPCStateService.Instance.SaveSnapshot(enemyT.gameObject);
 
