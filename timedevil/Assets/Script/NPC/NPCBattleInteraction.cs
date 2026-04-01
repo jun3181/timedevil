@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(Collider2D))]
 public class NPCBattleInteraction : MonoBehaviour, IInteractable
 {
     private const string BATTLE_SCENE = "battle";
