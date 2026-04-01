@@ -46,6 +46,16 @@ public class NPCBattleInteraction : MonoBehaviour, IInteractable
             Debug.LogWarning($"{gameObject.name}에서 대사를 출력하려고 하였으나 DialogueManager.instance가 null입니다.");
         }
 
+        StartCoroutine(RunAfterDialogueFinish());
+    }
+
+    private IEnumerator RunAfterDialogueFinish() {
+        while(true) {
+            if(!DialogueManager.instance.isDialogueActive) break;
+            yield return null;
+        }
+
         BattleSceneLoader.Go(BATTLE_SCENE, enemySO.enemyId, player, null);
+        yield break;
     }
 }
