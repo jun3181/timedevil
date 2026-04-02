@@ -17,7 +17,7 @@ public class TriggerRouter : MonoBehaviour
     public List<Route> routes = new();
 
     [Header("Policy")]
-    [Tooltip("falseë©´ ê°™ì€ keyê°€ ì‹¤í–‰ ì¤‘ì¼ ë•Œ ì¬ìš”ì²­ì€ ë¬´ì‹œ")]
+    [Tooltip("false¸é °°Àº key°¡ ½ÇÇà ÁßÀÏ ¶§ Àç¿äÃ»Àº ¹«½Ã")]
     public bool allowReentrySameKey = false;
 
     [Header("Debug")]
@@ -33,7 +33,7 @@ public class TriggerRouter : MonoBehaviour
 
     private void OnValidate()
     {
-        // ì—ë””í„°ì—ì„œ í‚¤ ì¤‘ë³µ ì²´í¬ ë„ì›€
+        // ¿¡µğÅÍ¿¡¼­ Å° Áßº¹ Ã¼Å© µµ¿ò
         BuildMap();
     }
 
@@ -50,13 +50,13 @@ public class TriggerRouter : MonoBehaviour
 
             if (string.IsNullOrWhiteSpace(r.key))
             {
-                if (debugLog) Debug.LogWarning($"[TriggerRouter] routes[{i}] keyê°€ ë¹„ì–´ìˆìŒ");
+                if (debugLog) Debug.LogWarning($"[TriggerRouter] routes[{i}] key°¡ ºñ¾îÀÖÀ½");
                 continue;
             }
 
             if (_map.ContainsKey(r.key))
             {
-                Debug.LogError($"[TriggerRouter] Route key ì¤‘ë³µ: '{r.key}' (í•˜ë‚˜ë§Œ ë‚¨ê²¨ì•¼ í•¨)");
+                Debug.LogError($"[TriggerRouter] Route key Áßº¹: '{r.key}' (ÇÏ³ª¸¸ ³²°Ü¾ß ÇÔ)");
                 continue;
             }
 
@@ -68,7 +68,7 @@ public class TriggerRouter : MonoBehaviour
     {
         if (string.IsNullOrWhiteSpace(key))
         {
-            if (debugLog) Debug.LogWarning("[TriggerRouter] RequestRoute: keyê°€ ë¹„ì–´ìˆìŒ");
+            if (debugLog) Debug.LogWarning("[TriggerRouter] RequestRoute: key°¡ ºñ¾îÀÖÀ½");
             return;
         }
 
@@ -106,7 +106,6 @@ public class TriggerRouter : MonoBehaviour
                 IEnumerator it = null;
                 try
                 {
-                    step.PreExecute(ctx);
                     it = step.Execute(ctx);
                 }
                 catch (System.Exception e)

@@ -148,7 +148,6 @@ public class CutsceneRouter : MonoBehaviour
             IEnumerator it = null;
             try
             {
-                step.PreExecute(ctx);
                 it = step.Execute(ctx);
             }
             catch (Exception e)
