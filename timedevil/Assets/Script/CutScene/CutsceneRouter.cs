@@ -8,6 +8,9 @@ using UnityEngine.SceneManagement;
 [DisallowMultipleComponent]
 public class CutsceneRouter : MonoBehaviour
 {
+    private static int s_runningCutsceneCount = 0;
+    public static bool IsAnyCutsceneRunning => s_runningCutsceneCount > 0;
+
     [Serializable]
     public class Route
     {
@@ -110,6 +113,7 @@ public class CutsceneRouter : MonoBehaviour
         }
 
         _running = true;
+        s_runningCutsceneCount++;
         _playedKeys.Add(key);
 
         BeginInputLock();
@@ -188,6 +192,7 @@ public class CutsceneRouter : MonoBehaviour
 
         EndInputLockIfHeld();
         _running = false;
+        s_runningCutsceneCount = Mathf.Max(0, s_runningCutsceneCount - 1);
     }
 
     private Route FindRoute(string key)
@@ -262,6 +267,8 @@ public class CutsceneRouter : MonoBehaviour
     {
         // 씬 전환/오브젝트 비활성화로 코루틴이 중단될 때 입력 잠금이 남지 않도록 안전 해제
         EndInputLockIfHeld();
+        if (_running)
+            s_runningCutsceneCount = Mathf.Max(0, s_runningCutsceneCount - 1);
         _running = false;
     }
 
