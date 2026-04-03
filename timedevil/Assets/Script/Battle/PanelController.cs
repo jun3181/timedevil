@@ -72,6 +72,7 @@ public class BattlePanelViewToggle : MonoBehaviour
     private Coroutine running;
 
     private TurnState lastTurnState = TurnState.PlayerTurn;
+    private bool lastHandSelectMode;
 
     void Reset()
     {
@@ -92,6 +93,7 @@ public class BattlePanelViewToggle : MonoBehaviour
         ApplyImmediate(isGameplayView);
 
         if (turnManager) lastTurnState = turnManager.currentTurn;
+        if (handUI) lastHandSelectMode = handUI.IsInSelectMode;
     }
 
     void OnEnable()
@@ -106,12 +108,19 @@ public class BattlePanelViewToggle : MonoBehaviour
 
     void Update()
     {
-        if (returnOnCardCancelKey && handUI && handUI.IsInSelectMode && Input.GetKeyDown(KeyCode.Q))
+        bool qDown = Input.GetKeyDown(KeyCode.Q);
+        bool handSelecting = handUI && handUI.IsInSelectMode;
+
+        if (returnOnCardCancelKey && qDown)
         {
             bool inDiscard = turnManager && turnManager.IsPlayerDiscardPhase;
-            if (!inDiscard)
+            bool wasSelectingThisFrame = handSelecting || lastHandSelectMode;
+
+            if (!inDiscard && wasSelectingThisFrame)
                 SetGameplayView(false);
         }
+
+        lastHandSelectMode = handSelecting;
 
         if (!returnOnPlayerTurnStart) return;
 
