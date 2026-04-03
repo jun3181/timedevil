@@ -3,36 +3,52 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Panel 메뉴 상호작용(E 제출)으로 전투 프레젠테이션을 토글한다.
-///
-/// 기본 상태(초기):
-/// - enemyTargets: 화면에 보임
-/// - gameplayTargets: 화면 아래(오프스크린)에서 대기
-///
-/// 토글 상태:
-/// - enemyTargets: 아래로 내려가 화면 밖으로 이동
-/// - gameplayTargets: 위로 올라와 화면에 보임
+/// Battle UI 메뉴 상호작용에 따라
+/// - enemyTargets (연출용 적)
+/// - gameplayTargets (그리드/캐릭터/전투 요소)
+/// 를 서로 반대 방향으로 이동시켜 전투 시점을 전환한다.
 /// </summary>
-public class PanelController : MonoBehaviour
+public class BattlePanelViewToggle : MonoBehaviour
 {
-    [Header("Trigger")]
+    [Header("Trigger Refs")]
     [SerializeField] private BattleMenuController menu;
-    [SerializeField] private int triggerMenuIndex = 2;
+    [SerializeField] private HandUI handUI;
+    [SerializeField] private TurnManager turnManager;
+
+    [Header("Menu Submit Index Rules")]
+    [Tooltip("켜면 panel 인덱스 제출 시 게임플레이 뷰로 전환")]
+    [SerializeField] private bool usePanelSubmit = true;
+    [SerializeField] private int panelSubmitIndex = 2;
+
+    [Tooltip("켜면 card 인덱스 제출 시 게임플레이 뷰로 전환")]
+    [SerializeField] private bool useCardSubmit = true;
+    [SerializeField] private int cardSubmitIndex = 0;
+
+    [Tooltip("켜면 end 인덱스 제출 시 게임플레이 뷰로 전환")]
+    [SerializeField] private bool useEndSubmit = true;
+    [SerializeField] private int endSubmitIndex = 3;
+
+    [Header("Return Rules")]
+    [Tooltip("Card 선택모드 종료(예: Q 취소) 시 원상태로 복귀")]
+    [SerializeField] private bool returnOnCardSelectExit = true;
+
+    [Tooltip("EnemyTurn -> PlayerTurn 전환 시 원상태로 복귀")]
+    [SerializeField] private bool returnOnPlayerTurnStart = true;
 
     [Header("Target Groups")]
-    [Tooltip("적(연출용)으로 취급할 대상들. 게임플레이 보기로 전환하면 아래로 내려감")]
+    [Tooltip("적(연출용) 대상들. 게임플레이 뷰로 전환하면 아래로 내려감")]
     [SerializeField] private List<Transform> enemyTargets = new List<Transform>();
 
-    [Tooltip("그리드/캐릭터/전투 오브젝트 등 게임플레이 요소들. 시작 시 아래에서 대기했다가 위로 올라옴")]
+    [Tooltip("그리드/캐릭터/전투 오브젝트 등 게임플레이 대상들. 기본은 아래 대기, 전환 시 올라옴")]
     [SerializeField] private List<Transform> gameplayTargets = new List<Transform>();
 
     [SerializeField] private bool useLocalPosition = true;
 
     [Header("Offsets")]
-    [Tooltip("게임플레이 보기 ON일 때 enemyTargets에 적용할 오프셋(보통 아래 음수 Y)")]
+    [Tooltip("게임플레이 뷰 ON일 때 enemyTargets에 적용할 오프셋(보통 아래 음수 Y)")]
     [SerializeField] private Vector3 enemyHiddenOffset = new Vector3(0f, -650f, 0f);
 
-    [Tooltip("게임플레이 보기 OFF일 때 gameplayTargets에 적용할 오프셋(보통 아래 음수 Y)")]
+    [Tooltip("게임플레이 뷰 OFF일 때 gameplayTargets에 적용할 오프셋(보통 아래 음수 Y)")]
     [SerializeField] private Vector3 gameplayHiddenOffset = new Vector3(0f, -650f, 0f);
 
     [Header("Animation - Enemy")]
@@ -43,8 +59,8 @@ public class PanelController : MonoBehaviour
     [SerializeField, Min(0.01f)] private float gameplayDuration = 0.35f;
     [SerializeField] private AnimationCurve gameplayEase = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
-    [Header("State")]
-    [Tooltip("체크 시 시작부터 게임플레이 요소가 보이는 상태로 시작")]
+    [Header("Initial State")]
+    [Tooltip("체크 시 시작부터 gameplayTargets가 보이는 상태")]
     [SerializeField] private bool startInGameplayView = false;
 
     private readonly List<Vector3> enemyShownBase = new List<Vector3>();
@@ -52,47 +68,98 @@ public class PanelController : MonoBehaviour
 
     private bool isGameplayView;
     private bool isAnimating;
+    private bool pendingReturnByEnd;
     private Coroutine running;
+
+    private TurnState lastTurnState = TurnState.PlayerTurn;
 
     void Reset()
     {
         if (!menu) menu = FindObjectOfType<BattleMenuController>(true);
+        if (!handUI) handUI = FindObjectOfType<HandUI>(true);
+        if (!turnManager) turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
     }
 
     void Awake()
     {
         if (!menu) menu = FindObjectOfType<BattleMenuController>(true);
+        if (!handUI) handUI = FindObjectOfType<HandUI>(true);
+        if (!turnManager) turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
 
         CacheShownBasePositions();
 
         isGameplayView = startInGameplayView;
         ApplyImmediate(isGameplayView);
+
+        if (turnManager) lastTurnState = turnManager.currentTurn;
     }
 
     void OnEnable()
     {
         if (menu) menu.onSubmit.AddListener(OnMenuSubmit);
+        if (handUI) handUI.onSelectModeChanged += OnHandSelectModeChanged;
     }
 
     void OnDisable()
     {
         if (menu) menu.onSubmit.RemoveListener(OnMenuSubmit);
+        if (handUI) handUI.onSelectModeChanged -= OnHandSelectModeChanged;
+    }
+
+    void Update()
+    {
+        if (!returnOnPlayerTurnStart) return;
+
+        if (!turnManager) turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
+        if (!turnManager) return;
+
+        var cur = turnManager.currentTurn;
+        if (cur != lastTurnState)
+        {
+            bool enemyToPlayer = (lastTurnState == TurnState.EnemyTurn && cur == TurnState.PlayerTurn);
+            if (enemyToPlayer && (pendingReturnByEnd || isGameplayView))
+            {
+                SetGameplayView(false);
+                pendingReturnByEnd = false;
+            }
+            lastTurnState = cur;
+        }
     }
 
     private void OnMenuSubmit(int index)
     {
-        if (index != triggerMenuIndex) return;
-        ToggleView();
+        if (usePanelSubmit && index == panelSubmitIndex)
+        {
+            SetGameplayView(true);
+            return;
+        }
+
+        if (useCardSubmit && index == cardSubmitIndex)
+        {
+            SetGameplayView(true);
+            return;
+        }
+
+        if (useEndSubmit && index == endSubmitIndex)
+        {
+            SetGameplayView(true);
+            pendingReturnByEnd = true;
+        }
+    }
+
+    private void OnHandSelectModeChanged(bool selecting)
+    {
+        if (!returnOnCardSelectExit) return;
+
+        if (!selecting)
+        {
+            SetGameplayView(false);
+        }
     }
 
     public void ToggleView()
     {
-        if (isAnimating) return;
-
-        isGameplayView = !isGameplayView;
-
-        if (running != null) StopCoroutine(running);
-        running = StartCoroutine(Co_Animate(isGameplayView));
+        SetGameplayView(!isGameplayView);
     }
 
     public void SetGameplayView(bool on, bool immediate = false)
