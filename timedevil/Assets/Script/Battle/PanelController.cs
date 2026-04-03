@@ -64,6 +64,7 @@ public class PanelController : MonoBehaviour
     private bool isGameplayView;
     private bool isAnimating;
     private Coroutine running;
+    private bool suppressNextToggle;
 
     void Reset()
     {
@@ -93,7 +94,17 @@ public class PanelController : MonoBehaviour
     private void OnMenuSubmit(int index)
     {
         if (index != triggerMenuIndex) return;
+        if (suppressNextToggle)
+        {
+            suppressNextToggle = false;
+            return;
+        }
         ToggleView();
+    }
+
+    public void SuppressNextToggle()
+    {
+        suppressNextToggle = true;
     }
 
     public void ToggleView()

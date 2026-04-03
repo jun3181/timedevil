@@ -8,6 +8,7 @@ public class HandSelectController : MonoBehaviour
     [SerializeField] private HandUI hand;
     [SerializeField] private Image externalSelector; // 옵션
     [SerializeField] private CardUseOrchestrator orchestrator;
+    [SerializeField] private PanelController panelController;
 
     [Header("Behavior")]
     [SerializeField] private bool wrap = true;
@@ -17,10 +18,12 @@ public class HandSelectController : MonoBehaviour
         if (!menu) menu = FindObjectOfType<BattleMenuController>(true);
         if (!hand) hand = FindObjectOfType<HandUI>(true);
         if (!orchestrator) orchestrator = FindObjectOfType<CardUseOrchestrator>(true);
+        if (!panelController) panelController = FindObjectOfType<PanelController>(true);
     }
 
     void Awake()
     {
+        if (!panelController) panelController = FindObjectOfType<PanelController>(true);
         if (externalSelector) externalSelector.enabled = false;
     }
 
@@ -88,6 +91,7 @@ public class HandSelectController : MonoBehaviour
             else
             {
                 // 평상시엔 카드 사용
+                panelController?.SuppressNextToggle();
                 orchestrator?.UseCurrentSelected();
             }
         }
