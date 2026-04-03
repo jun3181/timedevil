@@ -65,6 +65,14 @@ public class NPCMove : MonoBehaviour
         Moving = false;
     }
 
+    public bool WasOnMoving() {
+        if(!Moving && takingTime!=0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     // NPC 움직임 재게
     public void Resume() {
         if(Moving || takingTime==0) return;

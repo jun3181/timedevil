@@ -12,6 +12,14 @@ public class WanderingNPCMove : MonoBehaviour
     [Tooltip("정지 후 다시 움직이는데 까지 걸리는 시간")]
     public float Cooltime = 3f;
 
+    [Header("최대 이동 거리")]
+    [Tooltip("한번에 이동할 수 있는 최대 거리")]
+    public uint MaxDistance = 5;
+
+    [Header("최소 이동 거리")]
+    [Tooltip("한번에 이동할 수 있는 최소 거리")]
+    public uint MinDistance = 1;
+
     [Header("디버그 라인 활성화")]
     public bool Debuged = true;
 
@@ -37,15 +45,17 @@ public class WanderingNPCMove : MonoBehaviour
 
     void Update() {
         if(OnWandering) {
-            if(!npcMove.Moving && cooltimeCancelCoroutine==null) {
+            if(!npcMove.Moving && cooltimeCancelCoroutine == null && !npcMove.WasOnMoving()) {
                 Vector2 direction = directions[Random.Range(0, directions.Length)];
-                int magnitude = Random.Range(1, 6);
+                int distance = Random.Range((int)MinDistance, (int)MaxDistance + 1);
 
-                direction *= magnitude;
+                direction *= distance;
 
                 npcMove.MoveBy(direction);
-            } else if(npcMove.Moving && cooltimeCancelCoroutine==null) {
-                cooltimeCancelCoroutine = CancelCooltimeAfterSeconds(3);
+            } else if(!npcMove.Moving && cooltimeCancelCoroutine==null) {
+                npcMove.Resume();
+            } else if(npcMove.Moving && cooltimeCancelCoroutine == null) {
+                cooltimeCancelCoroutine = CancelCooltimeAfterSeconds(Cooltime);
             } else if(!npcMove.Moving && !isCooltimeRun) {
                 StartCoroutine(cooltimeCancelCoroutine);
             }
