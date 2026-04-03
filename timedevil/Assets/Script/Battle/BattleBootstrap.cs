@@ -43,12 +43,7 @@ public class BattleBootstrap : MonoBehaviour
         }
 
         // 1) 사용할 적 ID 결정
-        string enemyId = null;
-        if (SceneLoadContext.Instance != null && !string.IsNullOrWhiteSpace(SceneLoadContext.Instance.pendingEnemyName))
-        {
-            enemyId = SceneLoadContext.Instance.pendingEnemyName;
-            SceneLoadContext.Instance.Consume();
-        }
+        string enemyId = BattleSceneLoader.enemyIdToLoad;
         if (string.IsNullOrWhiteSpace(enemyId))
             enemyId = !string.IsNullOrWhiteSpace(enemyIdOverride) ? enemyIdOverride : "Enemy1";
 

@@ -3,6 +3,7 @@ using UnityEngine;
 /// 배틀씬 진입을 위한 전용 유틸: 적 ID를 넘기고, 복귀 좌표 저장 후 배틀씬으로 이동
 public static class BattleSceneLoader
 {
+    public static string enemyIdToLoad;
     public static void Go(string battleSceneName, string enemyIdToLoad, Transform playerT, Transform enemyT)
     {
         // 1) 적 ID 전달 (ObjectNameRuntime 싱글톤 사용)
@@ -17,11 +18,8 @@ public static class BattleSceneLoader
 
         // 2) 복귀 정보를 저장
         SceneLoader.SaveReturnPoint(playerT, enemyT);
-        
-        if(SceneLoadContext.Instance == null)
-            Object.DontDestroyOnLoad(new GameObject("SceneLoadContext", typeof(SceneLoadContext)));
-        
-        SceneLoadContext.Instance.pendingEnemyName = enemyIdToLoad;
+
+        BattleSceneLoader.enemyIdToLoad = enemyIdToLoad;
 
         if (enemyT && WorldNPCStateService.Instance != null)
             WorldNPCStateService.Instance.SaveSnapshot(enemyT.gameObject);
