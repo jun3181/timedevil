@@ -42,11 +42,11 @@ public class NPCBattleInteraction : MonoBehaviour, IInteractable
     public void Interact() {
         if(DialogueManager.instance!=null) {
             DialogueManager.instance.StartDialogue(dialogue);
-        } else if(debuged) {
-            Debug.LogWarning($"{gameObject.name}에서 대사를 출력하려고 하였으나 DialogueManager.instance가 null입니다.");
+            StartCoroutine(RunAfterDialogueFinish());
+        } else {
+            if(debuged) Debug.LogWarning($"{gameObject.name}에서 대사를 출력하려고 하였으나 DialogueManager.instance가 null입니다.");
+            BattleSceneLoader.Go(BATTLE_SCENE, enemySO.enemyId, player, null);
         }
-
-        StartCoroutine(RunAfterDialogueFinish());
     }
 
     private IEnumerator RunAfterDialogueFinish() {
