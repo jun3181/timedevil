@@ -8,7 +8,7 @@ using UnityEngine;
 /// - gameplayTargets (그리드/캐릭터/전투 요소)
 /// 를 서로 반대 방향으로 이동시켜 전투 시점을 전환한다.
 /// </summary>
-public class BattlePanelViewToggle : MonoBehaviour
+public class PanelController : MonoBehaviour
 {
     [Header("Trigger Refs")]
     [SerializeField] private BattleMenuController menu;
