@@ -20,7 +20,11 @@ public class ItemInteraction: MonoBehaviour, IInteractable
     [Tooltip("획득될 아이템")]
     [SerializeField] private List<ItemInfo> itemInfos = new();
 
-    [Header("아이템 획득 대사 후 추가적인 대사")]
+    [Header("아이템 획득 전 대사")]
+    [Tooltip("기본적인 획득 대사는 따로 설정할 필요가 없으며 Legacy 속성은 건들지 말 것")]
+    [SerializeField] private DialogueLine[] beforeDialogue;
+
+    [Header("아이템 획득 후 대사")]
     [Tooltip("기본적인 획득 대사는 따로 설정할 필요가 없으며 Legacy 속성은 건들지 말 것")]
     [SerializeField] private Dialogue dialogue;
 
@@ -74,24 +78,25 @@ public class ItemInteraction: MonoBehaviour, IInteractable
             return;
         }
 
-        int newLength = itemInfos.Count;
-        newLength += dialogue.lines?.Length ?? 0;
-
-        DialogueLine[] defaultDialogueLine = new DialogueLine[newLength];
-        for(int i=0; i<itemInfos.Count; i++) {
-            defaultDialogueLine[i] = new DialogueLine();
-            defaultDialogueLine[i].text = $"루시는 '{itemInfos[i].itemSO.displayName}'을 획득하였다!";
+        Queue<DialogueLine> newDialogueLines = new();
+        foreach(DialogueLine dl in beforeDialogue) {
+            newDialogueLines.Enqueue(dl);
         }
 
-        for(int i=itemInfos.Count; i<newLength; i++) {
-            defaultDialogueLine[i] = dialogue.lines[i - itemInfos.Count];
+        foreach(ItemInfo itemInfo in itemInfos) {
+            DialogueLine dl = new();
+            dl.text = $"루시는 '{itemInfo.itemSO.displayName}'를 {itemInfo.quantity}개 획득하였다!";
+            newDialogueLines.Enqueue(dl);
         }
 
-        dialogue.lines = defaultDialogueLine;
+        foreach(DialogueLine dl in dialogue.lines) {
+            newDialogueLines.Enqueue(dl);
+        }
+
+        dialogue.lines = newDialogueLines.ToArray();
 
         _inited = true;
     }
-
 
     public void Interact() {
         if(!_inited) {

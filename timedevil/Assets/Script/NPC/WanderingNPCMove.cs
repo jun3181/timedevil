@@ -5,23 +5,40 @@ using UnityEngine;
 [RequireComponent(typeof(NPCMove))]
 public class WanderingNPCMove : MonoBehaviour
 {
-    NPCMove npcMove;
+    [Header("")]
+    public bool OnWandering = false;
+
+    private NPCMove npcMove = null;
+    private IEnumerator cooltimeCancelCoroutine = null;
     void Start()
     {
         npcMove = GetComponent<NPCMove>();
     }
 
-    void FixedUpdate() {
-        if(!npcMove.Moving) {
-            float x = Random.Range(-1, 1);
-            float y = Random.Range(-1, 1);
-            Vector2 pos = new Vector2(x, y);
+    void Update() {
+        if(OnWandering) {
+            if(!npcMove.Moving && cooltimeCancelCoroutine==null) {
+                float x = Random.Range(-1f, 1f);
+                float y = Random.Range(-1f, 1f);
+                Vector2 pos = new Vector2(x, y);
 
-            Debug.Log(pos);
-
-            npcMove.MoveTo(pos);
+                npcMove.MoveBy(pos);
+            } else if(npcMove.Moving && cooltimeCancelCoroutine==null) {
+                cooltimeCancelCoroutine = CancelCooltimeAfterSeconds(3);
+                StartCoroutine(cooltimeCancelCoroutine);
+            }
+        } else {
+            if(cooltimeCancelCoroutine!=null) {
+                StopCoroutine(cooltimeCancelCoroutine);
+                cooltimeCancelCoroutine = null;
+            }
         }
+    }
 
-        //Debug.Log(npcMove.Moving);
+    private IEnumerator CancelCooltimeAfterSeconds(float sec) {
+        yield return new WaitForSeconds(sec);
+
+        cooltimeCancelCoroutine = null;
+        yield break;
     }
 }
