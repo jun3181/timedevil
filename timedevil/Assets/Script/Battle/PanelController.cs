@@ -29,8 +29,8 @@ public class BattlePanelViewToggle : MonoBehaviour
     [SerializeField] private int endSubmitIndex = 3;
 
     [Header("Return Rules")]
-    [Tooltip("Card 선택모드 종료(예: Q 취소) 시 원상태로 복귀")]
-    [SerializeField] private bool returnOnCardSelectExit = true;
+    [Tooltip("카드 선택모드에서 Q 취소 입력 시에만 원상태로 복귀")]
+    [SerializeField] private bool returnOnCardCancelKey = true;
 
     [Tooltip("EnemyTurn -> PlayerTurn 전환 시 원상태로 복귀")]
     [SerializeField] private bool returnOnPlayerTurnStart = true;
@@ -97,17 +97,22 @@ public class BattlePanelViewToggle : MonoBehaviour
     void OnEnable()
     {
         if (menu) menu.onSubmit.AddListener(OnMenuSubmit);
-        if (handUI) handUI.onSelectModeChanged += OnHandSelectModeChanged;
     }
 
     void OnDisable()
     {
         if (menu) menu.onSubmit.RemoveListener(OnMenuSubmit);
-        if (handUI) handUI.onSelectModeChanged -= OnHandSelectModeChanged;
     }
 
     void Update()
     {
+        if (returnOnCardCancelKey && handUI && handUI.IsInSelectMode && Input.GetKeyDown(KeyCode.Q))
+        {
+            bool inDiscard = turnManager && turnManager.IsPlayerDiscardPhase;
+            if (!inDiscard)
+                SetGameplayView(false);
+        }
+
         if (!returnOnPlayerTurnStart) return;
 
         if (!turnManager) turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
@@ -147,15 +152,6 @@ public class BattlePanelViewToggle : MonoBehaviour
         }
     }
 
-    private void OnHandSelectModeChanged(bool selecting)
-    {
-        if (!returnOnCardSelectExit) return;
-
-        if (!selecting)
-        {
-            SetGameplayView(false);
-        }
-    }
 
     public void ToggleView()
     {
