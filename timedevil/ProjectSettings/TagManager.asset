@@ -8,13 +8,13 @@ TagManager:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - Save
   - Water
   - UI
-  - 
-  - 
-  - 
-  - 
+  - Object
+  - item_get
+  - teleport
+  - Dialog
   - 
   - 
   - 

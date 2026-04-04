@@ -245,6 +245,81 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &758053708
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 758053710}
+  - component: {fileID: 758053709}
+  m_Layer: 0
+  m_Name: GameObject (2)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &758053709
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 758053708}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 44c2cf90ffa778c4ea238a05c5ee2213, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dialogue:
+    name: 
+    sentences:
+    - "\uB9C8\uC744\uC740 \uC774\uC0C1\uD558\uB9AC\uB9CC\uD07C \uC870\uC6A9\uD588\uACE0
+      \uC0AC\uB78C\uB4E4\uC740 \uC6C3\uC9C0 \uC54A\uC558\uB2E4"
+    - "\uC11C\uB85C\uC758 \uB208\uC744 \uD53C\uD55C \uCC44, \uC815\uD574\uC9C4 \uADDC\uCE59\uB300\uB85C\uB9CC
+      \uC6C0\uC9C1\uC774\uACE0 \uC788\uC5C8\uB2E4."
+    - "\uAD11\uC7A5 \uB05D\uC5D0\uC11C \uB204\uAD70\uAC00\uAC00 \uB098\uD0C0\uB098\uC790
+      \uBAA8\uB450\uAC00 \uACE0\uAC1C\uB97C \uC219\uC600\uACE0, \uADF8\uB294 \uCC28\uAC11\uAC8C
+      \uD1B5\uC81C\uD558\uBA70 \uB9C8\uC744\uC744 \uB2E4\uC2A4\uB9AC\uB294 \uB3C5\uC7AC\uC790\uCC98\uB7FC
+      \uBCF4\uC600\uB2E4."
+    - "\u201C\uACE0\uAC1C \uC219\uC5EC. \uADDC\uCE59\uC744 \uC78A\uC9C0 \uB9C8.\u201D"
+    - "\uB098\uB3C4 \uBAA8\uB974\uAC8C \uACE0\uAC1C\uB97C \uC219\uC600\uB2E4."
+    - "\uBAA8\uB450 \uADF8\uB140\uAC00 \uC9C0\uB098\uAC00\uAE38 \uAE30\uB2E4\uB838\uB2E4."
+    - "\u201C\u2026.\u201D"
+    - "\u201C\uB108\uB294 \uBABB\uBCF4\uB358 \uB188\uC778\uB370\u201D"
+    - "\u201C\uC544\u2026\uADF8\u2026.\uC544\u201D"
+    - "\u201C\uC5EC\uD589\uC790\uC778\uAC00\u2026.\u201D"
+    - "\u201C\uC544\u2026\uB124\u2026\u201D"
+    - "\u201C\u2026\uC74C\u2026\uC544\uBB34\uD2BC \uB208\uC5D0 \uB744\uBA74 \uC0AC\uD615\uC774\uB2E4\u2026\u201D"
+    - "\u201C\uB124\u2026\uB124\u201D"
+    - "\uC655\uCC98\uB7FC \uBCF4\uC774\uB294 \uADF8\uB140\uB294 \uC9C0\uB098\uAC00\uACE0
+      \uB9C8\uC744\uC0AC\uB78C\uB4E4\uC740 \uD55C\uC228\uC744 \uD479 \uC167\uB2E4"
+    leftPortrait: {fileID: 0}
+    rightPortrait: {fileID: 0}
+    lines: []
+  waitUntilDone: 1
+  lockPlayerInput: 1
+  blockWorldAdvance: 0
+  autoAdvance: 0
+  autoDelay: 1.5
+--- !u!4 &758053710
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 758053708}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -24.643988, y: -42.240948, z: -0.044486117}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1193082113
 GameObject:
   m_ObjectHideFlags: 0
@@ -283,3 +358,4 @@ SceneRoots:
   - {fileID: 470426334}
   - {fileID: 1193082114}
   - {fileID: 337703445}
+  - {fileID: 758053710}

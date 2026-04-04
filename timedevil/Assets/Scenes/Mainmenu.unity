@@ -603,7 +603,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -1224986720803320162, guid: 2b325ab3552524844b9df74199bdb90d, type: 3}
+  m_Sprite: {fileID: -1224986720803320162, guid: 2b325ab3552524844b9df74199bdb90d,
+    type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -1248,7 +1249,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -1224986720803320162, guid: 2b325ab3552524844b9df74199bdb90d, type: 3}
+  m_Sprite: {fileID: -1224986720803320162, guid: 2b325ab3552524844b9df74199bdb90d,
+    type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -1297,7 +1299,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   sfxPlayer: {fileID: 2063149943}
   clickSound: {fileID: 8300000, guid: 70cbbd69eeefc4841aef5f9432895e57, type: 3}
-  myRoomSceneName: testmyroom
+  myRoomSceneName: Myroom
 --- !u!4 &1523359872
 Transform:
   m_ObjectHideFlags: 0
@@ -1428,7 +1430,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -1224986720803320162, guid: 2b325ab3552524844b9df74199bdb90d, type: 3}
+  m_Sprite: {fileID: -1224986720803320162, guid: 2b325ab3552524844b9df74199bdb90d,
+    type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
