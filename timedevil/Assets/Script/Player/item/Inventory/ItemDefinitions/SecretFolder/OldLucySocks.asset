@@ -10,12 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1abd44402ecbf5148b3b83ac1b008ac9, type: 3}
-  m_Name: Hwangs
+  m_Name: OldLucySocks
   m_EditorClassIdentifier: 
-  id: hwang
-  displayName: "\uD669\uADFC\uCD9C \uBCD1\uC7A5\uB2D8\uC758 \uB9DB\uB3D9\uC0B0 \uBD09\uC9C0"
+  id: old_lucy_socks
+  displayName: "3\uC8FC \uB3D9\uC548 \uC548\uBE64 \uB8E8\uC2DC\uC758 \uC591\uB9D0"
   type: 0
-  description: "\uC545! \uD669\uADFC\uCD9C \uBCD1\uC7A5\uB2D8\uACFC \uD568\uAED8\uD558\uB294
-    \uC545\uAE30\uBC14\uB9AC\uB294 \uB108\uBB34\uB098 \uC990\uAC70\uC6CC!"
+  description: "\uB0C4\uC0C8...."
   icon: {fileID: -372507118, guid: a341d0e222275b54d8b0aaed7c4ae268, type: 3}
   defaultQuantity: 0

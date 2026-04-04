@@ -20,6 +20,8 @@ public class NPCBattleInteraction : MonoBehaviour, IInteractable
     public bool debuged = true;
 
     private Transform player;
+    private Transform enemy;
+    private INPCMoveController npcMoveController;
     void Awake() {
         if(db==null) {
             if(debuged) Debug.LogWarning($"{gameObject.name}의 EnemyDatabaseSO가 설정되지 않았습니다.");
@@ -37,9 +39,14 @@ public class NPCBattleInteraction : MonoBehaviour, IInteractable
         if(pm != null) {
             player = pm.GetComponent<Transform>();
         }
+
+        enemy = GetComponent<Transform>();
+        npcMoveController = GetComponent<INPCMoveController>();
     }
 
     public void Interact() {
+        npcMoveController?.Idle();
+
         if(DialogueManager.instance!=null) {
             DialogueManager.instance.StartDialogue(dialogue);
             StartCoroutine(RunAfterDialogueFinish());
@@ -55,7 +62,7 @@ public class NPCBattleInteraction : MonoBehaviour, IInteractable
             yield return null;
         }
 
-        BattleSceneLoader.Go(BATTLE_SCENE, enemySO.enemyId, player, null);
+        BattleSceneLoader.Go(BATTLE_SCENE, enemySO.enemyId, player, enemy);
         yield break;
     }
 }

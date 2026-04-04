@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(NPCMove))]
-public class WanderingNPCMove : MonoBehaviour
+public class WanderingNPCMove : MonoBehaviour, INPCMoveController
 {
-    [Header("돌아다니는 기능 활성화")]
-    public bool OnWandering = false;
+    [Header("움직임 활성화 여부")]
+    [SerializeField]
+    private bool Wandering = false;
 
     [Header("최대 이동 쿨타임")]
     [Tooltip("정지 후 다시 움직이는데 까지 최대로 걸리는 시간")]
@@ -57,7 +58,7 @@ public class WanderingNPCMove : MonoBehaviour
     }
 
     void Update() {
-        if(OnWandering) {
+        if(Wandering) {
             if(isCooltimeRun) return;
 
             // 쿨타임이 끝났거나 최초로 시작되었을 때
@@ -102,5 +103,13 @@ public class WanderingNPCMove : MonoBehaviour
         cooltimeCancelCoroutine = null;
         isCooltimeRun = false;
         yield break;
+    }
+
+    public void Idle() {
+        Wandering = false;
+    }
+
+    public void Resume() {
+        Wandering = true;
     }
 }
