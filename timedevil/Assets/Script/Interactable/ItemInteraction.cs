@@ -56,6 +56,7 @@ public class ItemInteraction: MonoBehaviour, IInteractable
             if(itemInfos[i].itemSO == null) {
                 itemInfos.RemoveAt(i);
                 i--;
+                if(debuged) Debug.LogWarning($"{gameObject.name}의 itemSO의 값을 None(null)로 설정할 수 없습니다.");
                 continue;
             }
 
@@ -68,13 +69,14 @@ public class ItemInteraction: MonoBehaviour, IInteractable
             }
 
             if(!found) {
+                if(debuged) Debug.LogWarning($"{itemInfos[i].itemSO.id}는 {db.name}내에 존재하지 않습니다.");
                 itemInfos.RemoveAt(i);
                 i--;
             }
         }
 
-        if(itemInfos.Count==0 && debuged) {
-            Debug.LogWarning($"{gameObject.name}과 상호작용시 지급될 아이템이 존재하지 않습니다.");
+        if(itemInfos.Count==0) {
+            if(debuged) Debug.LogWarning($"{gameObject.name}과 상호작용시 지급될 아이템이 존재하지 않습니다.");
             return;
         }
 
