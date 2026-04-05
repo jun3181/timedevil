@@ -30549,6 +30549,8 @@ MonoBehaviour:
   markAsSleepLoad: 0
   loadSceneFromProgress: 0
   fallbackDreamSceneName: Move_Tutorial
+  overrideCutsceneStartKey: 0
+  cutsceneStartKey: CutScene1
   saveReturnContext: 1
   returnPointOverride: {fileID: 1685952716}
   graceSeconds: 0.5
@@ -31090,6 +31092,8 @@ MonoBehaviour:
   markAsSleepLoad: 0
   loadSceneFromProgress: 0
   fallbackDreamSceneName: Move_Tutorial
+  overrideCutsceneStartKey: 1
+  cutsceneStartKey: CutScene1
   saveReturnContext: 1
   returnPointOverride: {fileID: 1685952716}
   graceSeconds: 0.5
@@ -33099,7 +33103,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   op: 1
   targetScope: 0
-  targetObjects: []
+  targetObjects:
+  - {fileID: 0}
   seconds: 0.5
   useUnscaledTime: 1
   lockAction: 1
