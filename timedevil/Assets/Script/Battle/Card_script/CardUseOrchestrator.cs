@@ -25,6 +25,7 @@ public class CardUseOrchestrator : MonoBehaviour
     [SerializeField] private SupportController supportController;
     [SerializeField] private DrawController drawController;
     [SerializeField] private MoveController moveController;
+    [SerializeField] private PanelController PanelController;
 
 
     private bool busy;
@@ -36,6 +37,7 @@ public class CardUseOrchestrator : MonoBehaviour
         if (!menu) menu = FindObjectOfType<BattleMenuController>(true);
         if (!database) database = Resources.Load<CardDatabaseSO>("CardDatabase");
         if (!costController) costController = FindObjectOfType<CostController>(true);
+        if (!PanelController) PanelController = FindObjectOfType<PanelController>(true);
         if (!showCard) showCard = FindObjectOfType<ShowCardController>(true);
         if (!desc) desc = FindObjectOfType<DescriptionPanelController>(true);
 
@@ -143,6 +145,7 @@ public class CardUseOrchestrator : MonoBehaviour
         else
         {
             if (menu) menu.EnableInput(true);
+            if (PanelController) PanelController.SetGameplayView(false);
         }
 
         busy = false;
