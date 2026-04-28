@@ -32,6 +32,8 @@ public class WanderingNPCMove : MonoBehaviour, INPCMoveController
         Vector2.up, Vector2.down, Vector2.left, Vector2.right
     };
 
+    private Collider2D collider2d;
+
     private NPCMove npcMove = null;
     private IEnumerator cooltimeCancelCoroutine = null;
     private bool isCooltimeRun = false;
@@ -55,6 +57,7 @@ public class WanderingNPCMove : MonoBehaviour, INPCMoveController
     void Start()
     {
         npcMove = GetComponent<NPCMove>();
+        collider2d = GetComponent<Collider2D>();
     }
 
     void Update() {
@@ -64,10 +67,20 @@ public class WanderingNPCMove : MonoBehaviour, INPCMoveController
             // 쿨타임이 끝났거나 최초로 시작되었을 때
             if(!npcMove.Moving && cooltimeCancelCoroutine == null && !npcMove.WasOnMoving()) {
                 Vector2 direction = directions[Random.Range(0, directions.Length)];
-                int distance = Random.Range((int)MinDistance, (int)MaxDistance + 1);
+
+                float distance = Random.Range((int)MinDistance, (int)MaxDistance + 1);
+
+                RaycastHit2D[] castRes = Physics2D.BoxCastAll(collider2d.bounds.center, collider2d.bounds.size, 0, direction, distance);
+                Debug.Log(castRes.Length);
+                Debug.Log(direction);
+                Debug.Log(collider2d.bounds.center);
+                Debug.Log(castRes[1].distance);
+                if(castRes.Length >= 2 && distance > castRes[1].distance) {
+                    distance = castRes[1].distance *0.99f + distance * 0.01f;
+                }
 
                 direction *= distance;
-
+                
                 npcMove.MoveBy(direction);
             // OnWandering이 false되어 일시적으로 멈춘 후 다시 시작할 때
             } else if(!npcMove.Moving && cooltimeCancelCoroutine == null) {
