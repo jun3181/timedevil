@@ -29,10 +29,11 @@ public class WanderingNPCMove : MonoBehaviour, INPCMoveController
 
     private readonly Vector2[] directions =
     {
-        Vector2.up, Vector2.down, Vector2.left, Vector2.right
+        Vector2.up, Vector2.down, Vector2.left, Vector2.right,
+        Vector2.one, -Vector2.down, new(1,-1), new(-1, 1)
     };
 
-    private Collider2D collider2d;
+    private Rigidbody2D rb;
 
     private NPCMove npcMove = null;
     private IEnumerator cooltimeCancelCoroutine = null;
@@ -57,7 +58,9 @@ public class WanderingNPCMove : MonoBehaviour, INPCMoveController
     void Start()
     {
         npcMove = GetComponent<NPCMove>();
-        collider2d = GetComponent<Collider2D>();
+        npcMove.CanStandbyForAvoiding = false;
+
+        rb = GetComponent<Rigidbody2D>();
     }
 
     void Update() {
@@ -65,19 +68,10 @@ public class WanderingNPCMove : MonoBehaviour, INPCMoveController
             if(isCooltimeRun) return;
 
             // 쿨타임이 끝났거나 최초로 시작되었을 때
-            if(!npcMove.Moving && cooltimeCancelCoroutine == null && !npcMove.WasOnMoving()) {
+            if(!npcMove.WasOnMoving() && cooltimeCancelCoroutine == null) {
                 Vector2 direction = directions[Random.Range(0, directions.Length)];
 
                 float distance = Random.Range((int)MinDistance, (int)MaxDistance + 1);
-
-                RaycastHit2D[] castRes = Physics2D.BoxCastAll(collider2d.bounds.center, collider2d.bounds.size, 0, direction, distance);
-                Debug.Log(castRes.Length);
-                Debug.Log(direction);
-                Debug.Log(collider2d.bounds.center);
-                Debug.Log(castRes[1].distance);
-                if(castRes.Length >= 2 && distance > castRes[1].distance) {
-                    distance = castRes[1].distance *0.99f + distance * 0.01f;
-                }
 
                 direction *= distance;
                 
