@@ -30,12 +30,15 @@ public class AStarPathfinder
     }
 
     public IEnumerator FindPath(Vector2 startPos, Vector2 targetPos, Stack<Vector2Int> res) {
+        System.Diagnostics.Stopwatch watch = new();
+        watch.Start();
+
         Vector2Int targetOffset = PositionToOffset(startPos, targetPos);
 
         Dictionary<Vector2Int, PathTile> openTiles = new();
         Dictionary<Vector2Int, PathTile> closeTiles = new();
 
-        int h = ManhattanDistance(Vector2Int.zero, targetOffset)*10;
+        int h = ManhattanDistance(Vector2Int.zero, targetOffset);
         openTiles[Vector2Int.zero] = new PathTile(h, 0, h, Vector2Int.zero, null);
 
         PathTile AbnormalTile = new(int.MaxValue, 0, 0, Vector2Int.zero, null);
@@ -74,7 +77,7 @@ public class AStarPathfinder
                     goto sortpath;
                 }
 
-                int searchH = ManhattanDistance(targetOffset, searchOffset)*10;
+                int searchH = ManhattanDistance(targetOffset, searchOffset);
                 int searchG = currentTile.g + 10;
                 int searchF = searchG + searchH;
 
@@ -114,7 +117,7 @@ public class AStarPathfinder
                     goto sortpath;
                 }
 
-                int searchH = ManhattanDistance(targetOffset, searchOffset) * 10;
+                int searchH = ManhattanDistance(targetOffset, searchOffset);
                 int searchG = currentTile.g + 14;
                 int searchF = searchG + searchH;
 
@@ -133,6 +136,8 @@ public class AStarPathfinder
         }
 
     sortpath:
+        watch.Stop();
+        Debug.Log(watch.ElapsedMilliseconds + "ms");
 
         if(closeTiles.ContainsKey(targetOffset)) {
             res.Push(targetOffset);
@@ -153,8 +158,19 @@ public class AStarPathfinder
         return targetOffset;
     }
 
+    private int Distance(Vector2Int a, Vector2Int b) {
+        return OctileDistance(a, b);
+    }
+
     private int ManhattanDistance(Vector2Int a, Vector2Int b) {
-        return (int)Mathf.Abs(a.x - b.x) + (int)Mathf.Abs(a.y - b.y);
+        return ((int)Mathf.Abs(a.x - b.x) + (int)Mathf.Abs(a.y - b.y))*10;
+    }
+
+    private int OctileDistance(Vector2Int a, Vector2Int b) {
+        int dx = (int)Mathf.Abs(a.x - b.x);
+        int dy = (int)Mathf.Abs(a.y - b.y);
+
+        return Mathf.Max(dx, dy) * 10 + Mathf.Min(dx, dy) * 4;
     }
 
     private bool IsValidTile(Vector2 startPos, Vector2Int tileOffset) {
