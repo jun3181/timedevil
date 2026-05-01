@@ -6,28 +6,36 @@ public class AStarTester : MonoBehaviour
 {
     private Collider2D collider;
     private NPCMove npcMove;
-    private List<Vector2Int> pathOffsets;
     private Stack<Vector2Int> result = new();
-    private System.Diagnostics.Stopwatch watch = new();
+    private bool blocked = false;
+    private Vector2 originPos;
+
+    public GameObject b;
     void Start() {
-        System.Diagnostics.Stopwatch watch = new();
 
         collider = GetComponent<Collider2D>();
         npcMove = GetComponent<NPCMove>();
 
-        AStarPathfinder pathfinder = new(collider, 1f);
+        AStarPathfinder pathfinder = new(collider, 0.1f);
 
-        IEnumerator co = pathfinder.FindPath(collider.bounds.center, new Vector2(-5, 3), result);
+        IEnumerator co = pathfinder.FindPath(collider.bounds.center,b.transform.position, result);
 
-        watch.Start();
+        originPos = collider.bounds.center;
         StartCoroutine(co);
     }
 
     void Update() {
-        if(result!=null && result.Count!=0) {
-            watch.Stop();
-            Debug.Log(watch.ElapsedMilliseconds + "ms");
-            result = null;
+        if(result.Count != 0 && !blocked) 
+            StartCoroutine(Move());
+    }
+
+    private IEnumerator Move() {
+        blocked = true;
+        while(result.Count!=0) {
+            Vector2 a = (Vector2)result.Pop() * 0.1f + originPos;
+            Debug.Log(a);
+            npcMove.MoveTo(a);
+            yield return new WaitForSeconds(1);
         }
     }
 }

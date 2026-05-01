@@ -7,9 +7,13 @@ using UnityEngine;
 */
 public class AStarPathfinder
 {
-    private readonly Vector2Int[] DIRECTION_VECTORS =
+    private readonly Vector2Int[] STRAIGHT_VECTORS =
     {
         new(0,1), new(-1, 0), new(0,-1), new(1,0),
+    };
+
+    private readonly Vector2Int[] DIAGONAL_VECTORS =
+    {
         new(1,1), new(-1,1), new(-1,-1), new(1,-1)
     };
 
@@ -27,17 +31,20 @@ public class AStarPathfinder
 
     public IEnumerator FindPath(Vector2 startPos, Vector2 targetPos, Stack<Vector2Int> res) {
         Vector2Int targetOffset = PositionToOffset(startPos, targetPos);
-        Debug.Log(targetOffset);
-        Debug.Log(nodeSize);
 
         Dictionary<Vector2Int, PathTile> openTiles = new();
         Dictionary<Vector2Int, PathTile> closeTiles = new();
 
-        openTiles[Vector2Int.zero] = new PathTile(0, 0, ManhattanDistance(Vector2Int.zero, targetOffset), Vector2Int.zero, null);
+        int h = ManhattanDistance(Vector2Int.zero, targetOffset)*10;
+        openTiles[Vector2Int.zero] = new PathTile(h, 0, h, Vector2Int.zero, null);
+
+        PathTile AbnormalTile = new(int.MaxValue, 0, 0, Vector2Int.zero, null);
+
+        bool[] diagonalCheckAllowed = new bool[4];
 
         while(openTiles.Count!=0) {
-            PathTile currentTile = new(int.MaxValue, 0, 0, Vector2Int.zero, null);
-            Vector2Int currentOffset = new(0,0);
+            PathTile currentTile = AbnormalTile;
+            Vector2Int currentOffset = Vector2Int.zero;
             foreach(KeyValuePair<Vector2Int, PathTile> kv in openTiles) {
                 if(kv.Value.f<currentTile.f) {
                     currentTile = kv.Value;
@@ -47,29 +54,66 @@ public class AStarPathfinder
 
             openTiles.Remove(currentOffset);
             closeTiles[currentOffset] = currentTile;
-            Debug.Log(currentOffset);
 
-            for(int i=0; i<DIRECTION_VECTORS.Length; i++) {
-                Vector2Int searchOffset = currentOffset + DIRECTION_VECTORS[i];
+            bool[] isObstacle = new bool[4];
+            for(int i=0; i < STRAIGHT_VECTORS.Length; i++) {
+                Vector2Int searchOffset = currentOffset + STRAIGHT_VECTORS[i];
+
                 if(closeTiles.ContainsKey(searchOffset)) {
                     continue;
                 }
 
                 if(!IsValidTile(startPos, searchOffset)) {
-                    closeTiles[searchOffset] = new PathTile(-1,-1,-1, Vector2Int.zero, null);
+                    isObstacle[i] = true;
+                    closeTiles[searchOffset] = AbnormalTile;
                     continue;
                 }
 
                 if(searchOffset==targetOffset) {
                     closeTiles[searchOffset] = new(0, 0, 0, Vector2Int.zero, currentTile);
-                    break;
+                    goto sortpath;
                 }
 
-                int searchH = ManhattanDistance(targetOffset, searchOffset);
-                int searchG = currentTile.g + 10 + (int)Mathf.Abs(DIRECTION_VECTORS[i].x * DIRECTION_VECTORS[i].y)*4;
+                int searchH = ManhattanDistance(targetOffset, searchOffset)*10;
+                int searchG = currentTile.g + 10;
                 int searchF = searchG + searchH;
 
-                if(openTiles.ContainsKey(searchOffset) && openTiles[searchOffset].f>searchF) {
+                if(openTiles.ContainsKey(searchOffset) && openTiles[searchOffset].g>searchG) {
+                    openTiles[searchOffset].g = searchG;
+                    openTiles[searchOffset].f = searchF;
+                    openTiles[searchOffset].parent = currentTile;
+                } else {
+                    openTiles[searchOffset] = new PathTile(searchF, searchG, searchH, searchOffset, currentTile);
+                }
+            }
+
+            diagonalCheckAllowed[0] = !(isObstacle[3] && isObstacle[0]);
+            diagonalCheckAllowed[1] = !(isObstacle[0] && isObstacle[1]);
+            diagonalCheckAllowed[2] = !(isObstacle[1] && isObstacle[2]);
+            diagonalCheckAllowed[3] = !(isObstacle[3] && isObstacle[4]);
+
+            for(int i = 0; i < DIAGONAL_VECTORS.Length; i++) {
+                Vector2Int searchOffset = currentOffset + DIAGONAL_VECTORS[i];
+
+                if(closeTiles.ContainsKey(searchOffset)) {
+                    continue;
+                }
+
+                if(!IsValidTile(startPos, searchOffset)) {
+                    closeTiles[searchOffset] = AbnormalTile;
+                    continue;
+                }
+
+                if(searchOffset == targetOffset) {
+                    closeTiles[searchOffset] = new(0, 0, 0, Vector2Int.zero, currentTile);
+                    goto sortpath;
+                }
+
+                int searchH = ManhattanDistance(targetOffset, searchOffset) * 10;
+                int searchG = currentTile.g + 14;
+                int searchF = searchG + searchH;
+
+                if(openTiles.ContainsKey(searchOffset) && openTiles[searchOffset].g > searchG) {
                     openTiles[searchOffset].g = searchG;
                     openTiles[searchOffset].f = searchF;
                     openTiles[searchOffset].parent = currentTile;
@@ -81,16 +125,16 @@ public class AStarPathfinder
             yield return null;
         }
 
+    sortpath:
+
         if(closeTiles.ContainsKey(targetOffset)) {
             res.Push(targetOffset);
             PathTile tile = closeTiles[targetOffset];
-            while(tile.parent!=null) {
+            while(tile.parent != null) {
                 res.Push(tile.parent.offset);
                 tile = tile.parent;
             }
         }
-
-        Debug.Log("dkfjdkf");
     }
 
     private Vector2Int PositionToOffset(Vector2 origin, Vector2 target) {
@@ -112,7 +156,7 @@ public class AStarPathfinder
             return true;
         else if(results.Length >= 2)
             return false;
-        else if(results.Length == 1 && results[0] == collider)
+        else if(results[0] == collider)
             return true;
         else
             return false;
