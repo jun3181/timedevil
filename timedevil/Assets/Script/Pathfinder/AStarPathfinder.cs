@@ -78,21 +78,26 @@ public class AStarPathfinder
                 int searchG = currentTile.g + 10;
                 int searchF = searchG + searchH;
 
-                if(openTiles.ContainsKey(searchOffset) && openTiles[searchOffset].g>searchG) {
-                    openTiles[searchOffset].g = searchG;
-                    openTiles[searchOffset].f = searchF;
-                    openTiles[searchOffset].parent = currentTile;
+                if(openTiles.ContainsKey(searchOffset)) {
+                    if(openTiles[searchOffset].g > searchG) {
+                        openTiles[searchOffset].g = searchG;
+                        openTiles[searchOffset].f = searchF;
+                        openTiles[searchOffset].parent = currentTile;
+                    }
                 } else {
                     openTiles[searchOffset] = new PathTile(searchF, searchG, searchH, searchOffset, currentTile);
                 }
             }
 
-            diagonalCheckAllowed[0] = !(isObstacle[3] && isObstacle[0]);
-            diagonalCheckAllowed[1] = !(isObstacle[0] && isObstacle[1]);
-            diagonalCheckAllowed[2] = !(isObstacle[1] && isObstacle[2]);
-            diagonalCheckAllowed[3] = !(isObstacle[3] && isObstacle[4]);
+            diagonalCheckAllowed[0] = !(isObstacle[3] || isObstacle[0]);
+            diagonalCheckAllowed[1] = !(isObstacle[0] || isObstacle[1]);
+            diagonalCheckAllowed[2] = !(isObstacle[1] || isObstacle[2]);
+            diagonalCheckAllowed[3] = !(isObstacle[2] || isObstacle[3]);
 
             for(int i = 0; i < DIAGONAL_VECTORS.Length; i++) {
+                if(!diagonalCheckAllowed[i]) {
+                    continue;
+                }
                 Vector2Int searchOffset = currentOffset + DIAGONAL_VECTORS[i];
 
                 if(closeTiles.ContainsKey(searchOffset)) {
@@ -113,10 +118,12 @@ public class AStarPathfinder
                 int searchG = currentTile.g + 14;
                 int searchF = searchG + searchH;
 
-                if(openTiles.ContainsKey(searchOffset) && openTiles[searchOffset].g > searchG) {
-                    openTiles[searchOffset].g = searchG;
-                    openTiles[searchOffset].f = searchF;
-                    openTiles[searchOffset].parent = currentTile;
+                if(openTiles.ContainsKey(searchOffset)) {
+                    if(openTiles[searchOffset].g > searchG) {
+                        openTiles[searchOffset].g = searchG;
+                        openTiles[searchOffset].f = searchF;
+                        openTiles[searchOffset].parent = currentTile;
+                    }
                 } else {
                     openTiles[searchOffset] = new PathTile(searchF, searchG, searchH, searchOffset, currentTile);
                 }
