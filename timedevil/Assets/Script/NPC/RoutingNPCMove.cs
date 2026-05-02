@@ -45,8 +45,6 @@ public class RoutingNPCMove : MonoBehaviour
         npcMove.CanStandbyForAvoiding = true;
 
         pathfinder = new(npcMove.GetCollider2D(), searchSize);
-
-        StartRouting();
     }
 
     public void StartRouting() {
@@ -54,6 +52,15 @@ public class RoutingNPCMove : MonoBehaviour
 
         routingCoroutine = RoutingCoroutine();
         StartCoroutine(routingCoroutine);
+
+        npcMove.Stop();
+    }
+
+    public void StopRouting() {
+        if(routingCoroutine == null) return;
+
+        StopCoroutine(routingCoroutine);
+        routingCoroutine = null;
     }
 
     private IEnumerator RoutingCoroutine() {
