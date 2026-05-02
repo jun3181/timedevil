@@ -14,6 +14,10 @@ public class NPCMove : MonoBehaviour
     [Tooltip("거짓일 경우 장애물과 만날 시 해당 지점에서 완전 정지하며 참일 경우 장애물이 없어질 때까지 일시정지")]
     public bool CanStandbyForAvoiding = false;
 
+    [Header("디버그 메시지 출력 여부")]
+    [SerializeField]
+    private bool debuged = true;
+
     public bool Moving { get; private set; }
 
     private Rigidbody2D rb;
@@ -40,6 +44,7 @@ public class NPCMove : MonoBehaviour
             int newContactCount = Physics2D.OverlapAreaNonAlloc((Vector3)newPos + collider.bounds.extents, (Vector3)newPos - collider.bounds.extents, results);
 
             if(newContactCount>1) {
+                if(debuged) Debug.Log($"{gameObject.name}이 {GetPosition()}위치에서 충돌을 회피하기 위해 움직임을 멈춤");
                 if(CanStandbyForAvoiding) {
                     Idle();
                 } else {
@@ -108,5 +113,13 @@ public class NPCMove : MonoBehaviour
     public void Resume() {
         if(Moving || takingTime==0) return;
         Moving = true;
+    }
+
+    public Vector2 GetPosition() {
+        return collider.bounds.center;
+    }
+
+    public Collider2D GetCollider2D() {
+        return collider;
     }
 }

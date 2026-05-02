@@ -7,6 +7,8 @@ using UnityEngine;
 */
 public class AStarPathfinder
 {
+    public static readonly Vector2Int ERROR_SIGNAL = new(int.MaxValue, int.MaxValue);
+
     private readonly Vector2Int[] STRAIGHT_VECTORS =
     {
         new(0,1), new(-1, 0), new(0,-1), new(1,0),
@@ -29,10 +31,7 @@ public class AStarPathfinder
         this.nodeSize = nodeSize;
     }
 
-    public IEnumerator FindPath(Vector2 startPos, Vector2 targetPos, Stack<Vector2Int> res) {
-        System.Diagnostics.Stopwatch watch = new();
-        watch.Start();
-
+    public IEnumerator FindPath(Vector2 startPos, Vector2 targetPos, List<Vector2Int> res) {
         Vector2Int targetOffset = PositionToOffset(startPos, targetPos);
 
         Dictionary<Vector2Int, PathTile> openTiles = new();
@@ -62,13 +61,13 @@ public class AStarPathfinder
             for(int i=0; i < STRAIGHT_VECTORS.Length; i++) {
                 Vector2Int searchOffset = currentOffset + STRAIGHT_VECTORS[i];
 
-                if(closeTiles.ContainsKey(searchOffset)) {
+                if(!IsValidTile(startPos, searchOffset)) {
+                    isObstacle[i] = true;
+                    closeTiles[searchOffset] = null;
                     continue;
                 }
 
-                if(!IsValidTile(startPos, searchOffset)) {
-                    isObstacle[i] = true;
-                    closeTiles[searchOffset] = AbnormalTile;
+                if(closeTiles.ContainsKey(searchOffset)) {
                     continue;
                 }
 
@@ -108,7 +107,7 @@ public class AStarPathfinder
                 }
 
                 if(!IsValidTile(startPos, searchOffset)) {
-                    closeTiles[searchOffset] = AbnormalTile;
+                    closeTiles[searchOffset] = null;
                     continue;
                 }
 
@@ -136,16 +135,18 @@ public class AStarPathfinder
         }
 
     sortpath:
-        watch.Stop();
-        Debug.Log(watch.ElapsedMilliseconds + "ms");
 
         if(closeTiles.ContainsKey(targetOffset)) {
-            res.Push(targetOffset);
+            res.Add(targetOffset);
             PathTile tile = closeTiles[targetOffset];
             while(tile.parent != null) {
-                res.Push(tile.parent.offset);
+                Vector2 delta = tile.parent.offset - tile.offset;
+                // 중요 턴 포인트만 저장
+                res.Insert(0, tile.parent.offset);
                 tile = tile.parent;
             }
+        } else {
+            res.Add(ERROR_SIGNAL);
         }
     }
 
