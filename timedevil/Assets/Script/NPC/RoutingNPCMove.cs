@@ -73,10 +73,11 @@ public class RoutingNPCMove : MonoBehaviour
         yield return null;
 
         // 1. Route
-        Vector2 currentPos = npcMove.GetPosition();
+        Vector2 currentPos;
         List<Vector2Int> path;
         WaitForSeconds waitForQuart = new(0.25f);
         for(int i=0; i<nodes.Count; i++) {
+            currentPos = npcMove.GetPosition();
             Vector2 nextPos = nodes[indexArray[i]].transform.position;
 
             edges.TryGetValue((currentPos, nextPos), out path);
@@ -89,33 +90,28 @@ public class RoutingNPCMove : MonoBehaviour
                 }
 
                 edges[(currentPos, nextPos)] = path;
-                edges[(nextPos, currentPos)] = path;
             }
 
-            List<Vector2Int> tempPath = path.ToList();
+            if(path[0]==AStarPathfinder.ERROR_SIGNAL) {
+                continue;
+            }
+
             int j = 0;
-            bool foundPath = true;
-
-            if(tempPath[0]==AStarPathfinder.ERROR_SIGNAL) {
-                foundPath = false;
-            }
-
-            while(j<tempPath.Count) {
+            while(j<path.Count) {
                 if(npcMove.WasOnMoving()) {
-                    tempPath = new();
+                    path = new();
                     j = 0;
 
-                    StartCoroutine(pathfinder.FindPath(npcMove.GetPosition(), nextPos, tempPath));
-                    while(tempPath.Count == 0) yield return waitForQuart;
+                    StartCoroutine(pathfinder.FindPath(npcMove.GetPosition(), nextPos, path));
+                    while(path.Count == 0) yield return waitForQuart;
 
                     currentPos = npcMove.GetPosition();
 
-                    if(tempPath[0] == AStarPathfinder.ERROR_SIGNAL) {
-                        foundPath = false;
+                    if(path[0] == AStarPathfinder.ERROR_SIGNAL) {
                         break;
                     }
                 }
-                Vector2Int offset = tempPath[j];
+                Vector2Int offset = path[j];
 
                 npcMove.MoveTo(currentPos + (Vector2)offset * searchSize);
                 while(npcMove.Moving) {
@@ -124,9 +120,6 @@ public class RoutingNPCMove : MonoBehaviour
 
                 j++;
             }
-
-            if(foundPath)
-                currentPos = nextPos;
         }
 
         nodes.RemoveAt(nodes.Count-1);
