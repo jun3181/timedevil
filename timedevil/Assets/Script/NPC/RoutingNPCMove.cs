@@ -52,8 +52,6 @@ public class RoutingNPCMove : MonoBehaviour
 
         routingCoroutine = RoutingCoroutine();
         StartCoroutine(routingCoroutine);
-
-        npcMove.Stop();
     }
 
     public void StopRouting() {
@@ -61,6 +59,8 @@ public class RoutingNPCMove : MonoBehaviour
 
         StopCoroutine(routingCoroutine);
         routingCoroutine = null;
+
+        npcMove.Stop();
     }
 
     private IEnumerator RoutingCoroutine() {
