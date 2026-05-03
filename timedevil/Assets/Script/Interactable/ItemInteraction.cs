@@ -2,7 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(BoxCollider2D))]
+[RequireComponent(typeof(Collider2D))]
+[RequireComponent(typeof(SpriteRenderer))]
 public class ItemInteraction: MonoBehaviour, IInteractable
 {
     [System.Serializable]
@@ -19,7 +20,11 @@ public class ItemInteraction: MonoBehaviour, IInteractable
     [Tooltip("획득될 아이템")]
     [SerializeField] private List<ItemInfo> itemInfos = new();
 
-    [Header("아이템 획득 대사 후 추가적인 대사")]
+    [Header("아이템 획득 전 대사")]
+    [Tooltip("기본적인 획득 대사는 따로 설정할 필요가 없으며 Legacy 속성은 건들지 말 것")]
+    [SerializeField] private DialogueLine[] beforeDialogue;
+
+    [Header("아이템 획득 후 대사")]
     [Tooltip("기본적인 획득 대사는 따로 설정할 필요가 없으며 Legacy 속성은 건들지 말 것")]
     [SerializeField] private Dialogue dialogue;
 
@@ -27,10 +32,17 @@ public class ItemInteraction: MonoBehaviour, IInteractable
     [SerializeField] private bool debuged = true;
 
     private bool _inited;
+    private SpriteRenderer _spriteRenderer;
     
     // 설정한 ItemSO가 ItemDatabaseSO에 등록되어 있는지 확인
     void Awake() {
         _inited = false;
+        _spriteRenderer = GetComponent<SpriteRenderer>();
+
+        Collider2D collider = GetComponent<Collider2D>();
+        collider.isTrigger = true;
+        collider.enabled = true;
+
         if(db==null) {
             if(debuged) Debug.LogWarning("ItemDatabaseSO가 설정되지 않았습니다.");
             return;
@@ -44,6 +56,7 @@ public class ItemInteraction: MonoBehaviour, IInteractable
             if(itemInfos[i].itemSO == null) {
                 itemInfos.RemoveAt(i);
                 i--;
+                if(debuged) Debug.LogWarning($"{gameObject.name}의 itemSO의 값을 None(null)로 설정할 수 없습니다.");
                 continue;
             }
 
@@ -56,34 +69,36 @@ public class ItemInteraction: MonoBehaviour, IInteractable
             }
 
             if(!found) {
+                if(debuged) Debug.LogWarning($"{itemInfos[i].itemSO.id}는 {db.name}내에 존재하지 않습니다.");
                 itemInfos.RemoveAt(i);
                 i--;
             }
         }
 
-        if(itemInfos.Count==0 && debuged) {
-            Debug.LogWarning($"{gameObject.name}과 상호작용시 지급될 아이템이 존재하지 않습니다.");
+        if(itemInfos.Count==0) {
+            if(debuged) Debug.LogWarning($"{gameObject.name}과 상호작용시 지급될 아이템이 존재하지 않습니다.");
             return;
         }
 
-        int newLength = itemInfos.Count;
-        newLength += dialogue.lines?.Length ?? 0;
-
-        DialogueLine[] defaultDialogueLine = new DialogueLine[newLength];
-        for(int i=0; i<itemInfos.Count; i++) {
-            defaultDialogueLine[i] = new DialogueLine();
-            defaultDialogueLine[i].text = $"루시는 '{itemInfos[i].itemSO.displayName}'을 획득하였다!";
+        Queue<DialogueLine> newDialogueLines = new();
+        foreach(DialogueLine dl in beforeDialogue) {
+            newDialogueLines.Enqueue(dl);
         }
 
-        for(int i=itemInfos.Count; i<newLength; i++) {
-            defaultDialogueLine[i] = dialogue.lines[i - itemInfos.Count];
+        foreach(ItemInfo itemInfo in itemInfos) {
+            DialogueLine dl = new();
+            dl.text = $"루시는 '{itemInfo.itemSO.displayName}'를 {itemInfo.quantity}개 획득하였다!";
+            newDialogueLines.Enqueue(dl);
         }
 
-        dialogue.lines = defaultDialogueLine;
+        foreach(DialogueLine dl in dialogue.lines) {
+            newDialogueLines.Enqueue(dl);
+        }
+
+        dialogue.lines = newDialogueLines.ToArray();
 
         _inited = true;
     }
-
 
     public void Interact() {
         if(!_inited) {
@@ -91,7 +106,10 @@ public class ItemInteraction: MonoBehaviour, IInteractable
             return;
         }
 
-        if(ItemRuntime.Instance == null) return;
+        if(ItemRuntime.Instance == null) {
+            if(debuged) Debug.LogWarning($"ItemRuntime의 인스턴스가 Scene내 존재하지 않습니다.");
+            return;
+        }
 
         if(debuged) PrintInventory();
 
@@ -101,7 +119,11 @@ public class ItemInteraction: MonoBehaviour, IInteractable
 
         if(debuged) PrintInventory();
 
+        _spriteRenderer.enabled = false;
+
         if(DialogueManager.instance != null) DialogueManager.instance.StartDialogue(dialogue);
+
+        Destroy(gameObject);
     }
 
     private void PrintInventory() {
