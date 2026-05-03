@@ -1,10 +1,12 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class CostController : MonoBehaviour
 {
     [Header("UI")]
-    [SerializeField] private TMP_Text costText;    // "Cost :" ≈ÿΩ∫∆Æ
+    [SerializeField] private TMP_Text costText;    // "Cost :" ÌÖçÏä§Ìä∏
+    [SerializeField] private Slider costBar;
 
     [Header("Rule")]
     [SerializeField] private int maxPerTurn = 10;
@@ -17,12 +19,13 @@ public class CostController : MonoBehaviour
     void Reset()
     {
         if (!costText) costText = GetComponentInChildren<TMP_Text>(true);
+        if (!costBar) costBar = GetComponentInChildren<Slider>(true);
     }
 
     void Awake()
     {
         if (!costText) costText = GetComponentInChildren<TMP_Text>(true);
-        ResetTurn(); // √π «•Ω√
+        ResetTurn();
     }
 
     public void SetMax(int max)
@@ -59,6 +62,14 @@ public class CostController : MonoBehaviour
     {
         if (costText)
             costText.text = $"Cost : {Current}/{maxPerTurn}";
+
+        if (costBar)
+        {
+            costBar.minValue = 0f;
+            costBar.maxValue = Mathf.Max(1, maxPerTurn);
+            costBar.value = Mathf.Clamp(Current, 0, maxPerTurn);
+        }
+
         onCostChanged?.Invoke(Current, maxPerTurn);
     }
 }

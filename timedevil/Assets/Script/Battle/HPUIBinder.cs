@@ -2,6 +2,7 @@
 using System.Reflection;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 /// 전투 UI에 HP를 "현재/최대" 형태로 표시.
 /// 우선 EnemyRuntime가 있으면 그 값을 사용, 없으면 기존 컴포넌트 리플렉션으로 폴백.
@@ -9,9 +10,11 @@ public class HPUIBinder : MonoBehaviour
 {
     [Header("Player UI")]
     [SerializeField] private TMP_Text playerHpText;
+    [SerializeField] private Slider playerHpBar;
 
     [Header("Enemy UI")]
     [SerializeField] private TMP_Text enemyHpText;
+    [SerializeField] private Slider enemyHpBar;
 
     [Header("Sources")]
     [SerializeField] private PlayerData playerData;     // Start에서 PlayerDataRuntime로 보충 가능
@@ -48,22 +51,34 @@ public class HPUIBinder : MonoBehaviour
     public void Refresh()
     {
         // Player
-        if (playerHpText != null && playerData != null)
-            playerHpText.text = $"HP : {playerData.currentHP} / {playerData.maxHP}";
+        if (playerData != null)
+        {
+            int cur = Mathf.Max(0, playerData.currentHP);
+            int max = Mathf.Max(1, playerData.maxHP);
+
+            if (playerHpText != null)
+                playerHpText.text = $"HP : {cur} / {max}";
+            UpdateBar(playerHpBar, cur, max);
+        }
 
         // Enemy: Runtime 우선
-        if (enemyHpText != null)
+        if (enemyRuntime != null)
         {
-            if (enemyRuntime != null)
-            {
-                enemyHpText.text = $"HP : {enemyRuntime.currentHP} / {enemyRuntime.maxHP}";
-            }
-            else if (enemyComp != null && enemyCurHpField != null && enemyMaxHpField != null)
-            {
-                int cur = Mathf.Max(0, (int)enemyCurHpField.GetValue(enemyComp));
-                int max = Mathf.Max(1, (int)enemyMaxHpField.GetValue(enemyComp));
+            int cur = Mathf.Max(0, enemyRuntime.currentHP);
+            int max = Mathf.Max(1, enemyRuntime.maxHP);
+
+            if (enemyHpText != null)
                 enemyHpText.text = $"HP : {cur} / {max}";
-            }
+            UpdateBar(enemyHpBar, cur, max);
+        }
+        else if (enemyComp != null && enemyCurHpField != null && enemyMaxHpField != null)
+        {
+            int cur = Mathf.Max(0, (int)enemyCurHpField.GetValue(enemyComp));
+            int max = Mathf.Max(1, (int)enemyMaxHpField.GetValue(enemyComp));
+
+            if (enemyHpText != null)
+                enemyHpText.text = $"HP : {cur} / {max}";
+            UpdateBar(enemyHpBar, cur, max);
         }
     }
 
@@ -104,5 +119,13 @@ public class HPUIBinder : MonoBehaviour
 
         if (enemyCurHpField == null || enemyMaxHpField == null)
             Debug.LogWarning($"[HPUIBinder] Enemy '{t.Name}'에서 currentHP / maxHP 필드를 찾지 못했습니다.");
+    }
+
+    private static void UpdateBar(Slider bar, int cur, int max)
+    {
+        if (bar == null) return;
+        bar.minValue = 0f;
+        bar.maxValue = Mathf.Max(1, max);
+        bar.value = Mathf.Clamp(cur, 0, max);
     }
 }
