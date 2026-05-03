@@ -161,6 +161,20 @@ public class DescriptionPanelController : MonoBehaviour
         RefreshNow();
     }
 
+    public void ShowOneShotMessage(string text, float seconds = 1.2f)
+    {
+        StartCoroutine(Co_ShowOneShotMessage(text, seconds));
+    }
+
+    private System.Collections.IEnumerator Co_ShowOneShotMessage(string text, float seconds)
+    {
+        _forcedMessage = text;
+        RefreshNow();
+        yield return new WaitForSeconds(Mathf.Max(0.05f, seconds));
+        _forcedMessage = null;
+        RefreshNow();
+    }
+
     private void RefreshNow()
     {
         if (!descriptionText) return;
