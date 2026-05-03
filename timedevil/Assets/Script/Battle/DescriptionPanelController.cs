@@ -299,6 +299,7 @@ public class DescriptionPanelController : MonoBehaviour
         {
             text = index switch
             {
+                0 when hand != null && hand.CardCount <= 0 => "선택가능한 카드가 없습니다.",
                 0 => msgCard,
                 1 => msgItem,
                 //2 => msgPanel,

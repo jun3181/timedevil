@@ -196,6 +196,9 @@ public class PanelController : MonoBehaviour
     }
 
 
+
+    public bool IsGameplayView => isGameplayView;
+
     public void ToggleView()
     {
         SetGameplayView(!isGameplayView);
