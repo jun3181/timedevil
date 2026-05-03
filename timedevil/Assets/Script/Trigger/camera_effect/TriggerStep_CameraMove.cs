@@ -32,11 +32,18 @@ public class TriggerStep_CameraMove : TriggerStepBase
     [SerializeField] private bool useUnscaledTime = true;
 
     [Header("Flow")]
+    [Header("Restore (Smooth)")]
+    [Min(0f)][SerializeField] private float restoreDuration = 0.6f;
+    [SerializeField] private AnimationCurve restoreEase = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+    [SerializeField] private bool lockPlayerInputWhileRestoring = true;
+
     [Tooltip("TriggerGet에서 병행 시작 시 true 권장. false면 Execute 호출만으로도 바로 반환.")]
     [SerializeField] private bool runAsync = true;
     [SerializeField] private bool debugLog = false;
 
     private Coroutine _running;
+    private Coroutine _restoreCo;
+    private bool _lockedByRestore = false;
     private bool _hasSnapshot = false;
     private CameraModeId _prevMode = CameraModeId.Fixed;
     private float _prevOrtho = 5f;
@@ -62,7 +69,77 @@ public class TriggerStep_CameraMove : TriggerStepBase
     {
         if (!_hasSnapshot || CameraManager.Instance == null) return;
 
+        if (_restoreCo != null)
+            StopCoroutine(_restoreCo);
+
+        _restoreCo = StartCoroutine(CoRestorePreviousModeSmooth());
+    }
+
+    private IEnumerator CoRestorePreviousModeSmooth()
+    {
         var cm = CameraManager.Instance;
+        if (cm == null) yield break;
+
+        if (lockPlayerInputWhileRestoring && GameManager.Instance != null)
+        {
+            GameManager.Instance.LockAction();
+            _lockedByRestore = true;
+
+            var pm = Object.FindObjectOfType<PlayerMove>(true);
+            if (pm != null)
+                pm.SetMoveInput(0, 0, false, false, false, false);
+        }
+
+        Vector3 from = Camera.main ? Camera.main.transform.position : _prevFixedPos;
+        Vector3 to = ResolveRestoreDestination();
+        float z = from.z;
+        float dur = Mathf.Max(0f, restoreDuration);
+
+        if (dur > 0f)
+        {
+            float t = 0f;
+            while (t < dur)
+            {
+                t += useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+                float u = Mathf.Clamp01(t / dur);
+                float k = (restoreEase != null) ? restoreEase.Evaluate(u) : u;
+                Vector3 p = Vector3.LerpUnclamped(from, to, k);
+                cm.SetFixed(new Vector3(p.x, p.y, z), _prevOrtho);
+                yield return null;
+            }
+        }
+
+        cm.SetFixed(new Vector3(to.x, to.y, z), _prevOrtho);
+        ApplyRestoreMode(cm);
+
+        if (_lockedByRestore && GameManager.Instance != null)
+        {
+            GameManager.Instance.UnlockAction();
+            _lockedByRestore = false;
+        }
+
+        if (debugLog) Debug.Log($"[TriggerStep_CameraMove] RestorePreviousMode (smooth) -> {_prevMode}, dur={dur:0.###}");
+        _restoreCo = null;
+    }
+
+    private Vector3 ResolveRestoreDestination()
+    {
+        switch (_prevMode)
+        {
+            case CameraModeId.FollowFree:
+            case CameraModeId.FollowConfined:
+            {
+                Transform target = ResolveFollowTarget(null);
+                if (target != null) return target.position;
+                break;
+            }
+        }
+
+        return _prevFixedPos;
+    }
+
+    private void ApplyRestoreMode(CameraManager cm)
+    {
         switch (_prevMode)
         {
             case CameraModeId.FollowFree:
@@ -81,8 +158,6 @@ public class TriggerStep_CameraMove : TriggerStepBase
                 cm.SetFixed(_prevFixedPos, _prevOrtho);
                 break;
         }
-
-        if (debugLog) Debug.Log($"[TriggerStep_CameraMove] RestorePreviousMode -> {_prevMode}");
     }
 
     private IEnumerator CoRun(TriggerContext ctx)
