@@ -9,6 +9,7 @@ public class HandSelectController : MonoBehaviour
     [SerializeField] private Image externalSelector; // 옵션
     [SerializeField] private CardUseOrchestrator orchestrator;
     [SerializeField] private DescriptionPanelController desc;
+    [SerializeField] private PanelController panelController;
 
     [Header("Behavior")]
     [SerializeField] private bool wrap = true;
@@ -20,6 +21,7 @@ public class HandSelectController : MonoBehaviour
         if (!hand) hand = FindObjectOfType<HandUI>(true);
         if (!orchestrator) orchestrator = FindObjectOfType<CardUseOrchestrator>(true);
         if (!desc) desc = FindObjectOfType<DescriptionPanelController>(true);
+        if (!panelController) panelController = FindObjectOfType<PanelController>(true);
     }
 
     void Awake()
@@ -84,6 +86,7 @@ public class HandSelectController : MonoBehaviour
         {
             hand.ExitSelectMode();
             menu.EnableInput(true);
+            panelController?.SetGameplayView(false);
         }
 
         if (Input.GetKeyDown(KeyCode.E))
