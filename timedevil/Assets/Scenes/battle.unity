@@ -336,6 +336,7 @@ RectTransform:
   - {fileID: 1613126918}
   - {fileID: 1352731690}
   - {fileID: 708448341}
+  - {fileID: 643248678}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -1818,7 +1819,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1522580515}
-  m_Father: {fileID: 708448341}
+  m_Father: {fileID: 169161172}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -1864,7 +1865,6 @@ RectTransform:
   - {fileID: 176631157}
   - {fileID: 1448559823}
   - {fileID: 2047237471}
-  - {fileID: 643248678}
   m_Father: {fileID: 169161172}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -5648,6 +5648,7 @@ MonoBehaviour:
   - {fileID: 1345401700}
   - {fileID: 1064948988}
   useLocalPosition: 1
+  lockZDepth: 1
   enemyHiddenOffset: {x: 0, y: -50, z: 0}
   gameplayHiddenOffset: {x: 0, y: -50, z: 0}
   enemyDuration: 0.4
