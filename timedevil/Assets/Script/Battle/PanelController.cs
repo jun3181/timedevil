@@ -130,7 +130,7 @@ public class PanelController : MonoBehaviour
         bool handSelecting = handUI && handUI.IsInSelectMode;
 
         bool enemyTurn = turnManager && turnManager.currentTurn == TurnState.EnemyTurn;
-        bool cardResolving = orchestrator && orchestrator.IsBusy;
+        bool cardResolving = orchestrator && orchestrator.GetIsBusy();
         bool shouldHideMenuPanels = enemyTurn || handSelecting || cardResolving;
         if (shouldHideMenuPanels != menuPanelsHidden)
             SetBattleMenuPanelsHidden(shouldHideMenuPanels);

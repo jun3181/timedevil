@@ -29,7 +29,8 @@ public class CardUseOrchestrator : MonoBehaviour
 
 
     private bool busy;
-    public bool IsBusy => busy;
+    public bool IsBusy { get { return busy; } }
+    public bool GetIsBusy() { return busy; }
 
     void Awake()
     {
