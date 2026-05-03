@@ -14,6 +14,7 @@ public class PanelController : MonoBehaviour
     [SerializeField] private BattleMenuController menu;
     [SerializeField] private HandUI handUI;
     [SerializeField] private TurnManager turnManager;
+    [SerializeField] private CardUseOrchestrator orchestrator;
 
     [Header("Menu Submit Index Rules")]
     [Tooltip("켜면 panel 인덱스 제출 시 게임플레이 뷰로 전환")]
@@ -93,6 +94,7 @@ public class PanelController : MonoBehaviour
         if (!menu) menu = FindObjectOfType<BattleMenuController>(true);
         if (!handUI) handUI = FindObjectOfType<HandUI>(true);
         if (!turnManager) turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
+        if (!orchestrator) orchestrator = FindObjectOfType<CardUseOrchestrator>(true);
     }
 
     void Awake()
@@ -100,6 +102,7 @@ public class PanelController : MonoBehaviour
         if (!menu) menu = FindObjectOfType<BattleMenuController>(true);
         if (!handUI) handUI = FindObjectOfType<HandUI>(true);
         if (!turnManager) turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
+        if (!orchestrator) orchestrator = FindObjectOfType<CardUseOrchestrator>(true);
 
         CacheShownBasePositions();
 
@@ -127,7 +130,8 @@ public class PanelController : MonoBehaviour
         bool handSelecting = handUI && handUI.IsInSelectMode;
 
         bool enemyTurn = turnManager && turnManager.currentTurn == TurnState.EnemyTurn;
-        bool shouldHideMenuPanels = enemyTurn || handSelecting;
+        bool cardResolving = orchestrator && orchestrator.IsBusy;
+        bool shouldHideMenuPanels = enemyTurn || handSelecting || cardResolving;
         if (shouldHideMenuPanels != menuPanelsHidden)
             SetBattleMenuPanelsHidden(shouldHideMenuPanels);
 
@@ -145,6 +149,7 @@ public class PanelController : MonoBehaviour
         if (!returnOnPlayerTurnStart) return;
 
         if (!turnManager) turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
+        if (!orchestrator) orchestrator = FindObjectOfType<CardUseOrchestrator>(true);
         if (!turnManager) return;
 
         var cur = turnManager.currentTurn;
