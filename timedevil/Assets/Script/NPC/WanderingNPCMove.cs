@@ -29,8 +29,11 @@ public class WanderingNPCMove : MonoBehaviour, INPCMoveController
 
     private readonly Vector2[] directions =
     {
-        Vector2.up, Vector2.down, Vector2.left, Vector2.right
+        Vector2.up, Vector2.down, Vector2.left, Vector2.right,
+        Vector2.one, -Vector2.down, new(1,-1), new(-1, 1)
     };
+
+    private Rigidbody2D rb;
 
     private NPCMove npcMove = null;
     private IEnumerator cooltimeCancelCoroutine = null;
@@ -55,6 +58,9 @@ public class WanderingNPCMove : MonoBehaviour, INPCMoveController
     void Start()
     {
         npcMove = GetComponent<NPCMove>();
+        npcMove.CanStandbyForAvoiding = false;
+
+        rb = GetComponent<Rigidbody2D>();
     }
 
     void Update() {
@@ -62,12 +68,13 @@ public class WanderingNPCMove : MonoBehaviour, INPCMoveController
             if(isCooltimeRun) return;
 
             // 쿨타임이 끝났거나 최초로 시작되었을 때
-            if(!npcMove.Moving && cooltimeCancelCoroutine == null && !npcMove.WasOnMoving()) {
+            if(!npcMove.WasOnMoving() && cooltimeCancelCoroutine == null) {
                 Vector2 direction = directions[Random.Range(0, directions.Length)];
-                int distance = Random.Range((int)MinDistance, (int)MaxDistance + 1);
+
+                float distance = Random.Range((int)MinDistance, (int)MaxDistance + 1);
 
                 direction *= distance;
-
+                
                 npcMove.MoveBy(direction);
             // OnWandering이 false되어 일시적으로 멈춘 후 다시 시작할 때
             } else if(!npcMove.Moving && cooltimeCancelCoroutine == null) {
