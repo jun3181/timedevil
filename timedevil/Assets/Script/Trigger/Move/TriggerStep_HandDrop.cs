@@ -84,20 +84,31 @@ public class TriggerStep_HandDrop : TriggerStepBase
         var tr = handObject.transform;
         Animator anim = handObject.GetComponent<Animator>();
 
-        if (driveAnimatorLikePlayerMove && (!anim || (strictAnimatorParamCheck && !HasRequiredParams(anim))))
+        bool canDriveAnimator = driveAnimatorLikePlayerMove;
+        if (canDriveAnimator && (!anim || (strictAnimatorParamCheck && !HasRequiredParams(anim))))
         {
             if (!anim)
-                Debug.LogWarning("[TriggerStep_HandDrop] Animator를 찾지 못했습니다. (driveAnimatorLikePlayerMove=true)");
+                Debug.LogWarning("[TriggerStep_HandDrop] Animator를 찾지 못했습니다. Animator 구동만 건너뜁니다.");
             else
-                Debug.LogWarning($"[TriggerStep_HandDrop] Animator 파라미터 누락: '{paramIsChange}', '{paramHAxisRaw}', '{paramVAxisRaw}'");
-            yield break;
+                Debug.LogWarning($"[TriggerStep_HandDrop] Animator 파라미터 누락: '{paramIsChange}', '{paramHAxisRaw}', '{paramVAxisRaw}'. Animator 구동만 건너뜁니다.");
+
+            canDriveAnimator = false;
         }
 
         // 1) 비활성 -> 활성
         if (forceDeactivateThenActivate)
         {
-            handObject.SetActive(false);
-            handObject.SetActive(true);
+            bool isSelfObject = ReferenceEquals(handObject, gameObject);
+            if (isSelfObject)
+            {
+                Debug.LogWarning("[TriggerStep_HandDrop] handObject가 자기 자신입니다. SetActive(false) 시 코루틴이 중단되어 비활성/활성 토글을 건너뜁니다.");
+                if (!handObject.activeSelf) handObject.SetActive(true);
+            }
+            else
+            {
+                handObject.SetActive(false);
+                handObject.SetActive(true);
+            }
         }
         else
         {
@@ -127,7 +138,7 @@ public class TriggerStep_HandDrop : TriggerStepBase
 
                 if (debugLog) Debug.Log($"[TriggerStep_HandDrop] seg[{i}] dir={seg.direction} from={from} to={to}");
 
-                if (driveAnimatorLikePlayerMove && anim)
+                if (canDriveAnimator && anim)
                 {
                     ApplyDirection(anim, seg.direction, true);
                     yield return null; // AnyState 전이 인지 보장
@@ -142,7 +153,7 @@ public class TriggerStep_HandDrop : TriggerStepBase
                     float k = (ease != null) ? ease.Evaluate(u) : u;
                     tr.position = Vector3.LerpUnclamped(from, to, k);
 
-                    if (driveAnimatorLikePlayerMove && anim)
+                    if (canDriveAnimator && anim)
                         ApplyDirection(anim, seg.direction, false);
 
                     yield return null;
@@ -151,7 +162,7 @@ public class TriggerStep_HandDrop : TriggerStepBase
                 tr.position = to;
             }
 
-            if (driveAnimatorLikePlayerMove && anim && setIdleAtEnd)
+            if (canDriveAnimator && anim && setIdleAtEnd)
                 SetIdle(anim, lastDir);
 
             yield break;
@@ -167,7 +178,7 @@ public class TriggerStep_HandDrop : TriggerStepBase
         if (debugLog) Debug.Log($"[TriggerStep_HandDrop] legacy from={legacyFrom} to={legacyTo}");
 
         HandDropMoveDirection legacyDir = ResolveLegacyDirection(moveDistanceX, moveDistanceY);
-        if (driveAnimatorLikePlayerMove && anim)
+        if (canDriveAnimator && anim)
         {
             ApplyDirection(anim, legacyDir, true);
             yield return null;
@@ -183,7 +194,7 @@ public class TriggerStep_HandDrop : TriggerStepBase
             float k = (ease != null) ? ease.Evaluate(u) : u;
             tr.position = Vector3.LerpUnclamped(legacyFrom, legacyTo, k);
 
-            if (driveAnimatorLikePlayerMove && anim)
+            if (canDriveAnimator && anim)
                 ApplyDirection(anim, legacyDir, false);
 
             yield return null;
@@ -191,7 +202,7 @@ public class TriggerStep_HandDrop : TriggerStepBase
 
         tr.position = legacyTo;
 
-        if (driveAnimatorLikePlayerMove && anim && setIdleAtEnd)
+        if (canDriveAnimator && anim && setIdleAtEnd)
             SetIdle(anim, legacyDir);
     }
 
