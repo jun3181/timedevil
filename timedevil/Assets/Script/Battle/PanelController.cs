@@ -35,6 +35,8 @@ public class PanelController : MonoBehaviour
 
     [Tooltip("EnemyTurn -> PlayerTurn 전환 시 원상태로 복귀")]
     [SerializeField] private bool returnOnPlayerTurnStart = true;
+    [SerializeField] private float submitViewDelay = 0.12f;
+    [SerializeField] private float turnTransitionDelay = 0.16f;
 
     [Header("Target Groups")]
     [Tooltip("적(연출용) 대상들. 게임플레이 뷰로 전환하면 아래로 내려감")]
@@ -85,6 +87,7 @@ public class PanelController : MonoBehaviour
     private bool pendingReturnByEnd;
     private Coroutine running;
     private Coroutine menuPanelRunning;
+    private Coroutine delayedViewRoutine;
     private bool menuPanelsHidden;
 
     private TurnState lastTurnState = TurnState.PlayerTurn;
@@ -157,10 +160,15 @@ public class PanelController : MonoBehaviour
         if (cur != lastTurnState)
         {
             bool enemyToPlayer = (lastTurnState == TurnState.EnemyTurn && cur == TurnState.PlayerTurn);
+            bool playerToEnemy = (lastTurnState == TurnState.PlayerTurn && cur == TurnState.EnemyTurn);
             if (enemyToPlayer && (pendingReturnByEnd || isGameplayView))
             {
-                SetGameplayView(false);
+                SetGameplayViewDelayed(false, turnTransitionDelay);
                 pendingReturnByEnd = false;
+            }
+            else if (playerToEnemy && isGameplayView)
+            {
+                SetGameplayViewDelayed(false, turnTransitionDelay);
             }
             lastTurnState = cur;
         }
@@ -170,19 +178,19 @@ public class PanelController : MonoBehaviour
     {
         if (usePanelSubmit && index == panelSubmitIndex)
         {
-            SetGameplayView(true);
+            SetGameplayViewDelayed(true, submitViewDelay);
             return;
         }
 
         if (useCardSubmit && index == cardSubmitIndex)
         {
-            SetGameplayView(true);
+            SetGameplayViewDelayed(true, submitViewDelay);
             return;
         }
 
         if (useEndSubmit && index == endSubmitIndex)
         {
-            SetGameplayView(true);
+            SetGameplayViewDelayed(true, submitViewDelay);
             pendingReturnByEnd = true;
         }
     }
@@ -195,6 +203,12 @@ public class PanelController : MonoBehaviour
 
     public void SetGameplayView(bool on, bool immediate = false)
     {
+        if (delayedViewRoutine != null)
+        {
+            StopCoroutine(delayedViewRoutine);
+            delayedViewRoutine = null;
+        }
+
         if (isAnimating && running != null)
         {
             StopCoroutine(running);
@@ -206,6 +220,24 @@ public class PanelController : MonoBehaviour
 
         if (immediate) ApplyImmediate(on);
         else running = StartCoroutine(Co_Animate(on));
+    }
+
+    public void SetGameplayViewDelayed(bool on, float delaySeconds)
+    {
+        if (delayedViewRoutine != null)
+        {
+            StopCoroutine(delayedViewRoutine);
+            delayedViewRoutine = null;
+        }
+        delayedViewRoutine = StartCoroutine(Co_SetGameplayViewDelayed(on, delaySeconds));
+    }
+
+    private IEnumerator Co_SetGameplayViewDelayed(bool on, float delaySeconds)
+    {
+        if (delaySeconds > 0f)
+            yield return new WaitForSeconds(delaySeconds);
+        SetGameplayView(on);
+        delayedViewRoutine = null;
     }
 
     [ContextMenu("Re-cache Shown Base From Current")]

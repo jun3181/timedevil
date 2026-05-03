@@ -23,6 +23,9 @@ public class MoveController : MonoBehaviour
     [SerializeField] private bool keepPawnZ = true;
     [SerializeField] private float playerPawnZ = -2f;
     [SerializeField] private float enemyPawnZ = -2f;
+    [SerializeField] private bool keepSortingOrder = true;
+    [SerializeField] private int playerSortingOrder = 20;
+    [SerializeField] private int enemySortingOrder = 20;
 
     [Header("Runtime State (grid index)")]
     [SerializeField] private Vector2Int playerRC = new Vector2Int(4, 1); // (row, col)
@@ -53,12 +56,14 @@ public class MoveController : MonoBehaviour
             playerRC = rc;
             if (snap && playerPawn && playerGridOrigin)
                 playerPawn.position = RCToWorld(rc, playerGridOrigin, originRow_Player, originCol_Player, keepPawnZ ? playerPawnZ : playerPawn.position.z);
+            ApplySorting(playerPawn, playerSortingOrder);
         }
         else
         {
             enemyRC = rc;
             if (snap && enemyPawn && enemyGridOrigin)
                 enemyPawn.position = RCToWorld(rc, enemyGridOrigin, originRow_Enemy, originCol_Enemy, keepPawnZ ? enemyPawnZ : enemyPawn.position.z);
+            ApplySorting(enemyPawn, enemySortingOrder);
         }
     }
 
@@ -90,6 +95,8 @@ public class MoveController : MonoBehaviour
             if (menu) menu.EnableInput(true);
             yield break;
         }
+
+        ApplySorting(pawn, target == Faction.Player ? playerSortingOrder : enemySortingOrder);
 
         Vector2Int curRC = GetGrid(target);
         Vector2Int deltaRC = DirToDelta(so.where) * Mathf.Max(0, so.amount);
@@ -232,5 +239,13 @@ public class MoveController : MonoBehaviour
         rc.x = Mathf.Clamp(rc.x, 1, rows);
         rc.y = Mathf.Clamp(rc.y, 1, cols);
         return rc;
+    }
+
+    private void ApplySorting(Transform pawn, int order)
+    {
+        if (!keepSortingOrder || pawn == null) return;
+        var srs = pawn.GetComponentsInChildren<SpriteRenderer>(true);
+        for (int i = 0; i < srs.Length; i++)
+            srs[i].sortingOrder = order;
     }
 }
