@@ -3,10 +3,14 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 [DisallowMultipleComponent]
 public class CutsceneRouter : MonoBehaviour
 {
+    private static int s_runningCutsceneCount = 0;
+    public static bool IsAnyCutsceneRunning => s_runningCutsceneCount > 0;
+
     [Serializable]
     public class Route
     {
@@ -46,6 +50,7 @@ public class CutsceneRouter : MonoBehaviour
     private bool _heldActionLock = false;
     private PlayerMove _pmCached = null;
     private bool _pmWasEnabled = false;
+    private string _resolvedStartKey = null;
 
     private void Start()
     {
@@ -57,16 +62,23 @@ public class CutsceneRouter : MonoBehaviour
     {
         if (delayOneFrame) yield return null;
 
-        if (oneShotStartKey && IsStartKeyAlreadyConsumed(startKey))
+        string autoStartKey = ResolveAutoStartKey();
+        if (string.IsNullOrWhiteSpace(autoStartKey))
         {
-            if (debugLog) Debug.Log($"[CutsceneRouter] skip AutoStart('{startKey}') (already consumed)");
+            if (debugLog) Debug.LogWarning("[CutsceneRouter] AutoStart skipped because resolved start key is empty");
             yield break;
         }
 
-        yield return Co_Play(startKey);
+        if (oneShotStartKey && IsStartKeyAlreadyConsumed(autoStartKey))
+        {
+            if (debugLog) Debug.Log($"[CutsceneRouter] skip AutoStart('{autoStartKey}') (already consumed)");
+            yield break;
+        }
 
-        if (oneShotStartKey && _playedKeys.Contains(startKey))
-            ConsumeStartKey(startKey);
+        yield return Co_Play(autoStartKey);
+
+        if (oneShotStartKey && _playedKeys.Contains(autoStartKey))
+            ConsumeStartKey(autoStartKey);
     }
 
     /// <summary>
@@ -101,6 +113,7 @@ public class CutsceneRouter : MonoBehaviour
         }
 
         _running = true;
+        s_runningCutsceneCount++;
         _playedKeys.Add(key);
 
         BeginInputLock();
@@ -179,6 +192,7 @@ public class CutsceneRouter : MonoBehaviour
 
         EndInputLockIfHeld();
         _running = false;
+        s_runningCutsceneCount = Mathf.Max(0, s_runningCutsceneCount - 1);
     }
 
     private Route FindRoute(string key)
@@ -253,6 +267,8 @@ public class CutsceneRouter : MonoBehaviour
     {
         // 씬 전환/오브젝트 비활성화로 코루틴이 중단될 때 입력 잠금이 남지 않도록 안전 해제
         EndInputLockIfHeld();
+        if (_running)
+            s_runningCutsceneCount = Mathf.Max(0, s_runningCutsceneCount - 1);
         _running = false;
     }
 
@@ -263,12 +279,34 @@ public class CutsceneRouter : MonoBehaviour
         bool gmAction = GameManager.Instance != null && GameManager.Instance.isAction;
         var pm = (_pmCached != null) ? _pmCached : ResolvePlayerMove();
         bool pmEnabled = (pm != null) && pm.enabled;
+        string autoStartKey = ResolveAutoStartKey();
 
         Debug.Log(
             "[CutsceneRouter] LOCK STATE " +
-            $"running={_running}, heldActionLock={_heldActionLock}, pmCached={(_pmCached != null)}, pmEnabled={pmEnabled}, gm.isAction={gmAction}, startKey='{startKey}', oneShotStartKey={oneShotStartKey}"
+            $"running={_running}, heldActionLock={_heldActionLock}, pmCached={(_pmCached != null)}, pmEnabled={pmEnabled}, gm.isAction={gmAction}, startKey='{startKey}', resolvedStartKey='{autoStartKey}', oneShotStartKey={oneShotStartKey}"
         );
     }
+
+    private string ResolveAutoStartKey()
+    {
+        if (!string.IsNullOrWhiteSpace(_resolvedStartKey))
+            return _resolvedStartKey;
+
+        string activeSceneName = SceneManager.GetActiveScene().name;
+        if (CutsceneStartContext.TryConsume(activeSceneName, out string overrideStartKey))
+        {
+            _resolvedStartKey = overrideStartKey;
+
+            if (debugLog)
+                Debug.Log($"[CutsceneRouter] Use pending scene start key '{_resolvedStartKey}' for scene '{activeSceneName}'");
+
+            return _resolvedStartKey;
+        }
+
+        _resolvedStartKey = startKey;
+        return _resolvedStartKey;
+    }
+
     private static string BuildStartKeyFlag(string key)
         => string.IsNullOrWhiteSpace(key) ? string.Empty : $"cutscene.start.used:{key}";
 

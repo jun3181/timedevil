@@ -3,19 +3,20 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class SceneCameraBootstrap : MonoBehaviour
 {
+    // 씬 시작 시 지정한 카메라 모드로 CameraManager를 초기화한다.
     [Header("Start Mode")]
     public CameraModeId startMode = CameraModeId.Fixed;
 
-    [Header("Follow Target (���� PlayerMove �ڵ� Ž��)")]
+    [Header("Follow Target (비워두면 PlayerMove 자동 탐색)")]
     public Transform followTarget;
 
-    [Header("FollowConfined�� Bounds (BoxCollider2D ����)")]
+    [Header("Follow Confined Bounds (BoxCollider2D 권장)")]
     public Collider2D confinerBounds;
 
-    [Header("Zoom (0�̸� �⺻�� ����)")]
+    [Header("카메라 Ortho Size (0 이하 = CameraManager 기본값 사용)")]
     public float orthoSize = 0f;
 
-    [Header("Fixed/Cutscene ��ġ (����)")]
+    [Header("Fixed/Cutscene Anchor (선택)")]
     public Transform fixedOrCutsceneAnchor;
 
     [Header("Debug")]
@@ -23,14 +24,17 @@ public class SceneCameraBootstrap : MonoBehaviour
 
     private void Start()
     {
+        // CameraManager가 없으면 아무 작업도 하지 않는다.
         if (!CameraManager.Instance) return;
 
+        // followTarget이 비어 있으면 PlayerMove를 찾아 자동 지정한다.
         if (!followTarget)
         {
             var pm = FindObjectOfType<PlayerMove>(true);
             if (pm) followTarget = pm.transform;
         }
 
+        // orthoSize가 0 이하이면 CameraManager 기본값을 사용한다.
         float? size = (orthoSize > 0f) ? orthoSize : (float?)null;
 
         switch (startMode)

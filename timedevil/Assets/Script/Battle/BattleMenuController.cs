@@ -50,7 +50,7 @@ public class BattleMenuController : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.E))
         {
-            string name = index switch { 0 => "Card", 1 => "Item", 2 =>"Panel", 3 => "End", 4 => "Run", _ => $"Idx{index}" };
+            string name = index switch { 0 => "Card", 1 => "Item", 2 => "End", 3 => "Run", _ => $"Idx{index}" };
             Debug.Log($"[BattleMenu] E pressed → {name} selected (index={index})");
             onSubmit?.Invoke(index);
         }
@@ -86,36 +86,18 @@ public class BattleMenuController : MonoBehaviour
     {
         if (entries == null || entries.Length == 0) return;
 
-        if (entries.Length == 4)
-        {
-            int row = index / 2;
-            int col = index % 2;
-            col = (col + (dir > 0 ? 1 : -1) + 2) % 2;
-            SetFocus(row * 2 + col);
-        }
-        else
-        {
             int count = entries.Length;
             SetFocus((index + (dir > 0 ? 1 : -1) + count) % count);
-        }
+        
     }
 
     private void MoveVert(int dir)
     {
         if (entries == null || entries.Length == 0) return;
 
-        if (entries.Length == 4)
-        {
-            int row = index / 2;
-            int col = index % 2;
-            row = (row + (dir > 0 ? 1 : -1) + 2) % 2;
-            SetFocus(row * 2 + col);
-        }
-        else
-        {
             int count = entries.Length;
             SetFocus((index + (dir > 0 ? 2 : -2) % count + count) % count);
-        }
+        
     }
 
     private void ApplyHighlight(int cur)
