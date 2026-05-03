@@ -28,6 +28,11 @@ public class TriggerGet : MonoBehaviour
     public bool debugLog = true;
 
     private int _called = 0;
+    private Collider2D _selfCollider;
+
+    private bool _pendingByCutscene = false;
+    private Collider2D _pendingInstigatorCollider = null;
+    private PlayerMove _pendingPlayerMove = null;
 
     private void Reset()
     {
@@ -37,14 +42,31 @@ public class TriggerGet : MonoBehaviour
 
     private void Awake()
     {
-        var col = GetComponent<Collider2D>();
-        if (!col.isTrigger)
+        _selfCollider = GetComponent<Collider2D>();
+        if (!_selfCollider.isTrigger)
         {
-            col.isTrigger = true;
+            _selfCollider.isTrigger = true;
             if (debugLog) Debug.LogWarning("[TriggerGet] Collider2D.isTrigger가 꺼져있어서 켰습니다.");
         }
 
         if (!router) router = FindObjectOfType<TriggerRouter>(true);
+    }
+
+    private void Update()
+    {
+        if (!_pendingByCutscene) return;
+        if (CutsceneRouter.IsAnyCutsceneRunning) return;
+
+        // 컷씬이 끝났고, 아직 같은 콜라이더가 트리거 내부에 남아 있으면 발동
+        if (_selfCollider != null && _pendingInstigatorCollider != null && _selfCollider.IsTouching(_pendingInstigatorCollider))
+        {
+            if (debugLog)
+                Debug.Log($"[TriggerGet] Resume pending key='{routeKey}' after cutscene end by='{_pendingInstigatorCollider.name}'");
+
+            TryInvokeRoute(_pendingInstigatorCollider, _pendingPlayerMove);
+        }
+
+        ClearPending();
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -74,6 +96,33 @@ public class TriggerGet : MonoBehaviour
             if (!pm) return;
         }
 
+        if (CutsceneRouter.IsAnyCutsceneRunning)
+        {
+            _pendingByCutscene = true;
+            _pendingInstigatorCollider = other;
+            _pendingPlayerMove = pm;
+
+            if (debugLog)
+                Debug.Log($"[TriggerGet] Deferred by cutscene key='{routeKey}' by='{other.name}'");
+            return;
+        }
+
+        TryInvokeRoute(other, pm);
+    }
+
+    private void OnTriggerExit2D(Collider2D other)
+    {
+        if (_pendingByCutscene && other == _pendingInstigatorCollider)
+            ClearPending();
+    }
+
+    private void TryInvokeRoute(Collider2D other, PlayerMove pm)
+    {
+        if (other == null) return;
+
+        if (maxCalls > 0 && _called >= maxCalls)
+            return;
+
         _called++;
 
         if (debugLog)
@@ -88,5 +137,12 @@ public class TriggerGet : MonoBehaviour
         );
 
         router.RequestRoute(routeKey, ctx);
+    }
+
+    private void ClearPending()
+    {
+        _pendingByCutscene = false;
+        _pendingInstigatorCollider = null;
+        _pendingPlayerMove = null;
     }
 }

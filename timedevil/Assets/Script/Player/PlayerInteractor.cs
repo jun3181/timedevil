@@ -1,4 +1,4 @@
-﻿// Assets/Script/Player/PlayerInteractor.cs
+// Assets/Script/Player/PlayerInteractor.cs
 using UnityEngine;
 
 public class PlayerInteractor : MonoBehaviour

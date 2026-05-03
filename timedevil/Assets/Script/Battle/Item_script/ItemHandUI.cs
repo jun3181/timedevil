@@ -5,7 +5,7 @@ using UnityEngine;
 public class ItemHandUI : MonoBehaviour
 {
     [Header("Refs")]
-    [SerializeField] private BattleMenuController menu;   // 0=Card, 1=Item,2=Panel, 3=End, 4=Run
+    [SerializeField] private BattleMenuController menu;   // 0=Card, 1=Item, 2=End, 3=Run
     private CanvasGroup cg;
 
     // �����̸� ������ ����

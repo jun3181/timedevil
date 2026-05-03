@@ -11,6 +11,7 @@ public class TriggerStep_UiSequence : TriggerStepBase
     [Header("Options")]
     [SerializeField] private bool playOnExecute = true;
     [SerializeField] private bool waitUntilFinished = true;
+    [SerializeField] private bool autoAdvanceAfterDialogueWhenWaiting = true;
 
     public override IEnumerator Execute(TriggerContext ctx)
     {
@@ -26,8 +27,18 @@ public class TriggerStep_UiSequence : TriggerStepBase
         bool done = false;
         System.Action handler = () => done = true;
 
+        bool pushedAutoAdvance = false;
+
         if (waitUntilFinished)
+        {
             sequence.OnFinished += handler;
+
+            if (autoAdvanceAfterDialogueWhenWaiting)
+            {
+                sequence.PushAutoAdvanceAfterDialogue();
+                pushedAutoAdvance = true;
+            }
+        }
 
         if (playOnExecute)
             sequence.PlayFromStart();
@@ -36,6 +47,9 @@ public class TriggerStep_UiSequence : TriggerStepBase
         {
             while (!done) yield return null;
             sequence.OnFinished -= handler;
+
+            if (pushedAutoAdvance)
+                sequence.PopAutoAdvanceAfterDialogue();
         }
     }
 }
