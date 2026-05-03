@@ -179,6 +179,8 @@ public class DescriptionPanelController : MonoBehaviour
         RefreshNow();
     }
 
+    public bool HasForcedMessage => !string.IsNullOrEmpty(_forcedMessage);
+
     private System.Collections.IEnumerator Co_ShowOneShotMessage(string text, float seconds)
     {
         _forcedMessage = text;

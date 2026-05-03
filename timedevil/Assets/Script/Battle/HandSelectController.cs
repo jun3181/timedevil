@@ -12,6 +12,7 @@ public class HandSelectController : MonoBehaviour
 
     [Header("Behavior")]
     [SerializeField] private bool wrap = true;
+    private bool noCardNoticeShown = false;
 
     void Reset()
     {
@@ -57,10 +58,19 @@ public class HandSelectController : MonoBehaviour
             if (hand.CardCount <= 0)
             {
                 desc?.ShowOneShotMessage("사용 가능한 카드가 없습니다.", 1.25f);
+                noCardNoticeShown = true;
                 return;
             }
             hand.EnterSelectMode();
             menu.EnableInput(false);
+            return;
+        }
+
+        if (noCardNoticeShown && Input.GetKeyDown(KeyCode.Q))
+        {
+            noCardNoticeShown = false;
+            desc?.ClearTemporaryMessage();
+            menu.EnableInput(true);
             return;
         }
 

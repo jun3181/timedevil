@@ -41,11 +41,19 @@ public class MoveController : MonoBehaviour
     [Header("UI Lock")]
     [SerializeField] private BattleMenuController menu;
     [SerializeField] private DescriptionPanelController desc;
+    private bool _ownsTempMessage;
 
     void Reset()
     {
         menu ??= FindObjectOfType<BattleMenuController>(true);
         desc ??= FindObjectOfType<DescriptionPanelController>(true);
+    }
+
+    void LateUpdate()
+    {
+        if (!keepSortingOrder) return;
+        ApplySorting(playerPawn, playerSortingOrder);
+        ApplySorting(enemyPawn, enemySortingOrder);
     }
 
     public void SetGrid(Faction who, int r, int c, bool snap = true)
@@ -74,10 +82,15 @@ public class MoveController : MonoBehaviour
         if (so == null) yield break;
 
         if (menu) menu.EnableInput(false);
-        if (desc) desc.ShowTemporaryExplanation(
-            string.IsNullOrEmpty(so.explanation)
-                ? (string.IsNullOrEmpty(so.display) ? so.displayName : so.display)
-                : so.explanation);
+        _ownsTempMessage = false;
+        if (desc && !desc.HasForcedMessage)
+        {
+            _ownsTempMessage = true;
+            desc.ShowTemporaryExplanation(
+                string.IsNullOrEmpty(so.explanation)
+                    ? (string.IsNullOrEmpty(so.display) ? so.displayName : so.display)
+                    : so.explanation);
+        }
 
         var target = (so.moveMode == MoveMode.UpMove) ? self : foe;
 
@@ -91,7 +104,7 @@ public class MoveController : MonoBehaviour
         if (!pawn || !origin)
         {
             Debug.LogWarning("[MoveController] Pawn/Origin 누락");
-            if (desc) desc.ClearTemporaryMessage();
+            if (_ownsTempMessage && desc) desc.ClearTemporaryMessage();
             if (menu) menu.EnableInput(true);
             yield break;
         }
@@ -124,7 +137,7 @@ public class MoveController : MonoBehaviour
         if (cellsDistance == 0)
         {
             yield return new WaitForSeconds(0.05f);
-            if (desc) desc.ClearTemporaryMessage();
+            if (_ownsTempMessage && desc) desc.ClearTemporaryMessage();
             if (menu) menu.EnableInput(true);
             yield break;
         }
@@ -166,7 +179,7 @@ public class MoveController : MonoBehaviour
 
         if (anim) anim.SetBool("Moving", false);
 
-        if (desc) desc.ClearTemporaryMessage();
+        if (_ownsTempMessage && desc) desc.ClearTemporaryMessage();
         if (menu) menu.EnableInput(true);
     }
 
