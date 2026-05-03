@@ -55,9 +55,20 @@ public class PanelController : MonoBehaviour
     [SerializeField, Min(0.01f)] private float enemyDuration = 0.35f;
     [SerializeField] private AnimationCurve enemyEase = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
+
     [Header("Animation - Gameplay")]
     [SerializeField, Min(0.01f)] private float gameplayDuration = 0.35f;
     [SerializeField] private AnimationCurve gameplayEase = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+
+    [Header("Battle Menu Panel Auto-Hide")]
+    [Tooltip("상대 턴이거나 카드 선택 중일 때 화면 아래로 내릴 UI 패널들(Card/Item/End/Run)")]
+    [SerializeField] private List<Transform> battleMenuPanelTargets = new List<Transform>();
+
+    [Tooltip("자동 숨김 시 적용할 패널 오프셋(화면 밖으로 내려가도록 충분히 큰 음수 Y 권장)")]
+    [SerializeField] private Vector3 battleMenuHiddenOffset = new Vector3(0f, -900f, 0f);
+
+    [SerializeField, Min(0.01f)] private float battleMenuDuration = 0.3f;
+    [SerializeField] private AnimationCurve battleMenuEase = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
     [Header("Initial State")]
     [Tooltip("체크 시 시작부터 gameplayTargets가 보이는 상태")]
@@ -65,11 +76,14 @@ public class PanelController : MonoBehaviour
 
     private readonly List<Vector3> enemyShownBase = new List<Vector3>();
     private readonly List<Vector3> gameplayShownBase = new List<Vector3>();
+    private readonly List<Vector3> battleMenuShownBase = new List<Vector3>();
 
     private bool isGameplayView;
     private bool isAnimating;
     private bool pendingReturnByEnd;
     private Coroutine running;
+    private Coroutine menuPanelRunning;
+    private bool menuPanelsHidden;
 
     private TurnState lastTurnState = TurnState.PlayerTurn;
     private bool lastHandSelectMode;
@@ -91,6 +105,7 @@ public class PanelController : MonoBehaviour
 
         isGameplayView = startInGameplayView;
         ApplyImmediate(isGameplayView);
+        ApplyBattleMenuImmediate(false);
 
         if (turnManager) lastTurnState = turnManager.currentTurn;
         if (handUI) lastHandSelectMode = handUI.IsInSelectMode;
@@ -110,6 +125,11 @@ public class PanelController : MonoBehaviour
     {
         bool qDown = Input.GetKeyDown(KeyCode.Q);
         bool handSelecting = handUI && handUI.IsInSelectMode;
+
+        bool enemyTurn = turnManager && turnManager.currentTurn == TurnState.EnemyTurn;
+        bool shouldHideMenuPanels = enemyTurn || handSelecting;
+        if (shouldHideMenuPanels != menuPanelsHidden)
+            SetBattleMenuPanelsHidden(shouldHideMenuPanels);
 
         if (returnOnCardCancelKey && qDown)
         {
@@ -187,12 +207,16 @@ public class PanelController : MonoBehaviour
     {
         enemyShownBase.Clear();
         gameplayShownBase.Clear();
+        battleMenuShownBase.Clear();
 
         for (int i = 0; i < enemyTargets.Count; i++)
             enemyShownBase.Add(GetPos(enemyTargets[i]));
 
         for (int i = 0; i < gameplayTargets.Count; i++)
             gameplayShownBase.Add(GetPos(gameplayTargets[i]));
+
+        for (int i = 0; i < battleMenuPanelTargets.Count; i++)
+            battleMenuShownBase.Add(GetPos(battleMenuPanelTargets[i]));
     }
 
     private IEnumerator Co_Animate(bool gameplayView)
@@ -255,6 +279,55 @@ public class PanelController : MonoBehaviour
         {
             Vector3 shown = i < gameplayShownBase.Count ? gameplayShownBase[i] : GetPos(gameplayTargets[i]);
             list.Add(gameplayView ? shown : shown + gameplayHiddenOffset);
+        }
+        return list;
+    }
+
+
+    public void SetBattleMenuPanelsHidden(bool hidden, bool immediate = false)
+    {
+        if (menuPanelRunning != null)
+        {
+            StopCoroutine(menuPanelRunning);
+            menuPanelRunning = null;
+        }
+
+        menuPanelsHidden = hidden;
+
+        if (immediate) ApplyBattleMenuImmediate(hidden);
+        else menuPanelRunning = StartCoroutine(Co_AnimateBattleMenuPanels(hidden));
+    }
+
+    private IEnumerator Co_AnimateBattleMenuPanels(bool hidden)
+    {
+        var from = SnapshotCurrent(battleMenuPanelTargets);
+        var to = BuildBattleMenuTargetPositions(hidden);
+
+        float t = 0f;
+        while (t < battleMenuDuration)
+        {
+            t += Time.deltaTime;
+            float k = battleMenuDuration <= 0f ? 1f : Mathf.Clamp01(t / battleMenuDuration);
+            ApplyLerp(battleMenuPanelTargets, from, to, EvaluateCurve(battleMenuEase, k));
+            yield return null;
+        }
+
+        ApplyAbsolute(battleMenuPanelTargets, to);
+        menuPanelRunning = null;
+    }
+
+    private void ApplyBattleMenuImmediate(bool hidden)
+    {
+        ApplyAbsolute(battleMenuPanelTargets, BuildBattleMenuTargetPositions(hidden));
+    }
+
+    private List<Vector3> BuildBattleMenuTargetPositions(bool hidden)
+    {
+        var list = new List<Vector3>(battleMenuPanelTargets.Count);
+        for (int i = 0; i < battleMenuPanelTargets.Count; i++)
+        {
+            Vector3 shown = i < battleMenuShownBase.Count ? battleMenuShownBase[i] : GetPos(battleMenuPanelTargets[i]);
+            list.Add(hidden ? shown + battleMenuHiddenOffset : shown);
         }
         return list;
     }
