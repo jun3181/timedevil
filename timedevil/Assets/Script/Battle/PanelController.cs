@@ -44,6 +44,7 @@ public class PanelController : MonoBehaviour
     [SerializeField] private List<Transform> gameplayTargets = new List<Transform>();
 
     [SerializeField] private bool useLocalPosition = true;
+    [SerializeField] private bool lockZDepth = true;
 
     [Header("Offsets")]
     [Tooltip("게임플레이 뷰 ON일 때 enemyTargets에 적용할 오프셋(보통 아래 음수 Y)")]
@@ -376,6 +377,13 @@ public class PanelController : MonoBehaviour
     private void SetPos(Transform t, Vector3 value)
     {
         if (!t) return;
+
+        if (lockZDepth)
+        {
+            float currentZ = useLocalPosition ? t.localPosition.z : t.position.z;
+            value.z = currentZ;
+        }
+
         if (useLocalPosition) t.localPosition = value;
         else t.position = value;
     }
