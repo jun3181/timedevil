@@ -184,6 +184,9 @@ public class PanelController : MonoBehaviour
 
         if (useCardSubmit && index == cardSubmitIndex)
         {
+            if (handUI != null && handUI.CardCount <= 0)
+                return;
+
             SetGameplayViewDelayed(true, submitViewDelay);
             return;
         }
@@ -195,6 +198,9 @@ public class PanelController : MonoBehaviour
         }
     }
 
+
+
+    public bool IsGameplayView => isGameplayView;
 
     public void ToggleView()
     {

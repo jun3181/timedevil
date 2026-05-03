@@ -9,10 +9,11 @@ public class HandSelectController : MonoBehaviour
     [SerializeField] private Image externalSelector; // 옵션
     [SerializeField] private CardUseOrchestrator orchestrator;
     [SerializeField] private DescriptionPanelController desc;
+    [SerializeField] private PanelController panelController;
 
     [Header("Behavior")]
     [SerializeField] private bool wrap = true;
-    private bool noCardNoticeShown = false;
+    private bool panelViewBeforeSelect = false;
 
     void Reset()
     {
@@ -20,6 +21,7 @@ public class HandSelectController : MonoBehaviour
         if (!hand) hand = FindObjectOfType<HandUI>(true);
         if (!orchestrator) orchestrator = FindObjectOfType<CardUseOrchestrator>(true);
         if (!desc) desc = FindObjectOfType<DescriptionPanelController>(true);
+        if (!panelController) panelController = FindObjectOfType<PanelController>(true);
     }
 
     void Awake()
@@ -55,22 +57,10 @@ public class HandSelectController : MonoBehaviour
         // 일반 진입(카드 탭) — 단, 버림 단계가 아닐 때만
         if (!inDiscard && !hand.IsInSelectMode && menu.Index == 0 && Input.GetKeyDown(KeyCode.E))
         {
-            if (hand.CardCount <= 0)
-            {
-                desc?.ShowOneShotMessage("선택가능한 카드가 없습니다. Q를 눌러 취소하세요.", 1.25f);
-                noCardNoticeShown = true;
-                return;
-            }
+            if (hand.CardCount <= 0) return;
+            panelViewBeforeSelect = panelController != null && panelController.IsGameplayView;
             hand.EnterSelectMode();
             menu.EnableInput(false);
-            return;
-        }
-
-        if (noCardNoticeShown && Input.GetKeyDown(KeyCode.Q))
-        {
-            noCardNoticeShown = false;
-            desc?.ClearTemporaryMessage();
-            menu.EnableInput(true);
             return;
         }
 
@@ -84,6 +74,7 @@ public class HandSelectController : MonoBehaviour
         {
             hand.ExitSelectMode();
             menu.EnableInput(true);
+            if (panelController) panelController.SetGameplayView(panelViewBeforeSelect);
         }
 
         if (Input.GetKeyDown(KeyCode.E))
@@ -130,4 +121,5 @@ public class HandSelectController : MonoBehaviour
         if (!rt) return;
         externalSelector.rectTransform.position = rt.position;
     }
+
 }
