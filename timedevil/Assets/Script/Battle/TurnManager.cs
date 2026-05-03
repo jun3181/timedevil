@@ -230,6 +230,7 @@ public class TurnManager : MonoBehaviour
 
         if (handUI) handUI.ShowCards();
         if (menu) menu.EnableInput(true);
+        if (menu) menu.SetFocus(0);
         if (desc) { desc.SetEnemyTurn(false); desc.SetPlayerDiscardMode(false); }
 
         if (enemyHandUI) enemyHandUI.HideAll();

@@ -33,6 +33,7 @@ public class DescriptionPanelController : MonoBehaviour
     private bool _forceEnemyTurn = false;   // TurnManager에서 on/off
     private string _forcedMessage = null;   //  발동 중(explanation) 임시 고정 문구
     private bool _forcePlayerDiscard = false; //  강제 버림 모드
+    private int _effectLockCount = 0;         // 카드 효과 실행 중 기본 문구 억제
 
     //  클래스 필드에 추가
     private bool _spectate = false;                    // 관전 플래그
@@ -161,6 +162,32 @@ public class DescriptionPanelController : MonoBehaviour
         RefreshNow();
     }
 
+    public void ShowOneShotMessage(string text, float seconds = 1.2f)
+    {
+        StartCoroutine(Co_ShowOneShotMessage(text, seconds));
+    }
+
+    public void EnterEffectLock()
+    {
+        _effectLockCount++;
+        RefreshNow();
+    }
+
+    public void ExitEffectLock()
+    {
+        _effectLockCount = Mathf.Max(0, _effectLockCount - 1);
+        RefreshNow();
+    }
+
+    private System.Collections.IEnumerator Co_ShowOneShotMessage(string text, float seconds)
+    {
+        _forcedMessage = text;
+        RefreshNow();
+        yield return new WaitForSeconds(Mathf.Max(0.05f, seconds));
+        _forcedMessage = null;
+        RefreshNow();
+    }
+
     private void RefreshNow()
     {
         if (!descriptionText) return;
@@ -257,6 +284,10 @@ public class DescriptionPanelController : MonoBehaviour
         if (!string.IsNullOrEmpty(_forcedMessage))
         {
             text = _forcedMessage;                         // 관전모드/연출 중 설명 고정
+        }
+        else if (_effectLockCount > 0)
+        {
+            text = string.Empty;
         }
         else if (index == 0 && hand != null && hand.IsInSelectMode)
         {
