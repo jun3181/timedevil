@@ -33,6 +33,13 @@ public class TriggerStep_Scene : TriggerStepBase
     [Tooltip("progress.json에 lastSceneName이 비어있을 때 갈 폴백 씬")]
     [SerializeField] private string fallbackDreamSceneName = "Move_Tutorial";
 
+    [Header("Cutscene Auto Start (optional)")]
+    [Tooltip("켜면 다음 씬의 CutsceneRouter가 Start 시 이 Key를 우선 사용합니다.")]
+    [SerializeField] private bool overrideCutsceneStartKey = false;
+
+    [Tooltip("overrideCutsceneStartKey가 켜져 있을 때 다음 씬 CutsceneRouter에 전달할 Start Key")]
+    [SerializeField] private string cutsceneStartKey = "CutScene1";
+
     // =========================
     // Battle return context (existing)
     // =========================
@@ -99,6 +106,26 @@ public class TriggerStep_Scene : TriggerStepBase
         {
             Debug.LogWarning("[TriggerStep_Scene] targetScene이 비어있습니다.");
             yield break;
+        }
+
+        if (overrideCutsceneStartKey)
+        {
+            if (string.IsNullOrWhiteSpace(cutsceneStartKey))
+            {
+                CutsceneStartContext.Clear();
+                Debug.LogWarning("[TriggerStep_Scene] overrideCutsceneStartKey가 켜져 있지만 cutsceneStartKey가 비어 있습니다.");
+            }
+            else
+            {
+                CutsceneStartContext.SetNext(targetScene, cutsceneStartKey);
+
+                if (debugLog)
+                    Debug.Log($"[TriggerStep_Scene] Queue Cutscene Start Key '{cutsceneStartKey}' for scene '{targetScene}'");
+            }
+        }
+        else
+        {
+            CutsceneStartContext.Clear();
         }
 
         // -------------------------

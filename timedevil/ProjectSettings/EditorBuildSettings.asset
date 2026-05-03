@@ -26,4 +26,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Move_Tutorial.unity
     guid: 3abb07c336ce9134b804131083a4fd66
+  - enabled: 1
+    path: Assets/Scenes/testbattle.unity
+    guid: 0f31c9f6386940c4e88156abb02fca8f
   m_configObjects: {}
