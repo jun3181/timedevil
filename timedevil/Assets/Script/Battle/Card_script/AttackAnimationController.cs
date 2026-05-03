@@ -14,6 +14,10 @@ public class AttackAnimationController : MonoBehaviour
     [SerializeField] private string sortingLayer = "Default";
     [SerializeField] private int sortingOrder = 1000;
     [SerializeField] private float tileZ = 0f;
+    [Header("Dynamic Sorting")]
+    [SerializeField] private bool useDynamicTopOrder = true;
+    [SerializeField] private int dynamicOrderPadding = 10;
+    [SerializeField] private int fallbackSortingOrder = 1000;
 
     [Header("Fade")]
     [SerializeField, Range(0f, 1f)] private float peakAlpha = 0.75f;
@@ -47,7 +51,7 @@ public class AttackAnimationController : MonoBehaviour
             var sr = go.AddComponent<SpriteRenderer>();
             sr.sprite = _sprite;
             sr.sortingLayerName = sortingLayer;
-            sr.sortingOrder = sortingOrder;
+            sr.sortingOrder = ResolveTopSortingOrder();
 
             // ʱ 
             var c = sr.color; c.r = 0f; c.g = 0f; c.b = 0f; c.a = 0f;
@@ -86,7 +90,7 @@ public class AttackAnimationController : MonoBehaviour
                     sr.color = c;
                     go.transform.localScale = ComputeSpriteScale(sr);
                     sr.sortingLayerName = sortingLayer;
-                    sr.sortingOrder = sortingOrder;
+                    sr.sortingOrder = ResolveTopSortingOrder();
                 }
 
                 go.SetActive(true);
@@ -185,6 +189,24 @@ public class AttackAnimationController : MonoBehaviour
 
         //  
         c.a = 0f; sr.color = c;
+    }
+
+    private int ResolveTopSortingOrder()
+    {
+        if (!useDynamicTopOrder) return sortingOrder;
+
+        int maxOrder = int.MinValue;
+        var renderers = FindObjectsOfType<SpriteRenderer>(true);
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            var sr = renderers[i];
+            if (!sr) continue;
+            if (sr.transform.IsChildOf(transform)) continue;
+            if (sr.sortingOrder > maxOrder) maxOrder = sr.sortingOrder;
+        }
+
+        if (maxOrder == int.MinValue) return fallbackSortingOrder;
+        return maxOrder + dynamicOrderPadding;
     }
 
     private Vector3 ComputeSpriteScale(SpriteRenderer sr)
