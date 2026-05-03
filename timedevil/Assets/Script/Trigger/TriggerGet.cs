@@ -37,6 +37,7 @@ public class TriggerGet : MonoBehaviour
     private bool _pendingByCutscene = false;
     private Collider2D _pendingInstigatorCollider = null;
     private PlayerMove _pendingPlayerMove = null;
+    private Coroutine _cameraRestoreCo = null;
 
     private void Reset()
     {
@@ -142,9 +143,25 @@ public class TriggerGet : MonoBehaviour
         );
 
         if (cameraMoveStep != null)
+        {
             cameraMoveStep.BeginFromTriggerGet(ctx);
+            if (_cameraRestoreCo != null) StopCoroutine(_cameraRestoreCo);
+            _cameraRestoreCo = StartCoroutine(CoRestoreCameraAfterRoute(routeKey));
+        }
 
         router.RequestRoute(routeKey, ctx);
+    }
+
+    private System.Collections.IEnumerator CoRestoreCameraAfterRoute(string key)
+    {
+        yield return null; // Route 코루틴이 _runningKeys에 등록될 시간 보장
+        while (router != null && router.IsRouteRunning(key))
+            yield return null;
+
+        if (cameraMoveStep != null)
+            cameraMoveStep.RestorePreviousMode();
+
+        _cameraRestoreCo = null;
     }
 
     private void ClearPending()

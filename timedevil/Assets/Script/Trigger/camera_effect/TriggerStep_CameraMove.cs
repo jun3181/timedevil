@@ -37,6 +37,10 @@ public class TriggerStep_CameraMove : TriggerStepBase
     [SerializeField] private bool debugLog = false;
 
     private Coroutine _running;
+    private bool _hasSnapshot = false;
+    private CameraModeId _prevMode = CameraModeId.Fixed;
+    private float _prevOrtho = 5f;
+    private Vector3 _prevFixedPos = Vector3.zero;
 
     public override IEnumerator Execute(TriggerContext ctx)
     {
@@ -47,10 +51,38 @@ public class TriggerStep_CameraMove : TriggerStepBase
 
     public void BeginFromTriggerGet(TriggerContext ctx)
     {
+        CaptureSnapshotIfNeeded();
         if (_running != null)
             StopCoroutine(_running);
 
         _running = StartCoroutine(CoRun(ctx));
+    }
+
+    public void RestorePreviousMode()
+    {
+        if (!_hasSnapshot || CameraManager.Instance == null) return;
+
+        var cm = CameraManager.Instance;
+        switch (_prevMode)
+        {
+            case CameraModeId.FollowFree:
+            case CameraModeId.FollowConfined:
+            {
+                Transform target = ResolveFollowTarget(null);
+                if (target != null) cm.SetFollowFree(target, _prevOrtho);
+                else cm.SetFixed(_prevFixedPos, _prevOrtho);
+                break;
+            }
+            case CameraModeId.Cutscene:
+                cm.SetCutscene(_prevFixedPos, _prevOrtho);
+                break;
+            case CameraModeId.Fixed:
+            default:
+                cm.SetFixed(_prevFixedPos, _prevOrtho);
+                break;
+        }
+
+        if (debugLog) Debug.Log($"[TriggerStep_CameraMove] RestorePreviousMode -> {_prevMode}");
     }
 
     private IEnumerator CoRun(TriggerContext ctx)
@@ -128,5 +160,19 @@ public class TriggerStep_CameraMove : TriggerStepBase
     {
         if (moveTarget != null) return moveTarget.position;
         return moveTargetWorldPosition;
+    }
+
+    private void CaptureSnapshotIfNeeded()
+    {
+        var cm = CameraManager.Instance;
+        if (cm == null) return;
+
+        if (cm.TryGetSnapshot(out CameraModeId mode, out float ortho, out Vector3 fixedPos, out string _))
+        {
+            _prevMode = mode;
+            _prevOrtho = ortho;
+            _prevFixedPos = fixedPos;
+            _hasSnapshot = true;
+        }
     }
 }
