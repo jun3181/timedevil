@@ -52,6 +52,7 @@ public class RandomBattleZone : MonoBehaviour
     void Awake() {
         collider2d = GetComponent<Collider2D>();
         collider2d.enabled = true;
+        collider2d.isTrigger = true;
 
         if(probability <= 0) {
             if(debuged) Debug.LogWarning($"{gameObject.name} 영역의 적 조우 확률이 0이하입니다.");

@@ -93,6 +93,7 @@ public class UiSequencePlayer : MonoBehaviour
     private bool isPlaying = false;
     private bool _stepEntered = false;
     private bool _waitingKeyReleaseAfterDialogue = false;
+    private int _externalAutoAdvanceAfterDialogueRefCount = 0;
 
     // lock runtime
     private bool _heldActionLock = false;
@@ -159,6 +160,13 @@ public class UiSequencePlayer : MonoBehaviour
             // 대화 종료 직후 같은 키 입력으로 다음 Step이 스킵되지 않도록 키를 한번 떼게 함
             if (_waitingKeyReleaseAfterDialogue)
             {
+                if (_externalAutoAdvanceAfterDialogueRefCount > 0)
+                {
+                    _waitingKeyReleaseAfterDialogue = false;
+                    Next();
+                    return;
+                }
+
                 if (Input.GetKey(currentAdvanceKey)) return;
                 _waitingKeyReleaseAfterDialogue = false;
             }
@@ -253,6 +261,20 @@ public class UiSequencePlayer : MonoBehaviour
 
         BeginInputLock();
         EnterCurrentStepIfNeeded();
+    }
+
+    /// <summary>
+    /// 외부(예: TriggerStep_UiSequence)에서 대화 종료 후 자동 진행을 요청/해제한다.
+    /// ref-count 방식이라 중첩 호출에도 안전하다.
+    /// </summary>
+    public void PushAutoAdvanceAfterDialogue()
+    {
+        _externalAutoAdvanceAfterDialogueRefCount++;
+    }
+
+    public void PopAutoAdvanceAfterDialogue()
+    {
+        _externalAutoAdvanceAfterDialogueRefCount = Mathf.Max(0, _externalAutoAdvanceAfterDialogueRefCount - 1);
     }
 
     public void Next()
