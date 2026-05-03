@@ -14,6 +14,7 @@ public class HandSelectController : MonoBehaviour
     [Header("Behavior")]
     [SerializeField] private bool wrap = true;
     private bool noCardNoticeShown = false;
+    private bool panelViewBeforeSelect = false;
 
     void Reset()
     {
@@ -63,6 +64,7 @@ public class HandSelectController : MonoBehaviour
                 noCardNoticeShown = true;
                 return;
             }
+            panelViewBeforeSelect = panelController != null && panelController.IsGameplayView;
             hand.EnterSelectMode();
             menu.EnableInput(false);
             return;
@@ -86,7 +88,7 @@ public class HandSelectController : MonoBehaviour
         {
             hand.ExitSelectMode();
             menu.EnableInput(true);
-            panelController?.SetGameplayView(false);
+            if (panelController) panelController.SetGameplayView(panelViewBeforeSelect);
         }
 
         if (Input.GetKeyDown(KeyCode.E))
