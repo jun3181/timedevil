@@ -29,6 +29,7 @@ public class CardUseOrchestrator : MonoBehaviour
 
 
     private bool busy;
+    public bool IsBusy => busy;
 
     void Awake()
     {
