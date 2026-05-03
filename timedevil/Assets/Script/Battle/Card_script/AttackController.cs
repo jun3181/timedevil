@@ -7,8 +7,8 @@ public class AttackController : MonoBehaviour
 {
     public enum TimelineMode { StartTimes, Windows }
 
-    private const float ProjectileZ = -5f;   // ¹ß»çÃ¼´Â Ç×»ó ¾Õ(Ä«¸Ş¶ó ÂÊ)
-    private const float ExplosionZ = -5f;    // Æø¹ßµµ ¾Õ
+    private const float ProjectileZ = -5f;   // ë°œì‚¬ì²´ëŠ” í•­ìƒ ì•(ì¹´ë©”ë¼ ìª½)
+    private const float ExplosionZ = -5f;    // í­ë°œë„ ì•
 
     [SerializeField] private AttackAnimationController anim;
 
@@ -50,7 +50,7 @@ public class AttackController : MonoBehaviour
 
         anim.EnsurePool(16);
 
-        // ¦¡¦¡¦¡ ¿şÀÌºê°¡ ¾øÀ¸¸é: ·¹°Å½Ã ¦¡¦¡¦¡
+        // â”€â”€â”€ ì›¨ì´ë¸Œê°€ ì—†ìœ¼ë©´: ë ˆê±°ì‹œ â”€â”€â”€
         if (so.waves == null || so.waves.Length == 0)
         {
             bool[] mask = new bool[16];
@@ -68,7 +68,7 @@ public class AttackController : MonoBehaviour
             yield break;
         }
 
-        // ¦¡¦¡¦¡ ¿şÀÌºê ±â¹İ ¦¡¦¡¦¡
+        // â”€â”€â”€ ì›¨ì´ë¸Œ ê¸°ë°˜ â”€â”€â”€
         for (int wi = 0; wi < so.waves.Length; wi++)
         {
             var w = so.waves[wi];
@@ -76,13 +76,13 @@ public class AttackController : MonoBehaviour
 
             if (w.delayBefore > 0f) yield return new WaitForSeconds(w.delayBefore);
 
-            // °æ°í¿ë ±âº» ¸¶½ºÅ©/Å¸ÀÌ¹Ö
+            // ê²½ê³ ìš© ê¸°ë³¸ ë§ˆìŠ¤í¬/íƒ€ì´ë°
             bool[] warnMaskBase = new bool[16];
             float[] warnTimes = new float[16];
             AttackCardSO.ParsePattern16(w.pattern16, warnMaskBase);
             AttackCardSO.FillTimeline16(w.timeline, warnTimes);
 
-            // (1) °æ°í ¸¶½ºÅ© °­È­: labelsB>0 ÀÎ ¸ğµç µµÂø Å¸ÀÏ OR
+            // (1) ê²½ê³  ë§ˆìŠ¤í¬ ê°•í™”: labelsB>0 ì¸ ëª¨ë“  ë„ì°© íƒ€ì¼ OR
             bool[] warnMask = BuildWarningMaskWithLabelsB(warnMaskBase, w.labelsB);
 
             if (IsAllZero(warnMask))
@@ -91,21 +91,21 @@ public class AttackController : MonoBehaviour
                 continue;
             }
 
-            // (°æ°í´Â "¸ÂÀ» ¸é"¿¡ Ç¥½Ã)
+            // (ê²½ê³ ëŠ” "ë§ì„ ë©´"ì— í‘œì‹œ)
             anim.PlaceAndShowMask(warnMask, centersFoe);
 
-            // ¿şÀÌºê ½ÃÀÛ SFX/VFX(¿É¼Ç)
+            // ì›¨ì´ë¸Œ ì‹œì‘ SFX/VFX(ì˜µì…˜)
             if (!w.sfxEveryHit && w.sfx)
                 AudioSource.PlayClipAtPoint(w.sfx, AveragePosition(warnMask, centersFoe));
             if (!w.vfxEveryHit && w.vfxPrefab)
                 SpawnVfx(w.vfxPrefab, AveragePosition(warnMask, centersFoe), w.vfxLifetime);
 
-            // °æ°í Å¸ÀÓ¶óÀÎ ÁøÇà
+            // ê²½ê³  íƒ€ì„ë¼ì¸ ì§„í–‰
             yield return RunWarningTimeline(warnMask, warnTimes);
             anim.HideAll();
 
-            // Hook ¼±ÅÃ
-            if (w.projectilePrefab != null)                       // Launcher Hook (ÀÌµ¿ Áß Ãæµ¹ Áï½Ã ÆÇÁ¤)
+            // Hook ì„ íƒ
+            if (w.projectilePrefab != null)                       // Launcher Hook (ì´ë™ ì¤‘ ì¶©ëŒ ì¦‰ì‹œ íŒì •)
             {
                 yield return LaunchProjectilesByLabels(w, self, foe, centersSelf, centersFoe, so);
             }
@@ -113,7 +113,7 @@ public class AttackController : MonoBehaviour
             {
                 yield return RunExplosionHook(warnMask, w.hitDelays, centersFoe, w, so, self, foe);
             }
-            else                                                  // Hook ¾øÀ½ ¡æ Áö¿¬ Á÷È÷Æ®
+            else                                                  // Hook ì—†ìŒ â†’ ì§€ì—° ì§íˆíŠ¸
             {
                 yield return RunDirectHitsByDelays(warnMask, w.hitDelays, centersFoe, so, self, foe);
             }
@@ -122,9 +122,9 @@ public class AttackController : MonoBehaviour
         }
     }
 
-    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
-    //  °æ°í(»¡°£ Å¸ÀÏ) Å¸ÀÓ¶óÀÎ¸¸ ¼öÇà
-    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    //  ê²½ê³ (ë¹¨ê°„ íƒ€ì¼) íƒ€ì„ë¼ì¸ë§Œ ìˆ˜í–‰
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     private IEnumerator RunWarningTimeline(bool[] mask, float[] timeline)
     {
         if (timelineMode == TimelineMode.StartTimes)
@@ -164,9 +164,9 @@ public class AttackController : MonoBehaviour
         }
     }
 
-    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
-    //  Hook ¾øÀ½: Ä­º° Áö¿¬ ÈÄ Áï½Ã È÷Æ®
-    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    //  Hook ì—†ìŒ: ì¹¸ë³„ ì§€ì—° í›„ ì¦‰ì‹œ íˆíŠ¸
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     private IEnumerator RunDirectHitsByDelays(
         bool[] mask, float[] delays, Vector3[] centers,
         AttackCardSO so, Faction self, Faction foe)
@@ -204,16 +204,17 @@ public class AttackController : MonoBehaviour
         }
     }
 
-    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
-    //  Explosion Hook: °æ°í ÈÄ Áï½Ã ÇÁ¸®ÆÕ Ç¥½Ã(Z=-5), hitDelays ÈÄ ÆÇÁ¤
-    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+                ApplyEffectSorting(go);
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    //  Explosion Hook: ê²½ê³  í›„ ì¦‰ì‹œ í”„ë¦¬íŒ¹ í‘œì‹œ(Z=-5), hitDelays í›„ íŒì •
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     private IEnumerator RunExplosionHook(
         bool[] mask, float[] hitDelays, Vector3[] centersFoe,
         AttackCardSO.Wave w, AttackCardSO so, Faction self, Faction foe)
     {
         if (w.explosionPrefab == null) yield break;
 
-        // 1) °¢ Ä­¿¡ Áï½Ã ÇÁ¸®ÆÕ »ı¼º(Z=-5), lifetime ÈÄ Á¦°Å + ½ºÄÉÀÏ
+        // 1) ê° ì¹¸ì— ì¦‰ì‹œ í”„ë¦¬íŒ¹ ìƒì„±(Z=-5), lifetime í›„ ì œê±° + ìŠ¤ì¼€ì¼
         var spawned = new List<GameObject>(16);
         for (int i = 0; i < 16; i++)
         {
@@ -229,7 +230,7 @@ public class AttackController : MonoBehaviour
             }
         }
 
-        // 2) Ä­º° hitDelay ÈÄ È÷Æ® ÆÇÁ¤
+        // 2) ì¹¸ë³„ hitDelay í›„ íˆíŠ¸ íŒì •
         bool damageApplied = false;
         var running = new List<Coroutine>(16);
 
@@ -238,7 +239,7 @@ public class AttackController : MonoBehaviour
             if (mask != null && i < mask.Length && mask[i])
             {
                 float d = (hitDelays != null && hitDelays.Length > i) ? Mathf.Max(0f, hitDelays[i]) : 0f;
-                var pos = centersFoe[i]; pos.z = tileZ; // ÆÇÁ¤¿ë Z´Â ¹«°ü
+                var pos = centersFoe[i]; pos.z = tileZ; // íŒì •ìš© ZëŠ” ë¬´ê´€
 
                 running.Add(StartCoroutine(CoDelayThenRectHit(
                     d, pos, so, self, foe,
@@ -250,10 +251,10 @@ public class AttackController : MonoBehaviour
         foreach (var co in running) if (co != null) yield return co;
     }
 
-    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
-    //  Launcher: ¶óº§ ¸ÅÄªÀ¸·Î ¹ß»çÃ¼ Á÷¼± ÀÌµ¿
-    //  (¡Ú¡Ú ¼öÁ¤: ÀÌµ¿ Áß Ãæµ¹ Áï½Ã µ¥¹ÌÁö/¼Ò¸ê Ã³¸®)
-    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    //  Launcher: ë¼ë²¨ ë§¤ì¹­ìœ¼ë¡œ ë°œì‚¬ì²´ ì§ì„  ì´ë™
+    //  (â˜…â˜… ìˆ˜ì •: ì´ë™ ì¤‘ ì¶©ëŒ ì¦‰ì‹œ ë°ë¯¸ì§€/ì†Œë©¸ ì²˜ë¦¬)
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     private IEnumerator LaunchProjectilesByLabels(
         AttackCardSO.Wave w, Faction self, Faction foe,
         Vector3[] centersA, Vector3[] centersB, AttackCardSO so)
@@ -267,7 +268,7 @@ public class AttackController : MonoBehaviour
         bool damageApplied = false;
         var running = new List<Coroutine>();
 
-        foreach (var kv in mapA) // label ¡æ src indices
+        foreach (var kv in mapA) // label â†’ src indices
         {
             int label = kv.Key; if (label == 0) continue;
             if (!mapB.TryGetValue(label, out var dstList)) continue;
@@ -276,16 +277,16 @@ public class AttackController : MonoBehaviour
             for (int si = 0; si < srcList.Count; si++)
             {
                 int srcIdx = srcList[si];
-                var startPos = centersA[srcIdx]; startPos.z = ProjectileZ; // Z °íÁ¤
+                var startPos = centersA[srcIdx]; startPos.z = ProjectileZ; // Z ê³ ì •
 
                 for (int di = 0; di < dstList.Count; di++)
                 {
                     int dstIdx = dstList[di];
-                    var endPos = centersB[dstIdx]; endPos.z = ProjectileZ; // Z °íÁ¤
+                    var endPos = centersB[dstIdx]; endPos.z = ProjectileZ; // Z ê³ ì •
 
                     float launchDelay = 0f;
                     if (w.hitDelays != null && w.hitDelays.Length > srcIdx)
-                        launchDelay = Mathf.Max(0f, w.hitDelays[srcIdx]); // Ãâ¹ßÄ­ ±âÁØ Áö¿¬
+                        launchDelay = Mathf.Max(0f, w.hitDelays[srcIdx]); // ì¶œë°œì¹¸ ê¸°ì¤€ ì§€ì—°
 
                     running.Add(StartCoroutine(CoLaunchProjectileLine_MoveHit(
                         w, startPos, endPos, launchDelay, so, self, foe,
@@ -311,7 +312,8 @@ public class AttackController : MonoBehaviour
         return dict;
     }
 
-    // ¡Ú »õ ¹öÀü: ÀÌµ¿ Áß ¸Å ÇÁ·¹ÀÓ AABB·Î Ãæµ¹ Ã¼Å© ¡æ Áï½Ã µ¥¹ÌÁö/ÀÓÆÑÆ® ¡æ (¿É¼Ç) ÆÄ±«
+            ApplyEffectSorting(proj);
+    // â˜… ìƒˆ ë²„ì „: ì´ë™ ì¤‘ ë§¤ í”„ë ˆì„ AABBë¡œ ì¶©ëŒ ì²´í¬ â†’ ì¦‰ì‹œ ë°ë¯¸ì§€/ì„íŒ©íŠ¸ â†’ (ì˜µì…˜) íŒŒê´´
     private IEnumerator CoLaunchProjectileLine_MoveHit(
         AttackCardSO.Wave w,
         Vector3 startPos, Vector3 endPos, float delay,
@@ -329,9 +331,9 @@ public class AttackController : MonoBehaviour
 
         float dist = Vector3.Distance(startPos, endPos);
         float speed = Mathf.Max(0f, w.projectileSpeed);
-        float t = (dist <= 0.0001f || speed <= 0f) ? 1f : 0f; // ¼Óµµ 0 ¡æ Áï½Ã µµÂø
+        float t = (dist <= 0.0001f || speed <= 0f) ? 1f : 0f; // ì†ë„ 0 â†’ ì¦‰ì‹œ ë„ì°©
 
-        // È÷Æ®¹Ú½º ÃÖ¼Ò º¸Á¤
+        // íˆíŠ¸ë°•ìŠ¤ ìµœì†Œ ë³´ì •
         float hbW = Mathf.Max(0.01f, w.projectileHitWidth);
         float hbH = Mathf.Max(0.01f, w.projectileHitHeight);
 
@@ -344,7 +346,7 @@ public class AttackController : MonoBehaviour
             pos.z = ProjectileZ;
             if (proj) proj.transform.position = pos;
 
-            // ÀÌµ¿ Áß Ãæµ¹: ÇÑ Ä«µå´ç 1È¸¸¸ µ¥¹ÌÁö(¿É¼Ç)
+            // ì´ë™ ì¤‘ ì¶©ëŒ: í•œ ì¹´ë“œë‹¹ 1íšŒë§Œ ë°ë¯¸ì§€(ì˜µì…˜)
             if (!(getDamageApplied() && oneHitPerCard))
             {
                 if (CheckRectHitNow(pos, hbW, hbH))
@@ -354,20 +356,20 @@ public class AttackController : MonoBehaviour
 
                     if (w.vfxPrefab) SpawnVfx(w.vfxPrefab, pos, w.vfxLifetime);
                     if (proj && w.destroyOnImpact) Destroy(proj);
-                    yield break; // ÀÌ ¹ß»çÃ¼ Á¾·á
+                    yield break; // ì´ ë°œì‚¬ì²´ ì¢…ë£Œ
                 }
             }
 
             yield return null;
         }
 
-        // µµÂøÇßÁö¸¸ ÀÌµ¿ Áß ÇÑ ¹øµµ ¸ÂÃßÁö ¸øÇßÀ¸¸é ¼Ò¸ê
+        // ë„ì°©í–ˆì§€ë§Œ ì´ë™ ì¤‘ í•œ ë²ˆë„ ë§ì¶”ì§€ ëª»í–ˆìœ¼ë©´ ì†Œë©¸
         if (proj) Destroy(proj);
     }
 
-    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
-    //  °øÅë À¯Æ¿
-    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    //  ê³µí†µ ìœ í‹¸
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     private bool[] BuildWarningMaskWithLabelsB(bool[] baseMask, int[] labelsB)
     {
         // baseMask OR (labelsB>0)
@@ -420,6 +422,30 @@ public class AttackController : MonoBehaviour
         return true;
     }
 
+    private int ResolveEffectTopOrder(Transform ignoreRoot)
+    {
+        int maxOrder = int.MinValue;
+        var allRenderers = FindObjectsOfType<SpriteRenderer>(true);
+        for (int i = 0; i < allRenderers.Length; i++)
+        {
+            var sr = allRenderers[i];
+            if (!sr) continue;
+            if (ignoreRoot != null && sr.transform.IsChildOf(ignoreRoot)) continue;
+            if (sr.sortingOrder > maxOrder) maxOrder = sr.sortingOrder;
+        }
+        if (maxOrder == int.MinValue) return 1000;
+        return maxOrder + effectSortingPadding;
+    }
+
+    private void ApplyEffectSorting(GameObject fxObject)
+    {
+        if (!useDynamicEffectSorting || fxObject == null) return;
+        int targetOrder = ResolveEffectTopOrder(fxObject.transform);
+        var renderers = fxObject.GetComponentsInChildren<SpriteRenderer>(true);
+        for (int i = 0; i < renderers.Length; i++)
+            renderers[i].sortingOrder = targetOrder;
+    }
+
     private static Vector3 AveragePosition(bool[] mask, Vector3[] centers)
     {
         Vector3 sum = Vector3.zero; int cnt = 0;
@@ -429,10 +455,11 @@ public class AttackController : MonoBehaviour
         var avg = sum / cnt; avg.z = 0f; return avg;
     }
 
-    private static void SpawnVfx(GameObject prefab, Vector3 pos, float life)
+    private void SpawnVfx(GameObject prefab, Vector3 pos, float life)
     {
         if (!prefab) return;
         var go = GameObject.Instantiate(prefab, pos, Quaternion.identity);
+        ApplyEffectSorting(go);
         if (life > 0f) GameObject.Destroy(go, life);
     }
 }

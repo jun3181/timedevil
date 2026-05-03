@@ -57,7 +57,7 @@ public class HandSelectController : MonoBehaviour
         {
             if (hand.CardCount <= 0)
             {
-                desc?.ShowOneShotMessage("사용 가능한 카드가 없습니다.", 1.25f);
+                desc?.ShowOneShotMessage("선택가능한 카드가 없습니다. Q를 눌러 취소하세요.", 1.25f);
                 noCardNoticeShown = true;
                 return;
             }
