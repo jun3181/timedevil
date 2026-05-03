@@ -213,10 +213,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   panel: {fileID: 1146908926}
-  image: {fileID: 1146908928}
-  text: {fileID: 0}
-  sprite: {fileID: 0}
+  illustrationImage: {fileID: 0}
+  messageText: {fileID: 0}
+  illustrationSprite: {fileID: 0}
   message: 
+  closeWithKey: 1
+  closeKey: 101
+  waitUntilClosed: 1
+  autoCloseDelay: 0
+  lockPlayerInput: 1
 --- !u!1 &13449013
 GameObject:
   m_ObjectHideFlags: 0
@@ -8616,9 +8621,9 @@ MonoBehaviour:
     - {fileID: 163536249}
     - {fileID: 318803556}
     - {fileID: 891191253}
-  - key: Trigger6
+  - key: Trigger5
     steps:
-    - {fileID: 0}
+    - {fileID: 1541091546}
   allowReentrySameKey: 0
   debugLog: 1
 --- !u!4 &345882305
@@ -30880,7 +30885,7 @@ MonoBehaviour:
   debugLog: 1
   markAsSleepLoad: 0
   loadSceneFromProgress: 0
-  fallbackDreamSceneName: Move_Tutorial
+  fallbackDreamSceneName: testbattle
   overrideCutsceneStartKey: 0
   cutsceneStartKey: CutScene1
   saveReturnContext: 1
@@ -34099,10 +34104,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   panel: {fileID: 1821018948}
-  image: {fileID: 2023173060}
-  text: {fileID: 0}
-  sprite: {fileID: -130197466, guid: f8700385f4a2ee24e8bd2680e3246486, type: 3}
+  illustrationImage: {fileID: 0}
+  messageText: {fileID: 0}
+  illustrationSprite: {fileID: 0}
   message: 
+  closeWithKey: 1
+  closeKey: 101
+  waitUntilClosed: 1
+  autoCloseDelay: 0
+  lockPlayerInput: 1
 --- !u!1 &2023173058
 GameObject:
   m_ObjectHideFlags: 0
