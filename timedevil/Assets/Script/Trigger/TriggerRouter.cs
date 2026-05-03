@@ -17,7 +17,7 @@ public class TriggerRouter : MonoBehaviour
     public List<Route> routes = new();
 
     [Header("Policy")]
-    [Tooltip("false면 같은 key가 실행 중일 때 재요청은 무시")]
+    [Tooltip("false  key    청 ")]
     public bool allowReentrySameKey = false;
 
     [Header("Debug")]
@@ -33,7 +33,7 @@ public class TriggerRouter : MonoBehaviour
 
     private void OnValidate()
     {
-        // 에디터에서 키 중복 체크 도움
+        // 沽 키 揷 체크 
         BuildMap();
     }
 
@@ -50,13 +50,13 @@ public class TriggerRouter : MonoBehaviour
 
             if (string.IsNullOrWhiteSpace(r.key))
             {
-                if (debugLog) Debug.LogWarning($"[TriggerRouter] routes[{i}] key가 비어있음");
+                if (debugLog) Debug.LogWarning($"[TriggerRouter] routes[{i}] key ");
                 continue;
             }
 
             if (_map.ContainsKey(r.key))
             {
-                Debug.LogError($"[TriggerRouter] Route key 중복: '{r.key}' (하나만 남겨야 함)");
+                Debug.LogError($"[TriggerRouter] Route key 揷: '{r.key}' (毬 輧 )");
                 continue;
             }
 
@@ -68,7 +68,7 @@ public class TriggerRouter : MonoBehaviour
     {
         if (string.IsNullOrWhiteSpace(key))
         {
-            if (debugLog) Debug.LogWarning("[TriggerRouter] RequestRoute: key가 비어있음");
+            if (debugLog) Debug.LogWarning("[TriggerRouter] RequestRoute: key ");
             return;
         }
 
@@ -120,5 +120,11 @@ public class TriggerRouter : MonoBehaviour
 
         if (debugLog) Debug.Log($"[TriggerRouter] END key='{key}'");
         _runningKeys.Remove(key);
+    }
+
+    public bool IsRouteRunning(string key)
+    {
+        if (string.IsNullOrWhiteSpace(key)) return false;
+        return _runningKeys.Contains(key);
     }
 }
