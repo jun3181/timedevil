@@ -75,6 +75,7 @@ public class HandSelectController : MonoBehaviour
             noCardNoticeShown = false;
             desc?.ClearTemporaryMessage();
             menu.EnableInput(true);
+            if (panelController) panelController.SetGameplayView(panelViewBeforeSelect);
             return;
         }
 
@@ -135,4 +136,5 @@ public class HandSelectController : MonoBehaviour
         if (!rt) return;
         externalSelector.rectTransform.position = rt.position;
     }
+
 }
