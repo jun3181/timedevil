@@ -47,6 +47,8 @@ public class TriggerStep_HandDrop : TriggerStepBase
     [Header("Animator (Optional)")]
     [Tooltip("체크하면 이동 시 PlayerMove 스타일 파라미터를 함께 세팅합니다.")]
     [SerializeField] private bool driveAnimatorLikePlayerMove = false;
+    [Tooltip("비우면 handObject에서 Animator를 찾습니다. 필요하면 직접 지정하세요.")]
+    [SerializeField] private Animator animatorTarget;
     [SerializeField] private bool strictAnimatorParamCheck = true;
     [SerializeField] private string paramIsChange = "isChange";
     [SerializeField] private string paramHAxisRaw = "hAxisRaw";
@@ -82,15 +84,15 @@ public class TriggerStep_HandDrop : TriggerStepBase
         CacheStartIfNeeded();
 
         var tr = handObject.transform;
-        Animator anim = handObject.GetComponent<Animator>();
+        Animator anim = ResolveAnimator();
 
         bool canDriveAnimator = driveAnimatorLikePlayerMove;
         if (canDriveAnimator && (!anim || (strictAnimatorParamCheck && !HasRequiredParams(anim))))
         {
             if (!anim)
-                Debug.LogWarning("[TriggerStep_HandDrop] Animator를 찾지 못했습니다. Animator 구동만 건너뜁니다.");
+                Debug.LogWarning($"[TriggerStep_HandDrop] Animator를 찾지 못했습니다. handObject='{handObject.name}' animatorTarget='{(animatorTarget ? animatorTarget.name : "null")}'. Animator 구동만 건너뜁니다.");
             else
-                Debug.LogWarning($"[TriggerStep_HandDrop] Animator 파라미터 누락: '{paramIsChange}', '{paramHAxisRaw}', '{paramVAxisRaw}'. Animator 구동만 건너뜁니다.");
+                Debug.LogWarning($"[TriggerStep_HandDrop] Animator 파라미터 누락: '{paramIsChange}', '{paramHAxisRaw}', '{paramVAxisRaw}' @ '{anim.name}'. Animator 구동만 건너뜁니다.");
 
             canDriveAnimator = false;
         }
@@ -247,6 +249,21 @@ public class TriggerStep_HandDrop : TriggerStepBase
         anim.SetInteger(paramHAxisRaw, 0);
         anim.SetInteger(paramVAxisRaw, 0);
         anim.SetBool(paramIsChange, false);
+    }
+
+
+    private Animator ResolveAnimator()
+    {
+        if (animatorTarget) return animatorTarget;
+        if (!handObject) return null;
+
+        Animator anim = handObject.GetComponent<Animator>();
+        if (anim) return anim;
+
+        anim = handObject.GetComponentInChildren<Animator>(true);
+        if (anim) return anim;
+
+        return handObject.GetComponentInParent<Animator>();
     }
 
     private bool HasRequiredParams(Animator anim)
