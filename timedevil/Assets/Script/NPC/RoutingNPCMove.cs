@@ -130,5 +130,7 @@ public class RoutingNPCMove : MonoBehaviour
         }
 
         nodes.RemoveAt(nodes.Count-1);
+
+        routingCoroutine = null;
     }
 }
