@@ -27,6 +27,10 @@ public class TriggerGet : MonoBehaviour
     [Header("Debug")]
     public bool debugLog = true;
 
+    [Header("Optional Parallel Step")]
+    [Tooltip("같은 TriggerGet에서 Route 실행과 동시에 카메라 연출을 병행 시작")]
+    public TriggerStep_CameraMove cameraMoveStep;
+
     private int _called = 0;
     private Collider2D _selfCollider;
 
@@ -50,6 +54,7 @@ public class TriggerGet : MonoBehaviour
         }
 
         if (!router) router = FindObjectOfType<TriggerRouter>(true);
+        if (!cameraMoveStep) cameraMoveStep = GetComponent<TriggerStep_CameraMove>();
     }
 
     private void Update()
@@ -135,6 +140,9 @@ public class TriggerGet : MonoBehaviour
             instigatorCollider: other,
             playerMove: pm
         );
+
+        if (cameraMoveStep != null)
+            cameraMoveStep.BeginFromTriggerGet(ctx);
 
         router.RequestRoute(routeKey, ctx);
     }
