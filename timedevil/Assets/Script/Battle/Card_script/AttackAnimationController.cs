@@ -1,4 +1,4 @@
-using System; // ¡Ú Ãß°¡
+    [SerializeField] private int sortingOrder = 1000;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -17,13 +17,13 @@ public class AttackAnimationController : MonoBehaviour
 
     [Header("Fade")]
     [SerializeField, Range(0f, 1f)] private float peakAlpha = 0.75f;
-    [SerializeField] private float minWindow = 0.06f;   // ³Ê¹« ÂªÀº °ª º¸Á¤
+    [SerializeField] private float minWindow = 0.06f;   // ë„ˆë¬´ ì§§ì€ ê°’ ë³´ì •
     [SerializeField] private bool useUnscaledTime = false;
 
     private Sprite _sprite;
     private readonly List<GameObject> _pool = new List<GameObject>();
-    private Coroutine[] _routines;    // Å¸ÀÏº° ÁøÇà ÄÚ·çÆ¾
-    private int[] _seq;               // Å¸ÀÏº° ¹öÀü ÅäÅ«(·¹ÀÌ½º ¹æÁö)
+    private Coroutine[] _routines;    // íƒ€ì¼ë³„ ì§„í–‰ ì½”ë£¨í‹´
+    private int[] _seq;               // íƒ€ì¼ë³„ ë²„ì „ í† í°(ë ˆì´ìŠ¤ ë°©ì§€)
 
     public event Action<int> OnTilePeak;
 
@@ -49,7 +49,7 @@ public class AttackAnimationController : MonoBehaviour
             sr.sortingLayerName = sortingLayer;
             sr.sortingOrder = sortingOrder;
 
-            // ÃÊ±â Åõ¸í
+            // ì´ˆê¸° íˆ¬ëª…
             var c = sr.color; c.r = 0f; c.g = 0f; c.b = 0f; c.a = 0f;
             sr.color = c;
 
@@ -62,7 +62,7 @@ public class AttackAnimationController : MonoBehaviour
         if (_seq == null || _seq.Length < _pool.Count) _seq = new int[_pool.Count];
     }
 
-    /// <summary> ¸¶½ºÅ©¿¡ ¸ÂÃç À§Ä¡½ÃÅ°°í 'Ç¥½Ã ÁØºñ(¾ËÆÄ0)' </summary>
+    /// <summary> ë§ˆìŠ¤í¬ì— ë§ì¶° ìœ„ì¹˜ì‹œí‚¤ê³  'í‘œì‹œ ì¤€ë¹„(ì•ŒíŒŒ0)' </summary>
     public void PlaceAndShowMask(bool[] mask16, Vector3[] centers16)
     {
         EnsurePool(16);
@@ -99,7 +99,7 @@ public class AttackAnimationController : MonoBehaviour
         }
     }
 
-    /// <summary> ¸ğµÎ ²ô±â(ÄÚ·çÆ¾ ÁßÁö + ºñÈ°¼º) </summary>
+    /// <summary> ëª¨ë‘ ë„ê¸°(ì½”ë£¨í‹´ ì¤‘ì§€ + ë¹„í™œì„±) </summary>
     public void HideAll()
     {
         for (int i = 0; i < _pool.Count; i++)
@@ -111,8 +111,8 @@ public class AttackAnimationController : MonoBehaviour
     }
 
     /// <summary>
-    /// idx Å¸ÀÏ¿¡ ´ëÇØ windowSeconds µ¿¾È ÆäÀÌµå(ÀÎ/¾Æ¿ô °¢°¢ 1/2¾¿).
-    /// windowSeconds°¡ ÀÛÀ¸¸é minWindow·Î º¸Á¤.
+    /// idx íƒ€ì¼ì— ëŒ€í•´ windowSeconds ë™ì•ˆ í˜ì´ë“œ(ì¸/ì•„ì›ƒ ê°ê° 1/2ì”©).
+    /// windowSecondsê°€ ì‘ìœ¼ë©´ minWindowë¡œ ë³´ì •.
     /// </summary>
     public void StartPulseWindow(int idx, float windowSeconds, float? peakOverride = null)
     {
@@ -125,8 +125,8 @@ public class AttackAnimationController : MonoBehaviour
         float fout = win * 0.5f;
         float peak = Mathf.Clamp01(peakOverride ?? peakAlpha);
 
-        _seq[idx]++;                         // »õ ¹öÀü
-        CancelIfAny(idx);                    // ±âÁ¸ ÁßÁö
+        _seq[idx]++;                         // ìƒˆ ë²„ì „
+        CancelIfAny(idx);                    // ê¸°ì¡´ ì¤‘ì§€
         _routines[idx] = StartCoroutine(PulseRoutine(idx, fin, fout, peak, _seq[idx]));
     }
 
@@ -165,7 +165,7 @@ public class AttackAnimationController : MonoBehaviour
             }
         }
 
-        // ¡Ú ÇÇÅ© ½º³À + ¾Ë¸²
+        // â˜… í”¼í¬ ìŠ¤ëƒ… + ì•Œë¦¼
         c.a = peak; sr.color = c;
         OnTilePeak?.Invoke(idx);
 
@@ -183,7 +183,7 @@ public class AttackAnimationController : MonoBehaviour
             }
         }
 
-        // Á¾·á ½º³À
+        // ì¢…ë£Œ ìŠ¤ëƒ…
         c.a = 0f; sr.color = c;
     }
 

@@ -8,15 +8,18 @@ public class HandSelectController : MonoBehaviour
     [SerializeField] private HandUI hand;
     [SerializeField] private Image externalSelector; // 옵션
     [SerializeField] private CardUseOrchestrator orchestrator;
+    [SerializeField] private DescriptionPanelController desc;
 
     [Header("Behavior")]
     [SerializeField] private bool wrap = true;
+    private bool noCardNoticeShown = false;
 
     void Reset()
     {
         if (!menu) menu = FindObjectOfType<BattleMenuController>(true);
         if (!hand) hand = FindObjectOfType<HandUI>(true);
         if (!orchestrator) orchestrator = FindObjectOfType<CardUseOrchestrator>(true);
+        if (!desc) desc = FindObjectOfType<DescriptionPanelController>(true);
     }
 
     void Awake()
@@ -52,8 +55,22 @@ public class HandSelectController : MonoBehaviour
         // 일반 진입(카드 탭) — 단, 버림 단계가 아닐 때만
         if (!inDiscard && !hand.IsInSelectMode && menu.Index == 0 && Input.GetKeyDown(KeyCode.E))
         {
+            if (hand.CardCount <= 0)
+            {
+                desc?.ShowOneShotMessage("사용 가능한 카드가 없습니다.", 1.25f);
+                noCardNoticeShown = true;
+                return;
+            }
             hand.EnterSelectMode();
             menu.EnableInput(false);
+            return;
+        }
+
+        if (noCardNoticeShown && Input.GetKeyDown(KeyCode.Q))
+        {
+            noCardNoticeShown = false;
+            desc?.ClearTemporaryMessage();
+            menu.EnableInput(true);
             return;
         }
 
