@@ -132,7 +132,6 @@ public class RoutingNPCMove : MonoBehaviour
             }
 
             savedTargetNodeIndex = i;
-            Debug.Log(savedTargetNodeIndex);
             int j = 0;
             while(j < path.Count) {
                 if(npcMove.WasOnMoving()) {
