@@ -29,6 +29,7 @@ public class RoutingNPCMove : MonoBehaviour
 
     private Dictionary<(Vector2, Vector2), List<Vector2Int>> edges = new();
     private int savedTargetNodeIndex = -1;
+    private List<int> savedNodeIndexList = null;
 
     void OnValidate() {
         if(searchSize<Physics2D.defaultContactOffset) {
@@ -68,6 +69,7 @@ public class RoutingNPCMove : MonoBehaviour
         StopCoroutine(routingCoroutine);
         routingCoroutine = null;
         savedTargetNodeIndex = -1;
+        savedNodeIndexList = null;
 
         npcMove.Stop();
     }
@@ -85,16 +87,22 @@ public class RoutingNPCMove : MonoBehaviour
         List<GameObject> nodes = new(layovers);
 
         // 0. Shuffle Index Array
-        List<int> indexList = Enumerable.Range(0, nodes.Count).ToList();
+        List<int> indexList;
+        if(savedNodeIndexList==null) {
+            indexList = Enumerable.Range(0, nodes.Count).ToList();
 
-        for(int i = indexList.Count-1; i>0; i--) {
-            int targetIndex = Random.Range(0, i + 1);
-            (indexList[i], indexList[targetIndex]) = (indexList[targetIndex], indexList[i]);
+            for(int i = indexList.Count-1; i>0; i--) {
+                int targetIndex = Random.Range(0, i + 1);
+                (indexList[i], indexList[targetIndex]) = (indexList[targetIndex], indexList[i]);
+            }
+
+            indexList.Add(nodes.Count);
+            savedNodeIndexList = indexList;
+        } else {
+            indexList = savedNodeIndexList;
         }
 
         nodes.Add(target);
-        indexList.Add(nodes.Count-1);
-
         int[] indexArray = indexList.ToArray();
 
         yield return null;
@@ -123,7 +131,8 @@ public class RoutingNPCMove : MonoBehaviour
                 continue;
             }
 
-            savedTargetNodeIndex = i + 1;
+            savedTargetNodeIndex = i;
+            Debug.Log(savedTargetNodeIndex);
             int j = 0;
             while(j < path.Count) {
                 if(npcMove.WasOnMoving()) {
@@ -152,5 +161,6 @@ public class RoutingNPCMove : MonoBehaviour
 
         routingCoroutine = null;
         savedTargetNodeIndex = -1;
+        savedNodeIndexList = null;
     }
 }
