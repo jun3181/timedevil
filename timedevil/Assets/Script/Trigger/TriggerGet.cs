@@ -27,12 +27,17 @@ public class TriggerGet : MonoBehaviour
     [Header("Debug")]
     public bool debugLog = true;
 
+    [Header("Optional Parallel Step")]
+    [Tooltip("같은 TriggerGet에서 Route 실행과 동시에 카메라 연출을 병행 시작")]
+    public TriggerStep_CameraMove cameraMoveStep;
+
     private int _called = 0;
     private Collider2D _selfCollider;
 
     private bool _pendingByCutscene = false;
     private Collider2D _pendingInstigatorCollider = null;
     private PlayerMove _pendingPlayerMove = null;
+    private Coroutine _cameraRestoreCo = null;
 
     private void Reset()
     {
@@ -50,6 +55,7 @@ public class TriggerGet : MonoBehaviour
         }
 
         if (!router) router = FindObjectOfType<TriggerRouter>(true);
+        if (!cameraMoveStep) cameraMoveStep = GetComponent<TriggerStep_CameraMove>();
     }
 
     private void Update()
@@ -136,7 +142,26 @@ public class TriggerGet : MonoBehaviour
             playerMove: pm
         );
 
+        if (cameraMoveStep != null)
+        {
+            cameraMoveStep.BeginFromTriggerGet(ctx);
+            if (_cameraRestoreCo != null) StopCoroutine(_cameraRestoreCo);
+            _cameraRestoreCo = StartCoroutine(CoRestoreCameraAfterRoute(routeKey));
+        }
+
         router.RequestRoute(routeKey, ctx);
+    }
+
+    private System.Collections.IEnumerator CoRestoreCameraAfterRoute(string key)
+    {
+        yield return null; // Route 코루틴이 _runningKeys에 등록될 시간 보장
+        while (router != null && router.IsRouteRunning(key))
+            yield return null;
+
+        if (cameraMoveStep != null)
+            cameraMoveStep.RestorePreviousMode();
+
+        _cameraRestoreCo = null;
     }
 
     private void ClearPending()

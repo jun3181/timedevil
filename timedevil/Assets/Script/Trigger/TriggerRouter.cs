@@ -11,13 +11,16 @@ public class TriggerRouter : MonoBehaviour
     {
         public string key = "Trigger1";
         public List<TriggerStepBase> steps = new();
+
+        [Tooltip("ì´ Route ì‹¤í–‰ ì¤‘ì—ëŠ” í”Œë ˆì´ì–´ ìž…ë ¥(GameManager Action Lock)ì„ ë§‰ì„ì§€ ì—¬ë¶€")]
+        public bool blockPlayerInputWhileRunning = false;
     }
 
     [Header("Routes (Key -> Steps)")]
     public List<Route> routes = new();
 
     [Header("Policy")]
-    [Tooltip("false¸é °°Àº key°¡ ½ÇÇà ÁßÀÏ ¶§ Àç¿äÃ»Àº ¹«½Ã")]
+    [Tooltip("false  key    Ã» ")]
     public bool allowReentrySameKey = false;
 
     [Header("Debug")]
@@ -25,6 +28,7 @@ public class TriggerRouter : MonoBehaviour
 
     private readonly Dictionary<string, Route> _map = new();
     private readonly HashSet<string> _runningKeys = new();
+    private int _heldRouteInputLockCount = 0;
 
     private void Awake()
     {
@@ -33,8 +37,18 @@ public class TriggerRouter : MonoBehaviour
 
     private void OnValidate()
     {
-        // ¿¡µðÅÍ¿¡¼­ Å° Áßº¹ Ã¼Å© µµ¿ò
+        // Í¿ Å° ßº Ã¼Å© 
         BuildMap();
+    }
+
+    private void OnDisable()
+    {
+        ReleaseAllRouteInputLocks("OnDisable");
+    }
+
+    private void OnDestroy()
+    {
+        ReleaseAllRouteInputLocks("OnDestroy");
     }
 
     private void BuildMap()
@@ -50,13 +64,13 @@ public class TriggerRouter : MonoBehaviour
 
             if (string.IsNullOrWhiteSpace(r.key))
             {
-                if (debugLog) Debug.LogWarning($"[TriggerRouter] routes[{i}] key°¡ ºñ¾îÀÖÀ½");
+                if (debugLog) Debug.LogWarning($"[TriggerRouter] routes[{i}] key ");
                 continue;
             }
 
             if (_map.ContainsKey(r.key))
             {
-                Debug.LogError($"[TriggerRouter] Route key Áßº¹: '{r.key}' (ÇÏ³ª¸¸ ³²°Ü¾ß ÇÔ)");
+                Debug.LogError($"[TriggerRouter] Route key ßº: '{r.key}' (Ï³ Ü¾ )");
                 continue;
             }
 
@@ -68,7 +82,7 @@ public class TriggerRouter : MonoBehaviour
     {
         if (string.IsNullOrWhiteSpace(key))
         {
-            if (debugLog) Debug.LogWarning("[TriggerRouter] RequestRoute: key°¡ ºñ¾îÀÖÀ½");
+            if (debugLog) Debug.LogWarning("[TriggerRouter] RequestRoute: key ");
             return;
         }
 
@@ -90,35 +104,77 @@ public class TriggerRouter : MonoBehaviour
     private IEnumerator CoRunRoute(string key, Route route, TriggerContext ctx)
     {
         _runningKeys.Add(key);
+        bool heldInputLock = false;
 
         if (debugLog)
             Debug.Log($"[TriggerRouter] START key='{key}' steps={(route.steps != null ? route.steps.Count : 0)} trigger='{(ctx?.trigger ? ctx.trigger.name : "null")}'");
 
-        if (route.steps != null)
+        if (route.blockPlayerInputWhileRunning && GameManager.Instance != null)
         {
-            for (int i = 0; i < route.steps.Count; i++)
-            {
-                var step = route.steps[i];
-                if (!step) continue;
-
-                if (debugLog) Debug.Log($"[TriggerRouter]  step[{i}] -> {step.GetType().Name} ({step.name})");
-
-                IEnumerator it = null;
-                try
-                {
-                    it = step.Execute(ctx);
-                }
-                catch (System.Exception e)
-                {
-                    Debug.LogError($"[TriggerRouter] step[{i}] Execute() throw: {e}");
-                }
-
-                if (it != null)
-                    yield return it;
-            }
+            GameManager.Instance.LockAction();
+            heldInputLock = true;
+            _heldRouteInputLockCount++;
+            if (debugLog) Debug.Log($"[TriggerRouter] INPUT LOCK key='{key}'");
         }
 
-        if (debugLog) Debug.Log($"[TriggerRouter] END key='{key}'");
-        _runningKeys.Remove(key);
+        try
+        {
+            if (route.steps != null)
+            {
+                for (int i = 0; i < route.steps.Count; i++)
+                {
+                    var step = route.steps[i];
+                    if (!step) continue;
+
+                    if (debugLog) Debug.Log($"[TriggerRouter]  step[{i}] -> {step.GetType().Name} ({step.name})");
+
+                    IEnumerator it = null;
+                    try
+                    {
+                        it = step.Execute(ctx);
+                    }
+                    catch (System.Exception e)
+                    {
+                        Debug.LogError($"[TriggerRouter] step[{i}] Execute() throw: {e}");
+                    }
+
+                    if (it != null)
+                        yield return it;
+                }
+            }
+        }
+        finally
+        {
+            if (heldInputLock && GameManager.Instance != null)
+            {
+                GameManager.Instance.UnlockAction();
+                _heldRouteInputLockCount = Mathf.Max(0, _heldRouteInputLockCount - 1);
+                if (debugLog) Debug.Log($"[TriggerRouter] INPUT UNLOCK key='{key}'");
+            }
+
+            if (debugLog) Debug.Log($"[TriggerRouter] END key='{key}'");
+            _runningKeys.Remove(key);
+        }
+    }
+
+    public bool IsRouteRunning(string key)
+    {
+        if (string.IsNullOrWhiteSpace(key)) return false;
+        return _runningKeys.Contains(key);
+    }
+
+    private void ReleaseAllRouteInputLocks(string reason)
+    {
+        if (_heldRouteInputLockCount <= 0) return;
+        if (GameManager.Instance == null) return;
+
+        int releaseCount = _heldRouteInputLockCount;
+        for (int i = 0; i < releaseCount; i++)
+            GameManager.Instance.UnlockAction();
+
+        _heldRouteInputLockCount = 0;
+
+        if (debugLog)
+            Debug.Log($"[TriggerRouter] Force INPUT UNLOCK x{releaseCount} ({reason})");
     }
 }
