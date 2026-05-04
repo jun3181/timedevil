@@ -156,7 +156,7 @@ public class TriggerStep_HandDrop : TriggerStepBase
                     tr.position = Vector3.LerpUnclamped(from, to, k);
 
                     if (canDriveAnimator && anim)
-                        ApplyDirection(anim, seg.direction, false);
+                        ApplyDirection(anim, seg.direction, true);
 
                     yield return null;
                 }
@@ -197,7 +197,7 @@ public class TriggerStep_HandDrop : TriggerStepBase
             tr.position = Vector3.LerpUnclamped(legacyFrom, legacyTo, k);
 
             if (canDriveAnimator && anim)
-                ApplyDirection(anim, legacyDir, false);
+                ApplyDirection(anim, legacyDir, true);
 
             yield return null;
         }
