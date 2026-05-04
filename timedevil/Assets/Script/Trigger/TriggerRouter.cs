@@ -11,6 +11,9 @@ public class TriggerRouter : MonoBehaviour
     {
         public string key = "Trigger1";
         public List<TriggerStepBase> steps = new();
+
+        [Tooltip("이 Route 실행 중에는 플레이어 입력(GameManager Action Lock)을 막을지 여부")]
+        public bool blockPlayerInputWhileRunning = false;
     }
 
     [Header("Routes (Key -> Steps)")]
@@ -90,9 +93,17 @@ public class TriggerRouter : MonoBehaviour
     private IEnumerator CoRunRoute(string key, Route route, TriggerContext ctx)
     {
         _runningKeys.Add(key);
+        bool heldInputLock = false;
 
         if (debugLog)
             Debug.Log($"[TriggerRouter] START key='{key}' steps={(route.steps != null ? route.steps.Count : 0)} trigger='{(ctx?.trigger ? ctx.trigger.name : "null")}'");
+
+        if (route.blockPlayerInputWhileRunning && GameManager.Instance != null)
+        {
+            GameManager.Instance.LockAction();
+            heldInputLock = true;
+            if (debugLog) Debug.Log($"[TriggerRouter] INPUT LOCK key='{key}'");
+        }
 
         if (route.steps != null)
         {
@@ -116,6 +127,12 @@ public class TriggerRouter : MonoBehaviour
                 if (it != null)
                     yield return it;
             }
+        }
+
+        if (heldInputLock && GameManager.Instance != null)
+        {
+            GameManager.Instance.UnlockAction();
+            if (debugLog) Debug.Log($"[TriggerRouter] INPUT UNLOCK key='{key}'");
         }
 
         if (debugLog) Debug.Log($"[TriggerRouter] END key='{key}'");
