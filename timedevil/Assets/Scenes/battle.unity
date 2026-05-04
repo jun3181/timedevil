@@ -1378,12 +1378,12 @@ MonoBehaviour:
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
-  m_FillMethod: 4
+  m_FillMethod: 3
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
+  m_PixelsPerUnitMultiplier: 3
 --- !u!222 &519244441
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1504,6 +1504,7 @@ MonoBehaviour:
   totalSeconds: 1
   desc: {fileID: 0}
   logDebug: 0
+  postResolvePanelDelay: 0.2
   attackController: {fileID: 1201525412}
   supportController: {fileID: 1201525409}
   drawController: {fileID: 1201525411}
@@ -5616,6 +5617,8 @@ MonoBehaviour:
   hand: {fileID: 860620052}
   externalSelector: {fileID: 0}
   orchestrator: {fileID: 593885361}
+  desc: {fileID: 0}
+  panelController: {fileID: 0}
   wrap: 1
 --- !u!114 &1069897055
 MonoBehaviour:
@@ -5641,6 +5644,8 @@ MonoBehaviour:
   endSubmitIndex: 3
   returnOnCardCancelKey: 1
   returnOnPlayerTurnStart: 1
+  submitViewDelay: 0.12
+  turnTransitionDelay: 0.16
   enemyTargets:
   - {fileID: 1250692066}
   gameplayTargets:
@@ -5951,6 +5956,12 @@ MonoBehaviour:
   enemyGridOrigin: {fileID: 1767689043}
   playerPawn: {fileID: 1345401700}
   enemyPawn: {fileID: 1064948988}
+  keepPawnZ: 1
+  playerPawnZ: -2
+  enemyPawnZ: -2
+  keepSortingOrder: 1
+  playerSortingOrder: 20
+  enemySortingOrder: 20
   playerRC: {x: 4, y: 1}
   enemyRC: {x: 2, y: 2}
   perCellSeconds: 0.15
@@ -6016,6 +6027,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9ba00dde70749c9448ac917d73b1c544, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  useDynamicEffectSorting: 1
+  effectSortingPadding: 12
   anim: {fileID: 1575189429}
   playerCentersPos:
   - {x: -5.98, y: 3.71, z: -2}
@@ -10558,6 +10571,9 @@ MonoBehaviour:
   sortingLayer: Default
   sortingOrder: 50
   tileZ: 0
+  useDynamicTopOrder: 1
+  dynamicOrderPadding: 10
+  fallbackSortingOrder: 1000
   peakAlpha: 0.75
   minWindow: 0.06
   useUnscaledTime: 0
