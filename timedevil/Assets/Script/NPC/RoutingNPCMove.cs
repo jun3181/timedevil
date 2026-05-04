@@ -28,6 +28,7 @@ public class RoutingNPCMove : MonoBehaviour
     private IEnumerator routingCoroutine;
 
     private Dictionary<(Vector2, Vector2), List<Vector2Int>> edges = new();
+    private int savedTargetNodeIndex = -1;
 
     void OnValidate() {
         if(searchSize<Physics2D.defaultContactOffset) {
@@ -50,7 +51,14 @@ public class RoutingNPCMove : MonoBehaviour
     public void StartRouting() {
         if(routingCoroutine!=null) return;
 
-        routingCoroutine = RoutingCoroutine();
+        routingCoroutine = RoutingCoroutine(nodes);
+        StartCoroutine(routingCoroutine);
+    }
+
+    public void ResumeRouting() {
+        if(routingCoroutine != null || savedTargetNodeIndex == -1) return;
+
+        routingCoroutine = RoutingCoroutine(nodes, savedTargetNodeIndex);
         StartCoroutine(routingCoroutine);
     }
 
@@ -59,11 +67,23 @@ public class RoutingNPCMove : MonoBehaviour
 
         StopCoroutine(routingCoroutine);
         routingCoroutine = null;
+        savedTargetNodeIndex = -1;
 
         npcMove.Stop();
     }
 
-    private IEnumerator RoutingCoroutine() {
+    public void IdleRouting() {
+        if(routingCoroutine == null) return;
+
+        StopCoroutine(routingCoroutine);
+        routingCoroutine = null;
+
+        npcMove.Stop();
+    }
+
+    private IEnumerator RoutingCoroutine(List<GameObject> layovers, int startIndex=0) {
+        List<GameObject> nodes = new(layovers);
+
         // 0. Shuffle Index Array
         List<int> indexList = Enumerable.Range(0, nodes.Count).ToList();
 
@@ -83,7 +103,7 @@ public class RoutingNPCMove : MonoBehaviour
         Vector2 currentPos;
         List<Vector2Int> path;
         WaitForSeconds waitForQuart = new(0.25f);
-        for(int i=0; i<nodes.Count; i++) {
+        for(int i=startIndex; i<nodes.Count; i++) {
             currentPos = npcMove.GetPosition();
             Vector2 nextPos = nodes[indexArray[i]].transform.position;
 
@@ -103,8 +123,9 @@ public class RoutingNPCMove : MonoBehaviour
                 continue;
             }
 
+            savedTargetNodeIndex = i + 1;
             int j = 0;
-            while(j<path.Count) {
+            while(j < path.Count) {
                 if(npcMove.WasOnMoving()) {
                     path = new();
                     j = 0;
@@ -129,8 +150,7 @@ public class RoutingNPCMove : MonoBehaviour
             }
         }
 
-        nodes.RemoveAt(nodes.Count-1);
-
         routingCoroutine = null;
+        savedTargetNodeIndex = -1;
     }
 }
