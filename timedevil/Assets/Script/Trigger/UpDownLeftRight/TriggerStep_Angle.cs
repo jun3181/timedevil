@@ -30,6 +30,12 @@ public class TriggerStep_Angle : TriggerStepBase
     [Tooltip("로컬 Z축 기준 회전(localRotation), 끄면 월드 Z축 기준(rotation)")]
     [SerializeField] private bool useLocalRotation = true;
 
+    [Tooltip("체크 시 오브젝트 중심(0,0) 기준 로컬 좌표를 회전 중심점으로 사용")]
+    [SerializeField] private bool useCustomPivotPoint = false;
+
+    [Tooltip("오브젝트 중심(0,0) 기준 회전 중심 로컬 좌표(X,Y)")]
+    [SerializeField] private Vector2 customPivotPoint = Vector2.zero;
+
     [Tooltip("true면 Time.unscaledDeltaTime 사용")]
     [SerializeField] private bool useUnscaledTime = false;
 
@@ -65,7 +71,8 @@ public class TriggerStep_Angle : TriggerStepBase
 
         Quaternion[] fromRot = new Quaternion[runTargets.Count];
         Quaternion[] toRot = new Quaternion[runTargets.Count];
-
+        Vector3[] fromPos = new Vector3[runTargets.Count];
+        Vector3[] toPos = new Vector3[runTargets.Count];
         for (int i = 0; i < runTargets.Count; i++)
         {
             Transform tr = runTargets[i];
@@ -76,6 +83,17 @@ public class TriggerStep_Angle : TriggerStepBase
 
             fromRot[i] = start;
             toRot[i] = end;
+            fromPos[i] = tr.position;
+            if (useCustomPivotPoint)
+            {
+                Vector3 pivot = GetPivotWorldPoint(tr);
+                Vector3 offset = tr.position - pivot;
+                toPos[i] = pivot + Quaternion.Euler(0f, 0f, signedAngle) * offset;
+            }
+            else
+            {
+                toPos[i] = tr.position;
+            }
 
             if (debugLog)
                 Debug.Log($"[TriggerStep_Angle] target={tr.name}, fromZ={start.eulerAngles.z:0.###}, toZ={end.eulerAngles.z:0.###}, dur={duration:0.###}");
@@ -94,6 +112,9 @@ public class TriggerStep_Angle : TriggerStepBase
                 Quaternion q = Quaternion.Slerp(fromRot[i], toRot[i], ratio);
                 if (useLocalRotation) tr.localRotation = q;
                 else tr.rotation = q;
+
+                if (useCustomPivotPoint)
+                    tr.position = Vector3.Lerp(fromPos[i], toPos[i], ratio);
             }
 
             float dt = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
@@ -108,6 +129,9 @@ public class TriggerStep_Angle : TriggerStepBase
 
             if (useLocalRotation) tr.localRotation = toRot[i];
             else tr.rotation = toRot[i];
+
+            if (useCustomPivotPoint)
+                tr.position = toPos[i];
         }
 
         if (debugLog)
@@ -116,8 +140,16 @@ public class TriggerStep_Angle : TriggerStepBase
 
     private void ApplyDelta(Transform tr, float signedAngle)
     {
+        Quaternion delta = Quaternion.Euler(0f, 0f, signedAngle);
         Quaternion baseRot = useLocalRotation ? tr.localRotation : tr.rotation;
-        Quaternion nextRot = baseRot * Quaternion.Euler(0f, 0f, signedAngle);
+        Quaternion nextRot = baseRot * delta;
+
+        if (useCustomPivotPoint)
+        {
+            Vector3 pivot = GetPivotWorldPoint(tr);
+            Vector3 offset = tr.position - pivot;
+            tr.position = pivot + delta * offset;
+        }
 
         if (useLocalRotation) tr.localRotation = nextRot;
         else tr.rotation = nextRot;
@@ -140,5 +172,11 @@ public class TriggerStep_Angle : TriggerStepBase
             list.Add(transform);
 
         return list;
+    }
+
+    private Vector3 GetPivotWorldPoint(Transform tr)
+    {
+        Vector3 pivotLocal = new Vector3(customPivotPoint.x, customPivotPoint.y, 0f);
+        return tr.TransformPoint(pivotLocal);
     }
 }
