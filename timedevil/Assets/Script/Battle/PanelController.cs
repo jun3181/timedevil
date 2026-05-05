@@ -91,6 +91,7 @@ public class PanelController : MonoBehaviour
     private Coroutine menuPanelRunning;
     private Coroutine delayedViewRoutine;
     private bool menuPanelsHidden;
+    private bool initialSyncRequested;
 
     private TurnState lastTurnState = TurnState.PlayerTurn;
     private bool lastHandSelectMode;
@@ -125,18 +126,11 @@ public class PanelController : MonoBehaviour
         if (menu) menu.onSubmit.AddListener(OnMenuSubmit);
         if (!turnManager) turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
         if (turnManager) turnManager.OnTurnChanged += HandleTurnChanged;
-    }
-
-    void Start()
-    {
-        if (syncInitialViewWithTurnState)
+        if (syncInitialViewWithTurnState && !initialSyncRequested)
+        {
+            initialSyncRequested = true;
             StartCoroutine(Co_SyncInitialViewWithTurnState());
-    }
-
-    void Start()
-    {
-        if (syncInitialViewWithTurnState)
-            StartCoroutine(Co_SyncInitialViewWithTurnState());
+        }
     }
 
     void OnDisable()
