@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Battle UI 메뉴 상호작용에 따라
@@ -91,6 +92,7 @@ public class PanelController : MonoBehaviour
     private Coroutine menuPanelRunning;
     private Coroutine delayedViewRoutine;
     private bool menuPanelsHidden;
+    private bool initialSyncRequested;
 
     private TurnState lastTurnState = TurnState.PlayerTurn;
     private bool lastHandSelectMode;
@@ -123,17 +125,18 @@ public class PanelController : MonoBehaviour
     void OnEnable()
     {
         if (menu) menu.onSubmit.AddListener(OnMenuSubmit);
-    }
-
-    void Start()
-    {
-        if (syncInitialViewWithTurnState)
+        if (!turnManager) turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
+        if (syncInitialViewWithTurnState && !initialSyncRequested)
+        {
+            initialSyncRequested = true;
             StartCoroutine(Co_SyncInitialViewWithTurnState());
+        }
     }
 
     void OnDisable()
     {
         if (menu) menu.onSubmit.RemoveListener(OnMenuSubmit);
+        if (turnManager) turnManager.OnTurnChanged -= HandleTurnChanged;
     }
 
     void Update()
@@ -256,12 +259,30 @@ public class PanelController : MonoBehaviour
 
     private IEnumerator Co_SyncInitialViewWithTurnState()
     {
-        yield return null;
-
         if (!turnManager) turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
+        if (!turnManager) yield break;
+
+        // 첫 턴이 실제로 확정될 때까지 기다렸다가 즉시 반영 (프레임 타임아웃 없음)
+        while (!turnManager.HasFirstTurnDecided)
+            yield return null;
 
         bool enemyTurn = turnManager && turnManager.currentTurn == TurnState.EnemyTurn;
-        SetGameplayView(enemyTurn, true);
+        bool isMoveTutorial = SceneManager.GetActiveScene().name == "Move_Tutorial";
+        bool shouldAnimateAfterIntro = isMoveTutorial && DialogueManager.instance != null;
+        if (shouldAnimateAfterIntro)
+        {
+            while (DialogueManager.instance != null && DialogueManager.instance.isDialogueActive)
+            {
+                if (Input.GetKeyDown(KeyCode.E) && !DialogueManager.instance.blockInput)
+                    DialogueManager.instance.DisplayNextSentence();
+                yield return null;
+            }
+        }
+
+        // 첫 턴이 EnemyTurn이면 enemy/gameplay 타겟 전환은 애니메이션을 적용한다.
+        // (Move_Tutorial 대사 종료 후에도 동일)
+        bool immediateViewApply = !enemyTurn && !shouldAnimateAfterIntro;
+        SetGameplayView(enemyTurn, immediateViewApply);
 
         bool handSelecting = handUI && handUI.IsInSelectMode;
         bool cardResolving = orchestrator && orchestrator.GetIsBusy();
@@ -269,6 +290,12 @@ public class PanelController : MonoBehaviour
         SetBattleMenuPanelsHidden(shouldHideMenuPanels, true);
 
         if (turnManager) lastTurnState = turnManager.currentTurn;
+    }
+
+    // 일부 브랜치/프리팹 상태에서 OnTurnChanged 구독 코드가 남아 있을 수 있어
+    // 컴파일 오류(CS0103) 방지를 위해 안전한 핸들러를 유지한다.
+    private void HandleTurnChanged(TurnState _)
+    {
     }
 
     [ContextMenu("Re-cache Shown Base From Current")]

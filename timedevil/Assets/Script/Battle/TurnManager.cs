@@ -5,6 +5,7 @@ public enum TurnState { PlayerTurn, EnemyTurn }
 
 public class TurnManager : MonoBehaviour
 {
+    public event System.Action<TurnState> OnTurnChanged;
     // ─────────────────────────────────────────
     //  Persisted flags (Intro / Gate)  **v2 keys**
     // ─────────────────────────────────────────
@@ -78,6 +79,7 @@ public class TurnManager : MonoBehaviour
 
     public bool IsPlayerDiscardPhase { get; private set; } = false;
     public TurnState currentTurn { get; private set; } = TurnState.PlayerTurn;
+    public bool HasFirstTurnDecided { get; private set; } = false;
 
     private PlayerDataRuntime pdr;
     private EnemyRuntime enemyRt;
@@ -223,6 +225,8 @@ public class TurnManager : MonoBehaviour
     public void BeginPlayerTurn()
     {
         currentTurn = TurnState.PlayerTurn;
+        HasFirstTurnDecided = true;
+        OnTurnChanged?.Invoke(currentTurn);
         IsPlayerDiscardPhase = false;
 
         if (cost) cost.ResetTurn();
@@ -250,6 +254,8 @@ public class TurnManager : MonoBehaviour
         if (itemHand) itemHand.SetEnemyTurn(true);
 
         currentTurn = TurnState.EnemyTurn;
+        HasFirstTurnDecided = true;
+        OnTurnChanged?.Invoke(currentTurn);
         IsPlayerDiscardPhase = false;
 
         if (cost) cost.ResetTurn();
@@ -491,6 +497,9 @@ public class TurnManager : MonoBehaviour
 
     private System.Collections.IEnumerator Co_MoveTutorialIntroBoot()
     {
+        bool prevIntroRequireKey = introRequireKey;
+        introRequireKey = true; // Move_Tutorial 인트로는 반드시 E 입력으로만 진행
+
         // 인트로 동안 입력 잠금/적 턴 차단
         if (menu) menu.EnableInput(false);
         if (handUI) handUI.HideCards();
@@ -519,6 +528,8 @@ public class TurnManager : MonoBehaviour
 
         // 인트로 후 적 턴 시작
         BeginEnemyTurn();
+
+        introRequireKey = prevIntroRequireKey;
     }
 
 #if UNITY_EDITOR
