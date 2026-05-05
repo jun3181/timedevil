@@ -285,6 +285,12 @@ public class PanelController : MonoBehaviour
         if (turnManager) lastTurnState = turnManager.currentTurn;
     }
 
+    // 일부 브랜치/프리팹 상태에서 OnTurnChanged 구독 코드가 남아 있을 수 있어
+    // 컴파일 오류(CS0103) 방지를 위해 안전한 핸들러를 유지한다.
+    private void HandleTurnChanged(TurnState _)
+    {
+    }
+
     [ContextMenu("Re-cache Shown Base From Current")]
     public void CacheShownBasePositions()
     {
