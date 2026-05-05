@@ -35,6 +35,11 @@ public class TriggerRouter : MonoBehaviour
         BuildMap();
     }
 
+    private void Start()
+    {
+        TryResumeInProgressRoutes();
+    }
+
     private void OnValidate()
     {
         // Ϳ Ű ߺ üũ 
@@ -98,16 +103,18 @@ public class TriggerRouter : MonoBehaviour
             return;
         }
 
-        StartCoroutine(CoRunRoute(key, route, ctx));
+        StartCoroutine(CoRunRoute(key, route, ctx, 0, false));
     }
 
-    private IEnumerator CoRunRoute(string key, Route route, TriggerContext ctx)
+    private IEnumerator CoRunRoute(string key, Route route, TriggerContext ctx, int startIndex, bool isResume)
     {
         _runningKeys.Add(key);
         bool heldInputLock = false;
+        string runtimeId = BuildRouteRuntimeId(key);
+        bool completedAllSteps = false;
 
         if (debugLog)
-            Debug.Log($"[TriggerRouter] START key='{key}' steps={(route.steps != null ? route.steps.Count : 0)} trigger='{(ctx?.trigger ? ctx.trigger.name : "null")}'");
+            Debug.Log($"[TriggerRouter] START key='{key}' resume={isResume} fromStep={startIndex} steps={(route.steps != null ? route.steps.Count : 0)} trigger='{(ctx?.trigger ? ctx.trigger.name : "null")}'");
 
         if (route.blockPlayerInputWhileRunning && GameManager.Instance != null)
         {
@@ -121,10 +128,12 @@ public class TriggerRouter : MonoBehaviour
         {
             if (route.steps != null)
             {
-                for (int i = 0; i < route.steps.Count; i++)
+                for (int i = Mathf.Max(0, startIndex); i < route.steps.Count; i++)
                 {
                     var step = route.steps[i];
                     if (!step) continue;
+                    // step 시작 전: 중간에 씬 전환되면 현재 step부터 재개
+                    WorldNPCStateService.Instance?.SaveTriggerRouteProgress(runtimeId, key, i, true);
 
                     if (debugLog) Debug.Log($"[TriggerRouter]  step[{i}] -> {step.GetType().Name} ({step.name})");
 
@@ -140,8 +149,13 @@ public class TriggerRouter : MonoBehaviour
 
                     if (it != null)
                         yield return it;
+
+                    // step 정상 종료 후: 다음 step 인덱스로 전진 저장
+                    WorldNPCStateService.Instance?.SaveTriggerRouteProgress(runtimeId, key, i + 1, true);
                 }
             }
+
+            completedAllSteps = true;
         }
         finally
         {
@@ -154,6 +168,13 @@ public class TriggerRouter : MonoBehaviour
 
             if (debugLog) Debug.Log($"[TriggerRouter] END key='{key}'");
             _runningKeys.Remove(key);
+
+            // 정상 완주 시에만 progress 제거.
+            // 씬 전환/중단으로 코루틴이 끝난 경우(progress가 있어야 복귀 후 resume 가능)
+            if (completedAllSteps)
+            {
+                WorldNPCStateService.Instance?.ClearTriggerRouteProgress(runtimeId);
+            }
         }
     }
 
@@ -176,5 +197,58 @@ public class TriggerRouter : MonoBehaviour
 
         if (debugLog)
             Debug.Log($"[TriggerRouter] Force INPUT UNLOCK x{releaseCount} ({reason})");
+    }
+
+    private void TryResumeInProgressRoutes()
+    {
+        if (WorldNPCStateService.Instance == null || routes == null) return;
+
+        for (int i = 0; i < routes.Count; i++)
+        {
+            var r = routes[i];
+            if (r == null || string.IsNullOrWhiteSpace(r.key)) continue;
+
+            string runtimeId = BuildRouteRuntimeId(r.key);
+            if (!WorldNPCStateService.Instance.TryGetTriggerRouteProgress(runtimeId, out var p)) continue;
+            if (!p.isRunning) continue;
+            if (_runningKeys.Contains(r.key)) continue;
+
+            if (debugLog)
+                Debug.Log($"[TriggerRouter] RESUME key='{r.key}' fromStep={p.nextStepIndex}");
+
+            StartCoroutine(CoRunRoute(r.key, r, BuildResumeContext(), p.nextStepIndex, true));
+        }
+    }
+
+    private TriggerContext BuildResumeContext()
+    {
+        var player = FindObjectOfType<PlayerMove>(true);
+        var playerGo = player ? player.gameObject : null;
+        var playerCol = player ? player.GetComponent<Collider2D>() : null;
+        return new TriggerContext(
+            trigger: null,
+            router: this,
+            instigator: playerGo,
+            instigatorCollider: playerCol,
+            playerMove: player
+        );
+    }
+
+    private string BuildRouteRuntimeId(string key)
+    {
+        return $"{gameObject.scene.name}::{GetTransformPath(transform)}::{key}";
+    }
+
+    private static string GetTransformPath(Transform t)
+    {
+        if (t == null) return "(null)";
+        var stack = new Stack<string>();
+        var cur = t;
+        while (cur != null)
+        {
+            stack.Push(cur.name);
+            cur = cur.parent;
+        }
+        return string.Join("/", stack.ToArray());
     }
 }
