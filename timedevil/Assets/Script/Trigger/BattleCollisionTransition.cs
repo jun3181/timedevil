@@ -35,6 +35,12 @@ public class BattleCollisionTransition : MonoBehaviour
 
     private bool _entered;
     private static readonly System.Collections.Generic.Dictionary<string, float> _reenterBlockedUntil = new();
+    private static readonly System.Collections.Generic.HashSet<string> _forceActivateAfterReturnKeys = new();
+
+    private void Start()
+    {
+        ApplyForcedReturnStateIfPending();
+    }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
@@ -75,8 +81,8 @@ public class BattleCollisionTransition : MonoBehaviour
     private void EnterBattle(Transform player, string colliderName)
     {
         _entered = true;
-        if (forceActivateChasingObject && chasingObject != null && !chasingObject.gameObject.activeSelf)
-            chasingObject.gameObject.SetActive(true);
+        if (forceActivateChasingObject)
+            _forceActivateAfterReturnKeys.Add(GetRuntimeKey());
 
         var enemy = chasingObject != null
             ? chasingObject
@@ -137,6 +143,23 @@ public class BattleCollisionTransition : MonoBehaviour
     private string GetRuntimeKey()
     {
         return $"{gameObject.scene.name}::{name}";
+    }
+
+    private void ApplyForcedReturnStateIfPending()
+    {
+        if (!forceActivateChasingObject) return;
+        if (chasingObject == null) return;
+
+        string key = GetRuntimeKey();
+        if (!_forceActivateAfterReturnKeys.Contains(key)) return;
+
+        if (!chasingObject.gameObject.activeSelf)
+            chasingObject.gameObject.SetActive(true);
+
+        _forceActivateAfterReturnKeys.Remove(key);
+
+        if (debugLog)
+            Debug.Log($"[BattleCollisionTransition] force-activated chasingObject after return: '{chasingObject.name}'");
     }
 
     private bool IsBlockedByCooldown()
