@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using System.Collections;
 
 [DisallowMultipleComponent]
 public class BattleCollisionTransition : MonoBehaviour
@@ -29,6 +30,12 @@ public class BattleCollisionTransition : MonoBehaviour
     [SerializeField] private string playerTag = "Player";
     [SerializeField] private bool disableAfterEnter = true;
     [SerializeField] private float reenterBlockSeconds = 0.5f;
+
+    [Header("Pause On Enter")]
+    [SerializeField] private Transform pauseTargetObject;
+    [SerializeField] private Rigidbody2D pauseTargetRigidbody2D;
+    [SerializeField] private MonoBehaviour pauseTargetController;
+    [SerializeField] private float pauseSecondsBeforeBattle = 0.12f;
 
     [Header("Follow After Reenter Block")]
     [SerializeField] private bool followAfterReenterBlock = true;
@@ -60,7 +67,7 @@ public class BattleCollisionTransition : MonoBehaviour
         if (_entered) return;
         if (!other || !other.CompareTag(playerTag)) return;
         if (IsBlockedByCooldown()) return;
-        EnterBattle(other.transform, other.name);
+        BeginBattleTransition(other.transform, other.name);
     }
 
     private void OnTriggerEnter(Collider other)
@@ -68,7 +75,7 @@ public class BattleCollisionTransition : MonoBehaviour
         if (_entered) return;
         if (!other || !other.CompareTag(playerTag)) return;
         if (IsBlockedByCooldown()) return;
-        EnterBattle(other.transform, other.name);
+        BeginBattleTransition(other.transform, other.name);
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -78,7 +85,7 @@ public class BattleCollisionTransition : MonoBehaviour
         var other = collision.collider;
         if (!other.CompareTag(playerTag)) return;
         if (IsBlockedByCooldown()) return;
-        EnterBattle(other.transform, other.name);
+        BeginBattleTransition(other.transform, other.name);
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -88,12 +95,26 @@ public class BattleCollisionTransition : MonoBehaviour
         var other = collision.collider;
         if (!other.CompareTag(playerTag)) return;
         if (IsBlockedByCooldown()) return;
-        EnterBattle(other.transform, other.name);
+        BeginBattleTransition(other.transform, other.name);
+    }
+
+    private void BeginBattleTransition(Transform player, string colliderName)
+    {
+        _entered = true;
+        StartCoroutine(CoEnterBattle(player, colliderName));
+    }
+
+    private IEnumerator CoEnterBattle(Transform player, string colliderName)
+    {
+        ApplyPauseOnEnter();
+        float wait = Mathf.Max(0f, pauseSecondsBeforeBattle);
+        if (wait > 0f) yield return new WaitForSeconds(wait);
+
+        EnterBattle(player, colliderName);
     }
 
     private void EnterBattle(Transform player, string colliderName)
     {
-        _entered = true;
         if (forceActivateChasingObject)
             SaveForcedChasingStateForReturn();
 
@@ -151,6 +172,20 @@ public class BattleCollisionTransition : MonoBehaviour
 
         if (disableAfterEnter)
             gameObject.SetActive(false);
+    }
+
+    private void ApplyPauseOnEnter()
+    {
+        Transform target = pauseTargetObject != null ? pauseTargetObject : null;
+        Rigidbody2D rb = pauseTargetRigidbody2D != null
+            ? pauseTargetRigidbody2D
+            : (target != null ? target.GetComponent<Rigidbody2D>() : null);
+
+        if (rb != null)
+            rb.velocity = Vector2.zero;
+
+        if (pauseTargetController != null)
+            pauseTargetController.enabled = false;
     }
 
     private void Update()
