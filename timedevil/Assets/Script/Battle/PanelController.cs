@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Battle UI 메뉴 상호작용에 따라
@@ -125,7 +126,6 @@ public class PanelController : MonoBehaviour
     {
         if (menu) menu.onSubmit.AddListener(OnMenuSubmit);
         if (!turnManager) turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
-        if (turnManager) turnManager.OnTurnChanged += HandleTurnChanged;
         if (syncInitialViewWithTurnState && !initialSyncRequested)
         {
             initialSyncRequested = true;
@@ -267,7 +267,15 @@ public class PanelController : MonoBehaviour
             yield return null;
 
         bool enemyTurn = turnManager && turnManager.currentTurn == TurnState.EnemyTurn;
-        SetGameplayView(enemyTurn, true);
+        bool isMoveTutorial = SceneManager.GetActiveScene().name == "Move_Tutorial";
+        bool shouldAnimateAfterIntro = isMoveTutorial && DialogueManager.instance != null;
+        if (shouldAnimateAfterIntro)
+        {
+            while (DialogueManager.instance != null && DialogueManager.instance.isDialogueActive)
+                yield return null;
+        }
+
+        SetGameplayView(enemyTurn, !shouldAnimateAfterIntro);
 
         bool handSelecting = handUI && handUI.IsInSelectMode;
         bool cardResolving = orchestrator && orchestrator.GetIsBusy();
@@ -275,11 +283,6 @@ public class PanelController : MonoBehaviour
         SetBattleMenuPanelsHidden(shouldHideMenuPanels, true);
 
         if (turnManager) lastTurnState = turnManager.currentTurn;
-    }
-
-    private void HandleTurnChanged(TurnState newTurn)
-    {
-        lastTurnState = newTurn;
     }
 
     [ContextMenu("Re-cache Shown Base From Current")]
