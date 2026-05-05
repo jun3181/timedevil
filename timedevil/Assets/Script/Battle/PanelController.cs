@@ -77,6 +77,8 @@ public class PanelController : MonoBehaviour
     [Header("Initial State")]
     [Tooltip("체크 시 시작부터 gameplayTargets가 보이는 상태")]
     [SerializeField] private bool startInGameplayView = false;
+    [Tooltip("시작 직후 턴 상태(Player/Enemy)에 맞춰 최초 뷰를 즉시 동기화(애니메이션 없음)")]
+    [SerializeField] private bool syncInitialViewWithTurnState = true;
 
     private readonly List<Vector3> enemyShownBase = new List<Vector3>();
     private readonly List<Vector3> gameplayShownBase = new List<Vector3>();
@@ -121,6 +123,12 @@ public class PanelController : MonoBehaviour
     void OnEnable()
     {
         if (menu) menu.onSubmit.AddListener(OnMenuSubmit);
+    }
+
+    void Start()
+    {
+        if (syncInitialViewWithTurnState)
+            StartCoroutine(Co_SyncInitialViewWithTurnState());
     }
 
     void OnDisable()
@@ -244,6 +252,23 @@ public class PanelController : MonoBehaviour
             yield return new WaitForSeconds(delaySeconds);
         SetGameplayView(on);
         delayedViewRoutine = null;
+    }
+
+    private IEnumerator Co_SyncInitialViewWithTurnState()
+    {
+        yield return null;
+
+        if (!turnManager) turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
+
+        bool enemyTurn = turnManager && turnManager.currentTurn == TurnState.EnemyTurn;
+        SetGameplayView(enemyTurn, true);
+
+        bool handSelecting = handUI && handUI.IsInSelectMode;
+        bool cardResolving = orchestrator && orchestrator.GetIsBusy();
+        bool shouldHideMenuPanels = enemyTurn || handSelecting || cardResolving;
+        SetBattleMenuPanelsHidden(shouldHideMenuPanels, true);
+
+        if (turnManager) lastTurnState = turnManager.currentTurn;
     }
 
     [ContextMenu("Re-cache Shown Base From Current")]
