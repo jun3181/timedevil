@@ -17,7 +17,7 @@ MonoBehaviour:
   maxHP: 60
   baseATK: 8
   baseDEF: 3
-  baseSPD: 1
+  baseSPD: 100
   deckIds:
   - Card2
   - Card6
