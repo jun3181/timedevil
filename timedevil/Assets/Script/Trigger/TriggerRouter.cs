@@ -111,6 +111,7 @@ public class TriggerRouter : MonoBehaviour
         _runningKeys.Add(key);
         bool heldInputLock = false;
         string runtimeId = BuildRouteRuntimeId(key);
+        bool completedAllSteps = false;
 
         if (debugLog)
             Debug.Log($"[TriggerRouter] START key='{key}' resume={isResume} fromStep={startIndex} steps={(route.steps != null ? route.steps.Count : 0)} trigger='{(ctx?.trigger ? ctx.trigger.name : "null")}'");
@@ -131,6 +132,7 @@ public class TriggerRouter : MonoBehaviour
                 {
                     var step = route.steps[i];
                     if (!step) continue;
+                    // step 시작 전: 중간에 씬 전환되면 현재 step부터 재개
                     WorldNPCStateService.Instance?.SaveTriggerRouteProgress(runtimeId, key, i, true);
 
                     if (debugLog) Debug.Log($"[TriggerRouter]  step[{i}] -> {step.GetType().Name} ({step.name})");
@@ -147,8 +149,13 @@ public class TriggerRouter : MonoBehaviour
 
                     if (it != null)
                         yield return it;
+
+                    // step 정상 종료 후: 다음 step 인덱스로 전진 저장
+                    WorldNPCStateService.Instance?.SaveTriggerRouteProgress(runtimeId, key, i + 1, true);
                 }
             }
+
+            completedAllSteps = true;
         }
         finally
         {
@@ -161,7 +168,13 @@ public class TriggerRouter : MonoBehaviour
 
             if (debugLog) Debug.Log($"[TriggerRouter] END key='{key}'");
             _runningKeys.Remove(key);
-            WorldNPCStateService.Instance?.ClearTriggerRouteProgress(runtimeId);
+
+            // 정상 완주 시에만 progress 제거.
+            // 씬 전환/중단으로 코루틴이 끝난 경우(progress가 있어야 복귀 후 resume 가능)
+            if (completedAllSteps)
+            {
+                WorldNPCStateService.Instance?.ClearTriggerRouteProgress(runtimeId);
+            }
         }
     }
 
