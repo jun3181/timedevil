@@ -382,10 +382,14 @@ public class CameraManager : MonoBehaviour
         if (!vcam) return;
 
         Vector3 delta = toPos - fromPos;
+        // 2D 카메라 워프는 XY 기준으로만 보정한다.
+        // 씬별 targetPoint Z 차이가 크면 빌드에서 카메라가 튀는 케이스가 있어 Z는 무시한다.
+        delta.z = 0f;
+
         Vector3 fixedPos = fixedCameraAnchorPoint ? fixedCameraAnchorPoint.position : toPos;
 
         if (debugLog)
-            Debug.Log($"[CameraManager] ApplyAfterTeleport mode={afterMode} from={fromPos} to={toPos} fixedPos={fixedPos} bounds={(afterBounds ? afterBounds.name : "(null)")}");
+            Debug.Log($"[CameraManager] ApplyAfterTeleport mode={afterMode} from={fromPos} to={toPos} deltaXY={delta} fixedPos={fixedPos} bounds={(afterBounds ? afterBounds.name : "(null)")}");
 
         switch (afterMode)
         {
