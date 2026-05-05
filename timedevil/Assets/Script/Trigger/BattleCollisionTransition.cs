@@ -30,10 +30,16 @@ public class BattleCollisionTransition : MonoBehaviour
     [SerializeField] private bool disableAfterEnter = true;
     [SerializeField] private float reenterBlockSeconds = 0.5f;
 
+    [Header("Follow After Reenter Block")]
+    [SerializeField] private bool followAfterReenterBlock = true;
+    [SerializeField] private Transform followTargetObject;
+    [SerializeField] private float followMoveSpeed = 2.5f;
+
     [Header("Debug")]
     [SerializeField] private bool debugLog = true;
 
     private bool _entered;
+    private bool _followArmedAfterReturn;
     private static readonly System.Collections.Generic.Dictionary<string, float> _reenterBlockedUntil = new();
     private static readonly System.Collections.Generic.Dictionary<string, ForcedChasingState> _forceStateAfterReturn = new();
 
@@ -147,6 +153,22 @@ public class BattleCollisionTransition : MonoBehaviour
             gameObject.SetActive(false);
     }
 
+    private void Update()
+    {
+        if (!followAfterReenterBlock) return;
+        if (!_followArmedAfterReturn) return;
+        if (chasingObject == null) return;
+        if (IsBlockedByCooldown()) return;
+
+        var target = ResolveFollowTarget();
+        if (target == null) return;
+
+        Vector3 from = chasingObject.position;
+        Vector3 to = target.position;
+        to.z = from.z;
+        chasingObject.position = Vector3.MoveTowards(from, to, Mathf.Max(0f, followMoveSpeed) * Time.deltaTime);
+    }
+
     private string GetRuntimeKey()
     {
         return $"{gameObject.scene.name}::{name}";
@@ -171,10 +193,20 @@ public class BattleCollisionTransition : MonoBehaviour
             if (rb != null) rb.velocity = Vector2.zero;
         }
 
+        _followArmedAfterReturn = true;
+
         _forceStateAfterReturn.Remove(key);
 
         if (debugLog)
             Debug.Log($"[BattleCollisionTransition] force restore after return: '{chasingObject.name}' pos={chasingObject.position}");
+    }
+
+    private Transform ResolveFollowTarget()
+    {
+        if (followTargetObject != null) return followTargetObject;
+
+        var player = GameObject.FindWithTag(playerTag);
+        return player != null ? player.transform : null;
     }
 
     private void SaveForcedChasingStateForReturn()
