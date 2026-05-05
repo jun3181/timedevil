@@ -84,9 +84,10 @@ public class BattleCollisionTransition : MonoBehaviour
             camFixedPos = returnFixedCameraAnchorOverride != null ? (Vector2)returnFixedCameraAnchorOverride.position : returnPos;
             camBoundsName = returnConfinerBoundsOverride != null ? returnConfinerBoundsOverride.name : null;
         }
-        else if (captureCameraSnapshot && CameraManager.Instance != null)
+        else if (captureCameraSnapshot)
         {
-            if (CameraManager.Instance.TryGetSnapshot(out camMode, out camOrtho, out Vector3 fixedPos3, out string boundsName))
+            var cm = CameraManager.Instance != null ? CameraManager.Instance : FindObjectOfType<CameraManager>(true);
+            if (cm != null && cm.TryGetSnapshot(out camMode, out camOrtho, out Vector3 fixedPos3, out string boundsName))
             {
                 restoreCam = true;
                 camFixedPos = new Vector2(fixedPos3.x, fixedPos3.y);
