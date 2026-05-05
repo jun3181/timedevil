@@ -197,6 +197,8 @@ public class BattleCollisionTransition : MonoBehaviour
 
     private bool IsBlockedByCooldown()
     {
+        if (PlayerReturnContext.IsInGracePeriod) return true;
+
         string key = GetRuntimeKey();
         if (!_reenterBlockedUntil.TryGetValue(key, out float until)) return false;
         return Time.unscaledTime < until;
