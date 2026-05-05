@@ -47,6 +47,19 @@ public class TeleportTransition : MonoBehaviour, IInteractable
         return $"[TeleportTransition] scene={gameObject.scene.name} object={name}";
     }
 
+    private static string BuildTransformPath(Transform t)
+    {
+        if (!t) return "<null>";
+        string path = t.name;
+        Transform cur = t.parent;
+        while (cur != null)
+        {
+            path = cur.name + "/" + path;
+            cur = cur.parent;
+        }
+        return path;
+    }
+
     private void Awake()
     {
         if (!fadePanel)
@@ -171,6 +184,9 @@ public class TeleportTransition : MonoBehaviour, IInteractable
         }
 
         Transform playerTr = player.transform;
+
+        if (debugLog)
+            Debug.Log($"{ContextTag()} resolved PlayerMove name={player.name} id={player.GetInstanceID()} active={player.gameObject.activeInHierarchy} path={BuildTransformPath(playerTr)} scene={player.gameObject.scene.name}", this);
 
         Vector3 from = playerTr.position;
         Vector3 to = targetPoint.position;

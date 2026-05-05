@@ -48,6 +48,19 @@ public class TriggerStep_PlayerTeleport : TriggerStepBase
         return $"[TriggerStep_PlayerTeleport] scene={gameObject.scene.name} object={name}";
     }
 
+    private static string BuildTransformPath(Transform t)
+    {
+        if (!t) return "<null>";
+        string path = t.name;
+        Transform cur = t.parent;
+        while (cur != null)
+        {
+            path = cur.name + "/" + path;
+            cur = cur.parent;
+        }
+        return path;
+    }
+
     public override IEnumerator Execute(TriggerContext ctx)
     {
         if (debugLog)
@@ -70,6 +83,9 @@ public class TriggerStep_PlayerTeleport : TriggerStepBase
             Debug.LogWarning("[TriggerStep_PlayerTeleport] 플레이어 Transform을 찾지 못했습니다.");
             yield break;
         }
+
+        if (debugLog)
+            Debug.Log($"{ContextTag()} resolved player name={playerTr.name} id={playerTr.gameObject.GetInstanceID()} active={playerTr.gameObject.activeInHierarchy} path={BuildTransformPath(playerTr)} scene={playerTr.gameObject.scene.name}", this);
 
         Vector3 from = playerTr.position;
         Vector3 to = targetPoint.position + (Vector3)offset;
