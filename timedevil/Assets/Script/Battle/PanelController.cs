@@ -123,6 +123,8 @@ public class PanelController : MonoBehaviour
     void OnEnable()
     {
         if (menu) menu.onSubmit.AddListener(OnMenuSubmit);
+        if (!turnManager) turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
+        if (turnManager) turnManager.OnTurnChanged += HandleTurnChanged;
     }
 
     void Start()
@@ -134,6 +136,7 @@ public class PanelController : MonoBehaviour
     void OnDisable()
     {
         if (menu) menu.onSubmit.RemoveListener(OnMenuSubmit);
+        if (turnManager) turnManager.OnTurnChanged -= HandleTurnChanged;
     }
 
     void Update()
@@ -259,15 +262,9 @@ public class PanelController : MonoBehaviour
         if (!turnManager) turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
         if (!turnManager) yield break;
 
-        // TurnManager가 Start/코루틴에서 첫 턴을 늦게 확정하는 씬(move_test 등) 대응
-        // 기본값(PlayerTurn)에서 실제 첫 턴으로 바뀔 시간을 잠깐 기다린 뒤 즉시 배치한다.
-        const int maxWaitFrames = 120; // 약 2초 @60fps
-        int waited = 0;
-        while (waited < maxWaitFrames && turnManager.currentTurn == lastTurnState)
-        {
-            waited++;
+        // 첫 턴이 실제로 확정될 때까지 기다렸다가 즉시 반영 (프레임 타임아웃 없음)
+        while (!turnManager.HasFirstTurnDecided)
             yield return null;
-        }
 
         bool enemyTurn = turnManager && turnManager.currentTurn == TurnState.EnemyTurn;
         SetGameplayView(enemyTurn, true);
@@ -278,6 +275,11 @@ public class PanelController : MonoBehaviour
         SetBattleMenuPanelsHidden(shouldHideMenuPanels, true);
 
         if (turnManager) lastTurnState = turnManager.currentTurn;
+    }
+
+    private void HandleTurnChanged(TurnState newTurn)
+    {
+        lastTurnState = newTurn;
     }
 
     [ContextMenu("Re-cache Shown Base From Current")]
