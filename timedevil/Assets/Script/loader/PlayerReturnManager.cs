@@ -170,7 +170,10 @@ public class PlayerReturnManager : MonoBehaviour
             if (id != null && id.Id == instanceId)
                 return id.gameObject;
         }
-        return null;
+
+        // fallback: EnemyInstanceId가 없는 오브젝트(트리거 연출 몬스터 등)
+        var byName = GameObject.Find(instanceId);
+        return byName;
     }
 
     private IEnumerator CoApplyReturnCameraNextFrame(
