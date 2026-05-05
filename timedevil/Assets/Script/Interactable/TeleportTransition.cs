@@ -42,6 +42,11 @@ public class TeleportTransition : MonoBehaviour, IInteractable
 
     private bool _running = false;
 
+    private string ContextTag()
+    {
+        return $"[TeleportTransition] scene={gameObject.scene.name} object={name}";
+    }
+
     private void Awake()
     {
         if (!fadePanel)
@@ -100,7 +105,14 @@ public class TeleportTransition : MonoBehaviour, IInteractable
 
     public void Interact()
     {
-        if (_running) return;
+        if (_running)
+        {
+            if (debugLog) Debug.Log($"{ContextTag()} Interact ignored: already running", this);
+            return;
+        }
+
+        if (debugLog)
+            Debug.Log($"{ContextTag()} Interact start target={(targetPoint ? targetPoint.name : "<null>")} mode={afterMode} bounds={(afterBounds ? afterBounds.name : "<null>")} fixedAnchor={(fixedCameraAnchorPoint ? fixedCameraAnchorPoint.name : "<null>")}", this);
 
         if (!targetPoint && !TryAutoResolveTargetPoint())
         {
@@ -109,7 +121,10 @@ public class TeleportTransition : MonoBehaviour, IInteractable
         }
 
         if (DialogueManager.instance != null && DialogueManager.instance.isDialogueActive)
+        {
+            if (debugLog) Debug.Log($"{ContextTag()} blocked: dialogue active", this);
             return;
+        }
 
         StartCoroutine(CoTeleport());
     }
@@ -117,13 +132,31 @@ public class TeleportTransition : MonoBehaviour, IInteractable
     private IEnumerator CoTeleport()
     {
         _running = true;
+        if (debugLog) Debug.Log($"{ContextTag()} CoTeleport begin", this);
 
-        if (lockPlayerInput && GameManager.Instance) GameManager.Instance.isAction = true;
-        if (CameraManager.Instance) CameraManager.Instance.BeginTransition(lockCamera: true);
+        if (lockPlayerInput && GameManager.Instance)
+        {
+            GameManager.Instance.isAction = true;
+            if (debugLog) Debug.Log($"{ContextTag()} input locked", this);
+        }
+
+        if (CameraManager.Instance)
+        {
+            CameraManager.Instance.BeginTransition(lockCamera: true);
+            if (debugLog) Debug.Log($"{ContextTag()} CameraManager.BeginTransition(lockCamera=true)", this);
+        }
+        else if (debugLog)
+        {
+            Debug.LogWarning($"{ContextTag()} CameraManager.Instance is null", this);
+        }
 
         //  Teleport는 SceneFader가 아니라 FadePanelFader
         if (fadePanel != null)
+        {
+            if (debugLog) Debug.Log($"{ContextTag()} fade out start duration={fadeOutDuration}", this);
             yield return fadePanel.FadeTo(1f, fadeOutDuration);
+            if (debugLog) Debug.Log($"{ContextTag()} fade out end", this);
+        }
 
         var player = FindObjectOfType<PlayerMove>(true);
         if (!player)
@@ -142,8 +175,12 @@ public class TeleportTransition : MonoBehaviour, IInteractable
         Vector3 from = playerTr.position;
         Vector3 to = targetPoint.position;
 
+        if (debugLog)
+            Debug.Log($"{ContextTag()} teleport player from={from} to={to} targetScene={targetPoint.gameObject.scene.name}", this);
+
         // 1) 플레이어 이동
         playerTr.position = to;
+        if (debugLog) Debug.Log($"{ContextTag()} player position applied current={playerTr.position}", this);
 
         // 2) 카메라 적용 (CameraManager가 책임)
         if (CameraManager.Instance != null)
@@ -162,18 +199,35 @@ public class TeleportTransition : MonoBehaviour, IInteractable
                 snapCameraWhenFixed: snapCameraWhenFixed
             );
 
+            if (debugLog)
+            {
+                Debug.Log($"{ContextTag()} ApplyAfterTeleport mode={afterMode} bounds={(afterBounds ? afterBounds.name : "<null>")} ortho={(size.HasValue ? size.Value.ToString() : "<keep>")} fixedAnchor={(fixedCameraAnchorPoint ? fixedCameraAnchorPoint.position.ToString() : "<null>")} notifyWarp={notifyWarpToCinemachine} snapFixed={snapCameraWhenFixed}", this);
+            }
+
             CameraManager.Instance.EndTransition();
+            if (debugLog) Debug.Log($"{ContextTag()} CameraManager.EndTransition", this);
         }
 
         if (applyDarkOverlay && DarkOverlay.Instance != null)
+        {
+            if (debugLog) Debug.Log($"{ContextTag()} DarkOverlay alpha={darkOverlayAlpha} duration={darkOverlayDuration}", this);
             DarkOverlay.Instance.SetAlpha(darkOverlayAlpha, darkOverlayDuration);
+        }
 
         if (fadePanel != null)
+        {
+            if (debugLog) Debug.Log($"{ContextTag()} fade in start duration={fadeInDuration}", this);
             yield return fadePanel.FadeTo(0f, fadeInDuration);
+            if (debugLog) Debug.Log($"{ContextTag()} fade in end", this);
+        }
 
-        if (lockPlayerInput && GameManager.Instance) GameManager.Instance.isAction = false;
+        if (lockPlayerInput && GameManager.Instance)
+        {
+            GameManager.Instance.isAction = false;
+            if (debugLog) Debug.Log($"{ContextTag()} input unlocked", this);
+        }
 
         _running = false;
-        if (debugLog) Debug.Log("[TeleportTransition] Done");
+        if (debugLog) Debug.Log($"{ContextTag()} Done");
     }
 }
