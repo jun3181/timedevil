@@ -970,6 +970,7 @@ MonoBehaviour:
   usePlayerMoveComponentCheck: 1
   blockDuringGracePeriod: 0
   debugLog: 1
+  cameraMoveStep: {fileID: 0}
 --- !u!61 &104821435
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -4662,6 +4663,7 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   lockPlayerInput: 1
+  unlockInputAtEnd: 1
   disablePlayerMainManagerWhileRunning: 1
   setIdleAtEnd: 1
   paramIsChange: isChange
@@ -4721,6 +4723,7 @@ MonoBehaviour:
   usePlayerMoveComponentCheck: 1
   blockDuringGracePeriod: 0
   debugLog: 1
+  cameraMoveStep: {fileID: 0}
 --- !u!61 &176392478
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -8607,23 +8610,28 @@ MonoBehaviour:
     steps:
     - {fileID: 645387352}
     - {fileID: 318803556}
+    blockPlayerInputWhileRunning: 0
   - key: Trigger2
     steps:
     - {fileID: 881014417}
     - {fileID: 318803556}
+    blockPlayerInputWhileRunning: 0
   - key: Trigger3
     steps:
     - {fileID: 1815720144}
     - {fileID: 1434851125}
     - {fileID: 318803556}
+    blockPlayerInputWhileRunning: 0
   - key: Trigger4
     steps:
     - {fileID: 163536249}
     - {fileID: 318803556}
     - {fileID: 891191253}
+    blockPlayerInputWhileRunning: 0
   - key: Trigger5
     steps:
     - {fileID: 1541091546}
+    blockPlayerInputWhileRunning: 0
   allowReentrySameKey: 0
   debugLog: 1
 --- !u!4 &345882305
@@ -14727,6 +14735,8 @@ MonoBehaviour:
   handObject: {fileID: 645387349}
   moveDistanceX: 0
   moveDistanceY: -10
+  useMoveSequence: 0
+  moveSequence: []
   dropDuration: 0.12
   useUnscaledTime: 1
   ease:
@@ -14753,6 +14763,13 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  driveAnimatorLikePlayerMove: 0
+  animatorTarget: {fileID: 0}
+  strictAnimatorParamCheck: 1
+  paramIsChange: isChange
+  paramHAxisRaw: hAxisRaw
+  paramVAxisRaw: vAxisRaw
+  setIdleAtEnd: 1
   forceDeactivateThenActivate: 1
   debugLog: 0
 --- !u!1 &697639302
@@ -18217,7 +18234,7 @@ Rigidbody2D:
     m_Bits: 0
   m_Interpolate: 0
   m_SleepingMode: 1
-  m_CollisionDetection: 0
+  m_CollisionDetection: 1
   m_Constraints: 4
 --- !u!212 &780439220
 SpriteRenderer:
@@ -19171,6 +19188,8 @@ MonoBehaviour:
   handObject: {fileID: 881014415}
   moveDistanceX: 0
   moveDistanceY: 10
+  useMoveSequence: 0
+  moveSequence: []
   dropDuration: 0.12
   useUnscaledTime: 1
   ease:
@@ -19197,6 +19216,13 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  driveAnimatorLikePlayerMove: 0
+  animatorTarget: {fileID: 0}
+  strictAnimatorParamCheck: 1
+  paramIsChange: isChange
+  paramHAxisRaw: hAxisRaw
+  paramVAxisRaw: vAxisRaw
+  setIdleAtEnd: 1
   forceDeactivateThenActivate: 1
   debugLog: 0
 --- !u!212 &881014418
@@ -30580,6 +30606,7 @@ MonoBehaviour:
   usePlayerMoveComponentCheck: 1
   blockDuringGracePeriod: 0
   debugLog: 1
+  cameraMoveStep: {fileID: 0}
 --- !u!61 &1309172987
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -31541,6 +31568,7 @@ MonoBehaviour:
   usePlayerMoveComponentCheck: 1
   blockDuringGracePeriod: 0
   debugLog: 1
+  cameraMoveStep: {fileID: 0}
 --- !u!1 &1629847977
 GameObject:
   m_ObjectHideFlags: 0
@@ -31771,6 +31799,7 @@ MonoBehaviour:
   usePlayerMoveComponentCheck: 1
   blockDuringGracePeriod: 0
   debugLog: 1
+  cameraMoveStep: {fileID: 0}
 --- !u!61 &1685952718
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -32175,6 +32204,8 @@ MonoBehaviour:
   handObject: {fileID: 1815720142}
   moveDistanceX: -7
   moveDistanceY: 0
+  useMoveSequence: 0
+  moveSequence: []
   dropDuration: 0.12
   useUnscaledTime: 1
   ease:
@@ -32201,6 +32232,13 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  driveAnimatorLikePlayerMove: 0
+  animatorTarget: {fileID: 0}
+  strictAnimatorParamCheck: 1
+  paramIsChange: isChange
+  paramHAxisRaw: hAxisRaw
+  paramVAxisRaw: vAxisRaw
+  setIdleAtEnd: 1
   forceDeactivateThenActivate: 1
   debugLog: 0
 --- !u!212 &1815720145
@@ -32583,6 +32621,7 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   lockPlayerInput: 1
+  unlockInputAtEnd: 1
   disablePlayerMainManagerWhileRunning: 1
   setIdleAtEnd: 1
   paramIsChange: isChange
