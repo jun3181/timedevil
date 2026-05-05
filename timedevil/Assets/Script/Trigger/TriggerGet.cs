@@ -83,8 +83,11 @@ public class TriggerGet : MonoBehaviour
             return;
         }
 
-        // 전투 트리거만 Grace 동안 막기
-        if (blockDuringGracePeriod && PlayerReturnContext.IsInGracePeriod)
+        // 전투 복귀 직후 재진입 방지:
+        // - IsInGracePeriod: 복귀 후 grace 코루틴이 실제로 도는 동안
+        // - GraceSecondsPending: 복귀 씬 로드 직후 코루틴 시작 전 "틈" 프레임 방어
+        if (blockDuringGracePeriod &&
+            (PlayerReturnContext.IsInGracePeriod || PlayerReturnContext.GraceSecondsPending > 0f))
         {
             if (debugLog)
                 Debug.Log($"[TriggerGet] Suppressed by Grace key='{routeKey}' (by='{other.name}')");

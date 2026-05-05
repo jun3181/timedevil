@@ -46,15 +46,65 @@ public class TeleportTransition : MonoBehaviour, IInteractable
     {
         if (!fadePanel)
             fadePanel = FindObjectOfType<FadePanelFader>(true);
+
+        TryAutoResolveTargetPoint();
+    }
+
+    private void OnEnable()
+    {
+        // 씬 복귀 후 참조가 비어 있는 케이스를 방어
+        TryAutoResolveTargetPoint();
+    }
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        TryAutoResolveTargetPoint();
+    }
+#endif
+
+    private bool TryAutoResolveTargetPoint()
+    {
+        if (targetPoint) return true;
+
+        // 1) 같은 오브젝트 이름 규칙 우선
+        var direct = transform.Find("TargetPoint");
+        if (!direct) direct = transform.Find("targetPoint");
+
+        // 2) 자식 전체에서 이름 기준 보강 탐색
+        if (!direct)
+        {
+            var children = GetComponentsInChildren<Transform>(true);
+            for (int i = 0; i < children.Length; i++)
+            {
+                var c = children[i];
+                if (c == transform) continue;
+                if (c.name == "TargetPoint" || c.name == "targetPoint")
+                {
+                    direct = c;
+                    break;
+                }
+            }
+        }
+
+        if (direct)
+        {
+            targetPoint = direct;
+            if (debugLog)
+                Debug.Log($"[TeleportTransition] Auto-resolved targetPoint: {targetPoint.name}", this);
+            return true;
+        }
+
+        return false;
     }
 
     public void Interact()
     {
         if (_running) return;
 
-        if (!targetPoint)
+        if (!targetPoint && !TryAutoResolveTargetPoint())
         {
-            Debug.LogWarning("[TeleportTransition] targetPoint가 비어있음");
+            Debug.LogWarning($"[TeleportTransition] targetPoint가 비어있음 (object={name}, scene={gameObject.scene.name})", this);
             return;
         }
 
