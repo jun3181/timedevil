@@ -272,7 +272,11 @@ public class PanelController : MonoBehaviour
         if (shouldAnimateAfterIntro)
         {
             while (DialogueManager.instance != null && DialogueManager.instance.isDialogueActive)
+            {
+                if (Input.GetKeyDown(KeyCode.E) && !DialogueManager.instance.blockInput)
+                    DialogueManager.instance.DisplayNextSentence();
                 yield return null;
+            }
         }
 
         SetGameplayView(enemyTurn, !shouldAnimateAfterIntro);
