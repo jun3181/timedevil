@@ -65,6 +65,7 @@ public class PlayerReturnManager : MonoBehaviour
         float camOrtho = PlayerReturnContext.ReturnCameraOrthoSize;
         Vector2 camFixedPos = PlayerReturnContext.ReturnCameraFixedPos;
         string camBoundsName = PlayerReturnContext.ReturnCameraBoundsName;
+        string enemyInstanceId = PlayerReturnContext.MonsterInstanceId;
 
         // 1) Player 찾기
         PlayerMainManager player = null;
@@ -99,6 +100,9 @@ public class PlayerReturnManager : MonoBehaviour
         if (debugLog)
             Debug.Log($"[PlayerReturnManager] moved player => ({returnPos2.x:F2},{returnPos2.y:F2},{player.transform.position.z:F2})", this);
 
+        // 2.5) 배틀 진입 직전 저장한 월드 오브젝트(적) 상태 복원
+        TryRestoreEnemySnapshot(enemyInstanceId);
+
         // 3) 카메라 복원은 "1프레임 뒤" 적용
         if (needRebind || restoreCam)
         {
@@ -132,6 +136,41 @@ public class PlayerReturnManager : MonoBehaviour
 
         // 6) 1회성 데이터 정리
         PlayerReturnContext.ClearReturnCore();
+    }
+
+    private void TryRestoreEnemySnapshot(string enemyInstanceId)
+    {
+        if (string.IsNullOrWhiteSpace(enemyInstanceId)) return;
+        if (WorldNPCStateService.Instance == null) return;
+
+        if (!WorldNPCStateService.Instance.TryGetSnapshot(enemyInstanceId, out EnemySnapshot snap))
+            return;
+
+        var enemy = FindEnemyByInstanceId(enemyInstanceId);
+        if (enemy == null)
+        {
+            if (debugLog)
+                Debug.LogWarning($"[PlayerReturnManager] snapshot exists but enemy not found id='{enemyInstanceId}'", this);
+            return;
+        }
+
+        snap.ApplyTo(enemy);
+        Physics2D.SyncTransforms();
+
+        if (debugLog)
+            Debug.Log($"[PlayerReturnManager] restored enemy snapshot id='{enemyInstanceId}' pos=({snap.position.x:F2},{snap.position.y:F2})", this);
+    }
+
+    private GameObject FindEnemyByInstanceId(string instanceId)
+    {
+        var ids = FindObjectsOfType<EnemyInstanceId>(true);
+        for (int i = 0; i < ids.Length; i++)
+        {
+            var id = ids[i];
+            if (id != null && id.Id == instanceId)
+                return id.gameObject;
+        }
+        return null;
     }
 
     private IEnumerator CoApplyReturnCameraNextFrame(
