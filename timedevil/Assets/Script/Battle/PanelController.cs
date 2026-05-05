@@ -133,6 +133,12 @@ public class PanelController : MonoBehaviour
             StartCoroutine(Co_SyncInitialViewWithTurnState());
     }
 
+    void Start()
+    {
+        if (syncInitialViewWithTurnState)
+            StartCoroutine(Co_SyncInitialViewWithTurnState());
+    }
+
     void OnDisable()
     {
         if (menu) menu.onSubmit.RemoveListener(OnMenuSubmit);
