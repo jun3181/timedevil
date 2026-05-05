@@ -131,7 +131,7 @@ public class PlayerAction : MonoBehaviour
         // --- Raycast 로직 끝 ---
 
         // 상호작용
-        if (Input.GetKeyDown(KeyCode.E) && scanObject != null)
+        if (!manager.isAction && Input.GetKeyDown(KeyCode.E) && scanObject != null)
         {
             // 대화가 진행 중이면 다른 상호작용을 막음
             if (DialogueManager.instance != null && DialogueManager.instance.isDialogueActive)
