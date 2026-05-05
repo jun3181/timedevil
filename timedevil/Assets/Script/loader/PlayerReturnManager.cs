@@ -146,7 +146,7 @@ public class PlayerReturnManager : MonoBehaviour
         if (!WorldNPCStateService.Instance.TryGetSnapshot(enemyInstanceId, out EnemySnapshot snap))
             return;
 
-        var enemy = FindEnemyByInstanceId(enemyInstanceId);
+        var enemy = FindEnemyByInstanceId(enemyInstanceId, snap.transformPath);
         if (enemy == null)
         {
             if (debugLog)
@@ -161,7 +161,7 @@ public class PlayerReturnManager : MonoBehaviour
             Debug.Log($"[PlayerReturnManager] restored enemy snapshot id='{enemyInstanceId}' pos=({snap.position.x:F2},{snap.position.y:F2})", this);
     }
 
-    private GameObject FindEnemyByInstanceId(string instanceId)
+    private GameObject FindEnemyByInstanceId(string instanceId, string transformPath)
     {
         var ids = FindObjectsOfType<EnemyInstanceId>(true);
         for (int i = 0; i < ids.Length; i++)
@@ -170,7 +170,36 @@ public class PlayerReturnManager : MonoBehaviour
             if (id != null && id.Id == instanceId)
                 return id.gameObject;
         }
-        return null;
+
+        // 우선순위 2: hierarchy path로 inactive 포함 탐색
+        if (!string.IsNullOrWhiteSpace(transformPath))
+        {
+            var all = FindObjectsOfType<Transform>(true);
+            for (int i = 0; i < all.Length; i++)
+            {
+                var t = all[i];
+                if (t == null) continue;
+                if (BuildTransformPath(t) == transformPath)
+                    return t.gameObject;
+            }
+        }
+
+        // fallback: EnemyInstanceId가 없는 오브젝트(트리거 연출 몬스터 등)
+        var byName = GameObject.Find(instanceId);
+        return byName;
+    }
+
+    private static string BuildTransformPath(Transform t)
+    {
+        if (t == null) return string.Empty;
+        var stack = new Stack<string>();
+        var cur = t;
+        while (cur != null)
+        {
+            stack.Push(cur.name);
+            cur = cur.parent;
+        }
+        return string.Join("/", stack.ToArray());
     }
 
     private IEnumerator CoApplyReturnCameraNextFrame(
