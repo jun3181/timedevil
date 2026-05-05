@@ -279,7 +279,10 @@ public class PanelController : MonoBehaviour
             }
         }
 
-        SetGameplayView(enemyTurn, !shouldAnimateAfterIntro);
+        // 첫 턴이 EnemyTurn이면 enemy/gameplay 타겟 전환은 애니메이션을 적용한다.
+        // (Move_Tutorial 대사 종료 후에도 동일)
+        bool immediateViewApply = !enemyTurn && !shouldAnimateAfterIntro;
+        SetGameplayView(enemyTurn, immediateViewApply);
 
         bool handSelecting = handUI && handUI.IsInSelectMode;
         bool cardResolving = orchestrator && orchestrator.GetIsBusy();
