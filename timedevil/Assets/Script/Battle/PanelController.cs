@@ -136,6 +136,7 @@ public class PanelController : MonoBehaviour
     void OnDisable()
     {
         if (menu) menu.onSubmit.RemoveListener(OnMenuSubmit);
+        if (turnManager) turnManager.OnTurnChanged -= HandleTurnChanged;
     }
 
     void Update()
