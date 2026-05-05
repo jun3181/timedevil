@@ -77,6 +77,8 @@ public class PanelController : MonoBehaviour
     [Header("Initial State")]
     [Tooltip("체크 시 시작부터 gameplayTargets가 보이는 상태")]
     [SerializeField] private bool startInGameplayView = false;
+    [Tooltip("시작 직후 턴 상태(Player/Enemy)에 맞춰 최초 뷰를 즉시 동기화(애니메이션 없음)")]
+    [SerializeField] private bool syncInitialViewWithTurnState = true;
 
     private readonly List<Vector3> enemyShownBase = new List<Vector3>();
     private readonly List<Vector3> gameplayShownBase = new List<Vector3>();
@@ -121,6 +123,12 @@ public class PanelController : MonoBehaviour
     void OnEnable()
     {
         if (menu) menu.onSubmit.AddListener(OnMenuSubmit);
+    }
+
+    void Start()
+    {
+        if (syncInitialViewWithTurnState)
+            StartCoroutine(Co_SyncInitialViewWithTurnState());
     }
 
     void OnDisable()
@@ -244,6 +252,32 @@ public class PanelController : MonoBehaviour
             yield return new WaitForSeconds(delaySeconds);
         SetGameplayView(on);
         delayedViewRoutine = null;
+    }
+
+    private IEnumerator Co_SyncInitialViewWithTurnState()
+    {
+        if (!turnManager) turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
+        if (!turnManager) yield break;
+
+        // TurnManager가 Start/코루틴에서 첫 턴을 늦게 확정하는 씬(move_test 등) 대응
+        // 기본값(PlayerTurn)에서 실제 첫 턴으로 바뀔 시간을 잠깐 기다린 뒤 즉시 배치한다.
+        const int maxWaitFrames = 120; // 약 2초 @60fps
+        int waited = 0;
+        while (waited < maxWaitFrames && turnManager.currentTurn == lastTurnState)
+        {
+            waited++;
+            yield return null;
+        }
+
+        bool enemyTurn = turnManager && turnManager.currentTurn == TurnState.EnemyTurn;
+        SetGameplayView(enemyTurn, true);
+
+        bool handSelecting = handUI && handUI.IsInSelectMode;
+        bool cardResolving = orchestrator && orchestrator.GetIsBusy();
+        bool shouldHideMenuPanels = enemyTurn || handSelecting || cardResolving;
+        SetBattleMenuPanelsHidden(shouldHideMenuPanels, true);
+
+        if (turnManager) lastTurnState = turnManager.currentTurn;
     }
 
     [ContextMenu("Re-cache Shown Base From Current")]
