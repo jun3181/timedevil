@@ -35,7 +35,14 @@ public class BattleCollisionTransition : MonoBehaviour
 
     private bool _entered;
     private static readonly System.Collections.Generic.Dictionary<string, float> _reenterBlockedUntil = new();
-    private static readonly System.Collections.Generic.HashSet<string> _forceActivateAfterReturnKeys = new();
+    private static readonly System.Collections.Generic.Dictionary<string, ForcedChasingState> _forceStateAfterReturn = new();
+
+    private struct ForcedChasingState
+    {
+        public bool hasValue;
+        public Vector3 position;
+        public Quaternion rotation;
+    }
 
     private void Start()
     {
@@ -82,7 +89,7 @@ public class BattleCollisionTransition : MonoBehaviour
     {
         _entered = true;
         if (forceActivateChasingObject)
-            _forceActivateAfterReturnKeys.Add(GetRuntimeKey());
+            SaveForcedChasingStateForReturn();
 
         var enemy = chasingObject != null
             ? chasingObject
@@ -151,15 +158,41 @@ public class BattleCollisionTransition : MonoBehaviour
         if (chasingObject == null) return;
 
         string key = GetRuntimeKey();
-        if (!_forceActivateAfterReturnKeys.Contains(key)) return;
+        if (!_forceStateAfterReturn.TryGetValue(key, out ForcedChasingState state)) return;
 
         if (!chasingObject.gameObject.activeSelf)
             chasingObject.gameObject.SetActive(true);
 
-        _forceActivateAfterReturnKeys.Remove(key);
+        if (state.hasValue)
+        {
+            chasingObject.position = state.position;
+            chasingObject.rotation = state.rotation;
+            var rb = chasingObject.GetComponent<Rigidbody2D>();
+            if (rb != null) rb.velocity = Vector2.zero;
+        }
+
+        _forceStateAfterReturn.Remove(key);
 
         if (debugLog)
-            Debug.Log($"[BattleCollisionTransition] force-activated chasingObject after return: '{chasingObject.name}'");
+            Debug.Log($"[BattleCollisionTransition] force restore after return: '{chasingObject.name}' pos={chasingObject.position}");
+    }
+
+    private void SaveForcedChasingStateForReturn()
+    {
+        string key = GetRuntimeKey();
+
+        if (chasingObject == null)
+        {
+            _forceStateAfterReturn[key] = default;
+            return;
+        }
+
+        _forceStateAfterReturn[key] = new ForcedChasingState
+        {
+            hasValue = true,
+            position = chasingObject.position,
+            rotation = chasingObject.rotation
+        };
     }
 
     private bool IsBlockedByCooldown()
