@@ -12,6 +12,16 @@ public class BattleCollisionTransition : MonoBehaviour
     [Header("Return")]
     [SerializeField] private Transform returnPointOverride;
     [SerializeField] private float graceSeconds = 0.5f;
+    [SerializeField] private bool requestCameraRebind = false;
+    [SerializeField] private string worldVcamName = "CM vcam1";
+
+    [Header("Return Camera")]
+    [SerializeField] private bool useReturnCameraOverride = false;
+    [SerializeField] private CameraModeId returnCameraModeOverride = CameraModeId.FollowFree;
+    [SerializeField] private Transform returnFixedCameraAnchorOverride;
+    [SerializeField] private Collider2D returnConfinerBoundsOverride;
+    [SerializeField] private float returnOrthoSizeOverride = 0f;
+    [SerializeField] private bool captureCameraSnapshot = true;
 
     [Header("Filter")]
     [SerializeField] private string playerTag = "Player";
@@ -26,25 +36,64 @@ public class BattleCollisionTransition : MonoBehaviour
     {
         if (_entered) return;
         if (!other || !other.CompareTag(playerTag)) return;
+        EnterBattle(other.transform, other.name);
+    }
 
+    private void OnTriggerEnter(Collider other)
+    {
+        if (_entered) return;
+        if (!other || !other.CompareTag(playerTag)) return;
+        EnterBattle(other.transform, other.name);
+    }
+
+    private void EnterBattle(Transform player, string colliderName)
+    {
         _entered = true;
-        var player = other.transform;
         var enemy = enemySnapshotTarget != null ? enemySnapshotTarget : transform;
         var returnPos = returnPointOverride != null ? returnPointOverride.position : player.position;
+
+        bool restoreCam = false;
+        CameraModeId camMode = CameraModeId.Fixed;
+        float camOrtho = 0f;
+        Vector2 camFixedPos = returnPos;
+        string camBoundsName = null;
+
+        if (useReturnCameraOverride)
+        {
+            restoreCam = true;
+            camMode = returnCameraModeOverride;
+            camOrtho = returnOrthoSizeOverride;
+            camFixedPos = returnFixedCameraAnchorOverride != null ? (Vector2)returnFixedCameraAnchorOverride.position : returnPos;
+            camBoundsName = returnConfinerBoundsOverride != null ? returnConfinerBoundsOverride.name : null;
+        }
+        else if (captureCameraSnapshot && CameraManager.Instance != null)
+        {
+            if (CameraManager.Instance.TryGetSnapshot(out camMode, out camOrtho, out Vector3 fixedPos3, out string boundsName))
+            {
+                restoreCam = true;
+                camFixedPos = new Vector2(fixedPos3.x, fixedPos3.y);
+                camBoundsName = string.IsNullOrWhiteSpace(boundsName) ? null : boundsName;
+            }
+        }
 
         PlayerReturnContext.SetReturnFromTrigger(
             returnSceneName: SceneManager.GetActiveScene().name,
             returnPosition: returnPos,
             graceSeconds: graceSeconds,
-            requestCameraRebind: false,
-            targetVcamName: null,
+            requestCameraRebind: requestCameraRebind,
+            targetVcamName: worldVcamName,
             useOverlapSuppression: false,
             overlapRadius: 0f,
-            overlapSeconds: 0f
+            overlapSeconds: 0f,
+            restoreCameraState: restoreCam,
+            cameraMode: camMode,
+            cameraOrthoSize: camOrtho,
+            cameraFixedPos: camFixedPos,
+            cameraBoundsName: camBoundsName
         );
 
         if (debugLog)
-            Debug.Log($"[BattleCollisionTransition] enter by '{other.name}' -> scene='{battleSceneName}', enemyId='{enemyId}', returnPos=({returnPos.x:F2},{returnPos.y:F2})");
+            Debug.Log($"[BattleCollisionTransition] enter by '{colliderName}' -> scene='{battleSceneName}', enemyId='{enemyId}', returnPos=({returnPos.x:F2},{returnPos.y:F2}), camRestore={restoreCam}, camMode={camMode}");
 
         BattleSceneLoader.Go(battleSceneName, enemyId, player, enemy);
 
