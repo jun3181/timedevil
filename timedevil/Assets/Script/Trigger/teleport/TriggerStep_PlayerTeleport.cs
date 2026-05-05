@@ -43,11 +43,32 @@ public class TriggerStep_PlayerTeleport : TriggerStepBase
             fadePanel = FindObjectOfType<FadePanelFader>(true);
     }
 
+    private string ContextTag()
+    {
+        return $"[TriggerStep_PlayerTeleport] scene={gameObject.scene.name} object={name}";
+    }
+
+    private static string BuildTransformPath(Transform t)
+    {
+        if (!t) return "<null>";
+        string path = t.name;
+        Transform cur = t.parent;
+        while (cur != null)
+        {
+            path = cur.name + "/" + path;
+            cur = cur.parent;
+        }
+        return path;
+    }
+
     public override IEnumerator Execute(TriggerContext ctx)
     {
+        if (debugLog)
+            Debug.Log($"{ContextTag()} Execute start target={(targetPoint ? targetPoint.name : "<null>")} offset={offset} mode={afterMode}", this);
+
         if (!targetPoint)
         {
-            Debug.LogWarning("[TriggerStep_PlayerTeleport] targetPoint가 비어있습니다.");
+            Debug.LogWarning($"{ContextTag()} targetPoint가 비어있습니다.", this);
             yield break;
         }
 
@@ -63,20 +84,36 @@ public class TriggerStep_PlayerTeleport : TriggerStepBase
             yield break;
         }
 
+        if (debugLog)
+            Debug.Log($"{ContextTag()} resolved player name={playerTr.name} id={playerTr.gameObject.GetInstanceID()} active={playerTr.gameObject.activeInHierarchy} path={BuildTransformPath(playerTr)} scene={playerTr.gameObject.scene.name}", this);
+
         Vector3 from = playerTr.position;
         Vector3 to = targetPoint.position + (Vector3)offset;
 
         if (debugLog)
-            Debug.Log($"[TriggerStep_PlayerTeleport] from={from} to={to} mode={afterMode}");
+            Debug.Log($"{ContextTag()} player={playerTr.name} from={from} to={to} targetScene={targetPoint.gameObject.scene.name} mode={afterMode} bounds={(afterBounds ? afterBounds.name : "<null>")} fixedAnchor={(fixedCameraAnchorPoint ? fixedCameraAnchorPoint.name : "<null>")}", this);
 
-        if (lockPlayerInput && GameManager.Instance) GameManager.Instance.isAction = true;
-        if (CameraManager.Instance) CameraManager.Instance.BeginTransition(lockCamera: true);
+        if (lockPlayerInput && GameManager.Instance)
+        {
+            GameManager.Instance.isAction = true;
+            if (debugLog) Debug.Log($"{ContextTag()} input locked", this);
+        }
+        if (CameraManager.Instance)
+        {
+            CameraManager.Instance.BeginTransition(lockCamera: true);
+            if (debugLog) Debug.Log($"{ContextTag()} CameraManager.BeginTransition(lockCamera=true)", this);
+        }
 
         if (useFade && fadePanel != null)
+        {
+            if (debugLog) Debug.Log($"{ContextTag()} fade out start duration={fadeOutDuration}", this);
             yield return fadePanel.FadeTo(1f, fadeOutDuration);
+            if (debugLog) Debug.Log($"{ContextTag()} fade out end", this);
+        }
 
         // 이동
         playerTr.position = to;
+        if (debugLog) Debug.Log($"{ContextTag()} player position applied current={playerTr.position}", this);
 
         // 카메라 적용은 CameraManager 책임(Indoor 앵커도 넘김)
         if (CameraManager.Instance != null)
@@ -95,12 +132,26 @@ public class TriggerStep_PlayerTeleport : TriggerStepBase
                 snapCameraWhenFixed: snapCameraWhenFixed
             );
 
+            if (debugLog)
+                Debug.Log($"{ContextTag()} ApplyAfterTeleport mode={afterMode} bounds={(afterBounds ? afterBounds.name : "<null>")} ortho={(size.HasValue ? size.Value.ToString() : "<keep>")} fixedAnchor={(fixedCameraAnchorPoint ? fixedCameraAnchorPoint.position.ToString() : "<null>")} notifyWarp={notifyWarpToCinemachine} snapFixed={snapCameraWhenFixed}", this);
+
             CameraManager.Instance.EndTransition();
+            if (debugLog) Debug.Log($"{ContextTag()} CameraManager.EndTransition", this);
         }
 
         if (useFade && fadePanel != null)
+        {
+            if (debugLog) Debug.Log($"{ContextTag()} fade in start duration={fadeInDuration}", this);
             yield return fadePanel.FadeTo(0f, fadeInDuration);
+            if (debugLog) Debug.Log($"{ContextTag()} fade in end", this);
+        }
 
-        if (lockPlayerInput && GameManager.Instance) GameManager.Instance.isAction = false;
+        if (lockPlayerInput && GameManager.Instance)
+        {
+            GameManager.Instance.isAction = false;
+            if (debugLog) Debug.Log($"{ContextTag()} input unlocked", this);
+        }
+
+        if (debugLog) Debug.Log($"{ContextTag()} Execute done", this);
     }
 }
