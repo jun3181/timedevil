@@ -5,6 +5,9 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class TriggerGet : MonoBehaviour
 {
+    // 씬 재로드(배틀 왕복) 시에도 "이미 소모된 TriggerGet" 상태를 유지
+    private static readonly System.Collections.Generic.Dictionary<string, int> s_callCountById = new();
+
     [Header("Router")]
     public TriggerRouter router;
 
@@ -38,6 +41,7 @@ public class TriggerGet : MonoBehaviour
     private Collider2D _pendingInstigatorCollider = null;
     private PlayerMove _pendingPlayerMove = null;
     private Coroutine _cameraRestoreCo = null;
+    private string _runtimeId;
 
     private void Reset()
     {
@@ -47,6 +51,8 @@ public class TriggerGet : MonoBehaviour
 
     private void Awake()
     {
+        _runtimeId = BuildRuntimeId();
+
         _selfCollider = GetComponent<Collider2D>();
         if (!_selfCollider.isTrigger)
         {
@@ -56,6 +62,12 @@ public class TriggerGet : MonoBehaviour
 
         if (!router) router = FindObjectOfType<TriggerRouter>(true);
         if (!cameraMoveStep) cameraMoveStep = GetComponent<TriggerStep_CameraMove>();
+
+        // 이전 씬 인스턴스에서의 호출 횟수 복원
+        if (!string.IsNullOrEmpty(_runtimeId) && s_callCountById.TryGetValue(_runtimeId, out int persisted))
+            _called = Mathf.Max(0, persisted);
+
+        ApplyConsumedStateIfNeeded();
     }
 
     private void Update()
@@ -83,8 +95,11 @@ public class TriggerGet : MonoBehaviour
             return;
         }
 
-        // 전투 트리거만 Grace 동안 막기
-        if (blockDuringGracePeriod && PlayerReturnContext.IsInGracePeriod)
+        // 전투 복귀 직후 재진입 방지:
+        // - IsInGracePeriod: 복귀 후 grace 코루틴이 실제로 도는 동안
+        // - GraceSecondsPending: 복귀 씬 로드 직후 코루틴 시작 전 "틈" 프레임 방어
+        if (blockDuringGracePeriod &&
+            (PlayerReturnContext.IsInGracePeriod || PlayerReturnContext.GraceSecondsPending > 0f))
         {
             if (debugLog)
                 Debug.Log($"[TriggerGet] Suppressed by Grace key='{routeKey}' (by='{other.name}')");
@@ -130,6 +145,7 @@ public class TriggerGet : MonoBehaviour
             return;
 
         _called++;
+        PersistCallCount();
 
         if (debugLog)
             Debug.Log($"[TriggerGet] Fired key='{routeKey}' call={_called}/{(maxCalls <= 0 ? "∞" : maxCalls.ToString())} by='{other.name}'");
@@ -150,6 +166,10 @@ public class TriggerGet : MonoBehaviour
         }
 
         router.RequestRoute(routeKey, ctx);
+
+        // 1회/유한 호출 트리거는 소진 시 즉시 비활성화하여
+        // 배틀씬 왕복 후에도 동일 TriggerGet만 재발동되지 않게 보장
+        ApplyConsumedStateIfNeeded();
     }
 
     private System.Collections.IEnumerator CoRestoreCameraAfterRoute(string key)
@@ -169,5 +189,42 @@ public class TriggerGet : MonoBehaviour
         _pendingByCutscene = false;
         _pendingInstigatorCollider = null;
         _pendingPlayerMove = null;
+    }
+
+    private void PersistCallCount()
+    {
+        if (string.IsNullOrEmpty(_runtimeId)) return;
+        s_callCountById[_runtimeId] = _called;
+    }
+
+    private void ApplyConsumedStateIfNeeded()
+    {
+        if (maxCalls <= 0) return;
+        if (_called < maxCalls) return;
+
+        enabled = false;
+        if (_selfCollider != null) _selfCollider.enabled = false;
+
+        if (debugLog)
+            Debug.Log($"[TriggerGet] Consumed -> disabled key='{routeKey}' id='{_runtimeId}' calls={_called}/{maxCalls}", this);
+    }
+
+    private string BuildRuntimeId()
+    {
+        string sceneName = gameObject.scene.IsValid() ? gameObject.scene.name : "(no-scene)";
+        return $"{sceneName}::{GetTransformPath(transform)}::{routeKey}";
+    }
+
+    private static string GetTransformPath(Transform t)
+    {
+        if (t == null) return "(null)";
+        var stack = new System.Collections.Generic.Stack<string>();
+        var cur = t;
+        while (cur != null)
+        {
+            stack.Push(cur.name);
+            cur = cur.parent;
+        }
+        return string.Join("/", stack.ToArray());
     }
 }
