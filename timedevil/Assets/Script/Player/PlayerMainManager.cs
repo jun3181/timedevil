@@ -136,9 +136,15 @@ public class PlayerMainManager : MonoBehaviour
 
         move?.SetMoveInput(h, v, hDown, vDown, hUp, vUp);
 
-        // 상호작용: E
+        // 상호작용: E (Action Lock 중에는 무시)
         if (Input.GetKeyDown(keyInteractOrSubmit))
         {
+            if (gameManager != null && gameManager.isAction)
+            {
+                if (debugLog) Debug.Log("[PlayerMainManager] INTERACT ignored (GameManager.isAction=true)");
+                return;
+            }
+
             if (debugLog) Debug.Log("[PlayerMainManager] INTERACT by E");
             interactor?.TryInteract();
         }

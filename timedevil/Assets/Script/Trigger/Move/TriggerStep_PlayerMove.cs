@@ -76,6 +76,8 @@ public class TriggerStep_PlayerMove : TriggerStepBase
 
     [Header("Input Lock")]
     [SerializeField] private bool lockPlayerInput = true;
+    [Tooltip("lockPlayerInput으로 잠근 입력을 Step 종료 시 해제할지 여부")]
+    [SerializeField] private bool unlockInputAtEnd = true;
 
     [SerializeField] private bool disablePlayerMainManagerWhileRunning = true;
 
@@ -263,7 +265,7 @@ public class TriggerStep_PlayerMove : TriggerStepBase
             pmm.enabled = pmmPrevEnabled;
 
         // 7) Unlock input
-        if (heldLock && GameManager.Instance != null)
+        if (heldLock && unlockInputAtEnd && GameManager.Instance != null)
             GameManager.Instance.UnlockAction();
     }
 

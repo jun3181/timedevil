@@ -1,10 +1,11 @@
-// Assets/Script/loader/EnemySnapshot.cs
 using UnityEngine;
 
 [System.Serializable]
 public struct EnemySnapshot
 {
     public string instanceId;
+    public string transformPath;
+    public bool activeSelf;
     public Vector2 position;
     public float rotationZ;
     public Vector2 velocity;
@@ -17,6 +18,8 @@ public struct EnemySnapshot
 
         var id = enemy.GetComponent<EnemyInstanceId>();
         snap.instanceId = id ? id.Id : enemy.name;
+        snap.transformPath = BuildTransformPath(enemy.transform);
+        snap.activeSelf = enemy.activeSelf;
 
         var t = enemy.transform;
         snap.position = t.position;
@@ -45,6 +48,10 @@ public struct EnemySnapshot
 
     public void ApplyTo(GameObject enemy)
     {
+        if (!enemy) return;
+
+        enemy.SetActive(activeSelf);
+
         var t = enemy.transform;
         t.position = position;
         t.rotation = Quaternion.Euler(0, 0, rotationZ);
@@ -55,8 +62,20 @@ public struct EnemySnapshot
         var anim = enemy.GetComponent<Animator>();
         if (anim && anim.runtimeAnimatorController && !string.IsNullOrEmpty(animStateName))
         {
-            // 같은 이름의 클립이 있으면 타임을 맞춰 재생 (없으면 무시)
             anim.Play(animStateName, 0, Mathf.Repeat(animNormalizedTime, 1f));
         }
+    }
+
+    private static string BuildTransformPath(Transform t)
+    {
+        if (t == null) return string.Empty;
+        var stack = new System.Collections.Generic.Stack<string>();
+        var cur = t;
+        while (cur != null)
+        {
+            stack.Push(cur.name);
+            cur = cur.parent;
+        }
+        return string.Join("/", stack.ToArray());
     }
 }
