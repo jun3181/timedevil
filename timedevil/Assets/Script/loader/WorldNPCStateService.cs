@@ -6,8 +6,18 @@ public class WorldNPCStateService : MonoBehaviour
 {
     public static WorldNPCStateService Instance { get; private set; }
 
-    // ÃÖ±Ù ÀüÅõ ÁøÀÔ ½Ã ºÎµúÈù "±×" ÀûÀÇ ½º³À¼¦¸¸ ¾²¸é µÇ¹Ç·Î, °¡Àå ´Ü¼øÇÏ°Ô º¸°ü
+    // ÃƒÃ–Â±Ã™ Ã€Ã¼Ã…Ãµ ÃÃ¸Ã€Ã” Â½Ãƒ ÂºÃÂµÃºÃˆÃ¹ "Â±Ã—" Ã€Ã»Ã€Ã‡ Â½ÂºÂ³Ã€Â¼Â¦Â¸Â¸ Â¾Â²Â¸Ã© ÂµÃ‡Â¹Ã‡Â·Ã, Â°Â¡Ã€Ã¥ Â´ÃœÂ¼Ã¸Ã‡ÃÂ°Ã” ÂºÂ¸Â°Ã¼
     private readonly Dictionary<string, EnemySnapshot> _lastSnapshots = new();
+
+    private readonly Dictionary<string, TriggerRouteProgress> _triggerRouteProgress = new();
+
+    public struct TriggerRouteProgress
+    {
+        public string routeRuntimeId;
+        public string routeKey;
+        public int nextStepIndex;
+        public bool isRunning;
+    }
 
     void Awake()
     {
@@ -36,4 +46,35 @@ public class WorldNPCStateService : MonoBehaviour
     {
         _lastSnapshots.Remove(instanceId);
     }
+
+    public void SaveTriggerRouteProgress(string routeRuntimeId, string routeKey, int nextStepIndex, bool isRunning)
+    {
+        if (string.IsNullOrWhiteSpace(routeRuntimeId)) return;
+
+        _triggerRouteProgress[routeRuntimeId] = new TriggerRouteProgress
+        {
+            routeRuntimeId = routeRuntimeId,
+            routeKey = routeKey,
+            nextStepIndex = Mathf.Max(0, nextStepIndex),
+            isRunning = isRunning
+        };
+    }
+
+    public bool TryGetTriggerRouteProgress(string routeRuntimeId, out TriggerRouteProgress progress)
+    {
+        if (string.IsNullOrWhiteSpace(routeRuntimeId))
+        {
+            progress = default;
+            return false;
+        }
+
+        return _triggerRouteProgress.TryGetValue(routeRuntimeId, out progress);
+    }
+
+    public void ClearTriggerRouteProgress(string routeRuntimeId)
+    {
+        if (string.IsNullOrWhiteSpace(routeRuntimeId)) return;
+        _triggerRouteProgress.Remove(routeRuntimeId);
+    }
+
 }
