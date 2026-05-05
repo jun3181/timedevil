@@ -1,22 +1,39 @@
 using UnityEngine;
 
-/// ¹èÆ²¾À ÁøÀÔÀ» À§ÇÑ Àü¿ë À¯Æ¿: Àû ID¸¦ ³Ñ±â°í, º¹±Í ÁÂÇ¥ ÀúÀå ÈÄ ¹èÆ²¾ÀÀ¸·Î ÀÌµ¿
+/// <summary>
+/// ë°°í‹€ ì§„ì… ìœ í‹¸: ì  ID/ë³µê·€ ìœ„ì¹˜ë¥¼ ì €ì¥í•˜ê³  ë°°í‹€ ì”¬ìœ¼ë¡œ ì´ë™.
+/// </summary>
 public static class BattleSceneLoader
 {
     public static string enemyIdToLoad;
+
+    private static ObjectNameRuntime EnsureObjectNameRuntime()
+    {
+        if (ObjectNameRuntime.Instance != null)
+            return ObjectNameRuntime.Instance;
+
+        var existing = Object.FindObjectOfType<ObjectNameRuntime>(true);
+        if (existing != null)
+            return existing;
+
+        var go = new GameObject("ObjectNameRuntime (Auto)");
+        return go.AddComponent<ObjectNameRuntime>();
+    }
+
     public static void Go(string battleSceneName, string enemyIdToLoad, Transform playerT, Transform enemyT)
     {
-        // 1) Àû ID Àü´Ş (ObjectNameRuntime ½Ì±ÛÅæ »ç¿ë)
-        if (ObjectNameRuntime.Instance != null)
+        // 1) ì  ID ê¸°ë¡ (ObjectNameRuntime ìë™ ë³´ì¥)
+        var runtime = EnsureObjectNameRuntime();
+        if (runtime != null)
         {
-            ObjectNameRuntime.Instance.SetEnemyToLoad(enemyIdToLoad);
+            runtime.SetEnemyToLoad(enemyIdToLoad);
         }
         else
         {
-            Debug.LogError("[BattleSceneLoader] ObjectNameRuntime.Instance°¡ ¾ø½À´Ï´Ù. Boot ¾À¿¡ ¹èÄ¡ÇÏ¼¼¿ä.");
+            Debug.LogError("[BattleSceneLoader] ObjectNameRuntime ìƒì„±/íšë“ì— ì‹¤íŒ¨í–ˆìŠµë‹ˆë‹¤.");
         }
 
-        // 2) º¹±Í Á¤º¸¸¦ ÀúÀå
+        // 2) ë³µê·€ ì •ë³´ ì €ì¥
         SceneLoader.SaveReturnPoint(playerT, enemyT);
 
         BattleSceneLoader.enemyIdToLoad = enemyIdToLoad;
@@ -24,7 +41,7 @@ public static class BattleSceneLoader
         if (enemyT && WorldNPCStateService.Instance != null)
             WorldNPCStateService.Instance.SaveSnapshot(enemyT.gameObject);
 
-        // 3) ¹èÆ²¾ÀÀ¸·Î ÀÌµ¿
+        // 3) ë°°í‹€ ì”¬ ì´ë™
         SceneLoader.Load(battleSceneName, useFaderIfExists: true);
     }
 }
