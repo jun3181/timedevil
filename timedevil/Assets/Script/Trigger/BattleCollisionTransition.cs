@@ -106,9 +106,18 @@ public class BattleCollisionTransition : MonoBehaviour
 
     private IEnumerator CoEnterBattle(Transform player, string colliderName)
     {
-        ApplyPauseOnEnter();
+        var pauseState = ApplyPauseOnEnter();
         float wait = Mathf.Max(0f, pauseSecondsBeforeBattle);
-        if (wait > 0f) yield return new WaitForSeconds(wait);
+        if (wait > 0f)
+        {
+            float elapsed = 0f;
+            while (elapsed < wait)
+            {
+                MaintainPauseState(pauseState);
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+        }
 
         EnterBattle(player, colliderName);
     }
@@ -174,7 +183,15 @@ public class BattleCollisionTransition : MonoBehaviour
             gameObject.SetActive(false);
     }
 
-    private void ApplyPauseOnEnter()
+    private struct PauseState
+    {
+        public bool hasTarget;
+        public Transform target;
+        public Vector3 lockedPosition;
+        public Rigidbody2D rb;
+    }
+
+    private PauseState ApplyPauseOnEnter()
     {
         Transform target = pauseTargetObject != null ? pauseTargetObject : null;
         Rigidbody2D rb = pauseTargetRigidbody2D != null
@@ -186,6 +203,25 @@ public class BattleCollisionTransition : MonoBehaviour
 
         if (pauseTargetController != null)
             pauseTargetController.enabled = false;
+
+        var state = new PauseState
+        {
+            hasTarget = target != null,
+            target = target,
+            lockedPosition = target != null ? target.position : Vector3.zero,
+            rb = rb
+        };
+
+        return state;
+    }
+
+    private void MaintainPauseState(PauseState state)
+    {
+        if (state.rb != null)
+            state.rb.velocity = Vector2.zero;
+
+        if (state.hasTarget && state.target != null)
+            state.target.position = state.lockedPosition;
     }
 
     private void Update()
