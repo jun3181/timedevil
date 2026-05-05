@@ -4,6 +4,7 @@ using UnityEngine;
 public struct EnemySnapshot
 {
     public string instanceId;
+    public string transformPath;
     public bool activeSelf;
     public Vector2 position;
     public float rotationZ;
@@ -17,6 +18,7 @@ public struct EnemySnapshot
 
         var id = enemy.GetComponent<EnemyInstanceId>();
         snap.instanceId = id ? id.Id : enemy.name;
+        snap.transformPath = BuildTransformPath(enemy.transform);
         snap.activeSelf = enemy.activeSelf;
 
         var t = enemy.transform;
@@ -62,5 +64,18 @@ public struct EnemySnapshot
         {
             anim.Play(animStateName, 0, Mathf.Repeat(animNormalizedTime, 1f));
         }
+    }
+
+    private static string BuildTransformPath(Transform t)
+    {
+        if (t == null) return string.Empty;
+        var stack = new System.Collections.Generic.Stack<string>();
+        var cur = t;
+        while (cur != null)
+        {
+            stack.Push(cur.name);
+            cur = cur.parent;
+        }
+        return string.Join("/", stack.ToArray());
     }
 }
