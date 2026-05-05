@@ -123,6 +123,14 @@ public class PanelController : MonoBehaviour
     void OnEnable()
     {
         if (menu) menu.onSubmit.AddListener(OnMenuSubmit);
+        if (!turnManager) turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
+        if (turnManager) turnManager.OnTurnChanged += HandleTurnChanged;
+    }
+
+    void Start()
+    {
+        if (syncInitialViewWithTurnState)
+            StartCoroutine(Co_SyncInitialViewWithTurnState());
     }
 
     void Start()
@@ -134,6 +142,7 @@ public class PanelController : MonoBehaviour
     void OnDisable()
     {
         if (menu) menu.onSubmit.RemoveListener(OnMenuSubmit);
+        if (turnManager) turnManager.OnTurnChanged -= HandleTurnChanged;
     }
 
     void Update()
@@ -256,9 +265,12 @@ public class PanelController : MonoBehaviour
 
     private IEnumerator Co_SyncInitialViewWithTurnState()
     {
-        yield return null;
-
         if (!turnManager) turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
+        if (!turnManager) yield break;
+
+        // 첫 턴이 실제로 확정될 때까지 기다렸다가 즉시 반영 (프레임 타임아웃 없음)
+        while (!turnManager.HasFirstTurnDecided)
+            yield return null;
 
         bool enemyTurn = turnManager && turnManager.currentTurn == TurnState.EnemyTurn;
         SetGameplayView(enemyTurn, true);
@@ -269,6 +281,11 @@ public class PanelController : MonoBehaviour
         SetBattleMenuPanelsHidden(shouldHideMenuPanels, true);
 
         if (turnManager) lastTurnState = turnManager.currentTurn;
+    }
+
+    private void HandleTurnChanged(TurnState newTurn)
+    {
+        lastTurnState = newTurn;
     }
 
     [ContextMenu("Re-cache Shown Base From Current")]
