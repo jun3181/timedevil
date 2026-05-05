@@ -46,6 +46,24 @@ public class BattleCollisionTransition : MonoBehaviour
         EnterBattle(other.transform, other.name);
     }
 
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (_entered) return;
+        if (collision == null || collision.collider == null) return;
+        var other = collision.collider;
+        if (!other.CompareTag(playerTag)) return;
+        EnterBattle(other.transform, other.name);
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (_entered) return;
+        if (collision == null || collision.collider == null) return;
+        var other = collision.collider;
+        if (!other.CompareTag(playerTag)) return;
+        EnterBattle(other.transform, other.name);
+    }
+
     private void EnterBattle(Transform player, string colliderName)
     {
         _entered = true;
