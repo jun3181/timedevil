@@ -77,6 +77,8 @@ public class PanelController : MonoBehaviour
     [Header("Initial State")]
     [Tooltip("체크 시 시작부터 gameplayTargets가 보이는 상태")]
     [SerializeField] private bool startInGameplayView = false;
+    [Tooltip("시작 직후 턴 상태(Player/Enemy)에 맞춰 최초 뷰를 즉시 동기화(애니메이션 없음)")]
+    [SerializeField] private bool syncInitialViewWithTurnState = true;
 
     private readonly List<Vector3> enemyShownBase = new List<Vector3>();
     private readonly List<Vector3> gameplayShownBase = new List<Vector3>();
@@ -89,6 +91,7 @@ public class PanelController : MonoBehaviour
     private Coroutine menuPanelRunning;
     private Coroutine delayedViewRoutine;
     private bool menuPanelsHidden;
+    private bool initialSyncRequested;
 
     private TurnState lastTurnState = TurnState.PlayerTurn;
     private bool lastHandSelectMode;
@@ -121,11 +124,19 @@ public class PanelController : MonoBehaviour
     void OnEnable()
     {
         if (menu) menu.onSubmit.AddListener(OnMenuSubmit);
+        if (!turnManager) turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
+        if (turnManager) turnManager.OnTurnChanged += HandleTurnChanged;
+        if (syncInitialViewWithTurnState && !initialSyncRequested)
+        {
+            initialSyncRequested = true;
+            StartCoroutine(Co_SyncInitialViewWithTurnState());
+        }
     }
 
     void OnDisable()
     {
         if (menu) menu.onSubmit.RemoveListener(OnMenuSubmit);
+        if (turnManager) turnManager.OnTurnChanged -= HandleTurnChanged;
     }
 
     void Update()
@@ -244,6 +255,31 @@ public class PanelController : MonoBehaviour
             yield return new WaitForSeconds(delaySeconds);
         SetGameplayView(on);
         delayedViewRoutine = null;
+    }
+
+    private IEnumerator Co_SyncInitialViewWithTurnState()
+    {
+        if (!turnManager) turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
+        if (!turnManager) yield break;
+
+        // 첫 턴이 실제로 확정될 때까지 기다렸다가 즉시 반영 (프레임 타임아웃 없음)
+        while (!turnManager.HasFirstTurnDecided)
+            yield return null;
+
+        bool enemyTurn = turnManager && turnManager.currentTurn == TurnState.EnemyTurn;
+        SetGameplayView(enemyTurn, true);
+
+        bool handSelecting = handUI && handUI.IsInSelectMode;
+        bool cardResolving = orchestrator && orchestrator.GetIsBusy();
+        bool shouldHideMenuPanels = enemyTurn || handSelecting || cardResolving;
+        SetBattleMenuPanelsHidden(shouldHideMenuPanels, true);
+
+        if (turnManager) lastTurnState = turnManager.currentTurn;
+    }
+
+    private void HandleTurnChanged(TurnState newTurn)
+    {
+        lastTurnState = newTurn;
     }
 
     [ContextMenu("Re-cache Shown Base From Current")]
