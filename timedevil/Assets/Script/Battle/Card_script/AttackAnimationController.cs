@@ -1,4 +1,4 @@
-using System; // ★ 추가
+using System; //  煞
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -12,18 +12,22 @@ public class AttackAnimationController : MonoBehaviour
     [SerializeField] private float tileWidth = 1.3f;
     [SerializeField] private float tileHeight = 1.3f;
     [SerializeField] private string sortingLayer = "Default";
-    [SerializeField] private int sortingOrder = 50;
+    [SerializeField] private int sortingOrder = 1000;
     [SerializeField] private float tileZ = 0f;
+    [Header("Dynamic Sorting")]
+    [SerializeField] private bool useDynamicTopOrder = true;
+    [SerializeField] private int dynamicOrderPadding = 10;
+    [SerializeField] private int fallbackSortingOrder = 1000;
 
     [Header("Fade")]
     [SerializeField, Range(0f, 1f)] private float peakAlpha = 0.75f;
-    [SerializeField] private float minWindow = 0.06f;   // 너무 짧은 값 보정
+    [SerializeField] private float minWindow = 0.06f;   // 賈 짧  
     [SerializeField] private bool useUnscaledTime = false;
 
     private Sprite _sprite;
     private readonly List<GameObject> _pool = new List<GameObject>();
-    private Coroutine[] _routines;    // 타일별 진행 코루틴
-    private int[] _seq;               // 타일별 버전 토큰(레이스 방지)
+    private Coroutine[] _routines;    // 타瞿  米틴
+    private int[] _seq;               // 타瞿  큰(決 )
 
     public event Action<int> OnTilePeak;
 
@@ -47,9 +51,9 @@ public class AttackAnimationController : MonoBehaviour
             var sr = go.AddComponent<SpriteRenderer>();
             sr.sprite = _sprite;
             sr.sortingLayerName = sortingLayer;
-            sr.sortingOrder = sortingOrder;
+            sr.sortingOrder = ResolveTopSortingOrder();
 
-            // 초기 투명
+            // 珂 
             var c = sr.color; c.r = 0f; c.g = 0f; c.b = 0f; c.a = 0f;
             sr.color = c;
 
@@ -62,7 +66,7 @@ public class AttackAnimationController : MonoBehaviour
         if (_seq == null || _seq.Length < _pool.Count) _seq = new int[_pool.Count];
     }
 
-    /// <summary> 마스크에 맞춰 위치시키고 '표시 준비(알파0)' </summary>
+    /// <summary> 크  치키 '표 曼(0)' </summary>
     public void PlaceAndShowMask(bool[] mask16, Vector3[] centers16)
     {
         EnsurePool(16);
@@ -86,7 +90,7 @@ public class AttackAnimationController : MonoBehaviour
                     sr.color = c;
                     go.transform.localScale = ComputeSpriteScale(sr);
                     sr.sortingLayerName = sortingLayer;
-                    sr.sortingOrder = sortingOrder;
+                    sr.sortingOrder = ResolveTopSortingOrder();
                 }
 
                 go.SetActive(true);
@@ -99,7 +103,7 @@ public class AttackAnimationController : MonoBehaviour
         }
     }
 
-    /// <summary> 모두 끄기(코루틴 중지 + 비활성) </summary>
+    /// <summary>  (米틴  + 활) </summary>
     public void HideAll()
     {
         for (int i = 0; i < _pool.Count; i++)
@@ -111,8 +115,8 @@ public class AttackAnimationController : MonoBehaviour
     }
 
     /// <summary>
-    /// idx 타일에 대해 windowSeconds 동안 페이드(인/아웃 각각 1/2씩).
-    /// windowSeconds가 작으면 minWindow로 보정.
+    /// idx 타臼  windowSeconds  絹(/틸  1/2).
+    /// windowSeconds  minWindow .
     /// </summary>
     public void StartPulseWindow(int idx, float windowSeconds, float? peakOverride = null)
     {
@@ -125,8 +129,8 @@ public class AttackAnimationController : MonoBehaviour
         float fout = win * 0.5f;
         float peak = Mathf.Clamp01(peakOverride ?? peakAlpha);
 
-        _seq[idx]++;                         // 새 버전
-        CancelIfAny(idx);                    // 기존 중지
+        _seq[idx]++;                         //  
+        CancelIfAny(idx);                    //  
         _routines[idx] = StartCoroutine(PulseRoutine(idx, fin, fout, peak, _seq[idx]));
     }
 
@@ -165,7 +169,7 @@ public class AttackAnimationController : MonoBehaviour
             }
         }
 
-        // ★ 피크 스냅 + 알림
+        //  크  + 舡
         c.a = peak; sr.color = c;
         OnTilePeak?.Invoke(idx);
 
@@ -183,8 +187,26 @@ public class AttackAnimationController : MonoBehaviour
             }
         }
 
-        // 종료 스냅
+        //  
         c.a = 0f; sr.color = c;
+    }
+
+    private int ResolveTopSortingOrder()
+    {
+        if (!useDynamicTopOrder) return sortingOrder;
+
+        int maxOrder = int.MinValue;
+        var renderers = FindObjectsOfType<SpriteRenderer>(true);
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            var sr = renderers[i];
+            if (!sr) continue;
+            if (sr.transform.IsChildOf(transform)) continue;
+            if (sr.sortingOrder > maxOrder) maxOrder = sr.sortingOrder;
+        }
+
+        if (maxOrder == int.MinValue) return fallbackSortingOrder;
+        return maxOrder + dynamicOrderPadding;
     }
 
     private Vector3 ComputeSpriteScale(SpriteRenderer sr)

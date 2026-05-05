@@ -106,6 +106,10 @@ public class EnemyHandUI : MonoBehaviour
 
     public void ShowAll()
     {
+        var rt = EnemyDeckRuntime.Instance;
+        if (spawned.Count == 0 && rt != null && rt.GetHandIds().Count > 0)
+            RebuildFromHand();
+
         for (int i = 0; i < spawned.Count; i++)
             if (spawned[i]) spawned[i].SetActive(true);
         gameObject.SetActive(true);

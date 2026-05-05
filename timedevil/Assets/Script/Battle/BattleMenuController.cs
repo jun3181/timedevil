@@ -6,7 +6,7 @@ public class BattleMenuController : MonoBehaviour
     [System.Serializable] public class IntEvent : UnityEvent<int> { }
 
     //[Header("Order (2x2 grid): 0=Card, 1=Item / 2=End, 3=Run")] UI배치 수정 전
-    [Header("Order: 0=Card, 1=Item 2=Panel 3=End, 4=Run")] //배치 수정 후
+    [Header("Order: 0=Card, 1=Item, 2=End, 3=Run")] //배치 수정 후
     [SerializeField] private GameObject[] entries;
 
     [Header("Input")]
