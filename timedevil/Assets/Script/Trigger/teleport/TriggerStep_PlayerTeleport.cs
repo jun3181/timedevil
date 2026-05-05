@@ -82,10 +82,6 @@ public class TriggerStep_PlayerTeleport : TriggerStepBase
         if (CameraManager.Instance != null)
         {
             float? size = (afterOrthoSize > 0f) ? afterOrthoSize : (float?)null;
-            if (debugLog && afterMode == CameraModeId.FollowConfined && afterBounds == null)
-                Debug.LogWarning("[TriggerStep_PlayerTeleport] afterBounds is null in FollowConfined. Camera will fallback to FollowFree.");
-            if (debugLog && (afterMode == CameraModeId.Fixed || afterMode == CameraModeId.Cutscene) && fixedCameraAnchorPoint == null)
-                Debug.LogWarning("[TriggerStep_PlayerTeleport] fixedCameraAnchorPoint is null in Fixed/Cutscene. Camera will fallback to player/target position.");
 
             CameraManager.Instance.ApplyAfterTeleport(
                 player: playerTr,

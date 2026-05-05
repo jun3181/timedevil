@@ -1,7 +1,6 @@
 ﻿// Assets/Script/Camera/CameraManager.cs
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using System.Collections;
 using Cinemachine;
 
 public enum CameraModeId
@@ -42,7 +41,6 @@ public class CameraManager : MonoBehaviour
 
     private Transform _fixedAnchor;
     private Transform _lastFollow;
-    private Coroutine _pendingTeleportFinalize;
 
     //  FollowConfined 스냅샷용(Clamp2D 내부 private boundsShape에 접근 못하니, 여기서 마지막 bounds를 기억)
     private Collider2D _lastConfineBounds;
@@ -380,19 +378,11 @@ public class CameraManager : MonoBehaviour
         bool snapCameraWhenFixed = true
     )
     {
-        if (!vcam && !ReacquireVcam(null, logWhenMissing: false))
-        {
-            if (debugLog) Debug.LogWarning("[CameraManager] ApplyAfterTeleport: vcam missing, queueing next-frame retry");
-            QueueTeleportFinalize(player, fromPos, toPos, afterMode, afterBounds, afterOrthoSize, fixedCameraAnchorPoint, notifyWarpToCinemachine, snapCameraWhenFixed, 2);
-            return;
-        }
+        if (!vcam) ReacquireVcam(null, logWhenMissing: false);
+        if (!vcam) return;
 
         Vector3 delta = toPos - fromPos;
-        Vector3 fallbackFixedPos = player ? player.position : toPos;
-        Vector3 fixedPos = fixedCameraAnchorPoint ? fixedCameraAnchorPoint.position : fallbackFixedPos;
-
-        if ((afterMode == CameraModeId.Fixed || afterMode == CameraModeId.Cutscene) && !fixedCameraAnchorPoint && debugLog)
-            Debug.LogWarning($"[CameraManager] ApplyAfterTeleport: anchor missing in mode={afterMode}, fallback to {(player ? "player" : "toPos")}");
+        Vector3 fixedPos = fixedCameraAnchorPoint ? fixedCameraAnchorPoint.position : toPos;
 
         if (debugLog)
             Debug.Log($"[CameraManager] ApplyAfterTeleport mode={afterMode} from={fromPos} to={toPos} fixedPos={fixedPos} bounds={(afterBounds ? afterBounds.name : "(null)")}");
@@ -405,37 +395,19 @@ public class CameraManager : MonoBehaviour
                 break;
 
             case CameraModeId.FollowConfined:
-                if (!player)
+                if (player)
                 {
-                    Debug.LogWarning("[CameraManager] ApplyAfterTeleport: FollowConfined requires player, fallback to Fixed");
-                    SetFixed(lockWorldPos: fixedPos, orthoSize: afterOrthoSize);
-                    if (snapCameraWhenFixed) SnapCameraTo(fixedPos);
-                    break;
-                }
-
-                if (!afterBounds)
-                {
-                    Debug.LogWarning("[CameraManager] ApplyAfterTeleport: FollowConfined bounds missing, fallback to FollowFree");
-                    SetFollowFree(player, afterOrthoSize);
+                    SetFollowConfined(player, afterBounds, afterOrthoSize);
                     if (notifyWarpToCinemachine) NotifyTargetWarp(player, delta);
-                    break;
                 }
-
-                SetFollowConfined(player, afterBounds, afterOrthoSize);
-                if (notifyWarpToCinemachine) NotifyTargetWarp(player, delta);
                 break;
 
             case CameraModeId.FollowFree:
-                if (!player)
+                if (player)
                 {
-                    Debug.LogWarning("[CameraManager] ApplyAfterTeleport: FollowFree requires player, fallback to Fixed");
-                    SetFixed(lockWorldPos: fixedPos, orthoSize: afterOrthoSize);
-                    if (snapCameraWhenFixed) SnapCameraTo(fixedPos);
-                    break;
+                    SetFollowFree(player, afterOrthoSize);
+                    if (notifyWarpToCinemachine) NotifyTargetWarp(player, delta);
                 }
-
-                SetFollowFree(player, afterOrthoSize);
-                if (notifyWarpToCinemachine) NotifyTargetWarp(player, delta);
                 break;
 
             case CameraModeId.Cutscene:
@@ -443,83 +415,6 @@ public class CameraManager : MonoBehaviour
                 if (snapCameraWhenFixed) SnapCameraTo(fixedPos);
                 break;
         }
-
-        QueueTeleportFinalize(player, fromPos, toPos, afterMode, afterBounds, afterOrthoSize, fixedCameraAnchorPoint, notifyWarpToCinemachine, snapCameraWhenFixed, 1);
-    }
-
-    // =========================
-    // Teleport Finalize (next frame safety)
-    // =========================
-    private void QueueTeleportFinalize(
-        Transform player,
-        Vector3 fromPos,
-        Vector3 toPos,
-        CameraModeId afterMode,
-        Collider2D afterBounds,
-        float? afterOrthoSize,
-        Transform fixedCameraAnchorPoint,
-        bool notifyWarpToCinemachine,
-        bool snapCameraWhenFixed,
-        int retries
-    )
-    {
-        if (_pendingTeleportFinalize != null)
-            StopCoroutine(_pendingTeleportFinalize);
-
-        _pendingTeleportFinalize = StartCoroutine(CoFinalizeTeleportNextFrame(
-            player, fromPos, toPos, afterMode, afterBounds, afterOrthoSize, fixedCameraAnchorPoint,
-            notifyWarpToCinemachine, snapCameraWhenFixed, retries
-        ));
-    }
-
-    private IEnumerator CoFinalizeTeleportNextFrame(
-        Transform player,
-        Vector3 fromPos,
-        Vector3 toPos,
-        CameraModeId afterMode,
-        Collider2D afterBounds,
-        float? afterOrthoSize,
-        Transform fixedCameraAnchorPoint,
-        bool notifyWarpToCinemachine,
-        bool snapCameraWhenFixed,
-        int retries
-    )
-    {
-        yield return null;
-
-        if (!vcam && retries > 0 && ReacquireVcam(null, logWhenMissing: false))
-        {
-            if (debugLog) Debug.Log("[CameraManager] Teleport finalize: reacquired vcam on next frame");
-        }
-
-        if (!vcam)
-        {
-            if (retries > 0)
-            {
-                if (debugLog) Debug.LogWarning($"[CameraManager] Teleport finalize retry left={retries - 1}");
-                QueueTeleportFinalize(player, fromPos, toPos, afterMode, afterBounds, afterOrthoSize, fixedCameraAnchorPoint, notifyWarpToCinemachine, snapCameraWhenFixed, retries - 1);
-                yield break;
-            }
-
-            Debug.LogWarning("[CameraManager] Teleport finalize aborted: vcam still missing");
-            yield break;
-        }
-
-        Vector3 delta = toPos - fromPos;
-        Vector3 fallbackFixedPos = player ? player.position : toPos;
-        Vector3 fixedPos = fixedCameraAnchorPoint ? fixedCameraAnchorPoint.position : fallbackFixedPos;
-
-        if (afterMode == CameraModeId.Fixed || afterMode == CameraModeId.Cutscene)
-        {
-            if (snapCameraWhenFixed) SnapCameraTo(fixedPos);
-        }
-        else if (notifyWarpToCinemachine && player)
-        {
-            NotifyTargetWarp(player, delta);
-        }
-
-        if (debugLog) Debug.Log("[CameraManager] Teleport finalize done (next frame)");
-        _pendingTeleportFinalize = null;
     }
 
     // =========================

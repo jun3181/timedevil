@@ -149,10 +149,6 @@ public class TeleportTransition : MonoBehaviour, IInteractable
         if (CameraManager.Instance != null)
         {
             float? size = (afterOrthoSize > 0f) ? afterOrthoSize : (float?)null;
-            if (debugLog && afterMode == CameraModeId.FollowConfined && afterBounds == null)
-                Debug.LogWarning("[TeleportTransition] afterBounds is null in FollowConfined. Camera will fallback to FollowFree.", this);
-            if (debugLog && (afterMode == CameraModeId.Fixed || afterMode == CameraModeId.Cutscene) && fixedCameraAnchorPoint == null)
-                Debug.LogWarning("[TeleportTransition] fixedCameraAnchorPoint is null in Fixed/Cutscene. Camera will fallback to player/target position.", this);
 
             CameraManager.Instance.ApplyAfterTeleport(
                 player: playerTr,
