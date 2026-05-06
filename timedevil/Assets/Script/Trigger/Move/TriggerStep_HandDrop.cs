@@ -19,6 +19,30 @@ public struct HandDropMoveSegment
     [Min(0.01f)] public float duration;
 }
 
+public enum HandDropExecutionMode
+{
+    Simultaneous,
+    Sequential
+}
+
+[System.Serializable]
+public class HandDropTargetEntry
+{
+    public string name;
+    public GameObject targetObject;
+    public bool forceDeactivateThenActivate = true;
+    public bool resetToInitialPosition = true;
+    public bool useMoveSequence = false;
+    public List<HandDropMoveSegment> moveSequence = new List<HandDropMoveSegment>();
+    public float moveDistanceX = 0f;
+    public float moveDistanceY = -3f;
+    [Min(0.01f)] public float dropDuration = 0.12f;
+
+    [Header("Animator (Optional)")]
+    public bool driveAnimatorLikePlayerMove = false;
+    public Animator animatorTarget;
+}
+
 [DisallowMultipleComponent]
 public class TriggerStep_HandDrop : TriggerStepBase
 {
@@ -58,11 +82,17 @@ public class TriggerStep_HandDrop : TriggerStepBase
     [Header("Options")]
     [SerializeField] private bool forceDeactivateThenActivate = true;
 
+    [Header("Multi Target")]
+    [SerializeField] private bool useMultiTarget = false;
+    [SerializeField] private HandDropExecutionMode executionMode = HandDropExecutionMode.Simultaneous;
+    [SerializeField] private List<HandDropTargetEntry> targets = new List<HandDropTargetEntry>();
+
     [Header("Debug")]
     [SerializeField] private bool debugLog = false;
 
     private bool _cachedStart;
     private Vector3 _startPos;
+    private readonly Dictionary<GameObject, Vector3> _startPosByObject = new Dictionary<GameObject, Vector3>();
 
     private void CacheStartIfNeeded()
     {
@@ -75,22 +105,91 @@ public class TriggerStep_HandDrop : TriggerStepBase
 
     public override IEnumerator Execute(TriggerContext ctx)
     {
+        if (useMultiTarget)
+        {
+            if (targets == null || targets.Count == 0)
+            {
+                Debug.LogWarning("[TriggerStep_HandDrop] useMultiTarget=true 인데 targets가 비어있습니다.");
+                yield break;
+            }
+
+            if (executionMode == HandDropExecutionMode.Sequential)
+            {
+                for (int i = 0; i < targets.Count; i++)
+                {
+                    var entry = targets[i];
+                    if (entry == null || !entry.targetObject)
+                    {
+                        if (debugLog) Debug.LogWarning($"[TriggerStep_HandDrop] targets[{i}] skip: targetObject 비어있음");
+                        continue;
+                    }
+                    yield return ExecuteOne(entry.targetObject, entry.forceDeactivateThenActivate, entry.resetToInitialPosition,
+                        entry.useMoveSequence, entry.moveSequence, entry.moveDistanceX, entry.moveDistanceY, entry.dropDuration,
+                        entry.driveAnimatorLikePlayerMove, entry.animatorTarget);
+                }
+            }
+            else
+            {
+                int pending = 0;
+                for (int i = 0; i < targets.Count; i++)
+                {
+                    var entry = targets[i];
+                    if (entry == null || !entry.targetObject)
+                    {
+                        if (debugLog) Debug.LogWarning($"[TriggerStep_HandDrop] targets[{i}] skip: targetObject 비어있음");
+                        continue;
+                    }
+
+                    pending++;
+                    StartCoroutine(CoExecuteOneAndSignal(entry, () => pending--));
+                }
+
+                while (pending > 0)
+                    yield return null;
+            }
+            yield break;
+        }
+
         if (!handObject)
         {
             Debug.LogWarning("[TriggerStep_HandDrop] handObject가 비어있습니다.");
             yield break;
         }
 
-        CacheStartIfNeeded();
+        yield return ExecuteOne(handObject, forceDeactivateThenActivate, true, useMoveSequence, moveSequence,
+            moveDistanceX, moveDistanceY, dropDuration, driveAnimatorLikePlayerMove, animatorTarget);
+    }
 
-        var tr = handObject.transform;
-        Animator anim = ResolveAnimator();
+    private IEnumerator CoExecuteOneAndSignal(HandDropTargetEntry entry, System.Action onDone)
+    {
+        yield return ExecuteOne(entry.targetObject, entry.forceDeactivateThenActivate, entry.resetToInitialPosition,
+            entry.useMoveSequence, entry.moveSequence, entry.moveDistanceX, entry.moveDistanceY, entry.dropDuration,
+            entry.driveAnimatorLikePlayerMove, entry.animatorTarget);
+        onDone?.Invoke();
+    }
 
-        bool canDriveAnimator = driveAnimatorLikePlayerMove;
+    private IEnumerator ExecuteOne(
+        GameObject targetObject,
+        bool forceDeactivateActivate,
+        bool resetToInitialPos,
+        bool useSequence,
+        List<HandDropMoveSegment> sequence,
+        float distanceX,
+        float distanceY,
+        float duration,
+        bool driveAnimator,
+        Animator animatorOverride)
+    {
+        CacheStartIfNeeded(targetObject);
+
+        var tr = targetObject.transform;
+        Animator anim = ResolveAnimator(targetObject, animatorOverride);
+
+        bool canDriveAnimator = driveAnimator;
         if (canDriveAnimator && (!anim || (strictAnimatorParamCheck && !HasRequiredParams(anim))))
         {
             if (!anim)
-                Debug.LogWarning($"[TriggerStep_HandDrop] Animator를 찾지 못했습니다. handObject='{handObject.name}' animatorTarget='{(animatorTarget ? animatorTarget.name : "null")}'. Animator 구동만 건너뜁니다.");
+                Debug.LogWarning($"[TriggerStep_HandDrop] Animator를 찾지 못했습니다. handObject='{targetObject.name}' animatorTarget='{(animatorOverride ? animatorOverride.name : "null")}'. Animator 구동만 건너뜁니다.");
             else
                 Debug.LogWarning($"[TriggerStep_HandDrop] Animator 파라미터 누락: '{paramIsChange}', '{paramHAxisRaw}', '{paramVAxisRaw}' @ '{anim.name}'. Animator 구동만 건너뜁니다.");
 
@@ -98,36 +197,36 @@ public class TriggerStep_HandDrop : TriggerStepBase
         }
 
         // 1) 비활성 -> 활성
-        if (forceDeactivateThenActivate)
+        if (forceDeactivateActivate)
         {
-            bool isSelfObject = ReferenceEquals(handObject, gameObject);
+            bool isSelfObject = ReferenceEquals(targetObject, gameObject);
             if (isSelfObject)
             {
                 Debug.LogWarning("[TriggerStep_HandDrop] handObject가 자기 자신입니다. SetActive(false) 시 코루틴이 중단되어 비활성/활성 토글을 건너뜁니다.");
-                if (!handObject.activeSelf) handObject.SetActive(true);
+                if (!targetObject.activeSelf) targetObject.SetActive(true);
             }
             else
             {
-                handObject.SetActive(false);
-                handObject.SetActive(true);
+                targetObject.SetActive(false);
+                targetObject.SetActive(true);
             }
         }
         else
         {
-            if (!handObject.activeSelf) handObject.SetActive(true);
+            if (!targetObject.activeSelf) targetObject.SetActive(true);
         }
 
-        // 시작 위치 스냅
-        tr.position = _startPos;
+        if (resetToInitialPos)
+            tr.position = _startPosByObject[targetObject];
 
-        if (useMoveSequence && moveSequence != null && moveSequence.Count > 0)
+        if (useSequence && sequence != null && sequence.Count > 0)
         {
-            if (debugLog) Debug.Log($"[TriggerStep_HandDrop] sequence mode start count={moveSequence.Count}");
+            if (debugLog) Debug.Log($"[TriggerStep_HandDrop] sequence mode start count={sequence.Count}");
 
             HandDropMoveDirection lastDir = HandDropMoveDirection.Down;
-            for (int i = 0; i < moveSequence.Count; i++)
+            for (int i = 0; i < sequence.Count; i++)
             {
-                var seg = moveSequence[i];
+                var seg = sequence[i];
                 if (seg.duration <= 0f || Mathf.Approximately(seg.distance, 0f))
                 {
                     if (debugLog) Debug.Log($"[TriggerStep_HandDrop] seg[{i}] skipped");
@@ -171,15 +270,15 @@ public class TriggerStep_HandDrop : TriggerStepBase
         }
 
         // Legacy 단일 이동
-        Vector3 legacyFrom = _startPos;
-        Vector3 legacyTo = legacyFrom + new Vector3(moveDistanceX, moveDistanceY, 0f);
+        Vector3 legacyFrom = tr.position;
+        Vector3 legacyTo = legacyFrom + new Vector3(distanceX, distanceY, 0f);
 
         // 시작 위치 스냅
         tr.position = legacyFrom;
 
         if (debugLog) Debug.Log($"[TriggerStep_HandDrop] legacy from={legacyFrom} to={legacyTo}");
 
-        HandDropMoveDirection legacyDir = ResolveLegacyDirection(moveDistanceX, moveDistanceY);
+        HandDropMoveDirection legacyDir = ResolveLegacyDirection(distanceX, distanceY);
         if (canDriveAnimator && anim)
         {
             ApplyDirection(anim, legacyDir, true);
@@ -187,12 +286,13 @@ public class TriggerStep_HandDrop : TriggerStepBase
         }
 
         float legacyT = 0f;
-        while (legacyT < dropDuration)
+        float effectiveDuration = Mathf.Max(0.01f, duration);
+        while (legacyT < effectiveDuration)
         {
             float dt = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
             legacyT += dt;
 
-            float u = Mathf.Clamp01(legacyT / dropDuration);
+            float u = Mathf.Clamp01(legacyT / effectiveDuration);
             float k = (ease != null) ? ease.Evaluate(u) : u;
             tr.position = Vector3.LerpUnclamped(legacyFrom, legacyTo, k);
 
@@ -252,18 +352,25 @@ public class TriggerStep_HandDrop : TriggerStepBase
     }
 
 
-    private Animator ResolveAnimator()
+    private Animator ResolveAnimator(GameObject targetObject, Animator overrideAnimator)
     {
-        if (animatorTarget) return animatorTarget;
-        if (!handObject) return null;
+        if (overrideAnimator) return overrideAnimator;
+        if (!targetObject) return null;
 
-        Animator anim = handObject.GetComponent<Animator>();
+        Animator anim = targetObject.GetComponent<Animator>();
         if (anim) return anim;
 
-        anim = handObject.GetComponentInChildren<Animator>(true);
+        anim = targetObject.GetComponentInChildren<Animator>(true);
         if (anim) return anim;
 
-        return handObject.GetComponentInParent<Animator>();
+        return targetObject.GetComponentInParent<Animator>();
+    }
+
+    private void CacheStartIfNeeded(GameObject targetObject)
+    {
+        if (!targetObject) return;
+        if (_startPosByObject.ContainsKey(targetObject)) return;
+        _startPosByObject[targetObject] = targetObject.transform.position;
     }
 
     private bool HasRequiredParams(Animator anim)
