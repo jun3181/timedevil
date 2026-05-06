@@ -25,6 +25,7 @@ public class BattleCollisionTransition : MonoBehaviour
     [SerializeField] private Collider2D returnConfinerBoundsOverride;
     [SerializeField] private float returnOrthoSizeOverride = 0f;
     [SerializeField] private bool captureCameraSnapshot = true;
+    [SerializeField] private Transform forceFixedReturnAnchor;
 
     [Header("Filter")]
     [SerializeField] private Transform playerTransform;
@@ -220,6 +221,13 @@ public class BattleCollisionTransition : MonoBehaviour
                     }
                 }
             }
+        }
+
+        if (camMode == CameraModeId.Fixed && forceFixedReturnAnchor != null)
+        {
+            camFixedPos = forceFixedReturnAnchor.position;
+            if (debugLog)
+                Debug.Log($"[BattleCollisionTransition] override fixed return camera anchor => '{forceFixedReturnAnchor.name}' ({camFixedPos.x:F2},{camFixedPos.y:F2})");
         }
 
         PlayerReturnContext.SetReturnFromTrigger(
