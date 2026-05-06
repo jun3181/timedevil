@@ -39,6 +39,10 @@ public class BattleCollisionTransition : MonoBehaviour
     [SerializeField] private MonoBehaviour pauseTargetController;
     [SerializeField] private float pauseSecondsBeforeBattle = 0.12f;
 
+    [Header("Enemy Reactivation Delay On Return")]
+    [SerializeField] private bool delayEnemySnapshotTargetOnReturn = true;
+    [SerializeField] private float enemySnapshotReactivateSeconds = 1.0f;
+
     [Header("Follow After Reenter Block")]
     [SerializeField] private bool followAfterReenterBlock = true;
     [SerializeField] private Transform followTargetObject;
@@ -51,6 +55,10 @@ public class BattleCollisionTransition : MonoBehaviour
     private bool _followArmedAfterReturn;
     private static readonly System.Collections.Generic.Dictionary<string, float> _reenterBlockedUntil = new();
     private static readonly System.Collections.Generic.Dictionary<string, ForcedChasingState> _forceStateAfterReturn = new();
+    private static DelayCoroutineRunner _delayRunner;
+
+    private sealed class DelayCoroutineRunner : MonoBehaviour { }
+
 
     private struct ForcedChasingState
     {
@@ -310,8 +318,50 @@ public class BattleCollisionTransition : MonoBehaviour
 
         _forceStateAfterReturn.Remove(key);
 
+        TryDelayEnemySnapshotTargetOnReturn();
+
         if (debugLog)
             Debug.Log($"[BattleCollisionTransition] force restore after return: '{chasingObject.name}' pos={chasingObject.position}");
+    }
+
+    private static DelayCoroutineRunner GetDelayRunner()
+    {
+        if (_delayRunner != null) return _delayRunner;
+
+        var go = new GameObject("BattleCollisionTransition.DelayRunner");
+        DontDestroyOnLoad(go);
+        _delayRunner = go.AddComponent<DelayCoroutineRunner>();
+        return _delayRunner;
+    }
+
+    private void TryDelayEnemySnapshotTargetOnReturn()
+    {
+        if (!delayEnemySnapshotTargetOnReturn) return;
+        if (enemySnapshotTarget == null) return;
+
+        var enemyObj = enemySnapshotTarget.gameObject;
+        if (!enemyObj.activeSelf) return;
+
+        float wait = Mathf.Max(0f, enemySnapshotReactivateSeconds);
+        if (wait <= 0f) return;
+
+        GetDelayRunner().StartCoroutine(CoDelayEnemySnapshotTarget(enemyObj, wait));
+    }
+
+    private IEnumerator CoDelayEnemySnapshotTarget(GameObject enemyObj, float wait)
+    {
+        enemyObj.SetActive(false);
+
+        if (debugLog)
+            Debug.Log($"[BattleCollisionTransition] disable enemySnapshotTarget for {wait:F2}s: '{enemyObj.name}'");
+
+        yield return new WaitForSeconds(wait);
+
+        if (enemyObj != null)
+            enemyObj.SetActive(true);
+
+        if (debugLog && enemyObj != null)
+            Debug.Log($"[BattleCollisionTransition] re-enable enemySnapshotTarget: '{enemyObj.name}'");
     }
 
     private Transform ResolveFollowTarget()
