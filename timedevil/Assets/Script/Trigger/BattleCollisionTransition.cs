@@ -173,7 +173,21 @@ public class BattleCollisionTransition : MonoBehaviour
                 camBoundsName = string.IsNullOrWhiteSpace(boundsName) ? null : boundsName;
             }
 
-            // 스냅샷 획득 실패 시에만 bootstrap을 fallback으로 사용
+            // 스냅샷 획득 실패 시: 우선 현재 실제 카메라 상태를 사용
+            if (!restoreCam)
+            {
+                var liveCam = Camera.main;
+                if (liveCam != null)
+                {
+                    restoreCam = true;
+                    camMode = cm != null ? cm.CurrentMode : CameraModeId.Fixed;
+                    camOrtho = liveCam.orthographic ? liveCam.orthographicSize : camOrtho;
+                    camFixedPos = new Vector2(liveCam.transform.position.x, liveCam.transform.position.y);
+                    camBoundsName = null;
+                }
+            }
+
+            // 그래도 정보가 없으면 bootstrap을 마지막 fallback으로 사용
             if (!restoreCam)
             {
                 var bootstrap = FindObjectOfType<SceneCameraBootstrap>(true);
