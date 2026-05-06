@@ -55,6 +55,10 @@ public class BattleCollisionTransition : MonoBehaviour
     private bool _followArmedAfterReturn;
     private static readonly System.Collections.Generic.Dictionary<string, float> _reenterBlockedUntil = new();
     private static readonly System.Collections.Generic.Dictionary<string, ForcedChasingState> _forceStateAfterReturn = new();
+    private static DelayCoroutineRunner _delayRunner;
+
+    private sealed class DelayCoroutineRunner : MonoBehaviour { }
+
 
     private struct ForcedChasingState
     {
@@ -320,6 +324,16 @@ public class BattleCollisionTransition : MonoBehaviour
             Debug.Log($"[BattleCollisionTransition] force restore after return: '{chasingObject.name}' pos={chasingObject.position}");
     }
 
+    private static DelayCoroutineRunner GetDelayRunner()
+    {
+        if (_delayRunner != null) return _delayRunner;
+
+        var go = new GameObject("BattleCollisionTransition.DelayRunner");
+        DontDestroyOnLoad(go);
+        _delayRunner = go.AddComponent<DelayCoroutineRunner>();
+        return _delayRunner;
+    }
+
     private void TryDelayEnemySnapshotTargetOnReturn()
     {
         if (!delayEnemySnapshotTargetOnReturn) return;
@@ -331,7 +345,7 @@ public class BattleCollisionTransition : MonoBehaviour
         float wait = Mathf.Max(0f, enemySnapshotReactivateSeconds);
         if (wait <= 0f) return;
 
-        StartCoroutine(CoDelayEnemySnapshotTarget(enemyObj, wait));
+        GetDelayRunner().StartCoroutine(CoDelayEnemySnapshotTarget(enemyObj, wait));
     }
 
     private IEnumerator CoDelayEnemySnapshotTarget(GameObject enemyObj, float wait)
