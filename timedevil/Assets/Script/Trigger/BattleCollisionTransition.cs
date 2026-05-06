@@ -165,35 +165,37 @@ public class BattleCollisionTransition : MonoBehaviour
                 camBoundsName = string.IsNullOrWhiteSpace(boundsName) ? null : boundsName;
             }
 
-            // 씬 순차 진행 시 CameraManager가 이전 씬 모드를 들고 있는 경우가 있어
-            // 현재 씬의 SceneCameraBootstrap 설정이 있으면 그것을 우선 복귀 기준으로 사용한다.
-            var bootstrap = FindObjectOfType<SceneCameraBootstrap>(true);
-            if (bootstrap != null)
+            // 스냅샷 획득 실패 시에만 bootstrap을 fallback으로 사용
+            if (!restoreCam)
             {
-                restoreCam = true;
-                camMode = bootstrap.startMode;
-                camOrtho = bootstrap.orthoSize > 0f ? bootstrap.orthoSize : 0f;
-
-                switch (bootstrap.startMode)
+                var bootstrap = FindObjectOfType<SceneCameraBootstrap>(true);
+                if (bootstrap != null)
                 {
-                    case CameraModeId.Fixed:
-                    case CameraModeId.Cutscene:
-                        if (bootstrap.fixedOrCutsceneAnchor != null)
-                            camFixedPos = bootstrap.fixedOrCutsceneAnchor.position;
-                        else if (bootstrap.followTarget != null)
-                            camFixedPos = bootstrap.followTarget.position;
-                        else
-                            camFixedPos = returnPos;
-                        camBoundsName = null;
-                        break;
+                    restoreCam = true;
+                    camMode = bootstrap.startMode;
+                    camOrtho = bootstrap.orthoSize > 0f ? bootstrap.orthoSize : 0f;
 
-                    case CameraModeId.FollowConfined:
-                        camBoundsName = bootstrap.confinerBounds != null ? bootstrap.confinerBounds.name : null;
-                        break;
+                    switch (bootstrap.startMode)
+                    {
+                        case CameraModeId.Fixed:
+                        case CameraModeId.Cutscene:
+                            if (bootstrap.fixedOrCutsceneAnchor != null)
+                                camFixedPos = bootstrap.fixedOrCutsceneAnchor.position;
+                            else if (bootstrap.followTarget != null)
+                                camFixedPos = bootstrap.followTarget.position;
+                            else
+                                camFixedPos = returnPos;
+                            camBoundsName = null;
+                            break;
 
-                    case CameraModeId.FollowFree:
-                        camBoundsName = null;
-                        break;
+                        case CameraModeId.FollowConfined:
+                            camBoundsName = bootstrap.confinerBounds != null ? bootstrap.confinerBounds.name : null;
+                            break;
+
+                        case CameraModeId.FollowFree:
+                            camBoundsName = null;
+                            break;
+                    }
                 }
             }
         }
@@ -346,7 +348,11 @@ public class BattleCollisionTransition : MonoBehaviour
 
     private bool IsBlockedByCooldown()
     {
-        if (PlayerReturnContext.IsInGracePeriod || PlayerReturnContext.GraceSecondsPending > 0f) return true;
+        bool sameSceneReturnContext = PlayerReturnContext.HasReturnPosition &&
+                                      PlayerReturnContext.ReturnSceneName == SceneManager.GetActiveScene().name;
+        if (sameSceneReturnContext &&
+            (PlayerReturnContext.IsInGracePeriod || PlayerReturnContext.GraceSecondsPending > 0f))
+            return true;
 
         string key = GetRuntimeKey();
         if (!_reenterBlockedUntil.TryGetValue(key, out float until)) return false;
