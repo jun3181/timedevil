@@ -88,32 +88,12 @@ public class BattleCollisionTransition : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (_entered) return;
-        if (collision == null || collision.collider == null) return;
-        var other = collision.collider;
-        if (!IsPlayerTransform(other.transform)) return;
-        if (IsBlockedByCooldown()) return;
-        BeginBattleTransition(other.transform, other.name);
+        HandleCollision2D(collision);
     }
 
     private void OnCollisionStay2D(Collision2D collision)
     {
-        if (_entered) return;
-        if (collision == null || collision.collider == null) return;
-        var other = collision.collider;
-        if (!IsPlayerTransform(other.transform)) return;
-        if (IsBlockedByCooldown()) return;
-        BeginBattleTransition(other.transform, other.name);
-    }
-
-    private void OnCollisionStay2D(Collision2D collision)
-    {
-        if (_entered) return;
-        if (collision == null || collision.collider == null) return;
-        var other = collision.collider;
-        if (!other.CompareTag(playerTag)) return;
-        if (IsBlockedByCooldown()) return;
-        BeginBattleTransition(other.transform, other.name);
+        HandleCollision2D(collision);
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -390,5 +370,15 @@ public class BattleCollisionTransition : MonoBehaviour
             return other.CompareTag(playerTag);
 
         return false;
+    }
+
+    private void HandleCollision2D(Collision2D collision)
+    {
+        if (_entered) return;
+        if (collision == null || collision.collider == null) return;
+        var other = collision.collider;
+        if (!IsPlayerTransform(other.transform)) return;
+        if (IsBlockedByCooldown()) return;
+        BeginBattleTransition(other.transform, other.name);
     }
 }
