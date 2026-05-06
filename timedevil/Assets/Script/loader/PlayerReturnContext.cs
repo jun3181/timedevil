@@ -58,16 +58,10 @@ public static class PlayerReturnContext
         HasReturnPosition = true;
 
         // Grace
-        if (graceSeconds > 0f)
-        {
-            IsInGracePeriod = true;
-            GraceSecondsPending = graceSeconds;
-        }
-        else
-        {
-            IsInGracePeriod = false;
-            GraceSecondsPending = 0f;
-        }
+        // 주의: 실제 grace 활성화는 "복귀 씬"에서 PlayerReturnManager가 담당한다.
+        // 여기서는 pending 값만 기록하고 즉시 차단 플래그를 켜지 않는다.
+        IsInGracePeriod = false;
+        GraceSecondsPending = Mathf.Max(0f, graceSeconds);
 
         // Camera (Rebind 옵션)
         CameraRebindRequested = requestCameraRebind;
