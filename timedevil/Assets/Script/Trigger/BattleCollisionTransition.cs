@@ -166,6 +166,38 @@ public class BattleCollisionTransition : MonoBehaviour
                 camFixedPos = new Vector2(fixedPos3.x, fixedPos3.y);
                 camBoundsName = string.IsNullOrWhiteSpace(boundsName) ? null : boundsName;
             }
+
+            // 씬 순차 진행 시 CameraManager가 이전 씬 모드를 들고 있는 경우가 있어
+            // 현재 씬의 SceneCameraBootstrap 설정이 있으면 그것을 우선 복귀 기준으로 사용한다.
+            var bootstrap = FindObjectOfType<SceneCameraBootstrap>(true);
+            if (bootstrap != null)
+            {
+                restoreCam = true;
+                camMode = bootstrap.startMode;
+                camOrtho = bootstrap.orthoSize > 0f ? bootstrap.orthoSize : 0f;
+
+                switch (bootstrap.startMode)
+                {
+                    case CameraModeId.Fixed:
+                    case CameraModeId.Cutscene:
+                        if (bootstrap.fixedOrCutsceneAnchor != null)
+                            camFixedPos = bootstrap.fixedOrCutsceneAnchor.position;
+                        else if (bootstrap.followTarget != null)
+                            camFixedPos = bootstrap.followTarget.position;
+                        else
+                            camFixedPos = returnPos;
+                        camBoundsName = null;
+                        break;
+
+                    case CameraModeId.FollowConfined:
+                        camBoundsName = bootstrap.confinerBounds != null ? bootstrap.confinerBounds.name : null;
+                        break;
+
+                    case CameraModeId.FollowFree:
+                        camBoundsName = null;
+                        break;
+                }
+            }
         }
 
         PlayerReturnContext.SetReturnFromTrigger(
