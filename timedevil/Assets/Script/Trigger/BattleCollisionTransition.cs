@@ -27,6 +27,8 @@ public class BattleCollisionTransition : MonoBehaviour
     [SerializeField] private bool captureCameraSnapshot = true;
 
     [Header("Filter")]
+    [SerializeField] private Transform playerTransform;
+    [SerializeField] private bool allowTagFallback = false;
     [SerializeField] private string playerTag = "Player";
     [SerializeField] private bool disableAfterEnter = true;
     [SerializeField] private float reenterBlockSeconds = 0.5f;
@@ -59,13 +61,19 @@ public class BattleCollisionTransition : MonoBehaviour
 
     private void Start()
     {
+        if (playerTransform == null)
+        {
+            var pm = FindObjectOfType<PlayerMainManager>(true);
+            if (pm != null) playerTransform = pm.transform;
+        }
+
         ApplyForcedReturnStateIfPending();
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (_entered) return;
-        if (!other || !other.CompareTag(playerTag)) return;
+        if (!other || !IsPlayerTransform(other.transform)) return;
         if (IsBlockedByCooldown()) return;
         BeginBattleTransition(other.transform, other.name);
     }
@@ -73,7 +81,7 @@ public class BattleCollisionTransition : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         if (_entered) return;
-        if (!other || !other.CompareTag(playerTag)) return;
+        if (!other || !IsPlayerTransform(other.transform)) return;
         if (IsBlockedByCooldown()) return;
         BeginBattleTransition(other.transform, other.name);
     }
@@ -83,7 +91,17 @@ public class BattleCollisionTransition : MonoBehaviour
         if (_entered) return;
         if (collision == null || collision.collider == null) return;
         var other = collision.collider;
-        if (!other.CompareTag(playerTag)) return;
+        if (!IsPlayerTransform(other.transform)) return;
+        if (IsBlockedByCooldown()) return;
+        BeginBattleTransition(other.transform, other.name);
+    }
+
+    private void OnCollisionStay2D(Collision2D collision)
+    {
+        if (_entered) return;
+        if (collision == null || collision.collider == null) return;
+        var other = collision.collider;
+        if (!IsPlayerTransform(other.transform)) return;
         if (IsBlockedByCooldown()) return;
         BeginBattleTransition(other.transform, other.name);
     }
@@ -93,7 +111,7 @@ public class BattleCollisionTransition : MonoBehaviour
         if (_entered) return;
         if (collision == null || collision.collider == null) return;
         var other = collision.collider;
-        if (!other.CompareTag(playerTag)) return;
+        if (!IsPlayerTransform(other.transform)) return;
         if (IsBlockedByCooldown()) return;
         BeginBattleTransition(other.transform, other.name);
     }
@@ -155,6 +173,38 @@ public class BattleCollisionTransition : MonoBehaviour
                 restoreCam = true;
                 camFixedPos = new Vector2(fixedPos3.x, fixedPos3.y);
                 camBoundsName = string.IsNullOrWhiteSpace(boundsName) ? null : boundsName;
+            }
+
+            // 씬 순차 진행 시 CameraManager가 이전 씬 모드를 들고 있는 경우가 있어
+            // 현재 씬의 SceneCameraBootstrap 설정이 있으면 그것을 우선 복귀 기준으로 사용한다.
+            var bootstrap = FindObjectOfType<SceneCameraBootstrap>(true);
+            if (bootstrap != null)
+            {
+                restoreCam = true;
+                camMode = bootstrap.startMode;
+                camOrtho = bootstrap.orthoSize > 0f ? bootstrap.orthoSize : 0f;
+
+                switch (bootstrap.startMode)
+                {
+                    case CameraModeId.Fixed:
+                    case CameraModeId.Cutscene:
+                        if (bootstrap.fixedOrCutsceneAnchor != null)
+                            camFixedPos = bootstrap.fixedOrCutsceneAnchor.position;
+                        else if (bootstrap.followTarget != null)
+                            camFixedPos = bootstrap.followTarget.position;
+                        else
+                            camFixedPos = returnPos;
+                        camBoundsName = null;
+                        break;
+
+                    case CameraModeId.FollowConfined:
+                        camBoundsName = bootstrap.confinerBounds != null ? bootstrap.confinerBounds.name : null;
+                        break;
+
+                    case CameraModeId.FollowFree:
+                        camBoundsName = null;
+                        break;
+                }
             }
         }
 
@@ -275,9 +325,15 @@ public class BattleCollisionTransition : MonoBehaviour
     private Transform ResolveFollowTarget()
     {
         if (followTargetObject != null) return followTargetObject;
+        if (playerTransform != null) return playerTransform;
+        if (allowTagFallback)
+        {
+            var player = GameObject.FindWithTag(playerTag);
+            return player != null ? player.transform : null;
+        }
 
-        var player = GameObject.FindWithTag(playerTag);
-        return player != null ? player.transform : null;
+        var pm = FindObjectOfType<PlayerMainManager>(true);
+        return pm != null ? pm.transform : null;
     }
 
     private void SaveForcedChasingStateForReturn()
@@ -300,7 +356,7 @@ public class BattleCollisionTransition : MonoBehaviour
 
     private bool IsBlockedByCooldown()
     {
-        if (PlayerReturnContext.IsInGracePeriod) return true;
+        if (PlayerReturnContext.IsInGracePeriod || PlayerReturnContext.GraceSecondsPending > 0f) return true;
 
         string key = GetRuntimeKey();
         if (!_reenterBlockedUntil.TryGetValue(key, out float until)) return false;
@@ -311,5 +367,18 @@ public class BattleCollisionTransition : MonoBehaviour
     {
         string key = GetRuntimeKey();
         _reenterBlockedUntil[key] = Time.unscaledTime + Mathf.Max(0f, reenterBlockSeconds);
+    }
+
+    private bool IsPlayerTransform(Transform other)
+    {
+        if (other == null) return false;
+
+        if (playerTransform != null)
+            return other == playerTransform || other.IsChildOf(playerTransform);
+
+        if (allowTagFallback)
+            return other.CompareTag(playerTag);
+
+        return false;
     }
 }
