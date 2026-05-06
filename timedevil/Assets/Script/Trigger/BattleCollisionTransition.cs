@@ -25,6 +25,7 @@ public class BattleCollisionTransition : MonoBehaviour
     [SerializeField] private Collider2D returnConfinerBoundsOverride;
     [SerializeField] private float returnOrthoSizeOverride = 0f;
     [SerializeField] private bool captureCameraSnapshot = true;
+    [SerializeField] private Transform forceFixedReturnAnchor;
 
     [Header("Filter")]
     [SerializeField] private Transform playerTransform;
@@ -39,6 +40,10 @@ public class BattleCollisionTransition : MonoBehaviour
     [SerializeField] private MonoBehaviour pauseTargetController;
     [SerializeField] private float pauseSecondsBeforeBattle = 0.12f;
 
+    [Header("Enemy Reactivation Delay On Return")]
+    [SerializeField] private bool delayEnemySnapshotTargetOnReturn = true;
+    [SerializeField] private float enemySnapshotReactivateSeconds = 1.0f;
+
     [Header("Follow After Reenter Block")]
     [SerializeField] private bool followAfterReenterBlock = true;
     [SerializeField] private Transform followTargetObject;
@@ -51,6 +56,10 @@ public class BattleCollisionTransition : MonoBehaviour
     private bool _followArmedAfterReturn;
     private static readonly System.Collections.Generic.Dictionary<string, float> _reenterBlockedUntil = new();
     private static readonly System.Collections.Generic.Dictionary<string, ForcedChasingState> _forceStateAfterReturn = new();
+    private static DelayCoroutineRunner _delayRunner;
+
+    private sealed class DelayCoroutineRunner : MonoBehaviour { }
+
 
     private struct ForcedChasingState
     {
@@ -165,7 +174,21 @@ public class BattleCollisionTransition : MonoBehaviour
                 camBoundsName = string.IsNullOrWhiteSpace(boundsName) ? null : boundsName;
             }
 
-            // 스냅샷 획득 실패 시에만 bootstrap을 fallback으로 사용
+            // 스냅샷 획득 실패 시: 우선 현재 실제 카메라 상태를 사용
+            if (!restoreCam)
+            {
+                var liveCam = Camera.main;
+                if (liveCam != null)
+                {
+                    restoreCam = true;
+                    camMode = cm != null ? cm.CurrentMode : CameraModeId.Fixed;
+                    camOrtho = liveCam.orthographic ? liveCam.orthographicSize : camOrtho;
+                    camFixedPos = new Vector2(liveCam.transform.position.x, liveCam.transform.position.y);
+                    camBoundsName = null;
+                }
+            }
+
+            // 그래도 정보가 없으면 bootstrap을 마지막 fallback으로 사용
             if (!restoreCam)
             {
                 var bootstrap = FindObjectOfType<SceneCameraBootstrap>(true);
@@ -198,6 +221,13 @@ public class BattleCollisionTransition : MonoBehaviour
                     }
                 }
             }
+        }
+
+        if (camMode == CameraModeId.Fixed && forceFixedReturnAnchor != null)
+        {
+            camFixedPos = forceFixedReturnAnchor.position;
+            if (debugLog)
+                Debug.Log($"[BattleCollisionTransition] override fixed return camera anchor => '{forceFixedReturnAnchor.name}' ({camFixedPos.x:F2},{camFixedPos.y:F2})");
         }
 
         PlayerReturnContext.SetReturnFromTrigger(
@@ -310,8 +340,50 @@ public class BattleCollisionTransition : MonoBehaviour
 
         _forceStateAfterReturn.Remove(key);
 
+        TryDelayEnemySnapshotTargetOnReturn();
+
         if (debugLog)
             Debug.Log($"[BattleCollisionTransition] force restore after return: '{chasingObject.name}' pos={chasingObject.position}");
+    }
+
+    private static DelayCoroutineRunner GetDelayRunner()
+    {
+        if (_delayRunner != null) return _delayRunner;
+
+        var go = new GameObject("BattleCollisionTransition.DelayRunner");
+        DontDestroyOnLoad(go);
+        _delayRunner = go.AddComponent<DelayCoroutineRunner>();
+        return _delayRunner;
+    }
+
+    private void TryDelayEnemySnapshotTargetOnReturn()
+    {
+        if (!delayEnemySnapshotTargetOnReturn) return;
+        if (enemySnapshotTarget == null) return;
+
+        var enemyObj = enemySnapshotTarget.gameObject;
+        if (!enemyObj.activeSelf) return;
+
+        float wait = Mathf.Max(0f, enemySnapshotReactivateSeconds);
+        if (wait <= 0f) return;
+
+        GetDelayRunner().StartCoroutine(CoDelayEnemySnapshotTarget(enemyObj, wait));
+    }
+
+    private IEnumerator CoDelayEnemySnapshotTarget(GameObject enemyObj, float wait)
+    {
+        enemyObj.SetActive(false);
+
+        if (debugLog)
+            Debug.Log($"[BattleCollisionTransition] disable enemySnapshotTarget for {wait:F2}s: '{enemyObj.name}'");
+
+        yield return new WaitForSeconds(wait);
+
+        if (enemyObj != null)
+            enemyObj.SetActive(true);
+
+        if (debugLog && enemyObj != null)
+            Debug.Log($"[BattleCollisionTransition] re-enable enemySnapshotTarget: '{enemyObj.name}'");
     }
 
     private Transform ResolveFollowTarget()
