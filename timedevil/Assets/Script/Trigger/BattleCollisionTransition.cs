@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections;
+using System.Collections.Generic;
 
 [DisallowMultipleComponent]
 public class BattleCollisionTransition : MonoBehaviour
@@ -141,6 +142,8 @@ public class BattleCollisionTransition : MonoBehaviour
 
     private void EnterBattle(Transform player, string colliderName)
     {
+        GrantStarterCardsOnBattleCollision();
+
         if (forceActivateChasingObject)
             SaveForcedChasingStateForReturn();
 
@@ -253,6 +256,40 @@ public class BattleCollisionTransition : MonoBehaviour
 
         if (disableAfterEnter)
             gameObject.SetActive(false);
+    }
+
+    private void GrantStarterCardsOnBattleCollision()
+    {
+        bool changed = false;
+
+        var runtime = CardStateRuntime.Instance;
+        if (runtime != null)
+        {
+            for (int i = 1; i <= 13; i++)
+                changed |= runtime.AddOwned($"Card{i}");
+
+            if (changed)
+                runtime.SaveNow();
+
+            return;
+        }
+
+        var data = CardSaveStore.Load() ?? new CardSaveData();
+        if (data.owned == null)
+            data.owned = new List<string>();
+
+        for (int i = 1; i <= 13; i++)
+        {
+            string id = $"Card{i}";
+            if (!data.owned.Contains(id))
+            {
+                data.owned.Add(id);
+                changed = true;
+            }
+        }
+
+        if (changed)
+            CardSaveStore.Save(data);
     }
 
     private struct PauseState
