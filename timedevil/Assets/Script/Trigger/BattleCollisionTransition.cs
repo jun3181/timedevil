@@ -115,6 +115,29 @@ public class BattleCollisionTransition : MonoBehaviour
         BeginBattleTransition(other.transform, other.name);
     }
 
+
+    public bool TryEnterFromExternal(Collider2D other)
+    {
+        if (_entered) return false;
+        if (other == null) return false;
+        if (!IsPlayerTransform(other.transform)) return false;
+        if (IsBlockedByCooldown()) return false;
+
+        BeginBattleTransition(other.transform, other.name);
+        return true;
+    }
+
+    public bool TryEnterFromExternal(Collider other)
+    {
+        if (_entered) return false;
+        if (other == null) return false;
+        if (!IsPlayerTransform(other.transform)) return false;
+        if (IsBlockedByCooldown()) return false;
+
+        BeginBattleTransition(other.transform, other.name);
+        return true;
+    }
+
     private void BeginBattleTransition(Transform player, string colliderName)
     {
         _entered = true;
