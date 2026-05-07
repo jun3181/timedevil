@@ -2,6 +2,7 @@
 using System.IO;
 using UnityEngine;
 using Newtonsoft.Json;
+using System.Collections.Generic;
 
 public static class CardSaveStore
 {
@@ -10,13 +11,25 @@ public static class CardSaveStore
 
     public static CardSaveData Load()
     {
-        //  기본 카드 자동 생성 제거
         if (!File.Exists(SavePath))
-            return new CardSaveData();  // 비어 있는 상태 반환
+            return CreateDefaultData();
 
         string json = File.ReadAllText(SavePath);
         var data = JsonConvert.DeserializeObject<CardSaveData>(json);
-        return data ?? new CardSaveData();
+        return data ?? CreateDefaultData();
+    }
+
+    private static CardSaveData CreateDefaultData()
+    {
+        var owned = new List<string>(13);
+        for (int i = 1; i <= 13; i++)
+            owned.Add($"Card{i}");
+
+        return new CardSaveData
+        {
+            owned = owned,
+            deck = new List<string>()
+        };
     }
 
     public static void Save(CardSaveData data)
