@@ -93,9 +93,11 @@ public class TriggerStep_PlayerTeleport : TriggerStepBase
         if (debugLog)
             Debug.Log($"{ContextTag()} player={playerTr.name} from={from} to={to} targetScene={targetPoint.gameObject.scene.name} mode={afterMode} bounds={(afterBounds ? afterBounds.name : "<null>")} fixedAnchor={(fixedCameraAnchorPoint ? fixedCameraAnchorPoint.name : "<null>")}", this);
 
+        bool heldInputLock = false;
         if (lockPlayerInput && GameManager.Instance)
         {
-            GameManager.Instance.isAction = true;
+            GameManager.Instance.LockAction();
+            heldInputLock = true;
             if (debugLog) Debug.Log($"{ContextTag()} input locked", this);
         }
         if (CameraManager.Instance)
@@ -146,9 +148,9 @@ public class TriggerStep_PlayerTeleport : TriggerStepBase
             if (debugLog) Debug.Log($"{ContextTag()} fade in end", this);
         }
 
-        if (lockPlayerInput && GameManager.Instance)
+        if (heldInputLock && GameManager.Instance)
         {
-            GameManager.Instance.isAction = false;
+            GameManager.Instance.UnlockAction();
             if (debugLog) Debug.Log($"{ContextTag()} input unlocked", this);
         }
 
