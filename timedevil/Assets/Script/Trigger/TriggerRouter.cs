@@ -178,6 +178,22 @@ public class TriggerRouter : MonoBehaviour
         }
     }
 
+
+    public bool IsBlockingInputRouteRunning()
+    {
+        if (_runningKeys.Count == 0 || routes == null) return false;
+
+        for (int i = 0; i < routes.Count; i++)
+        {
+            var r = routes[i];
+            if (r == null) continue;
+            if (!r.blockPlayerInputWhileRunning) continue;
+            if (string.IsNullOrWhiteSpace(r.key)) continue;
+            if (_runningKeys.Contains(r.key)) return true;
+        }
+
+        return false;
+    }
     public bool IsRouteRunning(string key)
     {
         if (string.IsNullOrWhiteSpace(key)) return false;

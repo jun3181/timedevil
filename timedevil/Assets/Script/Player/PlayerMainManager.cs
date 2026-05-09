@@ -163,6 +163,20 @@ public class PlayerMainManager : MonoBehaviour
 
         bool menuOpen = (menu != null && menu.IsOpen);
 
+        // TriggerRouter 기반 입력 차단은 GameManager 잠금값과 별도로 한번 더 방어
+        // (중간 Step에서 잠금 상태가 변해도 라우트 실행 중이면 이동 차단 유지)
+        var routers = FindObjectsOfType<TriggerRouter>(true);
+        for (int i = 0; i < routers.Length; i++)
+        {
+            var router = routers[i];
+            if (router == null) continue;
+            if (router.IsBlockingInputRouteRunning() && !menuOpen)
+            {
+                reason = "TriggerRouter(blockPlayerInputWhileRunning=true)";
+                return true;
+            }
+        }
+
         bool gmLock = (gameManager != null && gameManager.isAction);
         if (gmLock && !menuOpen)
         {
