@@ -8,15 +8,20 @@ public class HandSelectController : MonoBehaviour
     [SerializeField] private HandUI hand;
     [SerializeField] private Image externalSelector; // 옵션
     [SerializeField] private CardUseOrchestrator orchestrator;
+    [SerializeField] private DescriptionPanelController desc;
+    [SerializeField] private PanelController panelController;
 
     [Header("Behavior")]
     [SerializeField] private bool wrap = true;
+    private bool panelViewBeforeSelect = false;
 
     void Reset()
     {
         if (!menu) menu = FindObjectOfType<BattleMenuController>(true);
         if (!hand) hand = FindObjectOfType<HandUI>(true);
         if (!orchestrator) orchestrator = FindObjectOfType<CardUseOrchestrator>(true);
+        if (!desc) desc = FindObjectOfType<DescriptionPanelController>(true);
+        if (!panelController) panelController = FindObjectOfType<PanelController>(true);
     }
 
     void Awake()
@@ -52,6 +57,8 @@ public class HandSelectController : MonoBehaviour
         // 일반 진입(카드 탭) — 단, 버림 단계가 아닐 때만
         if (!inDiscard && !hand.IsInSelectMode && menu.Index == 0 && Input.GetKeyDown(KeyCode.E))
         {
+            if (hand.CardCount <= 0) return;
+            panelViewBeforeSelect = panelController != null && panelController.IsGameplayView;
             hand.EnterSelectMode();
             menu.EnableInput(false);
             return;
@@ -67,6 +74,7 @@ public class HandSelectController : MonoBehaviour
         {
             hand.ExitSelectMode();
             menu.EnableInput(true);
+            if (panelController) panelController.SetGameplayView(panelViewBeforeSelect);
         }
 
         if (Input.GetKeyDown(KeyCode.E))
@@ -113,4 +121,5 @@ public class HandSelectController : MonoBehaviour
         if (!rt) return;
         externalSelector.rectTransform.position = rt.position;
     }
+
 }

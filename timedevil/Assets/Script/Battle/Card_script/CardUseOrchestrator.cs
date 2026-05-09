@@ -18,6 +18,7 @@ public class CardUseOrchestrator : MonoBehaviour
     [Header("UI Hooks")]
     [SerializeField] private DescriptionPanelController desc; //  관전 모드 대사 표시용
     [SerializeField] private bool logDebug = false; // ← 옵션 로그
+    [SerializeField] private float postResolvePanelDelay = 0.2f;
 
     // (효과 실행은 타이밍 안정화 후 다시 연결)
     [Header("Optional Effect Controllers (disabled for timing)")]
@@ -29,6 +30,8 @@ public class CardUseOrchestrator : MonoBehaviour
 
 
     private bool busy;
+    public bool IsBusy { get { return busy; } }
+    public bool GetIsBusy() { return busy; }
 
     void Awake()
     {
@@ -88,6 +91,7 @@ public class CardUseOrchestrator : MonoBehaviour
         if (menu) menu.EnableInput(false);
         if (desc)
         {
+            desc.EnterEffectLock();
             string line =
                 !string.IsNullOrEmpty(so.explanation) ? so.explanation :
                 (!string.IsNullOrEmpty(so.display) ? so.display :
@@ -134,6 +138,7 @@ public class CardUseOrchestrator : MonoBehaviour
 
         // E. 설명 해제 및 선택 모드 복귀
         if (desc) desc.ClearTemporaryMessage();
+        if (desc) desc.ExitEffectLock();
 
         if (hand.CardCount > 0)
         {
@@ -145,7 +150,7 @@ public class CardUseOrchestrator : MonoBehaviour
         else
         {
             if (menu) menu.EnableInput(true);
-            if (PanelController) PanelController.SetGameplayView(false);
+            if (PanelController) PanelController.SetGameplayViewDelayed(false, postResolvePanelDelay);
         }
 
         busy = false;

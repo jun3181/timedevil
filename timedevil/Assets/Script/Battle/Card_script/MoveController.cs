@@ -20,6 +20,12 @@ public class MoveController : MonoBehaviour
     [Header("Actors")]
     [SerializeField] private Transform playerPawn;
     [SerializeField] private Transform enemyPawn;
+    [SerializeField] private bool keepPawnZ = true;
+    [SerializeField] private float playerPawnZ = -2f;
+    [SerializeField] private float enemyPawnZ = -2f;
+    [SerializeField] private bool keepSortingOrder = true;
+    [SerializeField] private int playerSortingOrder = 20;
+    [SerializeField] private int enemySortingOrder = 20;
 
     [Header("Runtime State (grid index)")]
     [SerializeField] private Vector2Int playerRC = new Vector2Int(4, 1); // (row, col)
@@ -35,11 +41,19 @@ public class MoveController : MonoBehaviour
     [Header("UI Lock")]
     [SerializeField] private BattleMenuController menu;
     [SerializeField] private DescriptionPanelController desc;
+    private bool _ownsTempMessage;
 
     void Reset()
     {
         menu ??= FindObjectOfType<BattleMenuController>(true);
         desc ??= FindObjectOfType<DescriptionPanelController>(true);
+    }
+
+    void LateUpdate()
+    {
+        if (!keepSortingOrder) return;
+        ApplySorting(playerPawn, playerSortingOrder);
+        ApplySorting(enemyPawn, enemySortingOrder);
     }
 
     public void SetGrid(Faction who, int r, int c, bool snap = true)
@@ -49,13 +63,15 @@ public class MoveController : MonoBehaviour
         {
             playerRC = rc;
             if (snap && playerPawn && playerGridOrigin)
-                playerPawn.position = RCToWorld(rc, playerGridOrigin, originRow_Player, originCol_Player, playerPawn.position.z); // ★
+                playerPawn.position = RCToWorld(rc, playerGridOrigin, originRow_Player, originCol_Player, keepPawnZ ? playerPawnZ : playerPawn.position.z);
+            ApplySorting(playerPawn, playerSortingOrder);
         }
         else
         {
             enemyRC = rc;
             if (snap && enemyPawn && enemyGridOrigin)
-                enemyPawn.position = RCToWorld(rc, enemyGridOrigin, originRow_Enemy, originCol_Enemy, enemyPawn.position.z);       // ★
+                enemyPawn.position = RCToWorld(rc, enemyGridOrigin, originRow_Enemy, originCol_Enemy, keepPawnZ ? enemyPawnZ : enemyPawn.position.z);
+            ApplySorting(enemyPawn, enemySortingOrder);
         }
     }
 
@@ -66,10 +82,15 @@ public class MoveController : MonoBehaviour
         if (so == null) yield break;
 
         if (menu) menu.EnableInput(false);
-        if (desc) desc.ShowTemporaryExplanation(
-            string.IsNullOrEmpty(so.explanation)
-                ? (string.IsNullOrEmpty(so.display) ? so.displayName : so.display)
-                : so.explanation);
+        _ownsTempMessage = false;
+        if (desc && !desc.HasForcedMessage)
+        {
+            _ownsTempMessage = true;
+            desc.ShowTemporaryExplanation(
+                string.IsNullOrEmpty(so.explanation)
+                    ? (string.IsNullOrEmpty(so.display) ? so.displayName : so.display)
+                    : so.explanation);
+        }
 
         var target = (so.moveMode == MoveMode.UpMove) ? self : foe;
 
@@ -83,15 +104,19 @@ public class MoveController : MonoBehaviour
         if (!pawn || !origin)
         {
             Debug.LogWarning("[MoveController] Pawn/Origin 누락");
-            if (desc) desc.ClearTemporaryMessage();
+            if (_ownsTempMessage && desc) desc.ClearTemporaryMessage();
             if (menu) menu.EnableInput(true);
             yield break;
         }
+
+        ApplySorting(pawn, target == Faction.Player ? playerSortingOrder : enemySortingOrder);
 
         Vector2Int curRC = GetGrid(target);
         Vector2Int deltaRC = DirToDelta(so.where) * Mathf.Max(0, so.amount);
 
         Vector3 startPos = pawn.position;
+        if (keepPawnZ)
+            startPos.z = (target == Faction.Player) ? playerPawnZ : enemyPawnZ;
         Vector3 worldDelta = RCDeltaToWorldDelta(deltaRC, origin, oRow, oCol);
         Vector3 rawEndPos = startPos + worldDelta;
 
@@ -99,7 +124,7 @@ public class MoveController : MonoBehaviour
         Vector3 clampedEndPos = new Vector3(
             Mathf.Clamp(rawEndPos.x, minX, maxX),
             Mathf.Clamp(rawEndPos.y, minY, maxY),
-            startPos.z
+            keepPawnZ ? ((target == Faction.Player) ? playerPawnZ : enemyPawnZ) : startPos.z
         );
 
         Vector2Int endRC = WorldToNearestRC(clampedEndPos, origin, oRow, oCol);
@@ -112,7 +137,7 @@ public class MoveController : MonoBehaviour
         if (cellsDistance == 0)
         {
             yield return new WaitForSeconds(0.05f);
-            if (desc) desc.ClearTemporaryMessage();
+            if (_ownsTempMessage && desc) desc.ClearTemporaryMessage();
             if (menu) menu.EnableInput(true);
             yield break;
         }
@@ -132,7 +157,7 @@ public class MoveController : MonoBehaviour
             anim.SetFloat("MoveSpeed", 1f / animDuration);
         }
 
-        Vector3 endPos = RCToWorld(endRC, origin, oRow, oCol, startPos.z);
+        Vector3 endPos = RCToWorld(endRC, origin, oRow, oCol, keepPawnZ ? ((target == Faction.Player) ? playerPawnZ : enemyPawnZ) : startPos.z);
 
         if (anim && !string.IsNullOrEmpty(moveTriggerName))
             anim.SetTrigger(moveTriggerName);
@@ -154,7 +179,7 @@ public class MoveController : MonoBehaviour
 
         if (anim) anim.SetBool("Moving", false);
 
-        if (desc) desc.ClearTemporaryMessage();
+        if (_ownsTempMessage && desc) desc.ClearTemporaryMessage();
         if (menu) menu.EnableInput(true);
     }
 
@@ -227,5 +252,13 @@ public class MoveController : MonoBehaviour
         rc.x = Mathf.Clamp(rc.x, 1, rows);
         rc.y = Mathf.Clamp(rc.y, 1, cols);
         return rc;
+    }
+
+    private void ApplySorting(Transform pawn, int order)
+    {
+        if (!keepSortingOrder || pawn == null) return;
+        var srs = pawn.GetComponentsInChildren<SpriteRenderer>(true);
+        for (int i = 0; i < srs.Length; i++)
+            srs[i].sortingOrder = order;
     }
 }
