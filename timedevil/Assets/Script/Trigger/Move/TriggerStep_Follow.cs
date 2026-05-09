@@ -126,7 +126,17 @@ public class TriggerStep_Follow : TriggerStepBase
                 int hitCount = movingCollider.Cast(dir2, filter, _castHits, moveDist + castSkin);
                 if (hitCount > 0)
                 {
-                    if (debugLog) Debug.Log($"[TriggerStep_Follow] collision with '{_castHits[0].collider.name}'");
+                    var hitCollider = _castHits[0].collider;
+                    if (debugLog) Debug.Log($"[TriggerStep_Follow] collision with '{hitCollider.name}'");
+
+                    bool battleTriggered = false;
+                    var battleTransition = mover != null ? mover.GetComponent<BattleCollisionTransition>() : null;
+                    if (battleTransition != null)
+                    {
+                        battleTriggered = battleTransition.TryEnterFromExternal(hitCollider);
+                        if (debugLog && battleTriggered)
+                            Debug.Log("[TriggerStep_Follow] forwarded collision to BattleCollisionTransition.");
+                    }
 
                     if (onCollisionStep)
                     {
