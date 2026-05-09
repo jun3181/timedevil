@@ -139,10 +139,14 @@ public class AStarPathfinder
         if(closeTiles.ContainsKey(targetOffset)) {
             res.Add(targetOffset);
             PathTile tile = closeTiles[targetOffset];
+            //Vector2Int directionTendency = tile.parent.offset - tile.offset, nextDirection;
             while(tile.parent != null) {
-                Vector2 delta = tile.parent.offset - tile.offset;
-                // 중요 턴 포인트만 저장
-                res.Insert(0, tile.parent.offset);
+                //nextDirection = (tile.parent.parent!=null) ? tile.parent.parent.offset - tile.parent.offset : new(int.MaxValue,int.MaxValue);
+                //if(directionTendency!=nextDirection) {
+                    res.Insert(0, tile.parent.offset);
+                    //directionTendency = nextDirection;
+                //}
+
                 tile = tile.parent;
             }
         } else {
