@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class test : MonoBehaviour
 {
+    public bool Switch = true;
+
     RoutingNPCMove rnm;
     void Start()
     {
@@ -14,6 +16,10 @@ public class test : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        if(!Switch) {
+            rnm.IdleRouting();
+        } else {
+            rnm.ResumeRouting();
+        }
     }
 }

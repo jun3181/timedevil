@@ -25,8 +25,11 @@ public class BattleCollisionTransition : MonoBehaviour
     [SerializeField] private Collider2D returnConfinerBoundsOverride;
     [SerializeField] private float returnOrthoSizeOverride = 0f;
     [SerializeField] private bool captureCameraSnapshot = true;
+    [SerializeField] private Transform forceFixedReturnAnchor;
 
     [Header("Filter")]
+    [SerializeField] private Transform playerTransform;
+    [SerializeField] private bool allowTagFallback = false;
     [SerializeField] private string playerTag = "Player";
     [SerializeField] private bool disableAfterEnter = true;
     [SerializeField] private float reenterBlockSeconds = 0.5f;
@@ -36,6 +39,10 @@ public class BattleCollisionTransition : MonoBehaviour
     [SerializeField] private Rigidbody2D pauseTargetRigidbody2D;
     [SerializeField] private MonoBehaviour pauseTargetController;
     [SerializeField] private float pauseSecondsBeforeBattle = 0.12f;
+
+    [Header("Enemy Reactivation Delay On Return")]
+    [SerializeField] private bool delayEnemySnapshotTargetOnReturn = true;
+    [SerializeField] private float enemySnapshotReactivateSeconds = 1.0f;
 
     [Header("Follow After Reenter Block")]
     [SerializeField] private bool followAfterReenterBlock = true;
@@ -49,6 +56,10 @@ public class BattleCollisionTransition : MonoBehaviour
     private bool _followArmedAfterReturn;
     private static readonly System.Collections.Generic.Dictionary<string, float> _reenterBlockedUntil = new();
     private static readonly System.Collections.Generic.Dictionary<string, ForcedChasingState> _forceStateAfterReturn = new();
+    private static DelayCoroutineRunner _delayRunner;
+
+    private sealed class DelayCoroutineRunner : MonoBehaviour { }
+
 
     private struct ForcedChasingState
     {
@@ -59,13 +70,19 @@ public class BattleCollisionTransition : MonoBehaviour
 
     private void Start()
     {
+        if (playerTransform == null)
+        {
+            var pm = FindObjectOfType<PlayerMainManager>(true);
+            if (pm != null) playerTransform = pm.transform;
+        }
+
         ApplyForcedReturnStateIfPending();
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (_entered) return;
-        if (!other || !other.CompareTag(playerTag)) return;
+        if (!other || !IsPlayerTransform(other.transform)) return;
         if (IsBlockedByCooldown()) return;
         BeginBattleTransition(other.transform, other.name);
     }
@@ -73,19 +90,19 @@ public class BattleCollisionTransition : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         if (_entered) return;
-        if (!other || !other.CompareTag(playerTag)) return;
+        if (!other || !IsPlayerTransform(other.transform)) return;
         if (IsBlockedByCooldown()) return;
         BeginBattleTransition(other.transform, other.name);
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (_entered) return;
-        if (collision == null || collision.collider == null) return;
-        var other = collision.collider;
-        if (!other.CompareTag(playerTag)) return;
-        if (IsBlockedByCooldown()) return;
-        BeginBattleTransition(other.transform, other.name);
+        HandleCollision2D(collision);
+    }
+
+    private void OnCollisionStay2D(Collision2D collision)
+    {
+        HandleCollision2D(collision);
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -93,9 +110,32 @@ public class BattleCollisionTransition : MonoBehaviour
         if (_entered) return;
         if (collision == null || collision.collider == null) return;
         var other = collision.collider;
-        if (!other.CompareTag(playerTag)) return;
+        if (!IsPlayerTransform(other.transform)) return;
         if (IsBlockedByCooldown()) return;
         BeginBattleTransition(other.transform, other.name);
+    }
+
+
+    public bool TryEnterFromExternal(Collider2D other)
+    {
+        if (_entered) return false;
+        if (other == null) return false;
+        if (!IsPlayerTransform(other.transform)) return false;
+        if (IsBlockedByCooldown()) return false;
+
+        BeginBattleTransition(other.transform, other.name);
+        return true;
+    }
+
+    public bool TryEnterFromExternal(Collider other)
+    {
+        if (_entered) return false;
+        if (other == null) return false;
+        if (!IsPlayerTransform(other.transform)) return false;
+        if (IsBlockedByCooldown()) return false;
+
+        BeginBattleTransition(other.transform, other.name);
+        return true;
     }
 
     private void BeginBattleTransition(Transform player, string colliderName)
@@ -156,6 +196,61 @@ public class BattleCollisionTransition : MonoBehaviour
                 camFixedPos = new Vector2(fixedPos3.x, fixedPos3.y);
                 camBoundsName = string.IsNullOrWhiteSpace(boundsName) ? null : boundsName;
             }
+
+            // 스냅샷 획득 실패 시: 우선 현재 실제 카메라 상태를 사용
+            if (!restoreCam)
+            {
+                var liveCam = Camera.main;
+                if (liveCam != null)
+                {
+                    restoreCam = true;
+                    camMode = cm != null ? cm.CurrentMode : CameraModeId.Fixed;
+                    camOrtho = liveCam.orthographic ? liveCam.orthographicSize : camOrtho;
+                    camFixedPos = new Vector2(liveCam.transform.position.x, liveCam.transform.position.y);
+                    camBoundsName = null;
+                }
+            }
+
+            // 그래도 정보가 없으면 bootstrap을 마지막 fallback으로 사용
+            if (!restoreCam)
+            {
+                var bootstrap = FindObjectOfType<SceneCameraBootstrap>(true);
+                if (bootstrap != null)
+                {
+                    restoreCam = true;
+                    camMode = bootstrap.startMode;
+                    camOrtho = bootstrap.orthoSize > 0f ? bootstrap.orthoSize : 0f;
+
+                    switch (bootstrap.startMode)
+                    {
+                        case CameraModeId.Fixed:
+                        case CameraModeId.Cutscene:
+                            if (bootstrap.fixedOrCutsceneAnchor != null)
+                                camFixedPos = bootstrap.fixedOrCutsceneAnchor.position;
+                            else if (bootstrap.followTarget != null)
+                                camFixedPos = bootstrap.followTarget.position;
+                            else
+                                camFixedPos = returnPos;
+                            camBoundsName = null;
+                            break;
+
+                        case CameraModeId.FollowConfined:
+                            camBoundsName = bootstrap.confinerBounds != null ? bootstrap.confinerBounds.name : null;
+                            break;
+
+                        case CameraModeId.FollowFree:
+                            camBoundsName = null;
+                            break;
+                    }
+                }
+            }
+        }
+
+        if (camMode == CameraModeId.Fixed && forceFixedReturnAnchor != null)
+        {
+            camFixedPos = forceFixedReturnAnchor.position;
+            if (debugLog)
+                Debug.Log($"[BattleCollisionTransition] override fixed return camera anchor => '{forceFixedReturnAnchor.name}' ({camFixedPos.x:F2},{camFixedPos.y:F2})");
         }
 
         PlayerReturnContext.SetReturnFromTrigger(
@@ -268,16 +363,64 @@ public class BattleCollisionTransition : MonoBehaviour
 
         _forceStateAfterReturn.Remove(key);
 
+        TryDelayEnemySnapshotTargetOnReturn();
+
         if (debugLog)
             Debug.Log($"[BattleCollisionTransition] force restore after return: '{chasingObject.name}' pos={chasingObject.position}");
+    }
+
+    private static DelayCoroutineRunner GetDelayRunner()
+    {
+        if (_delayRunner != null) return _delayRunner;
+
+        var go = new GameObject("BattleCollisionTransition.DelayRunner");
+        DontDestroyOnLoad(go);
+        _delayRunner = go.AddComponent<DelayCoroutineRunner>();
+        return _delayRunner;
+    }
+
+    private void TryDelayEnemySnapshotTargetOnReturn()
+    {
+        if (!delayEnemySnapshotTargetOnReturn) return;
+        if (enemySnapshotTarget == null) return;
+
+        var enemyObj = enemySnapshotTarget.gameObject;
+        if (!enemyObj.activeSelf) return;
+
+        float wait = Mathf.Max(0f, enemySnapshotReactivateSeconds);
+        if (wait <= 0f) return;
+
+        GetDelayRunner().StartCoroutine(CoDelayEnemySnapshotTarget(enemyObj, wait));
+    }
+
+    private IEnumerator CoDelayEnemySnapshotTarget(GameObject enemyObj, float wait)
+    {
+        enemyObj.SetActive(false);
+
+        if (debugLog)
+            Debug.Log($"[BattleCollisionTransition] disable enemySnapshotTarget for {wait:F2}s: '{enemyObj.name}'");
+
+        yield return new WaitForSeconds(wait);
+
+        if (enemyObj != null)
+            enemyObj.SetActive(true);
+
+        if (debugLog && enemyObj != null)
+            Debug.Log($"[BattleCollisionTransition] re-enable enemySnapshotTarget: '{enemyObj.name}'");
     }
 
     private Transform ResolveFollowTarget()
     {
         if (followTargetObject != null) return followTargetObject;
+        if (playerTransform != null) return playerTransform;
+        if (allowTagFallback)
+        {
+            var player = GameObject.FindWithTag(playerTag);
+            return player != null ? player.transform : null;
+        }
 
-        var player = GameObject.FindWithTag(playerTag);
-        return player != null ? player.transform : null;
+        var pm = FindObjectOfType<PlayerMainManager>(true);
+        return pm != null ? pm.transform : null;
     }
 
     private void SaveForcedChasingStateForReturn()
@@ -300,7 +443,11 @@ public class BattleCollisionTransition : MonoBehaviour
 
     private bool IsBlockedByCooldown()
     {
-        if (PlayerReturnContext.IsInGracePeriod) return true;
+        bool sameSceneReturnContext = PlayerReturnContext.HasReturnPosition &&
+                                      PlayerReturnContext.ReturnSceneName == SceneManager.GetActiveScene().name;
+        if (sameSceneReturnContext &&
+            (PlayerReturnContext.IsInGracePeriod || PlayerReturnContext.GraceSecondsPending > 0f))
+            return true;
 
         string key = GetRuntimeKey();
         if (!_reenterBlockedUntil.TryGetValue(key, out float until)) return false;
@@ -311,5 +458,28 @@ public class BattleCollisionTransition : MonoBehaviour
     {
         string key = GetRuntimeKey();
         _reenterBlockedUntil[key] = Time.unscaledTime + Mathf.Max(0f, reenterBlockSeconds);
+    }
+
+    private bool IsPlayerTransform(Transform other)
+    {
+        if (other == null) return false;
+
+        if (playerTransform != null)
+            return other == playerTransform || other.IsChildOf(playerTransform);
+
+        if (allowTagFallback)
+            return other.CompareTag(playerTag);
+
+        return false;
+    }
+
+    private void HandleCollision2D(Collision2D collision)
+    {
+        if (_entered) return;
+        if (collision == null || collision.collider == null) return;
+        var other = collision.collider;
+        if (!IsPlayerTransform(other.transform)) return;
+        if (IsBlockedByCooldown()) return;
+        BeginBattleTransition(other.transform, other.name);
     }
 }
