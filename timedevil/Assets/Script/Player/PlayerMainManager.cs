@@ -136,9 +136,15 @@ public class PlayerMainManager : MonoBehaviour
 
         move?.SetMoveInput(h, v, hDown, vDown, hUp, vUp);
 
-        // 상호작용: E
+        // 상호작용: E (Action Lock 중에는 무시)
         if (Input.GetKeyDown(keyInteractOrSubmit))
         {
+            if (gameManager != null && gameManager.isAction)
+            {
+                if (debugLog) Debug.Log("[PlayerMainManager] INTERACT ignored (GameManager.isAction=true)");
+                return;
+            }
+
             if (debugLog) Debug.Log("[PlayerMainManager] INTERACT by E");
             interactor?.TryInteract();
         }
@@ -156,6 +162,20 @@ public class PlayerMainManager : MonoBehaviour
         reason = "";
 
         bool menuOpen = (menu != null && menu.IsOpen);
+
+        // TriggerRouter 기반 입력 차단은 GameManager 잠금값과 별도로 한번 더 방어
+        // (중간 Step에서 잠금 상태가 변해도 라우트 실행 중이면 이동 차단 유지)
+        var routers = FindObjectsOfType<TriggerRouter>(true);
+        for (int i = 0; i < routers.Length; i++)
+        {
+            var router = routers[i];
+            if (router == null) continue;
+            if (router.IsBlockingInputRouteRunning() && !menuOpen)
+            {
+                reason = "TriggerRouter(blockPlayerInputWhileRunning=true)";
+                return true;
+            }
+        }
 
         bool gmLock = (gameManager != null && gameManager.isAction);
         if (gmLock && !menuOpen)
