@@ -145,7 +145,7 @@ public class HandUI : MonoBehaviour
         if (select) select.gameObject.SetActive(true);
         onSelectModeChanged?.Invoke(true);
 
-        SetSelectIndexPublic(CardCount - 1); // 오른쪽 끝부터
+        SetSelectIndexPublic(0); // 오른쪽 끝부터
     }
 
     public void ExitSelectMode()
