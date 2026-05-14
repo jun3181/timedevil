@@ -1524,7 +1524,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 4557927386923660926, guid: c5a34169a5e1a784daff0425a92a310c, type: 3}
+  m_Sprite: {fileID: 4557927386923660926, guid: c5a34169a5e1a784daff0425a92a310c,
+    type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -5810,7 +5811,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -1579757135588298338, guid: 861be80d5afb91b40bfefd36b2a7c56c, type: 3}
+  m_Sprite: {fileID: -1579757135588298338, guid: 861be80d5afb91b40bfefd36b2a7c56c,
+    type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -6200,6 +6202,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1190718238}
   - component: {fileID: 1190718237}
+  - component: {fileID: 1190718239}
   m_Layer: 0
   m_Name: ButtonManager
   m_TagString: Untagged
@@ -6238,6 +6241,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1393003957}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1190718239
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1190718236}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 44cf495990bb44a499bf1b9cf1753c79, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  pageManager: {fileID: 1190718237}
+  inventoryCursor: {fileID: 1528615507}
+  db: {fileID: 11400000, guid: e13b2b2f1c3ccab48851303d3588f4d9, type: 2}
 --- !u!1 &1219007414
 GameObject:
   m_ObjectHideFlags: 0
@@ -7835,7 +7853,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -5403833157620659356, guid: 15c03209293a47e4ca63802c90b2289b, type: 3}
+  m_Sprite: {fileID: -5403833157620659356, guid: 15c03209293a47e4ca63802c90b2289b,
+    type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1

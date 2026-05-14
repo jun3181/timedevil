@@ -158,6 +158,16 @@ public class InventoryDisplay : MonoBehaviour
         }
     }
 
+    public InventoryItemEntry GetCursoredItemEntry() {
+        int currentIndex = cursor.CurrentIndex + pageIndex * pageSize;
+
+        if(currentIndex>=currentFiltered.Count) {
+            return null;
+        } else {
+            return currentFiltered[currentIndex];
+        }
+    }
+
     /// <summary>D 키로 설명 패널 열고 닫기</summary>
     private void ToggleDescriptionPanel()
     {
