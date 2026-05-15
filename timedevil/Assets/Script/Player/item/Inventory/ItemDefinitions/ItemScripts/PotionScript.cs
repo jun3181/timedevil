@@ -53,6 +53,7 @@ public class PotionScript : ItemScriptBase
 
     public override bool CanItemUsed() {
         if(PlayerDataRuntime.Instance==null) {
+            if(debuged) Debug.LogWarning("PlayerDataRuntime의 인스턴스가 존재하지 않습니다.");
             return false;
         } else {
             return true;
