@@ -28,7 +28,7 @@ public class InventoryItemApplyer : MonoBehaviour
             if(so == null) return;
 
             if(so.itemScript != null) {
-                if(!so.itemScript.CanItemUsed()) return;
+                if(!so.itemScript.CanItemUsed(out string msg)) return;
                 so.itemScript.Run();
             }
 
