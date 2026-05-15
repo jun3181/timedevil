@@ -25,12 +25,22 @@ public class InventoryItemApplyer : MonoBehaviour
             if(entry == null) return;
 
             if(ItemRuntime.Instance == null) return;
-            ItemRuntime.Instance.AddQuantity(entry.id, -1);
+            InventoryItemEntry[] entries = ItemRuntime.Instance.CurrentData.items;
+            for(int i=0; i<entries.Length; i++) {
+                if(entries[i].id == entry.id) {
+                    if(entries[i].quantity>0) {
+                        ItemRuntime.Instance.AddQuantity(entry.id, -1);
+                    } else {
+                        return;
+                    }
+                }
+            }
+            page.DisplayCurrentPage();
 
             ItemSO so = db.GetById(entry.id);
-            if(so == null) return;
-
-            so.itemScript.Run();
+            if(so!=null && so.itemScript !=null) {
+                so.itemScript.Run();
+            }
         }
     }
 }
