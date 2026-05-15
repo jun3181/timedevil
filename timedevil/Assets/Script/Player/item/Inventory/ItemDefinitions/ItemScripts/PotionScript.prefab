@@ -44,3 +44,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb31a4e8e4843954abdeb7a0da5de8f2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  deltaMaxHP: 0
+  deltaCurrentHP: 10
+  deltaAttack: 0
+  deltaDefense: 0
+  deltaSpeed: 0
+  debuged: 1
