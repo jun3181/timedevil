@@ -10,5 +10,6 @@ using UnityEngine;
 */
 public abstract class ItemScriptBase : MonoBehaviour
 {
-    public abstract void Run();
+    public abstract void Run(); // 아이템 사용시 실행될 코드
+    public abstract bool CanItemUsed(); // 아이템 사용 가능 여부 판단
 }

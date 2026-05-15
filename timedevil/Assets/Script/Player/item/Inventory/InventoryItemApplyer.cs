@@ -24,23 +24,17 @@ public class InventoryItemApplyer : MonoBehaviour
             InventoryItemEntry entry = page.GetCursoredItemEntry();
             if(entry == null) return;
 
-            if(ItemRuntime.Instance == null) return;
-            InventoryItemEntry[] entries = ItemRuntime.Instance.CurrentData.items;
-            for(int i=0; i<entries.Length; i++) {
-                if(entries[i].id == entry.id) {
-                    if(entries[i].quantity>0) {
-                        ItemRuntime.Instance.AddQuantity(entry.id, -1);
-                    } else {
-                        return;
-                    }
-                }
-            }
-            page.DisplayCurrentPage();
-
             ItemSO so = db.GetById(entry.id);
-            if(so!=null && so.itemScript !=null) {
+            if(so == null) return;
+
+            if(so.itemScript != null) {
+                if(!so.itemScript.CanItemUsed()) return;
                 so.itemScript.Run();
             }
+
+            if(ItemRuntime.Instance == null) return;
+            ItemRuntime.Instance.AddQuantity(entry.id, -1);
+            page.DisplayCurrentPage();
         }
     }
 }
