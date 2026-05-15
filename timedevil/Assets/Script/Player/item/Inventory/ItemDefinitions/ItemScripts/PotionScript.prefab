@@ -45,7 +45,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   deltaMaxHP: 0
-  deltaCurrentHP: 10
+  deltaCurrentHP: 1
   deltaAttack: 0
   deltaDefense: 0
   deltaSpeed: 0
