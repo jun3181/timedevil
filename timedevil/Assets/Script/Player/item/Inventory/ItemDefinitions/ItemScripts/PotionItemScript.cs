@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PotionScript : ItemScriptBase
+public class PotionItemScript : ItemScriptBase
 {
     [Header("최대 체력 변화량")]
     [SerializeField]
