@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 2519393426154673958}
   - component: {fileID: -1992556513696332994}
   m_Layer: 0
-  m_Name: PotionScript
+  m_Name: HealingPotion
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
