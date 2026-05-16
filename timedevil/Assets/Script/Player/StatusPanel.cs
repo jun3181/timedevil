@@ -11,7 +11,6 @@ public class StatusPanel : MonoBehaviour, IDragHandler
     private const string ATTACK_FORMAT = "공격력: {0}";
     private const string SPEED_FORMAT = "속도: {0}";
 
-    private RectTransform screenTransform;
     private RectTransform panelTransform;
 
     private TextMeshProUGUI hpLabel;
@@ -20,7 +19,6 @@ public class StatusPanel : MonoBehaviour, IDragHandler
     private TextMeshProUGUI speedLabel;
 
     void Awake() {
-        screenTransform = (RectTransform)transform.parent;
         panelTransform = (RectTransform)transform;
 
         hpLabel = transform.Find("HPLabel").GetComponent<TextMeshProUGUI>();
