@@ -1,30 +1,31 @@
-using System.Collections;
+//using System.Collections;
 using UnityEngine;
 
 public class PlayerEvadeController : MonoBehaviour
 {
-    [Header("Target Pawn (½ÇÁ¦ ÀÌµ¿ÇÒ Transform)")]
+    /*
+    [Header("Target Pawn (ï¿½ï¿½ï¿½ï¿½ ï¿½Ìµï¿½ï¿½ï¿½ Transform)")]
     [SerializeField] private Transform playerPawn;
 
     [Header("Animator")]
     [SerializeField] private PlayerAnimeController animator;
 
-    [Header("Grid Step (ÇÑ Ä­ Å©±â)")]
+    [Header("Grid Step (ï¿½ï¿½ Ä­ Å©ï¿½ï¿½)")]
     [SerializeField] private float stepX = 1.3f;
     [SerializeField] private float stepY = 1.3f;
 
-    [Header("Allowed Tile Centers (Panel °æ°è)")]
-    [Tooltip("ÇÃ·¹ÀÌ¾î º¸µåÀÇ 16°³ ¼¾ÅÍ(¿ùµå ÁÂÇ¥). GridOrigin/AttackController¿¡¼­ ¾²´Â °Í°ú µ¿ÀÏÇÏ°Ô ¼¼ÆÃ")]
+    [Header("Allowed Tile Centers (Panel ï¿½ï¿½ï¿½)")]
+    [Tooltip("ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 16ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ç¥). GridOrigin/AttackControllerï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Í°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï°ï¿½ ï¿½ï¿½ï¿½ï¿½")]
     [SerializeField] private Vector3[] allowedCenters = new Vector3[16];
-    [SerializeField, Tooltip("µµÂø ÁöÁ¡ÀÌ ¼¾ÅÍ¿¡ ¾ó¸¶³ª °¡±î¿ö¾ß Çã¿ëÇÒÁö(¿ùµå °Å¸®)")]
+    [SerializeField, Tooltip("ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Í¿ï¿½ ï¿½ó¸¶³ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½(ï¿½ï¿½ï¿½ï¿½ ï¿½Å¸ï¿½)")]
     private float snapEpsilon = 0.15f;
 
     [Header("Timing")]
-    [SerializeField, Tooltip("Æíµµ ÀÌµ¿ ½Ã°£(ÃÊ)")]
+    [SerializeField, Tooltip("ï¿½ï¿½ï¿½ï¿½ ï¿½Ìµï¿½ ï¿½Ã°ï¿½(ï¿½ï¿½)")]
     private float moveSeconds = 0.25f;
 
     private bool enemyAttackWindow = false;
-    private bool evading = false; // ÀÌµ¿ Áß ÀÔ·Â Àá±Ý
+    private bool evading = false; // ï¿½Ìµï¿½ ï¿½ï¿½ ï¿½Ô·ï¿½ ï¿½ï¿½ï¿½
 
     void Awake()
     {
@@ -42,7 +43,7 @@ public class PlayerEvadeController : MonoBehaviour
     {
         if (!CanAcceptInput()) return;
 
-        // ¹æÇâ ÀÔ·Â
+        // ï¿½ï¿½ï¿½ï¿½ ï¿½Ô·ï¿½
         Vector3 offset = Vector3.zero;
         if (Input.GetKeyDown(KeyCode.UpArrow)) offset = new Vector3(0f, stepY, 0f);
         else if (Input.GetKeyDown(KeyCode.DownArrow)) offset = new Vector3(0f, -stepY, 0f);
@@ -50,10 +51,10 @@ public class PlayerEvadeController : MonoBehaviour
         else if (Input.GetKeyDown(KeyCode.RightArrow)) offset = new Vector3(stepX, 0f, 0f);
         else return;
 
-        // µµÂø ÈÄº¸ ¡æ ÆÐ³Î ³»ºÎÀÎÁö ½º³À °Ë»ç
+        // ï¿½ï¿½ï¿½ï¿½ ï¿½Äºï¿½ ï¿½ï¿½ ï¿½Ð³ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ë»ï¿½
         var cur = playerPawn.position;
         if (!TrySnapToAllowedCenter(cur + offset, out var snappedEnd))
-            return; // ÆÐ³Î ¹ÛÀÌ¸é ¹«½Ã
+            return; // ï¿½Ð³ï¿½ ï¿½ï¿½ï¿½Ì¸ï¿½ ï¿½ï¿½ï¿½ï¿½
 
         StartCoroutine(Co_MoveOnce(snappedEnd));
     }
@@ -62,13 +63,13 @@ public class PlayerEvadeController : MonoBehaviour
     {
         if (evading) return false;
         var tm = TurnManager.Instance;
-        if (tm == null || tm.currentTurn != TurnState.EnemyTurn) return false; // Àû ÅÏ¿¡¸¸ È¸ÇÇ
-        if (!enemyAttackWindow) return false;                                  // °ø°Ý À©µµ¿ì Áß¿¡¸¸ È¸ÇÇ
+        if (tm == null || tm.currentTurn != TurnState.EnemyTurn) return false; // ï¿½ï¿½ ï¿½Ï¿ï¿½ï¿½ï¿½ È¸ï¿½ï¿½
+        if (!enemyAttackWindow) return false;                                  // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ß¿ï¿½ï¿½ï¿½ È¸ï¿½ï¿½
         return true;
     }
 
     /// <summary>
-    /// ÇÑ Ä­¸¸ ÀÌµ¿ÇÏ°í ³¡(¿øÀ§Ä¡ º¹±Í ¾øÀ½)
+    /// ï¿½ï¿½ Ä­ï¿½ï¿½ ï¿½Ìµï¿½ï¿½Ï°ï¿½ ï¿½ï¿½(ï¿½ï¿½ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
     /// </summary>
     private IEnumerator Co_MoveOnce(Vector3 endWorld)
     {
@@ -86,7 +87,7 @@ public class PlayerEvadeController : MonoBehaviour
             yield return LerpPosition(playerPawn.position, endWorld, dur);
         }
 
-        // ½º³À º¸Á¤(ºÎµ¿¿ÀÂ÷ ¹æÁö)
+        // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½(ï¿½Îµï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
         playerPawn.position = endWorld;
 
         evading = false;
@@ -96,9 +97,9 @@ public class PlayerEvadeController : MonoBehaviour
     private bool TrySnapToAllowedCenter(Vector3 desired, out Vector3 snapped)
     {
         snapped = desired;
-        if (allowedCenters == null || allowedCenters.Length == 0) return true; // °æ°è ¹Ì¼¼ÆÃ ½Ã Åë°ú
+        if (allowedCenters == null || allowedCenters.Length == 0) return true; // ï¿½ï¿½ï¿½ ï¿½Ì¼ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½
 
-        // °¡Àå °¡±î¿î ¼¾ÅÍ Ã£±â
+        // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ã£ï¿½ï¿½
         float best = float.MaxValue;
         int bestIdx = -1;
         for (int i = 0; i < allowedCenters.Length; i++)
@@ -110,12 +111,12 @@ public class PlayerEvadeController : MonoBehaviour
         if (bestIdx >= 0 && best <= snapEpsilon)
         {
             snapped = allowedCenters[bestIdx];
-            return true; // ÆÐ³Î ³»ºÎ·Î ÀÎÁ¤
+            return true; // ï¿½Ð³ï¿½ ï¿½ï¿½ï¿½Î·ï¿½ ï¿½ï¿½ï¿½ï¿½
         }
-        return false;     // ÆÐ³Î Å»Ãâ ¡æ ÀÌµ¿ ±ÝÁö
+        return false;     // ï¿½Ð³ï¿½ Å»ï¿½ï¿½ ï¿½ï¿½ ï¿½Ìµï¿½ ï¿½ï¿½ï¿½ï¿½
     }
 
-    // Æú¹é º¸°£(¾Ö´Ï¸ÞÀÌÅÍ ¾øÀ» ¶§)
+    // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½(ï¿½Ö´Ï¸ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½)
     private IEnumerator LerpPosition(Vector3 a, Vector3 b, float dur)
     {
         float t = 0f;
@@ -129,4 +130,8 @@ public class PlayerEvadeController : MonoBehaviour
         }
         playerPawn.position = b;
     }
+
+*/
 }
+
+
