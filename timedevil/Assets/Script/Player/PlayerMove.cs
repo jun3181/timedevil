@@ -17,6 +17,13 @@ public class PlayerMove : MonoBehaviour
     private int v;
     private bool isHorizonMove;
 
+
+    [Header("Debug")]
+    [SerializeField] private bool debugAnimatorTrace = false;
+    [SerializeField] private float debugTraceInterval = 0.1f;
+
+    private float nextDebugTraceAt;
+
     private Vector3 facing = Vector3.down;
     public Vector3 Facing => facing;
 
@@ -43,26 +50,35 @@ public class PlayerMove : MonoBehaviour
         this.v = Mathf.Clamp(v, -1, 1);
 
         if (driveAnimator && anim)
-        if (hDown) isHorizonMove = true;
-        else if (vDown) isHorizonMove = false;
-        else if (hUp || vUp) isHorizonMove = this.h != 0;
-
-        // 애니 파라미터 갱신
-        if (anim)
         {
-            if (anim.GetInteger("hAxisRaw") != this.h)
+            if (hDown) isHorizonMove = true;
+            else if (vDown) isHorizonMove = false;
+            else if (hUp || vUp) isHorizonMove = this.h != 0;
+
+            // 애니 파라미터 갱신
+            bool hasMoveInput = this.h != 0 || this.v != 0;
+
+            // 이동 중일 때만 축 파라미터를 갱신해 마지막 바라보는 방향을 유지한다.
+            if (hasMoveInput)
             {
-                anim.SetBool("isChange", true);
-                anim.SetInteger("hAxisRaw", this.h);
+                if (isHorizonMove && this.h != 0)
+                {
+                    if (anim.GetInteger("hAxisRaw") != this.h)
+                        anim.SetInteger("hAxisRaw", this.h);
+                }
+                else if (!isHorizonMove && this.v != 0)
+                {
+                    if (anim.GetInteger("vAxisRaw") != this.v)
+                        anim.SetInteger("vAxisRaw", this.v);
+                }
             }
-            else if (anim.GetInteger("vAxisRaw") != this.v)
+
+            anim.SetBool("isChange", hasMoveInput);
+
+            if (debugAnimatorTrace && Time.unscaledTime >= nextDebugTraceAt)
             {
-                anim.SetBool("isChange", true);
-                anim.SetInteger("vAxisRaw", this.v);
-            }
-            else
-            {
-                anim.SetBool("isChange", false);
+                nextDebugTraceAt = Time.unscaledTime + Mathf.Max(0.01f, debugTraceInterval);
+                LogAnimatorTrace(hDown, vDown, hUp, vUp, hasMoveInput);
             }
         }
 
@@ -71,6 +87,27 @@ public class PlayerMove : MonoBehaviour
             facing = (this.h > 0) ? Vector3.right : Vector3.left;
         else if (vDown || (this.v != 0 && !isHorizonMove))
             facing = (this.v > 0) ? Vector3.up : Vector3.down;
+    }
+
+
+    private void LogAnimatorTrace(bool hDown, bool vDown, bool hUp, bool vUp, bool hasMoveInput)
+    {
+        if (!anim) return;
+
+        AnimatorStateInfo state = anim.GetCurrentAnimatorStateInfo(0);
+        Debug.Log(
+            $"[PlayerMove][AnimTrace] t={Time.unscaledTime:F3}, " +
+            $"input(h={h},v={v},hD={hDown},vD={vDown},hU={hUp},vU={vUp}), " +
+            $"param(hAxisRaw={anim.GetInteger("hAxisRaw")},vAxisRaw={anim.GetInteger("vAxisRaw")},isChange={anim.GetBool("isChange")},hasMoveInput={hasMoveInput}), " +
+            $"state(hash={state.shortNameHash},norm={state.normalizedTime:F3},loop={state.loop}," +
+            $"LWalk={state.IsName("Player_Left_Walk")},LIdle={state.IsName("Player_Left_Idle")}," +
+            $"RWalk={state.IsName("Player_Right_Walk")},RIdle={state.IsName("Player_Right_Idle")}," +
+            $"UWalk={state.IsName("Player_Up_Walk")},UIdle={state.IsName("Player_Up_Idle")}," +
+            $"DWalk={state.IsName("Player_Down_Walk")},DIdle={state.IsName("Player_Down_Idle")}), " +
+            $"velocity=({rb.velocity.x:F3},{rb.velocity.y:F3}), " +
+            $"controller={(anim.runtimeAnimatorController ? anim.runtimeAnimatorController.name : "null")}, " +
+            $"driveAnimator={driveAnimator}"
+        );
     }
 
     private void FixedUpdate()

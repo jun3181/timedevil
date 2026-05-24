@@ -63,20 +63,24 @@ public class PlayerAction : MonoBehaviour
             isHorizonMove = h != 0;
         }
 
-        if (anim.GetInteger("hAxisRaw") != h)
+        bool hasMoveInput = (!manager.isAction && !isTalking) && (h != 0f || v != 0f);
+
+        // 이동 중일 때만 축 파라미터를 갱신해 마지막 바라보는 방향을 유지한다.
+        if (hasMoveInput)
         {
-            anim.SetBool("isChange", true);
-            anim.SetInteger("hAxisRaw", (int)h);
+            if (isHorizonMove && h != 0f)
+            {
+                if (anim.GetInteger("hAxisRaw") != h)
+                    anim.SetInteger("hAxisRaw", (int)h);
+            }
+            else if (!isHorizonMove && v != 0f)
+            {
+                if (anim.GetInteger("vAxisRaw") != v)
+                    anim.SetInteger("vAxisRaw", (int)v);
+            }
         }
-        else if (anim.GetInteger("vAxisRaw") != v)
-        {
-            anim.SetBool("isChange", true);
-            anim.SetInteger("vAxisRaw", (int)v);
-        }
-        else
-        {
-            anim.SetBool("isChange", false);
-        }
+
+        anim.SetBool("isChange", hasMoveInput);
 
         // 바라보는 방향 갱신 (키를 누르고 있는 동안에도 계속 마지막 방향을 기억하도록 수정)
         if (hDown || (h != 0 && isHorizonMove))
