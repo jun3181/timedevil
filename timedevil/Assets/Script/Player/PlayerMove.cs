@@ -55,8 +55,8 @@ public class PlayerMove : MonoBehaviour
             if (anim.GetInteger("vAxisRaw") != this.v)
                 anim.SetInteger("vAxisRaw", this.v);
 
-            bool isMoving = this.h != 0 || this.v != 0;
-            anim.SetBool("isChange", isMoving);
+            bool hasMoveInput = this.h != 0 || this.v != 0;
+            anim.SetBool("isChange", hasMoveInput);
         }
 
         // 바라보는 방향
@@ -70,5 +70,11 @@ public class PlayerMove : MonoBehaviour
     {
         Vector2 input = new Vector2(h, v);
         rb.velocity = input.sqrMagnitude > 0f ? input.normalized * speed : Vector2.zero;
+
+        if (driveAnimator && anim)
+        {
+            bool isActuallyMoving = rb.velocity.sqrMagnitude > 0.0001f;
+            anim.SetBool("isChange", isActuallyMoving);
+        }
     }
 }
