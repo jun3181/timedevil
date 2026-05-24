@@ -8,6 +8,13 @@ public enum PivotSequencePlayMode
     Parallel
 }
 
+
+public enum PivotFinalFacingApplyMode
+{
+    IdleDirect,
+    WalkThenIdle
+}
+
 public enum PivotFacingMode
 {
     KeepCurrent,
@@ -54,6 +61,7 @@ public class TriggerStep_PivotSequenceMove : TriggerStepBase
     [SerializeField] private AnimationCurve ease = AnimationCurve.EaseInOut(0, 0, 1, 1);
 
     [Header("Final Facing")]
+    [SerializeField] private PivotFinalFacingApplyMode finalFacingApplyMode = PivotFinalFacingApplyMode.IdleDirect;
     [SerializeField, Min(0)] private int finalFacingHoldFrames = 2;
 
     [Header("Input Lock")]
@@ -249,24 +257,33 @@ public class TriggerStep_PivotSequenceMove : TriggerStepBase
     private IEnumerator ApplyFinalFacingStable(Animator anim, PivotFacingMode mode, ForcedWalkAnimType moveAnimType)
     {
         if (!anim) yield break;
+        if (mode == PivotFacingMode.KeepCurrent) yield break;
 
         int hold = Mathf.Max(0, finalFacingHoldFrames);
+
+        if (finalFacingApplyMode == PivotFinalFacingApplyMode.WalkThenIdle)
+        {
+            // 1) 최종 방향으로 "걷는 상태"를 한 프레임이라도 거치게 하여
+            //    AnyState -> Walk 전이를 선호하는 컨트롤러에서도 확실히 상태가 바뀌도록 한다.
+            ApplyFinalFacing(anim, mode, moveAnimType, true);
+            yield return null;
+        }
+
+        // 2) 최종적으로는 Idle 고정
         if (hold <= 0)
         {
-            ApplyFinalFacing(anim, mode, moveAnimType);
+            ApplyFinalFacing(anim, mode, moveAnimType, false);
             yield break;
         }
 
-        // 다른 스크립트가 같은 프레임대에 Animator 파라미터를 덮어쓰는 경우를 방지하기 위해
-        // 몇 프레임 동안 최종 바라보기 파라미터를 유지한다.
         for (int i = 0; i < hold; i++)
         {
-            ApplyFinalFacing(anim, mode, moveAnimType);
+            ApplyFinalFacing(anim, mode, moveAnimType, false);
             yield return null;
         }
     }
 
-    private void ApplyFinalFacing(Animator anim, PivotFacingMode mode, ForcedWalkAnimType moveAnimType)
+    private void ApplyFinalFacing(Animator anim, PivotFacingMode mode, ForcedWalkAnimType moveAnimType, bool isChange)
     {
         if (!anim) return;
         if (mode == PivotFacingMode.KeepCurrent) return;
@@ -297,7 +314,7 @@ public class TriggerStep_PivotSequenceMove : TriggerStepBase
 
         anim.SetInteger(pH, h);
         anim.SetInteger(pV, v);
-        anim.SetBool(pChange, false);
+        anim.SetBool(pChange, isChange);
     }
 
     private void SetIdle(Animator anim)
