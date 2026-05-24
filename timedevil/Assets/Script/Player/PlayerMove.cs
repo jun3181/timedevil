@@ -89,8 +89,14 @@ public class PlayerMove : MonoBehaviour
             $"[PlayerMove][AnimTrace] t={Time.unscaledTime:F3}, " +
             $"input(h={h},v={v},hD={hDown},vD={vDown},hU={hUp},vU={vUp}), " +
             $"param(hAxisRaw={anim.GetInteger("hAxisRaw")},vAxisRaw={anim.GetInteger("vAxisRaw")},isChange={anim.GetBool("isChange")},hasMoveInput={hasMoveInput}), " +
-            $"state(hash={state.shortNameHash},norm={state.normalizedTime:F3},loop={state.loop}), " +
-            $"velocity=({rb.velocity.x:F3},{rb.velocity.y:F3})"
+            $"state(hash={state.shortNameHash},norm={state.normalizedTime:F3},loop={state.loop}," +
+            $"LWalk={state.IsName("Player_Left_Walk")},LIdle={state.IsName("Player_Left_Idle")}," +
+            $"RWalk={state.IsName("Player_Right_Walk")},RIdle={state.IsName("Player_Right_Idle")}," +
+            $"UWalk={state.IsName("Player_Up_Walk")},UIdle={state.IsName("Player_Up_Idle")}," +
+            $"DWalk={state.IsName("Player_Down_Walk")},DIdle={state.IsName("Player_Down_Idle")}), " +
+            $"velocity=({rb.velocity.x:F3},{rb.velocity.y:F3}), " +
+            $"controller={(anim.runtimeAnimatorController ? anim.runtimeAnimatorController.name : "null")}, " +
+            $"driveAnimator={driveAnimator}"
         );
     }
 
