@@ -17,6 +17,13 @@ public class PlayerMove : MonoBehaviour
     private int v;
     private bool isHorizonMove;
 
+
+    [Header("Debug")]
+    [SerializeField] private bool debugAnimatorTrace = false;
+    [SerializeField] private float debugTraceInterval = 0.1f;
+
+    private float nextDebugTraceAt;
+
     private Vector3 facing = Vector3.down;
     public Vector3 Facing => facing;
 
@@ -57,6 +64,12 @@ public class PlayerMove : MonoBehaviour
 
             bool hasMoveInput = this.h != 0 || this.v != 0;
             anim.SetBool("isChange", hasMoveInput);
+
+            if (debugAnimatorTrace && Time.unscaledTime >= nextDebugTraceAt)
+            {
+                nextDebugTraceAt = Time.unscaledTime + Mathf.Max(0.01f, debugTraceInterval);
+                LogAnimatorTrace(hDown, vDown, hUp, vUp, hasMoveInput);
+            }
         }
 
         // 바라보는 방향
@@ -66,15 +79,24 @@ public class PlayerMove : MonoBehaviour
             facing = (this.v > 0) ? Vector3.up : Vector3.down;
     }
 
+
+    private void LogAnimatorTrace(bool hDown, bool vDown, bool hUp, bool vUp, bool hasMoveInput)
+    {
+        if (!anim) return;
+
+        AnimatorStateInfo state = anim.GetCurrentAnimatorStateInfo(0);
+        Debug.Log(
+            $"[PlayerMove][AnimTrace] t={Time.unscaledTime:F3}, " +
+            $"input(h={h},v={v},hD={hDown},vD={vDown},hU={hUp},vU={vUp}), " +
+            $"param(hAxisRaw={anim.GetInteger("hAxisRaw")},vAxisRaw={anim.GetInteger("vAxisRaw")},isChange={anim.GetBool("isChange")},hasMoveInput={hasMoveInput}), " +
+            $"state(hash={state.shortNameHash},norm={state.normalizedTime:F3},loop={state.loop}), " +
+            $"velocity=({rb.velocity.x:F3},{rb.velocity.y:F3})"
+        );
+    }
+
     private void FixedUpdate()
     {
         Vector2 input = new Vector2(h, v);
         rb.velocity = input.sqrMagnitude > 0f ? input.normalized * speed : Vector2.zero;
-
-        if (driveAnimator && anim)
-        {
-            bool isActuallyMoving = rb.velocity.sqrMagnitude > 0.0001f;
-            anim.SetBool("isChange", isActuallyMoving);
-        }
     }
 }
