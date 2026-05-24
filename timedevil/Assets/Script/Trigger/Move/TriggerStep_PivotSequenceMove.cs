@@ -179,6 +179,11 @@ public class TriggerStep_PivotSequenceMove : TriggerStepBase
 
         if (canDriveAnim)
         {
+            // 이동 루프 종료 직후 걷기 플래그를 명시적으로 끈 뒤, 최종 바라보기를 적용한다.
+            // (Animator 전이 조건이 엄격한 컨트롤러에서 걷기 상태 고정 방지)
+            ApplyWalkAnimation(animator, animType, false);
+            yield return null;
+
             if (entry.setIdleAtEnd)
                 SetIdle(animator);
 
