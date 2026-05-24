@@ -16,6 +16,8 @@ public class PlayerMove : MonoBehaviour
     private int h;
     private int v;
     private bool isHorizonMove;
+    private int lastHAxisRaw;
+    private int lastVAxisRaw = -1;
 
 
     [Header("Debug")]
@@ -58,20 +60,25 @@ public class PlayerMove : MonoBehaviour
             // 애니 파라미터 갱신
             bool hasMoveInput = this.h != 0 || this.v != 0;
 
-            // 이동 중일 때만 축 파라미터를 갱신해 마지막 바라보는 방향을 유지한다.
             if (hasMoveInput)
             {
                 if (isHorizonMove && this.h != 0)
                 {
-                    if (anim.GetInteger("hAxisRaw") != this.h)
-                        anim.SetInteger("hAxisRaw", this.h);
+                    lastHAxisRaw = this.h;
+                    lastVAxisRaw = 0;
                 }
                 else if (!isHorizonMove && this.v != 0)
                 {
-                    if (anim.GetInteger("vAxisRaw") != this.v)
-                        anim.SetInteger("vAxisRaw", this.v);
+                    lastHAxisRaw = 0;
+                    lastVAxisRaw = this.v;
                 }
             }
+
+            if (anim.GetInteger("hAxisRaw") != lastHAxisRaw)
+                anim.SetInteger("hAxisRaw", lastHAxisRaw);
+
+            if (anim.GetInteger("vAxisRaw") != lastVAxisRaw)
+                anim.SetInteger("vAxisRaw", lastVAxisRaw);
 
             anim.SetBool("isChange", hasMoveInput);
 

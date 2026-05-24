@@ -22,8 +22,10 @@ public class PlayerAction : MonoBehaviour
     float h;
     float v;
     bool isHorizonMove;
+    int lastHAxisRaw;
+    int lastVAxisRaw = -1;
 
-    Vector3 dirVec;
+    Vector3 dirVec = Vector3.down;
     GameObject scanObject;
 
     // ===== Unity =====
@@ -65,20 +67,25 @@ public class PlayerAction : MonoBehaviour
 
         bool hasMoveInput = (!manager.isAction && !isTalking) && (h != 0f || v != 0f);
 
-        // 이동 중일 때만 축 파라미터를 갱신해 마지막 바라보는 방향을 유지한다.
         if (hasMoveInput)
         {
             if (isHorizonMove && h != 0f)
             {
-                if (anim.GetInteger("hAxisRaw") != h)
-                    anim.SetInteger("hAxisRaw", (int)h);
+                lastHAxisRaw = (int)h;
+                lastVAxisRaw = 0;
             }
             else if (!isHorizonMove && v != 0f)
             {
-                if (anim.GetInteger("vAxisRaw") != v)
-                    anim.SetInteger("vAxisRaw", (int)v);
+                lastHAxisRaw = 0;
+                lastVAxisRaw = (int)v;
             }
         }
+
+        if (anim.GetInteger("hAxisRaw") != lastHAxisRaw)
+            anim.SetInteger("hAxisRaw", lastHAxisRaw);
+
+        if (anim.GetInteger("vAxisRaw") != lastVAxisRaw)
+            anim.SetInteger("vAxisRaw", lastVAxisRaw);
 
         anim.SetBool("isChange", hasMoveInput);
 
