@@ -10,6 +10,9 @@ public class PlayerMove : MonoBehaviour
     [SerializeField] private Rigidbody2D rb;
     [SerializeField] private Animator anim;
 
+    [Header("Animator Drive")]
+    [SerializeField] private bool driveAnimator = true;
+
     private int h;
     private int v;
     private bool isHorizonMove;
@@ -27,6 +30,11 @@ public class PlayerMove : MonoBehaviour
     {
         if (!rb) rb = GetComponent<Rigidbody2D>();
         if (!anim) anim = GetComponent<Animator>();
+
+        // PlayerAction이 활성화된 씬에서는 해당 스크립트가 Animator 파라미터를 이미 제어한다.
+        // 중복 제어로 isChange가 덮어써지는 것을 막기 위해 PlayerMove 쪽 구동을 자동 비활성화한다.
+        if (driveAnimator && TryGetComponent<PlayerAction>(out var playerAction) && playerAction.enabled)
+            driveAnimator = false;
     }
 
     public void SetMoveInput(int h, int v, bool hDown, bool vDown, bool hUp, bool vUp)
@@ -34,12 +42,12 @@ public class PlayerMove : MonoBehaviour
         this.h = Mathf.Clamp(h, -1, 1);
         this.v = Mathf.Clamp(v, -1, 1);
 
-        // ����/���� �켱 ����
+        if (driveAnimator && anim)
         if (hDown) isHorizonMove = true;
         else if (vDown) isHorizonMove = false;
         else if (hUp || vUp) isHorizonMove = this.h != 0;
 
-        // �ִ� �Ķ���� ����
+        // 애니 파라미터 갱신
         if (anim)
         {
             if (anim.GetInteger("hAxisRaw") != this.h)
@@ -58,7 +66,7 @@ public class PlayerMove : MonoBehaviour
             }
         }
 
-        // �ٶ󺸴� ����
+        // 바라보는 방향
         if (hDown || (this.h != 0 && isHorizonMove))
             facing = (this.h > 0) ? Vector3.right : Vector3.left;
         else if (vDown || (this.v != 0 && !isHorizonMove))
