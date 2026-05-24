@@ -53,6 +53,9 @@ public class TriggerStep_PivotSequenceMove : TriggerStepBase
     [SerializeField] private bool useUnscaledTime = true;
     [SerializeField] private AnimationCurve ease = AnimationCurve.EaseInOut(0, 0, 1, 1);
 
+    [Header("Final Facing")]
+    [SerializeField, Min(0)] private int finalFacingHoldFrames = 2;
+
     [Header("Input Lock")]
     [SerializeField] private bool lockPlayerInput = false;
     [SerializeField] private bool unlockInputAtEnd = true;
@@ -187,7 +190,7 @@ public class TriggerStep_PivotSequenceMove : TriggerStepBase
             if (entry.setIdleAtEnd)
                 SetIdle(animator);
 
-            ApplyFinalFacing(animator, entry.finalFacing, animType);
+            yield return ApplyFinalFacingStable(animator, entry.finalFacing, animType);
         }
     }
 
@@ -242,6 +245,26 @@ public class TriggerStep_PivotSequenceMove : TriggerStepBase
         anim.SetBool(pChange, isChange);
     }
 
+
+    private IEnumerator ApplyFinalFacingStable(Animator anim, PivotFacingMode mode, ForcedWalkAnimType moveAnimType)
+    {
+        if (!anim) yield break;
+
+        int hold = Mathf.Max(0, finalFacingHoldFrames);
+        if (hold <= 0)
+        {
+            ApplyFinalFacing(anim, mode, moveAnimType);
+            yield break;
+        }
+
+        // 다른 스크립트가 같은 프레임대에 Animator 파라미터를 덮어쓰는 경우를 방지하기 위해
+        // 몇 프레임 동안 최종 바라보기 파라미터를 유지한다.
+        for (int i = 0; i < hold; i++)
+        {
+            ApplyFinalFacing(anim, mode, moveAnimType);
+            yield return null;
+        }
+    }
 
     private void ApplyFinalFacing(Animator anim, PivotFacingMode mode, ForcedWalkAnimType moveAnimType)
     {

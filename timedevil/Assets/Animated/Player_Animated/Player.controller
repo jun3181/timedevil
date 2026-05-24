@@ -337,6 +337,9 @@ AnimatorStateTransition:
   - m_ConditionMode: 6
     m_ConditionEvent: hAxisRaw
     m_EventTreshold: 0
+  - m_ConditionMode: 2
+    m_ConditionEvent: isChange
+    m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -5241865108476012528}
   m_Solo: 0
@@ -572,7 +575,7 @@ AnimatorStateMachine:
     m_Position: {x: -20, y: 340, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -5241865108476012528}
-    m_Position: {x: -460, y: 150, z: 0}
+    m_Position: {x: -520, y: 150, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -1855928699500706935}
     m_Position: {x: 500, y: 140, z: 0}
@@ -584,7 +587,7 @@ AnimatorStateMachine:
     m_Position: {x: 0, y: 260, z: 0}
   - serializedVersion: 1
     m_State: {fileID: 8371991020061856771}
-    m_Position: {x: -190, y: 150, z: 0}
+    m_Position: {x: -200, y: 160, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -6158263778351538941}
     m_Position: {x: 260, y: 140, z: 0}
@@ -616,6 +619,9 @@ AnimatorStateTransition:
   - m_ConditionMode: 6
     m_ConditionEvent: vAxisRaw
     m_EventTreshold: 0
+  - m_ConditionMode: 2
+    m_ConditionEvent: isChange
+    m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -4092197338705346929}
   m_Solo: 0
@@ -640,6 +646,9 @@ AnimatorStateTransition:
   m_Conditions:
   - m_ConditionMode: 6
     m_ConditionEvent: hAxisRaw
+    m_EventTreshold: 0
+  - m_ConditionMode: 2
+    m_ConditionEvent: isChange
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -1855928699500706935}
@@ -693,6 +702,9 @@ AnimatorStateTransition:
   m_Conditions:
   - m_ConditionMode: 6
     m_ConditionEvent: vAxisRaw
+    m_EventTreshold: 0
+  - m_ConditionMode: 2
+    m_ConditionEvent: isChange
     m_EventTreshold: 0
   m_DstStateMachine: {fileID: 0}
   m_DstState: {fileID: -7138409624470356406}
