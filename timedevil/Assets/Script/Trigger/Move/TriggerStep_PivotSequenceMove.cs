@@ -169,7 +169,7 @@ public class TriggerStep_PivotSequenceMove : TriggerStepBase
                 entry.target.position = Vector3.LerpUnclamped(from, to, k);
 
                 if (canDriveAnim)
-                    ApplyWalkAnimation(animator, animType, false);
+                    ApplyWalkAnimation(animator, animType, true);
 
                 yield return null;
             }
