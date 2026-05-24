@@ -56,13 +56,23 @@ public class PlayerMove : MonoBehaviour
             else if (hUp || vUp) isHorizonMove = this.h != 0;
 
             // 애니 파라미터 갱신
-            if (anim.GetInteger("hAxisRaw") != this.h)
-                anim.SetInteger("hAxisRaw", this.h);
-
-            if (anim.GetInteger("vAxisRaw") != this.v)
-                anim.SetInteger("vAxisRaw", this.v);
-
             bool hasMoveInput = this.h != 0 || this.v != 0;
+
+            // 이동 중일 때만 축 파라미터를 갱신해 마지막 바라보는 방향을 유지한다.
+            if (hasMoveInput)
+            {
+                if (isHorizonMove && this.h != 0)
+                {
+                    if (anim.GetInteger("hAxisRaw") != this.h)
+                        anim.SetInteger("hAxisRaw", this.h);
+                }
+                else if (!isHorizonMove && this.v != 0)
+                {
+                    if (anim.GetInteger("vAxisRaw") != this.v)
+                        anim.SetInteger("vAxisRaw", this.v);
+                }
+            }
+
             anim.SetBool("isChange", hasMoveInput);
 
             if (debugAnimatorTrace && Time.unscaledTime >= nextDebugTraceAt)
