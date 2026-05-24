@@ -8,6 +8,16 @@ public enum PivotSequencePlayMode
     Parallel
 }
 
+public enum PivotFacingMode
+{
+    KeepCurrent,
+    AutoFromMoveDirection,
+    Up,
+    Down,
+    Left,
+    Right
+}
+
 [System.Serializable]
 public struct PivotSequenceEntry
 {
@@ -19,6 +29,7 @@ public struct PivotSequenceEntry
 
     public Animator animatorOverride;
     public bool setIdleAtEnd;
+    public PivotFacingMode finalFacing;
 }
 
 [System.Serializable]
@@ -166,8 +177,13 @@ public class TriggerStep_PivotSequenceMove : TriggerStepBase
             entry.target.position = to;
         }
 
-        if (canDriveAnim && entry.setIdleAtEnd)
-            SetIdle(animator);
+        if (canDriveAnim)
+        {
+            if (entry.setIdleAtEnd)
+                SetIdle(animator);
+
+            ApplyFinalFacing(animator, entry.finalFacing, animType);
+        }
     }
 
     private ForcedWalkAnimType ResolveAnimByDirection(Vector2 dir)
@@ -219,6 +235,41 @@ public class TriggerStep_PivotSequenceMove : TriggerStepBase
         anim.SetInteger(pH, h);
         anim.SetInteger(pV, v);
         anim.SetBool(pChange, isChange);
+    }
+
+
+    private void ApplyFinalFacing(Animator anim, PivotFacingMode mode, ForcedWalkAnimType moveAnimType)
+    {
+        if (!anim) return;
+        if (mode == PivotFacingMode.KeepCurrent) return;
+
+        string pChange = string.IsNullOrWhiteSpace(paramIsChange) ? DefaultParamIsChange : paramIsChange;
+        string pH = string.IsNullOrWhiteSpace(paramHAxisRaw) ? DefaultParamHAxisRaw : paramHAxisRaw;
+        string pV = string.IsNullOrWhiteSpace(paramVAxisRaw) ? DefaultParamVAxisRaw : paramVAxisRaw;
+
+        ForcedWalkAnimType facing = moveAnimType;
+        switch (mode)
+        {
+            case PivotFacingMode.AutoFromMoveDirection: facing = moveAnimType; break;
+            case PivotFacingMode.Up: facing = ForcedWalkAnimType.UpWalk; break;
+            case PivotFacingMode.Down: facing = ForcedWalkAnimType.DownWalk; break;
+            case PivotFacingMode.Left: facing = ForcedWalkAnimType.LeftWalk; break;
+            case PivotFacingMode.Right: facing = ForcedWalkAnimType.RightWalk; break;
+            default: return;
+        }
+
+        int h = 0, v = 0;
+        switch (facing)
+        {
+            case ForcedWalkAnimType.DownWalk: v = -1; break;
+            case ForcedWalkAnimType.UpWalk: v = 1; break;
+            case ForcedWalkAnimType.LeftWalk: h = -1; break;
+            case ForcedWalkAnimType.RightWalk: h = 1; break;
+        }
+
+        anim.SetInteger(pH, h);
+        anim.SetInteger(pV, v);
+        anim.SetBool(pChange, false);
     }
 
     private void SetIdle(Animator anim)
