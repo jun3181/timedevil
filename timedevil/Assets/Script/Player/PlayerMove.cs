@@ -43,27 +43,20 @@ public class PlayerMove : MonoBehaviour
         this.v = Mathf.Clamp(v, -1, 1);
 
         if (driveAnimator && anim)
-        if (hDown) isHorizonMove = true;
-        else if (vDown) isHorizonMove = false;
-        else if (hUp || vUp) isHorizonMove = this.h != 0;
-
-        // 애니 파라미터 갱신
-        if (anim)
         {
+            if (hDown) isHorizonMove = true;
+            else if (vDown) isHorizonMove = false;
+            else if (hUp || vUp) isHorizonMove = this.h != 0;
+
+            // 애니 파라미터 갱신
             if (anim.GetInteger("hAxisRaw") != this.h)
-            {
-                anim.SetBool("isChange", true);
                 anim.SetInteger("hAxisRaw", this.h);
-            }
-            else if (anim.GetInteger("vAxisRaw") != this.v)
-            {
-                anim.SetBool("isChange", true);
+
+            if (anim.GetInteger("vAxisRaw") != this.v)
                 anim.SetInteger("vAxisRaw", this.v);
-            }
-            else
-            {
-                anim.SetBool("isChange", false);
-            }
+
+            bool isMoving = this.h != 0 || this.v != 0;
+            anim.SetBool("isChange", isMoving);
         }
 
         // 바라보는 방향
