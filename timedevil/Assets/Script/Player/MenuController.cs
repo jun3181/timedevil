@@ -135,5 +135,17 @@ public class MenuController : MonoBehaviour
 
         PlayerReturnContext.ReturnSceneName = currentScene;
         PlayerReturnContext.CameraRebindRequested = true;
+        
+        if(CameraManager.Instance!=null) {
+            CameraModeId currentCameraMode = CameraManager.Instance.CurrentMode;
+            PlayerReturnContext.ReturnCameraMode = currentCameraMode;
+            PlayerReturnContext.RestoreCameraStatePending = true;
+
+            CameraManager.Instance.TryGetSnapshot(out CameraModeId camMode, out float camOrtho, out Vector3 fixedPos, out string boundsName);
+            PlayerReturnContext.ReturnCameraBoundsName = boundsName;
+            if(currentCameraMode==CameraModeId.Fixed || currentCameraMode==CameraModeId.Cutscene) {
+                PlayerReturnContext.ReturnCameraFixedPos = fixedPos;
+            }
+        }
     }
 }

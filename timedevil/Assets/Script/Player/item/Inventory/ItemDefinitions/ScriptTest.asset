@@ -10,13 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1abd44402ecbf5148b3b83ac1b008ac9, type: 3}
-  m_Name: Potion
+  m_Name: ScriptTest
   m_EditorClassIdentifier: 
-  id: potion
-  displayName: potion
+  id: script-test
+  displayName: script_test
   type: 0
-  description: hihih
-  icon: {fileID: -804351320, guid: c0d523de60d2a4d4a98591b76207bc1c, type: 3}
-  defaultQuantity: 2
-  itemScript: {fileID: -1992556513696332994, guid: 980c547950c91f84eaa496fc804c6b40,
-    type: 3}
+  description: "\uB2E4\uB78C\uC950 \uD5CC \uCCC7\uBC14\uD034 \uD0C0\uACE0\uD30C"
+  icon: {fileID: 0}
+  defaultQuantity: 0
+  itemScript: {fileID: 0}
