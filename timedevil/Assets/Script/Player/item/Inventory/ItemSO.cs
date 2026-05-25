@@ -21,4 +21,7 @@ public class ItemSO : ScriptableObject
 
     [Header("기본값 (선택 사항)")]
     public int defaultQuantity = 0;       // 새 게임 시작 시 기본 수량 (안 써도 됨)
+
+    [Header("사용시 실행될 ItemScript")]
+    public ItemScriptBase itemScript;
 }

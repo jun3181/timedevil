@@ -41,8 +41,9 @@ public class NPCMove : MonoBehaviour
             float takenTime = (newPos - startPos).magnitude / Speed;
 
             Collider2D[] results = new Collider2D[2];
-            int newContactCount = Physics2D.OverlapAreaNonAlloc((Vector3)newPos + collider.bounds.extents, (Vector3)newPos - collider.bounds.extents, results);
-
+            Vector3 colliderCenter = (Vector3)newPos + (Vector3)collider.offset;
+            int newContactCount = Physics2D.OverlapAreaNonAlloc(colliderCenter + collider.bounds.extents, colliderCenter - collider.bounds.extents, results);
+            
             if(newContactCount>1) {
                 if(debuged) Debug.Log($"{gameObject.name}이 {GetPosition()}위치에서 충돌을 회피하기 위해 움직임을 멈춤");
                 if(CanStandbyForAvoiding) {
