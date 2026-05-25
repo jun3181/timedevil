@@ -92,6 +92,7 @@ public class PanelController : MonoBehaviour
     private Coroutine menuPanelRunning;
     private Coroutine delayedViewRoutine;
     private bool menuPanelsHidden;
+    private int externalMenuHideRequestCount;
     private bool initialSyncRequested;
 
     private TurnState lastTurnState = TurnState.PlayerTurn;
@@ -146,7 +147,7 @@ public class PanelController : MonoBehaviour
 
         bool enemyTurn = turnManager && turnManager.currentTurn == TurnState.EnemyTurn;
         bool cardResolving = orchestrator && orchestrator.GetIsBusy();
-        bool shouldHideMenuPanels = enemyTurn || handSelecting || cardResolving;
+        bool shouldHideMenuPanels = enemyTurn || handSelecting || cardResolving || externalMenuHideRequestCount > 0;
         if (shouldHideMenuPanels != menuPanelsHidden)
             SetBattleMenuPanelsHidden(shouldHideMenuPanels);
 
@@ -286,7 +287,7 @@ public class PanelController : MonoBehaviour
 
         bool handSelecting = handUI && handUI.IsInSelectMode;
         bool cardResolving = orchestrator && orchestrator.GetIsBusy();
-        bool shouldHideMenuPanels = enemyTurn || handSelecting || cardResolving;
+        bool shouldHideMenuPanels = enemyTurn || handSelecting || cardResolving || externalMenuHideRequestCount > 0;
         SetBattleMenuPanelsHidden(shouldHideMenuPanels, true);
 
         if (turnManager) lastTurnState = turnManager.currentTurn;
@@ -392,6 +393,24 @@ public class PanelController : MonoBehaviour
 
         if (immediate) ApplyBattleMenuImmediate(hidden);
         else menuPanelRunning = StartCoroutine(Co_AnimateBattleMenuPanels(hidden));
+    }
+
+    public void PushBattleMenuHideRequest(bool immediate = false)
+    {
+        externalMenuHideRequestCount++;
+        SetBattleMenuPanelsHidden(true, immediate);
+    }
+
+    public void PopBattleMenuHideRequest(bool immediate = false)
+    {
+        externalMenuHideRequestCount = Mathf.Max(0, externalMenuHideRequestCount - 1);
+        if (externalMenuHideRequestCount > 0)
+            return;
+
+        bool enemyTurn = turnManager && turnManager.currentTurn == TurnState.EnemyTurn;
+        bool handSelecting = handUI && handUI.IsInSelectMode;
+        bool cardResolving = orchestrator && orchestrator.GetIsBusy();
+        SetBattleMenuPanelsHidden(enemyTurn || handSelecting || cardResolving, immediate);
     }
 
     private IEnumerator Co_AnimateBattleMenuPanels(bool hidden)
