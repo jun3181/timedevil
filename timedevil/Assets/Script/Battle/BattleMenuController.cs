@@ -6,7 +6,7 @@ public class BattleMenuController : MonoBehaviour
     [System.Serializable] public class IntEvent : UnityEvent<int> { }
 
     //[Header("Order (2x2 grid): 0=Card, 1=Item / 2=End, 3=Run")] UI배치 수정 전
-    [Header("Order: 0=Card, 1=Item, 2=End, 3=Run")] //배치 수정 후
+    [Header("Order: 0=Card, 1=Item, 2=State, 3=End, 4=Run")]
     [SerializeField] private GameObject[] entries;
 
     [Header("Input")]
@@ -19,6 +19,7 @@ public class BattleMenuController : MonoBehaviour
     private int index = 0;
     public int Index => index;
     public int CurrentIndex => index;
+    public int EntryCount => entries != null ? entries.Length : 0;
 
     void Awake()
     {
@@ -50,7 +51,7 @@ public class BattleMenuController : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.E))
         {
-            string name = index switch { 0 => "Card", 1 => "Item", 2 => "End", 3 => "Run", _ => $"Idx{index}" };
+            string name = GetEntryName(index);
             Debug.Log($"[BattleMenu] E pressed → {name} selected (index={index})");
             onSubmit?.Invoke(index);
         }
@@ -111,5 +112,14 @@ public class BattleMenuController : MonoBehaviour
             if (!img) continue;
             img.color = (i == cur) ? new Color(0.7f, 1f, 0.7f, 1f) : Color.white;
         }
+    }
+
+    private string GetEntryName(int entryIndex)
+    {
+        bool hasStatePanel = EntryCount >= 5;
+        if (hasStatePanel)
+            return entryIndex switch { 0 => "Card", 1 => "Item", 2 => "State", 3 => "End", 4 => "Run", _ => $"Idx{entryIndex}" };
+
+        return entryIndex switch { 0 => "Card", 1 => "Item", 2 => "End", 3 => "Run", _ => $"Idx{entryIndex}" };
     }
 }

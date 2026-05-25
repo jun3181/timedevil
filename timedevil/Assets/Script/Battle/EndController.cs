@@ -3,6 +3,7 @@
 public class EndController : MonoBehaviour
 {
     [SerializeField] private BattleMenuController menu;
+    [SerializeField] private int endIndex = 3;
 
     void Reset()
     {
@@ -13,7 +14,7 @@ public class EndController : MonoBehaviour
     {
         if (!menu) return;
 
-        if (menu.Index == 2 && Input.GetKeyDown(KeyCode.E))
+        if (menu.Index == ResolveEndIndex() && Input.GetKeyDown(KeyCode.E))
         {
             if (TurnManager.Instance != null)
             {
@@ -21,5 +22,10 @@ public class EndController : MonoBehaviour
                 TurnManager.Instance.OnPlayerPressedEnd();
             }
         }
+    }
+
+    private int ResolveEndIndex()
+    {
+        return menu != null && menu.EntryCount >= 5 ? endIndex : 2;
     }
 }

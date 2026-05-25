@@ -242,8 +242,7 @@ public class PlayerReturnManager : MonoBehaviour
         if (debugLog)
             Debug.Log($"[PlayerReturnManager] apply return camera => mode={camMode}, ortho={(size.HasValue ? size.Value.ToString("F2") : "(default)")}, bounds='{camBoundsName}' found={(bounds ? bounds.name : "(null)")}, fixed=({camFixedPos.x:F2},{camFixedPos.y:F2})", this);
 
-        switch (camMode)
-        {
+        switch(camMode) {
             case CameraModeId.Fixed:
                 CameraManager.Instance.SetFixed(new Vector3(camFixedPos.x, camFixedPos.y, 0f), size);
                 CameraManager.Instance.SnapCameraTo(new Vector3(camFixedPos.x, camFixedPos.y, 0f));
@@ -255,17 +254,15 @@ public class PlayerReturnManager : MonoBehaviour
                 break;
 
             case CameraModeId.FollowConfined:
-                if (follow != null)
-                {
-                    if (bounds != null) CameraManager.Instance.SetFollowConfined(follow, bounds, size);
+                if(follow != null) {
+                    if(bounds != null) CameraManager.Instance.SetFollowConfined(follow, bounds, size);
                     else CameraManager.Instance.SetFollowFree(follow, size); // bounds 못찾으면 FollowFree
                     CameraManager.Instance.NotifyTargetWarp(follow, delta);
                 }
                 break;
 
             case CameraModeId.FollowFree:
-                if (follow != null)
-                {
+                if(follow != null) {
                     CameraManager.Instance.SetFollowFree(follow, size);
                     CameraManager.Instance.NotifyTargetWarp(follow, delta);
                 }

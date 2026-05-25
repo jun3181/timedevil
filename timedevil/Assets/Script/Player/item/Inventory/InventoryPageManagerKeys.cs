@@ -17,6 +17,10 @@ public class InventoryPageManagerKeys : MonoBehaviour
 
     private int currentPage = 1;   // 1 또는 2
     private const int totalPages = 2;
+    public int CurrentPage
+    {
+        get { return currentPage; }
+    }
 
     private void Start()
     {
@@ -61,5 +65,13 @@ public class InventoryPageManagerKeys : MonoBehaviour
 
         if (resetCursor && cursor != null)
             cursor.ResetToTop();
+    }
+
+    public InventoryDisplay GetCurrentPage() {
+        if(currentPage==1) {
+            return page1.GetComponent<InventoryDisplay>();
+        } else {
+            return page2.GetComponent<InventoryDisplay>();
+        }
     }
 }
