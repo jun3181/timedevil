@@ -23,6 +23,7 @@ public class NPCMove : MonoBehaviour
     private Rigidbody2D rb;
     private Collider2D collider;
     private int movementPriority;
+    private Vector3 colliderDetectMargin;
 
     private Vector2 startPos;
     private Vector2 velocity;
@@ -33,6 +34,8 @@ public class NPCMove : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         rb.bodyType = RigidbodyType2D.Kinematic;
         collider = GetComponent<Collider2D>();
+
+        colliderDetectMargin = new(1, 1);
     }
 
     void FixedUpdate() {
@@ -42,8 +45,8 @@ public class NPCMove : MonoBehaviour
 
             Collider2D[] results = new Collider2D[2];
             Vector3 colliderCenter = (Vector3)newPos + (Vector3)collider.offset;
-            int newContactCount = Physics2D.OverlapAreaNonAlloc(colliderCenter + collider.bounds.extents, colliderCenter - collider.bounds.extents, results);
-            
+            int newContactCount = Physics2D.OverlapAreaNonAlloc(colliderCenter + collider.bounds.extents + colliderDetectMargin, colliderCenter - collider.bounds.extents - colliderDetectMargin, results);
+            Debug.Log(newContactCount);
             if(newContactCount>1) {
                 if(debuged) Debug.Log($"{gameObject.name}이 {GetPosition()}위치에서 충돌을 회피하기 위해 움직임을 멈춤");
                 if(CanStandbyForAvoiding) {
