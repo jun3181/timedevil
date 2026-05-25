@@ -18,3 +18,5 @@ MonoBehaviour:
   description: hihih
   icon: {fileID: -804351320, guid: c0d523de60d2a4d4a98591b76207bc1c, type: 3}
   defaultQuantity: 2
+  itemScript: {fileID: -1992556513696332994, guid: 980c547950c91f84eaa496fc804c6b40,
+    type: 3}
