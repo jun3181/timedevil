@@ -18,7 +18,7 @@ public class DescriptionPanelController : MonoBehaviour
     [Header("Messages")]
     [TextArea] public string msgCard = "Card를 선택합니다.";
     [TextArea] public string msgItem = "Item을 선택합니다.";
-    //[TextArea] public string msgPanel = "Panel";
+    [TextArea] public string msgState = "상태를 확인합니다.";
 
     [TextArea] public string msgEnd = "턴엔드합니다.";
     [TextArea] public string msgRun = "도망칩니다.";
@@ -34,6 +34,8 @@ public class DescriptionPanelController : MonoBehaviour
     private string _forcedMessage = null;   //  발동 중(explanation) 임시 고정 문구
     private bool _forcePlayerDiscard = false; //  강제 버림 모드
     private int _effectLockCount = 0;         // 카드 효과 실행 중 기본 문구 억제
+    private bool _stateView = false;
+    private string _stateViewMessage = null;
 
     //  클래스 필드에 추가
     private bool _spectate = false;                    // 관전 플래그
@@ -181,6 +183,20 @@ public class DescriptionPanelController : MonoBehaviour
 
     public bool HasForcedMessage => !string.IsNullOrEmpty(_forcedMessage);
 
+    public void EnterStateView(string message)
+    {
+        _stateView = true;
+        _stateViewMessage = message;
+        RefreshNow();
+    }
+
+    public void ExitStateView()
+    {
+        _stateView = false;
+        _stateViewMessage = null;
+        RefreshNow();
+    }
+
     private System.Collections.IEnumerator Co_ShowOneShotMessage(string text, float seconds)
     {
         _forcedMessage = text;
@@ -195,7 +211,22 @@ public class DescriptionPanelController : MonoBehaviour
         if (!descriptionText) return;
 
         int index = menu ? menu.Index : 0;
+        int stateIndex = ResolveStateIndex();
+        int endIndex = ResolveEndIndex();
+        int runIndex = ResolveRunIndex();
 
+
+        if (_stateView)
+        {
+            if (handCanvasGroup) { handCanvasGroup.alpha = 0f; handCanvasGroup.interactable = false; handCanvasGroup.blocksRaycasts = false; }
+            if (hand) hand.HideCards();
+
+            if (enemyHandCanvasGroup) { enemyHandCanvasGroup.alpha = 0f; enemyHandCanvasGroup.interactable = false; enemyHandCanvasGroup.blocksRaycasts = false; }
+            if (enemyHand) enemyHand.HideAll();
+
+            descriptionText.text = string.IsNullOrEmpty(_stateViewMessage) ? msgState : _stateViewMessage;
+            return;
+        }
 
         //  0) 관전 모드가 최우선
         if (_spectate)
@@ -271,7 +302,7 @@ public class DescriptionPanelController : MonoBehaviour
         // EnemyHand: End(2)에서만 표시
         if (enemyHand != null)
         {
-            bool showEnemy = (index == 2);
+            bool showEnemy = (index == endIndex);
             if (showEnemy) enemyHand.ShowAll(); else enemyHand.HideAll();
             if (enemyHandCanvasGroup)
             {
@@ -302,13 +333,28 @@ public class DescriptionPanelController : MonoBehaviour
                 0 when hand != null && hand.CardCount <= 0 => "선택가능한 카드가 없습니다.",
                 0 => msgCard,
                 1 => msgItem,
-                //2 => msgPanel,
-                2 => msgEnd,
-                3 => msgRun,
+                _ when index == stateIndex => msgState,
+                _ when index == endIndex => msgEnd,
+                _ when index == runIndex => msgRun,
                 _ => string.Empty
             };
         }
         descriptionText.text = text;
+    }
+
+    private int ResolveStateIndex()
+    {
+        return menu != null && menu.EntryCount >= 5 ? 2 : -1;
+    }
+
+    private int ResolveEndIndex()
+    {
+        return menu != null && menu.EntryCount >= 5 ? 3 : 2;
+    }
+
+    private int ResolveRunIndex()
+    {
+        return menu != null && menu.EntryCount >= 5 ? 4 : 3;
     }
 
 
