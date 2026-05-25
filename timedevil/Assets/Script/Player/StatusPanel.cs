@@ -4,7 +4,7 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.EventSystems;
 
-public class StatusPanel : MonoBehaviour, IDragHandler
+public class StatusPanel : MonoBehaviour//, IDragHandler
 {
     private const string HP_FORMAT = "체력: {0}/{1}";
     private const string DEFENSE_FORMAT = "방어력: {0}";
@@ -37,7 +37,7 @@ public class StatusPanel : MonoBehaviour, IDragHandler
         attackLabel.text = string.Format(ATTACK_FORMAT, player.attack);
         speedLabel.text = string.Format(SPEED_FORMAT, player.speed);
     }
-
+    /*
     public void OnDrag(PointerEventData eventData) {
         panelTransform.position += (Vector3)eventData.delta;
 
@@ -61,5 +61,5 @@ public class StatusPanel : MonoBehaviour, IDragHandler
 
         panelTransform.offsetMin = offsetMin;
         panelTransform.offsetMax = offsetMax;
-    }
+    } */
 }
