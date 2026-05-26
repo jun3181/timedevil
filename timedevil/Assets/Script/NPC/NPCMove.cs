@@ -54,7 +54,7 @@ public class NPCMove : MonoBehaviour
             Collider2D[] results = new Collider2D[2];
             Vector2 newColliderCenter = newPos + colliderGlobalOffset;
             int newContactCount = Physics2D.OverlapAreaNonAlloc(newColliderCenter + (Vector2)collider.bounds.extents, newColliderCenter - (Vector2)collider.bounds.extents, results);
-            if(debuged) Debug.DrawLine(newColliderCenter + (Vector2)collider.bounds.extents, newColliderCenter - (Vector2)collider.bounds.extents);
+            if(debuged) Debug.DrawLine(newColliderCenter + (Vector2)collider.bounds.extents, newColliderCenter - (Vector2)collider.bounds.extents, Color.cyan);
 
             if(newContactCount > 1) {
                 if(debuged) Debug.Log($"{gameObject.name}이 {GetPosition()}위치에서 충돌을 회피하기 위해 움직임을 멈춤");
