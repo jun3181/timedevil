@@ -80,6 +80,7 @@ public class PanelController : MonoBehaviour
     [SerializeField] private bool startInGameplayView = false;
     [Tooltip("시작 직후 턴 상태(Player/Enemy)에 맞춰 최초 뷰를 즉시 동기화(애니메이션 없음)")]
     [SerializeField] private bool syncInitialViewWithTurnState = true;
+    [SerializeField] private bool recacheShownBaseBeforeViewChange = true;
 
     private readonly List<Vector3> enemyShownBase = new List<Vector3>();
     private readonly List<Vector3> gameplayShownBase = new List<Vector3>();
@@ -227,6 +228,9 @@ public class PanelController : MonoBehaviour
             delayedViewRoutine = null;
         }
 
+        if (recacheShownBaseBeforeViewChange && on != isGameplayView)
+            CacheShownBaseFromCurrentViewState();
+
         if (isAnimating && running != null)
         {
             StopCoroutine(running);
@@ -314,6 +318,24 @@ public class PanelController : MonoBehaviour
 
         for (int i = 0; i < battleMenuPanelTargets.Count; i++)
             battleMenuShownBase.Add(GetPos(battleMenuPanelTargets[i]));
+    }
+
+    private void CacheShownBaseFromCurrentViewState()
+    {
+        enemyShownBase.Clear();
+        gameplayShownBase.Clear();
+
+        for (int i = 0; i < enemyTargets.Count; i++)
+        {
+            Vector3 current = GetPos(enemyTargets[i]);
+            enemyShownBase.Add(isGameplayView ? current - enemyHiddenOffset : current);
+        }
+
+        for (int i = 0; i < gameplayTargets.Count; i++)
+        {
+            Vector3 current = GetPos(gameplayTargets[i]);
+            gameplayShownBase.Add(isGameplayView ? current : current - gameplayHiddenOffset);
+        }
     }
 
     private IEnumerator Co_Animate(bool gameplayView)
