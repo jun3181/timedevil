@@ -16,6 +16,7 @@ public class EnemyTurnController : MonoBehaviour
     [SerializeField] private DrawController drawController;
     [SerializeField] private MoveController moveController;   //  추가: Move 실행
     [SerializeField] private AttackController attackController;
+    [SerializeField] private SupportController supportController;
 
 
 
@@ -36,6 +37,7 @@ public class EnemyTurnController : MonoBehaviour
         if (!drawController) drawController = FindObjectOfType<DrawController>(true); //  자동 결선
         if (!moveController) moveController = FindObjectOfType<MoveController>(true);   //  자동 결선
         if (!attackController) attackController = FindObjectOfType<AttackController>(true); //  자동 결선
+        if (!supportController) supportController = FindObjectOfType<SupportController>(true);
 
 
 
@@ -126,6 +128,13 @@ public class EnemyTurnController : MonoBehaviour
                 OnEnemyAttackWindowChanged?.Invoke(true);
                 yield return attackController.Execute(aso, Faction.Enemy, Faction.Player);
                 OnEnemyAttackWindowChanged?.Invoke(false);
+            }
+            else if (so is SupportCardSO sso && supportController != null)
+            {
+                if (showCard != null) yield return showCard.PreviewById(playableId, previewSeconds);
+                else yield return null;
+
+                yield return supportController.Execute(sso, Faction.Enemy, Faction.Player);
             }
             else
                     {

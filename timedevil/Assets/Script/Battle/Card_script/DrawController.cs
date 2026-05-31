@@ -180,6 +180,85 @@ public class DrawController : MonoBehaviour
             yield break;
         }
 
+
+        if (so.drawMode == DrawMode.HandRefresh)
+        {
+            int discardN = Mathf.Max(0, so.refreshDiscardAmount);
+            int drawN = Mathf.Max(0, so.refreshDrawAmount);
+
+            int HandCount()
+            {
+                if (self == Faction.Player) return BattleDeckRuntime.Instance ? BattleDeckRuntime.Instance.HandCount : 0;
+                return EnemyDeckRuntime.Instance ? EnemyDeckRuntime.Instance.GetHandIds().Count : 0;
+            }
+
+            System.Action<int> DiscardToBottomAt = (idx) =>
+            {
+                if (self == Faction.Player)
+                {
+                    var rt = BattleDeckRuntime.Instance;
+                    if (rt != null) rt.DiscardToBottom(idx);
+                }
+                else
+                {
+                    var rt = EnemyDeckRuntime.Instance;
+                    if (rt != null) rt.DiscardToBottom(idx);
+                }
+            };
+
+            if (self == Faction.Player && playerHandUI) playerHandUI.ShowCards();
+            if (self == Faction.Enemy && enemyHandUI) { enemyHandUI.gameObject.SetActive(true); enemyHandUI.ShowAll(); }
+
+            yield return new WaitForEndOfFrame();
+
+            int removeN = Mathf.Clamp(discardN, 0, HandCount());
+            for (int t = 0; t < removeN; t++)
+            {
+                int countNow = HandCount();
+                if (countNow <= 0) break;
+
+                int idx = Random.Range(0, countNow);
+                if (cardAnime != null)
+                {
+                    yield return cardAnime.DiscardOneAtIndex(
+                        self,
+                        idx,
+                        afterAnimDataOp: () => DiscardToBottomAt(idx)
+                    );
+                }
+                else
+                {
+                    DiscardToBottomAt(idx);
+                    yield return null;
+                }
+            }
+
+            int actuallyDrawn = 0;
+            if (drawN > 0)
+            {
+                if (self == Faction.Player)
+                {
+                    var deck = BattleDeckRuntime.Instance;
+                    if (deck != null) actuallyDrawn = deck.Draw(drawN, ignoreHandCap: true);
+                    else Debug.LogWarning("[DrawController] BattleDeckRuntime is null (player HandRefresh).");
+                }
+                else
+                {
+                    var enemy = EnemyDeckRuntime.Instance;
+                    if (enemy != null) actuallyDrawn = enemy.Draw(drawN, ignoreHandCap: true);
+                    else Debug.LogWarning("[DrawController] EnemyDeckRuntime is null (enemy HandRefresh).");
+                }
+            }
+
+            if (actuallyDrawn > 0 && cardAnime != null)
+            {
+                yield return new WaitForEndOfFrame();
+                cardAnime.RevealLastNCards(self, actuallyDrawn);
+            }
+
+            Debug.Log($"[DrawController] HandRefresh: self={self}, discarded={removeN}, drawn={actuallyDrawn}");
+            yield break;
+        }
         Debug.LogWarning($"[DrawController] Unknown drawMode: {so.drawMode}");
     }
 

@@ -1078,8 +1078,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
@@ -1213,8 +1213,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
@@ -2057,8 +2057,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
@@ -5732,6 +5732,7 @@ MonoBehaviour:
   enemyHandCanvasGroup: {fileID: 133108823}
   msgCard: "Card\uB97C \uC120\uD0DD\uD569\uB2C8\uB2E4."
   msgItem: "Item\uC744 \uC120\uD0DD\uD569\uB2C8\uB2E4."
+  msgState: "\uC0C1\uD0DC\uB97C \uD655\uC778\uD569\uB2C8\uB2E4."
   msgEnd: "\uD134\uC5D4\uB4DC\uD569\uB2C8\uB2E4."
   msgRun: "\uB3C4\uB9DD\uCE69\uB2C8\uB2E4."
   msgEnemyTurn: "\uC0C1\uB300\uD134\uC785\uB2C8\uB2E4."
@@ -5883,8 +5884,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2c62e9a4b6f64d84994c4210efb14d17, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   menu: {fileID: 1069897049}
   panelController: {fileID: 1069897055}
   descriptionPanel: {fileID: 1069897052}
@@ -10349,8 +10350,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1

@@ -114,12 +114,27 @@ public class CardUseOrchestrator : MonoBehaviour
             while (!(previewDone && attackDone))
                 yield return null;
         }
+        else if (supportController != null && so is SupportCardSO sso)
+        {
+            bool previewDone = false;
+            bool supportDone = false;
+
+            StartCoroutine(CoRunPreview(sso.id, totalSeconds, () => previewDone = true));
+            StartCoroutine(CoRunSupport(sso, () => supportDone = true));
+
+            while (!(previewDone && supportDone))
+                yield return null;
+        }
         else if (drawController != null && so is DrawCardSO dso)
         {
-            // Draw는 실행 코루틴을 흘려보내고, 프리뷰만 기다림
-            StartCoroutine(drawController.Execute(dso, Faction.Player));
-            if (showCard != null) yield return showCard.PreviewById(so.id, totalSeconds);
-            else yield return null;
+            bool previewDone = false;
+            bool drawDone = false;
+
+            StartCoroutine(CoRunPreview(dso.id, totalSeconds, () => previewDone = true));
+            StartCoroutine(CoRunDraw(dso, () => drawDone = true));
+
+            while (!(previewDone && drawDone))
+                yield return null;
         }
         else if (moveController != null && so is MoveCardSO mso)
         {
@@ -167,6 +182,18 @@ public class CardUseOrchestrator : MonoBehaviour
     private IEnumerator CoRunAttack(AttackCardSO aso, System.Action onDone)
     {
         yield return attackController.Execute(aso, Faction.Player, Faction.Enemy);
+        onDone?.Invoke();
+    }
+
+    private IEnumerator CoRunSupport(SupportCardSO sso, System.Action onDone)
+    {
+        yield return supportController.Execute(sso, Faction.Player, Faction.Enemy);
+        onDone?.Invoke();
+    }
+
+    private IEnumerator CoRunDraw(DrawCardSO dso, System.Action onDone)
+    {
+        yield return drawController.Execute(dso, Faction.Player);
         onDone?.Invoke();
     }
 
