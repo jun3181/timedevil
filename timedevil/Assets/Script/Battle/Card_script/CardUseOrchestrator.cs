@@ -75,18 +75,27 @@ public class CardUseOrchestrator : MonoBehaviour
         var so = database ? database.GetById(id) : null;
         if (!so) { busy = false; yield break; }
 
-        // B. 코스트 즉시 지불
+        // B. Draw 계열은 코스트 지불/카드 제거 전에 손패 버리기 가능 여부를 먼저 검사
+        if (drawController != null && so is DrawCardSO precheckDraw &&
+            !drawController.CanExecute(precheckDraw, Faction.Player, selfCardsAlreadyCommitted: 1, out string drawFailMessage))
+        {
+            desc?.ShowOneShotMessage(drawFailMessage);
+            busy = false;
+            yield break;
+        }
+
+        // C. 코스트 즉시 지불
         int need = Mathf.Max(0, so.cost);
         if (costController && (costController.Current < need || !costController.TryPay(need)))
         { busy = false; yield break; }
 
-        // C. 카드 즉시 제거(덱 아래)
+        // D. 카드 즉시 제거(덱 아래)
         var bdr = BattleDeckRuntime.Instance;
         if (bdr != null) bdr.UseCardToBottom(handIndex);
         yield return null;               // 데이터 반영
         hand.RebuildFromHand();
 
-        // D. 관전 모드: 선택 해제 + 입력 OFF + 설명 고정
+        // E. 관전 모드: 선택 해제 + 입력 OFF + 설명 고정
         hand.ExitSelectMode();
         if (menu) menu.EnableInput(false);
         if (desc)
@@ -151,7 +160,7 @@ public class CardUseOrchestrator : MonoBehaviour
         }
         // ====  분기 끝 ====
 
-        // E. 설명 해제 및 선택 모드 복귀
+        // F. 설명 해제 및 선택 모드 복귀
         if (desc) desc.ClearTemporaryMessage();
         if (desc) desc.ExitEffectLock();
 
