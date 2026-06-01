@@ -20,5 +20,7 @@ MonoBehaviour:
   cost: 3
   positive: 0
   negative: 0
-  drawMode: 0
-  amount: 2
+  drawMode: 2
+  amount: 3
+  refreshDiscardAmount: 1
+  refreshDrawAmount: 2
