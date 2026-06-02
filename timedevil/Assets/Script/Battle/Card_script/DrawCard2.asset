@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae67f8acdd35dd84fb814605a4b67711, type: 3}
+  m_Name: DrawCard2
+  m_EditorClassIdentifier: 
+  id: DrawCard2
+  displayName: "\uB2E8\uC808"
+  type: 2
+  display: 
+  explanation: 
+  cost: 2
+  positive: 0
+  negative: 5
+  drawMode: 1
+  amount: 2
