@@ -1773,6 +1773,7 @@ MonoBehaviour:
   drawController: {fileID: 1201525411}
   moveController: {fileID: 1201525410}
   attackController: {fileID: 0}
+  supportController: {fileID: 0}
   previewSeconds: 1.5
   playInterval: 0.3
 --- !u!1 &643248676
@@ -1806,6 +1807,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   useImage: {fileID: 1522580513}
   resourcesFolder: my_asset
+  maxPreviewSize: {x: 130, y: 200}
   fadeIn: 0.35
   fadeOut: 0.35
 --- !u!224 &643248678
@@ -2359,6 +2361,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   row: {fileID: 0}
   cardPrefab: {fileID: 77755690}
+  cardDatabase: {fileID: 0}
   resourcesFolder: my_asset
   leftPadding: 8
   rightPadding: 8
@@ -5876,6 +5879,7 @@ MonoBehaviour:
     m_RotationOrder: 4
   startInGameplayView: 0
   syncInitialViewWithTurnState: 1
+  recacheShownBaseBeforeViewChange: 1
 --- !u!114 &1069897056
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6104,6 +6108,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 054dd805b00764843812be18406e3d02, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  moveController: {fileID: 0}
+  hpController: {fileID: 0}
+  costController: {fileID: 0}
 --- !u!114 &1201525410
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11393,6 +11400,7 @@ MonoBehaviour:
   cost: {fileID: 1352731693}
   desc: {fileID: 1069897052}
   deck: {fileID: 0}
+  supportController: {fileID: 0}
   enemyThinkDelay: 2
   enemyHandUI: {fileID: 133108826}
   enemyDeck: {fileID: 1424331453}
@@ -11714,9 +11722,9 @@ Transform:
   m_GameObject: {fileID: 2084521560}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.020000756, y: 0.36619073, z: -2}
-  m_LocalScale: {x: 3.0693972, y: 3.0693972, z: 3.0693972}
-  m_ConstrainProportionsScale: 0
+  m_LocalPosition: {x: 0.01, y: 0.38, z: -2}
+  m_LocalScale: {x: 1.7676, y: 1.7676, z: 1.7676}
+  m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 1345401700}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -11761,7 +11769,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 1554966682, guid: a234c8df68441404e8379020e04bb081, type: 3}
+  m_Sprite: {fileID: -1953733047, guid: 0da34eb1b310adb42b6da6aff206662b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -11780,7 +11788,7 @@ Animator:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2084521560}
-  m_Enabled: 1
+  m_Enabled: 0
   m_Avatar: {fileID: 0}
   m_Controller: {fileID: 9100000, guid: 66b2d0b0bf6bda748b8d6f0cef92c9ef, type: 2}
   m_CullingMode: 0
