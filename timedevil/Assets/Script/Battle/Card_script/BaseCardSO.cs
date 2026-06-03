@@ -10,9 +10,16 @@ public abstract class BaseCardSO : ScriptableObject
     [TextArea] public string display; // 설명문
     [TextArea] public string explanation;  //  발동 대사(우선 노출)
 
+    [Header("Template Contents")]
+    public Sprite mainArtwork;
+    public Sprite arrowArtwork;
+    [TextArea] public string effectTextOverride;
+
 
     [Header("Cost & Rating")]
     public int cost = 1;
     [Range(0, 10)] public int positive = 0;
     [Range(0, 10)] public int negative = 0;
+
+    public string EffectText => string.IsNullOrWhiteSpace(effectTextOverride) ? display : effectTextOverride;
 }

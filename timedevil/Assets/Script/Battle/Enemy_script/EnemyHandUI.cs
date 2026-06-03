@@ -16,6 +16,7 @@ public class EnemyHandUI : MonoBehaviour
     [SerializeField] private float rightPadding = 8f; //  추가
 
     [SerializeField] private float cardWidth = 120f;
+    [SerializeField] private float cardSpacing = 150f;
 
     [Header("Reveal")]
     [SerializeField] private bool revealFaces = true;      // false면 뒷면만
@@ -67,7 +68,7 @@ public class EnemyHandUI : MonoBehaviour
         {
             float maxSpan = Mathf.Max(0f, usable - cardWidth);
             float needed = maxSpan / (n - 1);
-            step = Mathf.Min(cardWidth, Mathf.Max(0f, needed));
+            step = Mathf.Min(cardSpacing, Mathf.Max(0f, needed));
         }
 
         ClearSpawned();
