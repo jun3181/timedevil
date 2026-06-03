@@ -38,9 +38,46 @@ public class HandUI : MonoBehaviour
     public int CurrentSelectIndex => selectIndex;
     public int CardCount => handIdsSnapshot.Count;
 
+    private void EnsureCardDatabase()
+    {
+        if (cardDatabase) return;
+
+        var orchestrator = FindObjectOfType<CardUseOrchestrator>(true);
+        if (orchestrator && orchestrator.CardDatabase)
+            cardDatabase = orchestrator.CardDatabase;
+    }
+
+    private BaseCardSO GetCardById(string id)
+    {
+        EnsureCardDatabase();
+        return cardDatabase ? cardDatabase.GetById(id) : null;
+    }
+
+    private Sprite GetFallbackSprite(string id)
+    {
+        if (string.IsNullOrEmpty(id)) return null;
+
+        Sprite sprite = Resources.Load<Sprite>($"{resourcesFolder}/{id}");
+        if (sprite) return sprite;
+
+        string typeFolder = GetCardTypeFolder(id);
+        return !string.IsNullOrEmpty(typeFolder)
+            ? Resources.Load<Sprite>($"{resourcesFolder}/{typeFolder}/{id}")
+            : null;
+    }
+
+    private static string GetCardTypeFolder(string id)
+    {
+        if (id.StartsWith("AttackCard")) return "AttackCard";
+        if (id.StartsWith("DrawCard")) return "DrawCard";
+        if (id.StartsWith("MoveCard")) return "MoveCard";
+        return null;
+    }
+
     void Awake()
     {
         if (!row) row = (RectTransform)transform;
+        EnsureCardDatabase();
         HideCards();
         if (select) select.gameObject.SetActive(false);
     }
@@ -96,8 +133,8 @@ public class HandUI : MonoBehaviour
             go.name = $"HandCard_{id}";
             spawned.Add(go);
 
-            Sprite fallbackSprite = !string.IsNullOrEmpty(id) ? Resources.Load<Sprite>($"{resourcesFolder}/{id}") : null;
-            BaseCardSO card = cardDatabase ? cardDatabase.GetById(id) : null;
+            BaseCardSO card = GetCardById(id);
+            Sprite fallbackSprite = card && card.mainArtwork ? card.mainArtwork : GetFallbackSprite(id);
 
             var templateView = go.GetComponentInChildren<CardTemplateView>(true);
             if (templateView)
