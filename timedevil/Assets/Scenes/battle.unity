@@ -234,7 +234,8 @@ MonoBehaviour:
   resourcesFolder: my_asset
   leftPadding: 5
   rightPadding: 5
-  cardWidth: 600
+  cardWidth: 150
+  cardSpacing: 300
   revealFaces: 1
   cardBackSprite: {fileID: 0}
 --- !u!1 &169161168
@@ -2361,7 +2362,8 @@ MonoBehaviour:
   resourcesFolder: my_asset
   leftPadding: 8
   rightPadding: 8
-  cardWidth: 300
+  cardWidth: 150
+  cardSpacing: 180
   select: {fileID: 2047237471}
   useFixedSelectSize: 1
   fixedSelectSize: {x: 130, y: 200}
