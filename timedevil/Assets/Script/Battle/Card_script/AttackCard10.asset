@@ -24,7 +24,7 @@ MonoBehaviour:
   positive: 9
   negative: 0
   power: 5
-  useRawPowerDamage: 1
+  useRawPowerDamage: 0
   pattern16: 1111001000100000
   timeline:
   - 1
