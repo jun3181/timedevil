@@ -65,6 +65,7 @@ public class TurnManager : MonoBehaviour
     [SerializeField] private CostController cost;
     [SerializeField] private DescriptionPanelController desc;
     [SerializeField] private BattleDeckRuntime deck;
+    [SerializeField] private SupportController supportController;
 
     [Header("Delays")]
     [SerializeField] private float enemyThinkDelay = 0.6f;
@@ -97,6 +98,7 @@ public class TurnManager : MonoBehaviour
         if (!cost) cost = FindObjectOfType<CostController>(true);
         if (!desc) desc = FindObjectOfType<DescriptionPanelController>(true);
         if (!deck) deck = BattleDeckRuntime.Instance ?? FindObjectOfType<BattleDeckRuntime>(true);
+        if (!supportController) supportController = FindObjectOfType<SupportController>(true);
         if (!enemyHandUI) enemyHandUI = FindObjectOfType<EnemyHandUI>(true);
         if (!enemyDeck) enemyDeck = EnemyDeckRuntime.Instance ?? FindObjectOfType<EnemyDeckRuntime>(true);
         if (!itemHand) itemHand = FindObjectOfType<ItemHandUI>(true);
@@ -230,6 +232,7 @@ public class TurnManager : MonoBehaviour
         IsPlayerDiscardPhase = false;
 
         if (cost) cost.ResetTurn();
+        if (supportController) supportController.OnTurnStarted(Faction.Player);
         if (deck) deck.DrawOneIfNeeded();
 
         if (handUI) handUI.ShowCards();
@@ -259,6 +262,7 @@ public class TurnManager : MonoBehaviour
         IsPlayerDiscardPhase = false;
 
         if (cost) cost.ResetTurn();
+        if (supportController) supportController.OnTurnStarted(Faction.Enemy);
 
         if (menu) menu.EnableInput(false);
         if (handUI) handUI.HideCards();

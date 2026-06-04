@@ -22,3 +22,5 @@ MonoBehaviour:
   negative: 0
   drawMode: 0
   amount: 5
+  refreshDiscardAmount: 1
+  refreshDrawAmount: 2

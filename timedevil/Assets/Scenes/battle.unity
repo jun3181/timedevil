@@ -234,7 +234,8 @@ MonoBehaviour:
   resourcesFolder: my_asset
   leftPadding: 5
   rightPadding: 5
-  cardWidth: 600
+  cardWidth: 150
+  cardSpacing: 300
   revealFaces: 1
   cardBackSprite: {fileID: 0}
 --- !u!1 &169161168
@@ -1078,8 +1079,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
@@ -1213,8 +1214,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
@@ -1772,6 +1773,7 @@ MonoBehaviour:
   drawController: {fileID: 1201525411}
   moveController: {fileID: 1201525410}
   attackController: {fileID: 0}
+  supportController: {fileID: 0}
   previewSeconds: 1.5
   playInterval: 0.3
 --- !u!1 &643248676
@@ -1805,6 +1807,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   useImage: {fileID: 1522580513}
   resourcesFolder: my_asset
+  maxPreviewSize: {x: 130, y: 200}
   fadeIn: 0.35
   fadeOut: 0.35
 --- !u!224 &643248678
@@ -2057,8 +2060,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
@@ -2358,10 +2361,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   row: {fileID: 0}
   cardPrefab: {fileID: 77755690}
+  cardDatabase: {fileID: 0}
   resourcesFolder: my_asset
   leftPadding: 8
   rightPadding: 8
-  cardWidth: 300
+  cardWidth: 150
+  cardSpacing: 180
   select: {fileID: 2047237471}
   useFixedSelectSize: 1
   fixedSelectSize: {x: 130, y: 200}
@@ -5732,6 +5737,7 @@ MonoBehaviour:
   enemyHandCanvasGroup: {fileID: 133108823}
   msgCard: "Card\uB97C \uC120\uD0DD\uD569\uB2C8\uB2E4."
   msgItem: "Item\uC744 \uC120\uD0DD\uD569\uB2C8\uB2E4."
+  msgState: "\uC0C1\uD0DC\uB97C \uD655\uC778\uD569\uB2C8\uB2E4."
   msgEnd: "\uD134\uC5D4\uB4DC\uD569\uB2C8\uB2E4."
   msgRun: "\uB3C4\uB9DD\uCE69\uB2C8\uB2E4."
   msgEnemyTurn: "\uC0C1\uB300\uD134\uC785\uB2C8\uB2E4."
@@ -5873,6 +5879,7 @@ MonoBehaviour:
     m_RotationOrder: 4
   startInGameplayView: 0
   syncInitialViewWithTurnState: 1
+  recacheShownBaseBeforeViewChange: 1
 --- !u!114 &1069897056
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5883,8 +5890,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2c62e9a4b6f64d84994c4210efb14d17, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   menu: {fileID: 1069897049}
   panelController: {fileID: 1069897055}
   descriptionPanel: {fileID: 1069897052}
@@ -6101,6 +6108,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 054dd805b00764843812be18406e3d02, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  moveController: {fileID: 0}
+  hpController: {fileID: 0}
+  costController: {fileID: 0}
 --- !u!114 &1201525410
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10349,8 +10359,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
@@ -11390,6 +11400,7 @@ MonoBehaviour:
   cost: {fileID: 1352731693}
   desc: {fileID: 1069897052}
   deck: {fileID: 0}
+  supportController: {fileID: 0}
   enemyThinkDelay: 2
   enemyHandUI: {fileID: 133108826}
   enemyDeck: {fileID: 1424331453}
@@ -11711,9 +11722,9 @@ Transform:
   m_GameObject: {fileID: 2084521560}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.020000756, y: 0.36619073, z: -2}
-  m_LocalScale: {x: 3.0693972, y: 3.0693972, z: 3.0693972}
-  m_ConstrainProportionsScale: 0
+  m_LocalPosition: {x: 0.01, y: 0.38, z: -2}
+  m_LocalScale: {x: 1.7676, y: 1.7676, z: 1.7676}
+  m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 1345401700}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -11758,7 +11769,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 1554966682, guid: a234c8df68441404e8379020e04bb081, type: 3}
+  m_Sprite: {fileID: -1953733047, guid: 0da34eb1b310adb42b6da6aff206662b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -11777,7 +11788,7 @@ Animator:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2084521560}
-  m_Enabled: 1
+  m_Enabled: 0
   m_Avatar: {fileID: 0}
   m_Controller: {fileID: 9100000, guid: 66b2d0b0bf6bda748b8d6f0cef92c9ef, type: 2}
   m_CullingMode: 0

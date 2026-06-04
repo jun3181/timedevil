@@ -7,6 +7,8 @@ public class AttackCardSO : BaseCardSO
     [Header("Attack")]
     public int power = 1;
 
+    [Tooltip("true면 ATK/DEF 보정을 하지 않고 power를 최종 데미지로 사용")]
+    public bool useRawPowerDamage = false;
     // ▼▼ 레거시(웨이브 없을 때만 사용) ▼▼
     [Tooltip("16자리 패턴: 위→아래, 각 행 4칸. 예) 1000 0100 0010 0001 → '1000010000100001'")]
     public string pattern16 = "0000000000000000";

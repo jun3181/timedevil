@@ -75,18 +75,27 @@ public class CardUseOrchestrator : MonoBehaviour
         var so = database ? database.GetById(id) : null;
         if (!so) { busy = false; yield break; }
 
-        // B. 코스트 즉시 지불
+        // B. Draw 계열은 코스트 지불/카드 제거 전에 손패 버리기 가능 여부를 먼저 검사
+        if (drawController != null && so is DrawCardSO precheckDraw &&
+            !drawController.CanExecute(precheckDraw, Faction.Player, selfCardsAlreadyCommitted: 1, out string drawFailMessage))
+        {
+            desc?.ShowOneShotMessage(drawFailMessage);
+            busy = false;
+            yield break;
+        }
+
+        // C. 코스트 즉시 지불
         int need = Mathf.Max(0, so.cost);
         if (costController && (costController.Current < need || !costController.TryPay(need)))
         { busy = false; yield break; }
 
-        // C. 카드 즉시 제거(덱 아래)
+        // D. 카드 즉시 제거(덱 아래)
         var bdr = BattleDeckRuntime.Instance;
         if (bdr != null) bdr.UseCardToBottom(handIndex);
         yield return null;               // 데이터 반영
         hand.RebuildFromHand();
 
-        // D. 관전 모드: 선택 해제 + 입력 OFF + 설명 고정
+        // E. 관전 모드: 선택 해제 + 입력 OFF + 설명 고정
         hand.ExitSelectMode();
         if (menu) menu.EnableInput(false);
         if (desc)
@@ -114,12 +123,27 @@ public class CardUseOrchestrator : MonoBehaviour
             while (!(previewDone && attackDone))
                 yield return null;
         }
+        else if (supportController != null && so is SupportCardSO sso)
+        {
+            bool previewDone = false;
+            bool supportDone = false;
+
+            StartCoroutine(CoRunPreview(sso.id, totalSeconds, () => previewDone = true));
+            StartCoroutine(CoRunSupport(sso, () => supportDone = true));
+
+            while (!(previewDone && supportDone))
+                yield return null;
+        }
         else if (drawController != null && so is DrawCardSO dso)
         {
-            // Draw는 실행 코루틴을 흘려보내고, 프리뷰만 기다림
-            StartCoroutine(drawController.Execute(dso, Faction.Player));
-            if (showCard != null) yield return showCard.PreviewById(so.id, totalSeconds);
-            else yield return null;
+            bool previewDone = false;
+            bool drawDone = false;
+
+            StartCoroutine(CoRunPreview(dso.id, totalSeconds, () => previewDone = true));
+            StartCoroutine(CoRunDraw(dso, () => drawDone = true));
+
+            while (!(previewDone && drawDone))
+                yield return null;
         }
         else if (moveController != null && so is MoveCardSO mso)
         {
@@ -136,7 +160,7 @@ public class CardUseOrchestrator : MonoBehaviour
         }
         // ====  분기 끝 ====
 
-        // E. 설명 해제 및 선택 모드 복귀
+        // F. 설명 해제 및 선택 모드 복귀
         if (desc) desc.ClearTemporaryMessage();
         if (desc) desc.ExitEffectLock();
 
@@ -167,6 +191,18 @@ public class CardUseOrchestrator : MonoBehaviour
     private IEnumerator CoRunAttack(AttackCardSO aso, System.Action onDone)
     {
         yield return attackController.Execute(aso, Faction.Player, Faction.Enemy);
+        onDone?.Invoke();
+    }
+
+    private IEnumerator CoRunSupport(SupportCardSO sso, System.Action onDone)
+    {
+        yield return supportController.Execute(sso, Faction.Player, Faction.Enemy);
+        onDone?.Invoke();
+    }
+
+    private IEnumerator CoRunDraw(DrawCardSO dso, System.Action onDone)
+    {
+        yield return drawController.Execute(dso, Faction.Player);
         onDone?.Invoke();
     }
 

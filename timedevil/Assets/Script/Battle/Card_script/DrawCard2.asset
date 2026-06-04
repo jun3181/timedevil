@@ -9,12 +9,16 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1abd44402ecbf5148b3b83ac1b008ac9, type: 3}
-  m_Name: piece
+  m_Script: {fileID: 11500000, guid: ae67f8acdd35dd84fb814605a4b67711, type: 3}
+  m_Name: DrawCard2
   m_EditorClassIdentifier: 
-  id: piece
-  displayName: piece
-  type: 0
-  description: "\uAE30\uC5B5\uC870\uAC01"
-  icon: {fileID: 21300000, guid: 9021ad8f9682fac4ea13052d58b93d01, type: 3}
-  defaultQuantity: 0
+  id: DrawCard2
+  displayName: "\uB2E8\uC808"
+  type: 2
+  display: 
+  explanation: 
+  cost: 2
+  positive: 0
+  negative: 5
+  drawMode: 1
+  amount: 2

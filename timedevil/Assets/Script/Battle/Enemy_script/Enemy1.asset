@@ -19,12 +19,13 @@ MonoBehaviour:
   baseDEF: 3
   baseSPD: 1
   deckIds:
-  - Card2
-  - Card6
-  - Card7
-  - Card8
-  - Card9
-  - Card10
-  - Card11
-  - Card12
-  - Card14
+  - AttackCard1
+  - AttackCard2
+  - AttackCard3
+  - AttackCard4
+  - AttackCard5
+  - AttackCard6
+  - AttackCard7
+  - AttackCard8
+  - AttackCard9
+  - AttackCard10
