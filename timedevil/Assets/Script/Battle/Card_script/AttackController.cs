@@ -413,6 +413,12 @@ public class AttackController : MonoBehaviour
     private void ApplyDamage(AttackCardSO so, Faction self, Faction foe)
     {
         if (hp == null) return;
+        if (so.useRawPowerDamage)
+        {
+            hp.ApplyDamage(foe, Mathf.Max(1, so.power));
+            return;
+        }
+
         int atk = hp.GetAttack(self);
         int def = hp.GetDefense(foe);
         int dmg = Mathf.Max(1, (so.power + atk) - def);

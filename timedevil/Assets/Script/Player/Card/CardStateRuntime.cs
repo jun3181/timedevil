@@ -7,6 +7,11 @@ public class CardStateRuntime : MonoBehaviour
 
     //  덱 최대 장수
     public const int MAX_DECK = 13;
+    private static readonly string[] DefaultCardIds =
+    {
+        "AttackCard1", "AttackCard2", "AttackCard3", "AttackCard4", "AttackCard5",
+        "AttackCard6", "AttackCard7", "AttackCard8", "AttackCard9", "AttackCard10"
+    };
 
     [Header("자동 저장 옵션 (기본 꺼짐)")]
     public bool saveOnDisable = false;
@@ -27,6 +32,7 @@ public class CardStateRuntime : MonoBehaviour
 
         // 파일이 없으면 비어있는 상태로 시작
         Data = CardSaveStore.Load();
+        UseDefaultAttackCardsOnly();
 
 #if UNITY_EDITOR
         Debug.Log($"[CardStateRuntime] Loaded. owned={Data.owned?.Count ?? 0}, deck={Data.deck?.Count ?? 0}");
@@ -108,6 +114,15 @@ public class CardStateRuntime : MonoBehaviour
     }
 
     // --- Helpers ---
+    private void UseDefaultAttackCardsOnly()
+    {
+        if (Data == null) Data = new CardSaveData();
+
+        var defaults = DefaultCardIds.ToList();
+        Data.owned = defaults.ToList();
+        Data.deck = defaults.ToList();
+    }
+
     private bool ShouldSkipEmptyInitialSave()
     {
         return IsEmpty(Data) && !File.Exists(CardSaveStore.GetPath());

@@ -10,11 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1abd44402ecbf5148b3b83ac1b008ac9, type: 3}
-  m_Name: piece
+  m_Name: puzzle
   m_EditorClassIdentifier: 
   id: piece
   displayName: piece
   type: 0
-  description: "\uAE30\uC5B5\uC870\uAC01"
-  icon: {fileID: 21300000, guid: 9021ad8f9682fac4ea13052d58b93d01, type: 3}
+  description: "\uD37C\uC990 \uC870\uAC01"
+  icon: {fileID: 0}
   defaultQuantity: 0
+  itemScript: {fileID: 0}
