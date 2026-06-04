@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: MoveCard1
   type: 3
   display: "[\uD76C\uB9DD]\n\uC624\uB978\uCABD\uC73C\uB85C \uD55C \uCE78 \uC774\uB3D9"
-  explanation: 
+  explanation: "희망이 보이는 쪽으로, 한 걸음만 더."
   cost: 1
   positive: 0
   negative: 0

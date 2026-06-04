@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: AttackCard8
   type: 0
   display: "[\uC2E0\uB8B0]"
-  explanation: "신뢰가 쌓인다"
+  explanation: "믿어볼게. 무너져도 이번 한 번은."
   mainArtwork: {fileID: 21300000, guid: fdecb3f4d91220548b314b7a4da90d0c, type: 3}
   arrowArtwork: {fileID: 0}
   effectTextOverride: "공격칸: 8"

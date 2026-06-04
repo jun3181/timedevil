@@ -15,10 +15,18 @@ MonoBehaviour:
   id: DrawCard9
   displayName: "\uAD74\uC695"
   type: 2
-  display: 
-  explanation: 
+  display: "[\uAD74\uC695]\n\uCE74\uB4DC 3\uC7A5\uC744 \uB4DC\uB85C\uC6B0\uD55C\uB2E4."
+  explanation: "\uB098\uB97C \uADF8\uB7F0 \uB208\uC73C\uB85C \uBCF4\uC9C0 \uB9D0\uC544\uC918..."
+  mainArtwork: {fileID: 0}
+  arrowArtwork: {fileID: 0}
+  effectTextOverride: 
   cost: 2
   positive: 0
   negative: 4
   drawMode: 0
   amount: 3
+  refreshDiscardAmount: 1
+  refreshDrawAmount: 2
+  handEffectSequence:
+  - effectType: 1
+    amount: 1

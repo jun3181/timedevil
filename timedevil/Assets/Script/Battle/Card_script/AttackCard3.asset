@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: AttackCard3
   type: 0
   display: "[\uC9D1\uCC29]"
-  explanation: "집착이 심해진다"
+  explanation: "내 거라고 생각하면, 멈출 수가 없어."
   mainArtwork: {fileID: 21300000, guid: d1e82a7a08c26c04c969e64e3482557c, type: 3}
   arrowArtwork: {fileID: 0}
   effectTextOverride: "공격칸: 4"

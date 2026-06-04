@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: AttackCard4
   type: 0
   display: "[\uD3C9\uC628]"
-  explanation: "평온을 되찾는다"
+  explanation: "제발, 이 고요함만은 깨지지 않았으면."
   mainArtwork: {fileID: 21300000, guid: 319ef7623017880409513479264aab7d, type: 3}
   arrowArtwork: {fileID: 0}
   effectTextOverride: "공격칸: 4"

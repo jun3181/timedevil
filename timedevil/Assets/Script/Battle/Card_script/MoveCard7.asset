@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: MoveCard7
   type: 3
   display: "[\uD6C4\uD68C]\n\uC67C\uCABD\uC73C\uB85C \uB450 \uCE78 \uC774\uB3D9"
-  explanation: 
+  explanation: "그때로 돌아갈 수 있다면... 발이 자꾸 뒤로 가."
   cost: 2
   positive: 0
   negative: 0

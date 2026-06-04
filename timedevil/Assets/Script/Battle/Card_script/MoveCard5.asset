@@ -17,7 +17,7 @@ MonoBehaviour:
   type: 3
   display: "[\uB9E4\uD639]\n\uC0C1\uB300\uB97C \uC67C\uCABD\uC73C\uB85C \uB450 \uCE78
     \uC774\uB3D9"
-  explanation: 
+  explanation: "눈을 떼지 못해서, 상대를 끌어당기고 싶어."
   cost: 2
   positive: 0
   negative: 0

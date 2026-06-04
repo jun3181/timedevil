@@ -17,7 +17,7 @@ MonoBehaviour:
   type: 3
   display: "[\uC99D\uC624]\n\uC0C1\uB300\uB97C \uC544\uB798\uCABD\uC73C\uB85C \uD55C
     \uCE78 \uC774\uB3D9"
-  explanation: 
+  explanation: "보기 싫어. 너도 바닥까지 내려가."
   cost: 1
   positive: 0
   negative: 0
