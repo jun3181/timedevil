@@ -35,6 +35,7 @@ public class NPCMove : MonoBehaviour
     private Vector2 startPos;
     private Vector2 velocity;
     private float takingTime;
+    private bool isPausingForAvoiding;
     private int lastHAxisRaw;
     private int lastVAxisRaw = -1;
     private bool canDriveAnimator;
@@ -65,6 +66,8 @@ public class NPCMove : MonoBehaviour
 
     void FixedUpdate() {
         if(Moving) {
+            ApplyMoveAnimation(true);
+
             Vector2 newPos = rb.position + Time.fixedDeltaTime * velocity;
             float takenTime = (newPos - startPos).magnitude / Speed;
 
@@ -97,10 +100,13 @@ public class NPCMove : MonoBehaviour
     public void MoveBy(Vector2 offset) {
         if(Moving) return;
 
+        if(offset.sqrMagnitude <= 0.0001f) return;
+
         startPos = rb.position;
         velocity = offset.normalized * Speed;
         takingTime = offset.magnitude / Speed;
 
+        isPausingForAvoiding = false;
         UpdateLastDirectionFromVelocity();
         Moving = true;
         ApplyMoveAnimation(true);
@@ -114,12 +120,14 @@ public class NPCMove : MonoBehaviour
     // NPC 일시정지
     public void Idle() {
         Moving = false;
+        isPausingForAvoiding = true;
         ApplyMoveAnimation(false);
     }
 
     // NPC 완전정지
     public void Stop() {
         Moving = false;
+        isPausingForAvoiding = false;
         takingTime = 0;
         ApplyMoveAnimation(false);
     }
@@ -146,6 +154,7 @@ public class NPCMove : MonoBehaviour
     // NPC 움직임 재게
     public void Resume() {
         if(Moving || takingTime==0) return;
+        isPausingForAvoiding = false;
         Moving = true;
         ApplyMoveAnimation(true);
     }
@@ -168,7 +177,7 @@ public class NPCMove : MonoBehaviour
 
         anim.SetInteger(paramHAxisRaw, lastHAxisRaw);
         anim.SetInteger(paramVAxisRaw, lastVAxisRaw);
-        anim.SetBool(paramIsChange, isChange);
+        anim.SetBool(paramIsChange, isChange && !isPausingForAvoiding);
     }
 
     private bool HasRequiredAnimatorParams() {
