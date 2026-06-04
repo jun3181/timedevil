@@ -25,6 +25,7 @@ public class NPCMove : MonoBehaviour
     [SerializeField] private string paramIsChange = "isChange";
     [SerializeField] private string paramHAxisRaw = "hAxisRaw";
     [SerializeField] private string paramVAxisRaw = "vAxisRaw";
+    [SerializeField] private float stopIdleAnimationDelay = 0.05f;
 
     public bool Moving { get; private set; }
 
@@ -39,6 +40,11 @@ public class NPCMove : MonoBehaviour
     private int lastHAxisRaw;
     private int lastVAxisRaw = -1;
     private bool canDriveAnimator;
+    private bool hasAppliedAnimation;
+    private int appliedHAxisRaw;
+    private int appliedVAxisRaw;
+    private bool appliedIsChange;
+    private Coroutine idleAnimationCoroutine;
 
     private Vector2 colliderGlobalOffset = new();
     // private Vector2 collisionDetectionPadding = new(0.02f, 0.02f);
@@ -66,8 +72,6 @@ public class NPCMove : MonoBehaviour
 
     void FixedUpdate() {
         if(Moving) {
-            ApplyMoveAnimation(true);
-
             Vector2 newPos = rb.position + Time.fixedDeltaTime * velocity;
             float takenTime = (newPos - startPos).magnitude / Speed;
 
@@ -106,6 +110,7 @@ public class NPCMove : MonoBehaviour
         velocity = offset.normalized * Speed;
         takingTime = offset.magnitude / Speed;
 
+        CancelPendingIdleAnimation();
         isPausingForAvoiding = false;
         UpdateLastDirectionFromVelocity();
         Moving = true;
@@ -121,6 +126,7 @@ public class NPCMove : MonoBehaviour
     public void Idle() {
         Moving = false;
         isPausingForAvoiding = true;
+        CancelPendingIdleAnimation();
         ApplyMoveAnimation(false);
     }
 
@@ -129,7 +135,7 @@ public class NPCMove : MonoBehaviour
         Moving = false;
         isPausingForAvoiding = false;
         takingTime = 0;
-        ApplyMoveAnimation(false);
+        ScheduleIdleAnimation();
     }
 
     public bool OverlapingColliderExist() {
@@ -154,6 +160,7 @@ public class NPCMove : MonoBehaviour
     // NPC 움직임 재게
     public void Resume() {
         if(Moving || takingTime==0) return;
+        CancelPendingIdleAnimation();
         isPausingForAvoiding = false;
         Moving = true;
         ApplyMoveAnimation(true);
@@ -172,12 +179,46 @@ public class NPCMove : MonoBehaviour
         }
     }
 
+    private void ScheduleIdleAnimation() {
+        CancelPendingIdleAnimation();
+
+        if(stopIdleAnimationDelay <= 0f) {
+            ApplyMoveAnimation(false);
+            return;
+        }
+
+        idleAnimationCoroutine = StartCoroutine(ApplyIdleAnimationAfterDelay());
+    }
+
+    private IEnumerator ApplyIdleAnimationAfterDelay() {
+        yield return new WaitForSeconds(stopIdleAnimationDelay);
+        idleAnimationCoroutine = null;
+
+        if(Moving) yield break;
+        ApplyMoveAnimation(false);
+    }
+
+    private void CancelPendingIdleAnimation() {
+        if(idleAnimationCoroutine == null) return;
+
+        StopCoroutine(idleAnimationCoroutine);
+        idleAnimationCoroutine = null;
+    }
+
     private void ApplyMoveAnimation(bool isChange) {
         if(!canDriveAnimator || !anim) return;
 
+        bool nextIsChange = isChange && !isPausingForAvoiding;
+        if(hasAppliedAnimation && appliedHAxisRaw == lastHAxisRaw && appliedVAxisRaw == lastVAxisRaw && appliedIsChange == nextIsChange) return;
+
         anim.SetInteger(paramHAxisRaw, lastHAxisRaw);
         anim.SetInteger(paramVAxisRaw, lastVAxisRaw);
-        anim.SetBool(paramIsChange, isChange && !isPausingForAvoiding);
+        anim.SetBool(paramIsChange, nextIsChange);
+
+        hasAppliedAnimation = true;
+        appliedHAxisRaw = lastHAxisRaw;
+        appliedVAxisRaw = lastVAxisRaw;
+        appliedIsChange = nextIsChange;
     }
 
     private bool HasRequiredAnimatorParams() {
