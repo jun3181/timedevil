@@ -13,7 +13,7 @@ public class RoutingNPCMove : MonoBehaviour
 
     [Header("게임 실행시 라우팅 자동 시작")]
     [SerializeField]
-    private bool isAutoRouting = true;
+    private bool isAutoRoutingStart = true;
 
     [Header("라우팅 모드")]
     [SerializeField]
@@ -61,17 +61,18 @@ public class RoutingNPCMove : MonoBehaviour
 
         pathfinder = new(npcMove.GetCollider2D(), searchSize);
 
-        if(isAutoRouting) StartRouting();
+        if(isAutoRoutingStart) StartRouting();
     }
 
     void Update() {
-        if(routingMode==RoutingMode.Loop && routingCoroutine==null) {
+        if(isAutoRoutingStart && routingMode==RoutingMode.Loop && routingCoroutine==null) {
             StartRouting();
         }
     }
 
     public void StartRouting() {
         if(routingCoroutine!=null) return;
+        isAutoRoutingStart = true;
 
         routingCoroutine = RoutingCoroutine(nodes);
         StartCoroutine(routingCoroutine);
