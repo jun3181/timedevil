@@ -44,8 +44,6 @@ public class NPCMove : MonoBehaviour
     private int appliedHAxisRaw;
     private int appliedVAxisRaw;
     private bool appliedIsChange;
-    private bool continuousAnimationMove;
-    private bool continuousAnimationApplied;
     private Coroutine idleAnimationCoroutine;
 
     private Vector2 colliderGlobalOffset = new();
@@ -116,15 +114,7 @@ public class NPCMove : MonoBehaviour
         isPausingForAvoiding = false;
         UpdateLastDirectionFromVelocity();
         Moving = true;
-
-        if(continuousAnimationMove) {
-            if(!continuousAnimationApplied) {
-                ApplyMoveAnimation(true);
-                continuousAnimationApplied = true;
-            }
-        } else {
-            ApplyMoveAnimation(true);
-        }
+        ApplyMoveAnimation(true);
     }
 
     // 주어진 좌표로 이동
@@ -136,7 +126,6 @@ public class NPCMove : MonoBehaviour
     public void Idle() {
         Moving = false;
         isPausingForAvoiding = true;
-        continuousAnimationApplied = false;
         CancelPendingIdleAnimation();
         ApplyMoveAnimation(false);
     }
@@ -146,9 +135,6 @@ public class NPCMove : MonoBehaviour
         Moving = false;
         isPausingForAvoiding = false;
         takingTime = 0;
-
-        if(continuousAnimationMove) return;
-
         ScheduleIdleAnimation();
     }
 
@@ -178,23 +164,6 @@ public class NPCMove : MonoBehaviour
         isPausingForAvoiding = false;
         Moving = true;
         ApplyMoveAnimation(true);
-    }
-
-    public void BeginContinuousAnimationMove() {
-        CancelPendingIdleAnimation();
-        isPausingForAvoiding = false;
-        continuousAnimationMove = true;
-        continuousAnimationApplied = false;
-    }
-
-    public void EndContinuousAnimationMove(bool setIdle = true) {
-        continuousAnimationMove = false;
-        continuousAnimationApplied = false;
-        CancelPendingIdleAnimation();
-
-        if(setIdle) {
-            ApplyMoveAnimation(false);
-        }
     }
 
 
