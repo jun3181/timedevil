@@ -6,6 +6,10 @@ using UnityEngine;
 [RequireComponent(typeof(NPCMove))]
 public class RoutingNPCMove : MonoBehaviour
 {
+    [Header("시작시 라우팅 자동 실행")]
+    [SerializeField]
+    private bool isAutoRouting = true;
+
     [Header("목표 지점의 오브젝트")]
     [SerializeField]
     private GameObject target;
@@ -47,6 +51,8 @@ public class RoutingNPCMove : MonoBehaviour
         npcMove.CanStandbyForAvoiding = true;
 
         pathfinder = new(npcMove.GetCollider2D(), searchSize);
+
+        if(isAutoRouting) StartRouting();
     }
 
     public void StartRouting() {
