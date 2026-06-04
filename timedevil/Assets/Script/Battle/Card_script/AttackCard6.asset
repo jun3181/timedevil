@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: AttackCard6
   type: 0
   display: "[\uB0C9\uC18C]"
-  explanation: "냉소가 번져간다"
+  explanation: "기대 같은 건 안 할래. 상처만 남잖아."
   mainArtwork: {fileID: 21300000, guid: 866ce3d5dd95fc946aa519b310df4eb2, type: 3}
   arrowArtwork: {fileID: 0}
   effectTextOverride: "공격칸: 4"

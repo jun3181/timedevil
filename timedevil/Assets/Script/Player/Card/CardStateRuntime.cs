@@ -6,11 +6,15 @@ public class CardStateRuntime : MonoBehaviour
     public static CardStateRuntime Instance { get; private set; }
 
     //  덱 최대 장수
-    public const int MAX_DECK = 13;
+    public const int MAX_DECK = 30;
     private static readonly string[] DefaultCardIds =
     {
         "AttackCard1", "AttackCard2", "AttackCard3", "AttackCard4", "AttackCard5",
-        "AttackCard6", "AttackCard7", "AttackCard8", "AttackCard9", "AttackCard10"
+        "AttackCard6", "AttackCard7", "AttackCard8", "AttackCard9", "AttackCard10",
+        "DrawCard1", "DrawCard2", "DrawCard3", "DrawCard4", "DrawCard5",
+        "DrawCard6", "DrawCard7", "DrawCard8", "DrawCard9", "DrawCard10",
+        "MoveCard1", "MoveCard2", "MoveCard3", "MoveCard4", "MoveCard5",
+        "MoveCard6", "MoveCard7", "MoveCard8", "MoveCard9", "MoveCard10"
     };
 
     [Header("자동 저장 옵션 (기본 꺼짐)")]
@@ -32,7 +36,7 @@ public class CardStateRuntime : MonoBehaviour
 
         // 파일이 없으면 비어있는 상태로 시작
         Data = CardSaveStore.Load();
-        UseDefaultAttackCardsOnly();
+        UseDefaultBattleCards();
 
 #if UNITY_EDITOR
         Debug.Log($"[CardStateRuntime] Loaded. owned={Data.owned?.Count ?? 0}, deck={Data.deck?.Count ?? 0}");
@@ -87,13 +91,13 @@ public class CardStateRuntime : MonoBehaviour
     public int DeckCount => Data.deck?.Count ?? 0;
     public bool DeckContains(string id) => Data.deck != null && Data.deck.Contains(id);
 
-    /// <summary>중복 금지 + 최대 13장 제한</summary>
+    /// <summary>중복 금지 + 최대 장수 제한</summary>
     public bool TryAddToDeck(string id)
     {
         if (string.IsNullOrEmpty(id)) return false;
         if (Data.deck == null) Data.deck = new System.Collections.Generic.List<string>();
         if (Data.deck.Contains(id)) return false;              // 중복 불가
-        if (Data.deck.Count >= MAX_DECK) return false;         // 13장 제한
+        if (Data.deck.Count >= MAX_DECK) return false;
         Data.deck.Add(id);
         return true;
     }
@@ -114,7 +118,7 @@ public class CardStateRuntime : MonoBehaviour
     }
 
     // --- Helpers ---
-    private void UseDefaultAttackCardsOnly()
+    private void UseDefaultBattleCards()
     {
         if (Data == null) Data = new CardSaveData();
 

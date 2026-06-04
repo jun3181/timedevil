@@ -28,6 +28,7 @@ public class CardUseOrchestrator : MonoBehaviour
     [SerializeField] private MoveController moveController;
     [SerializeField] private PanelController PanelController;
 
+    public CardDatabaseSO CardDatabase => database;
 
     private bool busy;
     public bool IsBusy { get { return busy; } }

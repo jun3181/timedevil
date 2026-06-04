@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: MoveCard3
   type: 3
   display: "[\uC560\uCC29]\n\uC624\uB978\uCABD\uC73C\uB85C \uB450 \uCE78 \uC774\uB3D9"
-  explanation: 
+  explanation: "놓기 싫어서, 그쪽으로 몸이 먼저 가."
   cost: 2
   positive: 0
   negative: 0

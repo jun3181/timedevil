@@ -17,7 +17,7 @@ MonoBehaviour:
   type: 3
   display: "[\uB3D9\uC815]\n\uC0C1\uB300\uB97C \uC704\uCABD\uC73C\uB85C \uD55C \uCE78
     \uC774\uB3D9"
-  explanation: 
+  explanation: "그 애를 그냥 둘 수 없어. 조금만 밀어 올리자."
   cost: 1
   positive: 0
   negative: 0

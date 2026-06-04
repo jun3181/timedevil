@@ -15,10 +15,18 @@ MonoBehaviour:
   id: DrawCard8
   displayName: "\uBE44\uB09C\uBC1B\uB294 \uB290\uB08C"
   type: 2
-  display: 
-  explanation: 
+  display: "[\uBE44\uB09C\uBC1B\uB294 \uB290\uB08C]\n\uCE74\uB4DC 4\uC7A5\uC744 \uB4DC\uB85C\uC6B0\uD55C\uB2E4."
+  explanation: "\uC8C4\uC1A1\uD569\uB2C8\uB2E4, \uC8C4\uC1A1\uD569\uB2C8\uB2E4, \uC8C4\uC1A1\uD569\uB2C8\uB2E4!"
+  mainArtwork: {fileID: 0}
+  arrowArtwork: {fileID: 0}
+  effectTextOverride: 
   cost: 0
   positive: 0
   negative: 8
   drawMode: 0
   amount: 4
+  refreshDiscardAmount: 1
+  refreshDrawAmount: 2
+  handEffectSequence:
+  - effectType: 1
+    amount: 1
