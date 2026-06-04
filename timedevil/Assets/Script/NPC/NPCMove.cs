@@ -129,7 +129,7 @@ public class NPCMove : MonoBehaviour
     }
 
     public Vector2 GetPosition() {
-        return collider.bounds.center;
+        return transform.position;
     }
 
     public Collider2D GetCollider2D() {
