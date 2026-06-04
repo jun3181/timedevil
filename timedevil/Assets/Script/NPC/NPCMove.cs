@@ -18,6 +18,14 @@ public class NPCMove : MonoBehaviour
     [SerializeField]
     private bool debuged = true;
 
+    [Header("Animator Drive")]
+    [SerializeField] private bool driveAnimator = true;
+    [SerializeField] private Animator anim;
+    [SerializeField] private bool strictAnimatorParamCheck = true;
+    [SerializeField] private string paramIsChange = "isChange";
+    [SerializeField] private string paramHAxisRaw = "hAxisRaw";
+    [SerializeField] private string paramVAxisRaw = "vAxisRaw";
+
     public bool Moving { get; private set; }
 
     private Rigidbody2D rb;
@@ -27,6 +35,10 @@ public class NPCMove : MonoBehaviour
     private Vector2 startPos;
     private Vector2 velocity;
     private float takingTime;
+    private bool isPausingForAvoiding;
+    private int lastHAxisRaw;
+    private int lastVAxisRaw = -1;
+    private bool canDriveAnimator;
 
     private Vector2 colliderGlobalOffset = new();
     // private Vector2 collisionDetectionPadding = new(0.02f, 0.02f);
@@ -41,6 +53,12 @@ public class NPCMove : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         rb.bodyType = RigidbodyType2D.Kinematic;
         collider = GetComponent<Collider2D>();
+        if(!anim) anim = GetComponent<Animator>();
+        canDriveAnimator = driveAnimator && HasRequiredAnimatorParams();
+        if(driveAnimator && !canDriveAnimator && debuged) {
+            Debug.LogWarning($"{gameObject.name}의 Animator 파라미터가 올바르지 않아 NPCMove Animator 구동을 건너뜁니다.");
+        }
+        ApplyMoveAnimation(false);
         
         colliderGlobalOffset.x = collider.offset.x * transform.localScale.x;
         colliderGlobalOffset.y = collider.offset.y * transform.localScale.y;
@@ -48,6 +66,8 @@ public class NPCMove : MonoBehaviour
 
     void FixedUpdate() {
         if(Moving) {
+            ApplyMoveAnimation(true);
+
             Vector2 newPos = rb.position + Time.fixedDeltaTime * velocity;
             float takenTime = (newPos - startPos).magnitude / Speed;
 
@@ -80,11 +100,16 @@ public class NPCMove : MonoBehaviour
     public void MoveBy(Vector2 offset) {
         if(Moving) return;
 
+        if(offset.sqrMagnitude <= 0.0001f) return;
+
         startPos = rb.position;
         velocity = offset.normalized * Speed;
         takingTime = offset.magnitude / Speed;
 
+        isPausingForAvoiding = false;
+        UpdateLastDirectionFromVelocity();
         Moving = true;
+        ApplyMoveAnimation(true);
     }
 
     // 주어진 좌표로 이동
@@ -95,12 +120,16 @@ public class NPCMove : MonoBehaviour
     // NPC 일시정지
     public void Idle() {
         Moving = false;
+        isPausingForAvoiding = true;
+        ApplyMoveAnimation(false);
     }
 
     // NPC 완전정지
     public void Stop() {
         Moving = false;
+        isPausingForAvoiding = false;
         takingTime = 0;
+        ApplyMoveAnimation(false);
     }
 
     public bool OverlapingColliderExist() {
@@ -125,7 +154,50 @@ public class NPCMove : MonoBehaviour
     // NPC 움직임 재게
     public void Resume() {
         if(Moving || takingTime==0) return;
+        isPausingForAvoiding = false;
         Moving = true;
+        ApplyMoveAnimation(true);
+    }
+
+
+    private void UpdateLastDirectionFromVelocity() {
+        if(velocity.sqrMagnitude <= 0.0001f) return;
+
+        if(Mathf.Abs(velocity.x) >= Mathf.Abs(velocity.y)) {
+            lastHAxisRaw = velocity.x >= 0f ? 1 : -1;
+            lastVAxisRaw = 0;
+        } else {
+            lastHAxisRaw = 0;
+            lastVAxisRaw = velocity.y >= 0f ? 1 : -1;
+        }
+    }
+
+    private void ApplyMoveAnimation(bool isChange) {
+        if(!canDriveAnimator || !anim) return;
+
+        anim.SetInteger(paramHAxisRaw, lastHAxisRaw);
+        anim.SetInteger(paramVAxisRaw, lastVAxisRaw);
+        anim.SetBool(paramIsChange, isChange && !isPausingForAvoiding);
+    }
+
+    private bool HasRequiredAnimatorParams() {
+        if(!driveAnimator) return false;
+        if(!anim) return false;
+        if(!strictAnimatorParamCheck) return true;
+
+        bool hasChange = false;
+        bool hasH = false;
+        bool hasV = false;
+
+        var pars = anim.parameters;
+        for(int i=0; i<pars.Length; i++) {
+            var p = pars[i];
+            if(p.name == paramIsChange && p.type == AnimatorControllerParameterType.Bool) hasChange = true;
+            else if(p.name == paramHAxisRaw && p.type == AnimatorControllerParameterType.Int) hasH = true;
+            else if(p.name == paramVAxisRaw && p.type == AnimatorControllerParameterType.Int) hasV = true;
+        }
+
+        return hasChange && hasH && hasV;
     }
 
     public Vector2 GetPosition() {
