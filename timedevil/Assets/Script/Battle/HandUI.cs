@@ -103,6 +103,9 @@ public class HandUI : MonoBehaviour
         var rt = BattleDeckRuntime.Instance;
         if (rt == null) return;
 
+        bool restoreSelectMode = selecting;
+        int restoreSelectIndex = selectIndex;
+
         handIdsSnapshot.Clear();
         var live = rt.GetHandIds();
         if (live != null) handIdsSnapshot.AddRange(live);
@@ -159,7 +162,18 @@ public class HandUI : MonoBehaviour
             rtItem.sizeDelta = new Vector2(cardWidth, rtItem.sizeDelta.y);
         }
 
-        ExitSelectMode();
+        if (restoreSelectMode && n > 0)
+        {
+            selecting = true;
+            if (select) select.gameObject.SetActive(true);
+            selectIndex = -1;
+            SetSelectIndexPublic(Mathf.Clamp(restoreSelectIndex, 0, n - 1));
+        }
+        else
+        {
+            ExitSelectMode();
+        }
+
         ShowCards();
     }
 
