@@ -51,6 +51,15 @@ public class CostController : MonoBehaviour
         return true;
     }
 
+    public int ReduceCurrent(int amount)
+    {
+        amount = Mathf.Max(0, amount);
+        int reduced = Mathf.Min(Current, amount);
+        Current -= reduced;
+        RefreshUI();
+        return reduced;
+    }
+
     public void Refund(int amount)
     {
         if (amount <= 0) return;

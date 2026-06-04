@@ -16,6 +16,7 @@ public class EnemyTurnController : MonoBehaviour
     [SerializeField] private DrawController drawController;
     [SerializeField] private MoveController moveController;   //  추가: Move 실행
     [SerializeField] private AttackController attackController;
+    [SerializeField] private SupportController supportController;
 
 
 
@@ -36,6 +37,7 @@ public class EnemyTurnController : MonoBehaviour
         if (!drawController) drawController = FindObjectOfType<DrawController>(true); //  자동 결선
         if (!moveController) moveController = FindObjectOfType<MoveController>(true);   //  자동 결선
         if (!attackController) attackController = FindObjectOfType<AttackController>(true); //  자동 결선
+        if (!supportController) supportController = FindObjectOfType<SupportController>(true);
 
 
 
@@ -78,6 +80,17 @@ public class EnemyTurnController : MonoBehaviour
                 yield break;
             }
 
+            // SO 가져오기 (타입 분기용)
+            BaseCardSO so = cardDatabase ? cardDatabase.GetById(playableId) : null;
+
+            if (so is DrawCardSO precheckDraw && drawController != null &&
+                !drawController.CanExecute(precheckDraw, Faction.Enemy, selfCardsAlreadyCommitted: 1, out string drawFailMessage))
+            {
+                desc?.ShowOneShotMessage(drawFailMessage);
+                Debug.LogWarning($"[EnemyTurn] Draw 카드 발동 실패: {drawFailMessage}");
+                yield break;
+            }
+
             if (!cost.TryPay(playableCost))
             {
                 Debug.LogWarning("[EnemyTurn] 코스트 지불 실패 → 턴 종료");
@@ -85,9 +98,6 @@ public class EnemyTurnController : MonoBehaviour
             }
 
             Debug.Log($"[EnemyTurn] Play '{playableId}' (cost={playableCost})");
-
-            // SO 가져오기 (타입 분기용)
-            BaseCardSO so = cardDatabase ? cardDatabase.GetById(playableId) : null;
 
             //  설명(explanation) 고정: (explanation > display > displayName > id)
             if (desc && so)
@@ -99,12 +109,19 @@ public class EnemyTurnController : MonoBehaviour
                 desc.ShowTemporaryExplanation(line);
             }
 
+            bool usedCardMovedToBottom = false;
+
             //  효과 실행: Draw 카드면 적 진영으로 실행 (cap 무시)
             if (so is DrawCardSO dso && drawController != null)
             {
                 // (권장 UX) 먼저 프리뷰를 보여주고 …
                 if (showCard != null) yield return showCard.PreviewById(playableId, previewSeconds);
                 else yield return null;
+
+                // 플레이어 카드 사용 흐름과 맞춰, 효과 처리 전에 사용 카드를 손패에서 제거합니다.
+                enemyDeck.UseCardToBottom(playableIndex);
+                usedCardMovedToBottom = true;
+                yield return null;
 
                 // … 그 다음 Draw 효과를 '완료될 때까지' 실행
                 yield return drawController.Execute(dso, Faction.Enemy);
@@ -127,6 +144,13 @@ public class EnemyTurnController : MonoBehaviour
                 yield return attackController.Execute(aso, Faction.Enemy, Faction.Player);
                 OnEnemyAttackWindowChanged?.Invoke(false);
             }
+            else if (so is SupportCardSO sso && supportController != null)
+            {
+                if (showCard != null) yield return showCard.PreviewById(playableId, previewSeconds);
+                else yield return null;
+
+                yield return supportController.Execute(sso, Faction.Enemy, Faction.Player);
+            }
             else
                     {
                 // Draw가 아닌 카드면 기존 프리뷰 로직
@@ -138,7 +162,8 @@ public class EnemyTurnController : MonoBehaviour
             if (desc) desc.ClearTemporaryMessage();
 
             //  사용한 카드는 덱 맨 아래로
-            enemyDeck.UseCardToBottom(playableIndex);
+            if (!usedCardMovedToBottom)
+                enemyDeck.UseCardToBottom(playableIndex);
 
             // (선택) 적 손패 UI 새로고침이 필요하면 여기서 호출
             // var ui = FindObjectOfType<EnemyHandUI>(true);
