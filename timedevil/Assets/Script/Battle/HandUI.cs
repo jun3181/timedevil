@@ -7,12 +7,14 @@ public class HandUI : MonoBehaviour
     [Header("Refs")]
     [SerializeField] private RectTransform row;
     [SerializeField] private GameObject cardPrefab;
+    [SerializeField] private CardDatabaseSO cardDatabase;
     [SerializeField] private string resourcesFolder = "my_asset";
 
     [Header("Layout (single row, left aligned)")]
     [SerializeField] private float leftPadding = 8f;
     [SerializeField] private float rightPadding = 8f;
     [SerializeField] private float cardWidth = 120f;
+    [SerializeField] private float cardSpacing = 150f;
 
     [Header("Select Overlay")]
     [SerializeField] private RectTransform select;
@@ -83,7 +85,7 @@ public class HandUI : MonoBehaviour
         {
             float maxSpan = Mathf.Max(0f, usable - cardWidth);
             float needed = maxSpan / (n - 1);
-            step = Mathf.Min(cardWidth, Mathf.Max(0f, needed));
+            step = Mathf.Min(cardSpacing, Mathf.Max(0f, needed));
         }
 
         ClearSpawned();
@@ -94,10 +96,21 @@ public class HandUI : MonoBehaviour
             go.name = $"HandCard_{id}";
             spawned.Add(go);
 
-            var img = go.GetComponentInChildren<Image>() ?? go.AddComponent<Image>();
-            img.sprite = !string.IsNullOrEmpty(id) ? Resources.Load<Sprite>($"{resourcesFolder}/{id}") : null;
-            img.preserveAspect = true;
-            img.raycastTarget = true;
+            Sprite fallbackSprite = !string.IsNullOrEmpty(id) ? Resources.Load<Sprite>($"{resourcesFolder}/{id}") : null;
+            BaseCardSO card = cardDatabase ? cardDatabase.GetById(id) : null;
+
+            var templateView = go.GetComponentInChildren<CardTemplateView>(true);
+            if (templateView)
+            {
+                templateView.Bind(card, fallbackSprite);
+            }
+            else
+            {
+                var img = go.GetComponentInChildren<Image>() ?? go.AddComponent<Image>();
+                img.sprite = fallbackSprite;
+                img.preserveAspect = true;
+                img.raycastTarget = true;
+            }
 
             var rtItem = (RectTransform)go.transform;
             rtItem.anchorMin = rtItem.anchorMax = new Vector2(0f, 0.5f);

@@ -113,6 +113,46 @@ public class HPController : MonoBehaviour
         }
     }
 
+    public void Heal(Faction target, int amount)
+    {
+        amount = Mathf.Max(0, amount);
+        if (amount <= 0) return;
+
+        if (enemyData == null) enemyData = EnemyRuntime.Instance ?? FindObjectOfType<EnemyRuntime>(true);
+        if (playerData == null) playerData = PlayerDataRuntime.Instance ?? FindObjectOfType<PlayerDataRuntime>(true);
+        if (_hpUI == null) _hpUI = FindObjectOfType<HPUIBinder>(true);
+
+        if (target == Faction.Player)
+        {
+            var pd = playerData?.Data;
+            if (pd != null)
+            {
+                int cur = ReadIntFrom(pd, "currentHP");
+                int max = ReadIntFrom(pd, "maxHP");
+                cur = Mathf.Clamp(cur + amount, 0, Mathf.Max(1, max));
+                WriteIntFieldOrProp(pd, "currentHP", cur);
+                Debug.Log($"[HP] Player +{amount} -> {cur}");
+                _hpUI?.Refresh();
+            }
+            else
+            {
+                Debug.LogWarning("[HPController] PlayerDataRuntime.Data is null");
+            }
+        }
+        else
+        {
+            if (enemyData != null)
+            {
+                enemyData.Heal(amount);
+                Debug.Log($"[HP] Enemy +{amount} -> {enemyData.currentHP}");
+            }
+            else
+            {
+                Debug.LogWarning("[HPController] EnemyRuntime is null");
+            }
+        }
+    }
+
     public Vector3 GetWorldPositionOfPawn(Faction who)
     {
         if (who == Faction.Player && playerPawn) return playerPawn.position;

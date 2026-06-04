@@ -1,8 +1,11 @@
+using System;
 using System.Collections;
 using UnityEngine;
 
 public class MoveController : MonoBehaviour
 {
+    public event Action<Faction, Vector2Int> OnGridChanged;
+
     [Header("Grid")]
     [SerializeField] private int rows = 4;
     [SerializeField] private int cols = 4;
@@ -73,6 +76,8 @@ public class MoveController : MonoBehaviour
                 enemyPawn.position = RCToWorld(rc, enemyGridOrigin, originRow_Enemy, originCol_Enemy, keepPawnZ ? enemyPawnZ : enemyPawn.position.z);
             ApplySorting(enemyPawn, enemySortingOrder);
         }
+
+        OnGridChanged?.Invoke(who, rc);
     }
 
     public Vector2Int GetGrid(Faction who) => (who == Faction.Player) ? playerRC : enemyRC;

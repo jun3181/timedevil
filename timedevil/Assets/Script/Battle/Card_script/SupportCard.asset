@@ -15,16 +15,22 @@ MonoBehaviour:
   id: 
   displayName: 
   type: 1
-  display: 
-  explanation: 
+  display: 12
+  explanation: 12
   cost: 1
   positive: 0
   negative: 0
-  action: 0
+  action: 1
   debuffStat: 0
   debuffAmount: 0
   debuffTurn: 0
   debuffTickDamage: 0
   buffStat: 0
-  buffAmount: 0
-  buffTurn: 0
+  buffAmount: 2
+  buffTurn: 2
+  antiCostAmount: 1
+  antiCostTurn: 1
+  enablePositionDebug: 0
+  positionTarget: 0
+  positionPattern16: 1111111111111111
+  positionDebugOneShot: 1

@@ -27,12 +27,23 @@ public class NPCMove : MonoBehaviour
     private Vector2 startPos;
     private Vector2 velocity;
     private float takingTime;
+
+    private Vector2 colliderGlobalOffset = new();
+    // private Vector2 collisionDetectionPadding = new(0.02f, 0.02f);
+    /* 이동할 영역에 콜라이더가 있으면 NPC는 정지하는데,
+     * 콜라이더를 감지할 영역을 축소하는 역할을 함
+     * 패딩을 적용할 경우 플레이어가 옆에서 부딪힐 때 정지하지 않음
+     */
+
     void Awake() {
         movementPriority = ++NPCCount;
 
         rb = GetComponent<Rigidbody2D>();
         rb.bodyType = RigidbodyType2D.Kinematic;
         collider = GetComponent<Collider2D>();
+        
+        colliderGlobalOffset.x = collider.offset.x * transform.localScale.x;
+        colliderGlobalOffset.y = collider.offset.y * transform.localScale.y;
     }
 
     void FixedUpdate() {
@@ -41,17 +52,18 @@ public class NPCMove : MonoBehaviour
             float takenTime = (newPos - startPos).magnitude / Speed;
 
             Collider2D[] results = new Collider2D[2];
-            Vector3 colliderCenter = (Vector3)newPos + (Vector3)collider.offset;
-            int newContactCount = Physics2D.OverlapAreaNonAlloc(colliderCenter + collider.bounds.extents, colliderCenter - collider.bounds.extents, results);
-            
-            if(newContactCount>1) {
+            Vector2 newColliderCenter = newPos + colliderGlobalOffset;
+            int newContactCount = Physics2D.OverlapAreaNonAlloc(newColliderCenter + (Vector2)collider.bounds.extents, newColliderCenter - (Vector2)collider.bounds.extents, results);
+            if(debuged) Debug.DrawLine(newColliderCenter + (Vector2)collider.bounds.extents, newColliderCenter - (Vector2)collider.bounds.extents, Color.cyan);
+
+            if(newContactCount > 1) {
                 if(debuged) Debug.Log($"{gameObject.name}이 {GetPosition()}위치에서 충돌을 회피하기 위해 움직임을 멈춤");
                 if(CanStandbyForAvoiding) {
                     Idle();
                 } else {
                     Stop();
                 }
-            } else if(takenTime >= takingTime || newPos==rb.position) {
+            } else if(takenTime >= takingTime || newPos == rb.position) {
                 rb.MovePosition(startPos + velocity * takingTime);
                 Stop();
             } else {
@@ -117,7 +129,7 @@ public class NPCMove : MonoBehaviour
     }
 
     public Vector2 GetPosition() {
-        return collider.bounds.center;
+        return transform.position;
     }
 
     public Collider2D GetCollider2D() {
