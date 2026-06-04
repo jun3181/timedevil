@@ -173,15 +173,10 @@ public class PanelController : MonoBehaviour
         if (cur != lastTurnState)
         {
             bool enemyToPlayer = (lastTurnState == TurnState.EnemyTurn && cur == TurnState.PlayerTurn);
-            bool playerToEnemy = (lastTurnState == TurnState.PlayerTurn && cur == TurnState.EnemyTurn);
             if (enemyToPlayer && (pendingReturnByEnd || isGameplayView))
             {
                 SetGameplayViewDelayed(false, turnTransitionDelay);
                 pendingReturnByEnd = false;
-            }
-            else if (playerToEnemy && isGameplayView)
-            {
-                SetGameplayViewDelayed(false, turnTransitionDelay);
             }
             lastTurnState = cur;
         }

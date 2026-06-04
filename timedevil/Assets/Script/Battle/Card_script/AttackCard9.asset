@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: AttackCard9
   type: 0
   display: "[\uC8C4\uCC45\uAC10]"
-  explanation: "죄책감이 짓누른다"
+  explanation: "미안해. 이 말로는 아무것도 갚을 수 없지만."
   mainArtwork: {fileID: 21300000, guid: 859428c371eccb648bc5a336f2cb1315, type: 3}
   arrowArtwork: {fileID: 0}
   effectTextOverride: "공격칸: 4"

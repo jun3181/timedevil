@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: AttackCard2
   type: 0
   display: "[\uAC10\uC0AC]"
-  explanation: "감사함을 느낀다"
+  explanation: "고마운데... 그 마음이 나를 더 흔들어."
   mainArtwork: {fileID: 21300000, guid: 34a95a7a6cc59ed4585fa25c84d67554, type: 3}
   arrowArtwork: {fileID: 0}
   effectTextOverride: "공격칸: 4"

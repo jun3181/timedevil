@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: MoveCard2
   type: 3
   display: "[\uC5F4\uC815]\n\uC704\uCABD\uC73C\uB85C \uD55C \uCE78 \uC774\uB3D9"
-  explanation: 
+  explanation: "뜨거운 마음이 나를 위로 밀어 올려."
   cost: 1
   positive: 0
   negative: 0

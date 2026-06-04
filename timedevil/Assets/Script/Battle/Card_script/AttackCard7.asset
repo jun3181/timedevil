@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: AttackCard7
   type: 0
   display: "[\uC790\uC2E0\uAC10]"
-  explanation: "자신감이 넘쳐난다"
+  explanation: "이번엔 내가 해낼 수 있다고 말하고 싶어."
   mainArtwork: {fileID: 21300000, guid: 0da042f0c50d264499e486cf7a21cc61, type: 3}
   arrowArtwork: {fileID: 0}
   effectTextOverride: "공격칸: 6"

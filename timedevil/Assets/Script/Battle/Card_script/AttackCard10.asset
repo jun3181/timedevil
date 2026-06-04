@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: AttackCard10
   type: 0
   display: "[\uC6A9\uAE30]"
-  explanation: "용기를 낸다"
+  explanation: "무서워도 앞으로 나아가야 해."
   mainArtwork: {fileID: 21300000, guid: 57203bb7c25464248bafefb4bed27180, type: 3}
   arrowArtwork: {fileID: 0}
   effectTextOverride: "공격칸: 6"

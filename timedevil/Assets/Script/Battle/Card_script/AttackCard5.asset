@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: AttackCard5
   type: 0
   display: "[\uC9C8\uD22C]"
-  explanation: "질투심이 커진다"
+  explanation: "나도 저렇게 빛나고 싶었어."
   mainArtwork: {fileID: 21300000, guid: b135f33ba985e004aa72bb50d01ee618, type: 3}
   arrowArtwork: {fileID: 0}
   effectTextOverride: "공격칸: 6"

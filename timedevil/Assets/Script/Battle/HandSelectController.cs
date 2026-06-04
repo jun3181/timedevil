@@ -87,7 +87,6 @@ public class HandSelectController : MonoBehaviour
                 {
                     int idx = hand.CurrentSelectIndex;
                     bdr.DiscardToBottom(idx);       // 덱 밑으로 보냄
-                    hand.RebuildFromHand();         // UI 갱신(인덱스 보정 포함)
 
                     int over = bdr.OverCapCount;
                     if (TurnManager.Instance) TurnManager.Instance.OnPlayerDiscardOne(over);

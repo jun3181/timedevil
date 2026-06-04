@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: MoveCard8
   type: 3
   display: "[\uC6B0\uC6B8]\n\uC544\uB798\uCABD\uC73C\uB85C \uB450 \uCE78 \uC774\uB3D9"
-  explanation: 
+  explanation: "몸이 가라앉아. 아래로, 더 아래로."
   cost: 2
   positive: 0
   negative: 0

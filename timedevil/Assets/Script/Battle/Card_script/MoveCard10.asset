@@ -17,7 +17,7 @@ MonoBehaviour:
   type: 3
   display: "[\uACF5\uD3EC]\n\uC0C1\uB300\uB97C \uC624\uB978\uCABD\uC73C\uB85C \uD55C
     \uCE78 \uC774\uB3D9"
-  explanation: 
+  explanation: "다가오지 마. 제발, 저쪽으로 가 줘."
   cost: 1
   positive: 0
   negative: 0

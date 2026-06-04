@@ -39,7 +39,7 @@ public class MoveController : MonoBehaviour
     [SerializeField] private AnimationCurve ease = AnimationCurve.EaseInOut(0, 0, 1, 1);
     [SerializeField] private Animator playerAnimator;
     [SerializeField] private Animator enemyAnimator;
-    [SerializeField] private string moveTriggerName = "Move";
+    [SerializeField] private string chapter1RightWalkStateName = "Player_Right_Walk";
 
     [Header("UI Lock")]
     [SerializeField] private BattleMenuController menu;
@@ -147,25 +147,10 @@ public class MoveController : MonoBehaviour
             yield break;
         }
 
-        // ▶ 애니 파라미터 세팅(변수 이름 충돌 방지)
-        int animDir;
-        if (endRC.y < curRC.y) animDir = 2; // Left
-        else if (endRC.y > curRC.y) animDir = 3; // Right
-        else if (endRC.x < curRC.x) animDir = 0; // Up
-        else animDir = 1; // Down
-        if (anim)
-        {
-            anim.SetInteger("Dir", animDir);
-            anim.SetBool("Moving", true);
-
-            float animDuration = Mathf.Max(0.001f, perCellSeconds * cellsDistance);
-            anim.SetFloat("MoveSpeed", 1f / animDuration);
-        }
+        // Play chapter1's right-walk animation only while this move tween is running.
+        BattleMoveAnimatorSnapshot animSnapshot = BeginMoveAnimation(anim);
 
         Vector3 endPos = RCToWorld(endRC, origin, oRow, oCol, keepPawnZ ? ((target == Faction.Player) ? playerPawnZ : enemyPawnZ) : startPos.z);
-
-        if (anim && !string.IsNullOrEmpty(moveTriggerName))
-            anim.SetTrigger(moveTriggerName);
 
         float tweenDuration = perCellSeconds * Mathf.Max(1, cellsDistance);
 
@@ -182,7 +167,7 @@ public class MoveController : MonoBehaviour
 
         SetGrid(target, endRC.x, endRC.y, snap: false);
 
-        if (anim) anim.SetBool("Moving", false);
+        EndMoveAnimation(anim, animSnapshot);
 
         if (_ownsTempMessage && desc) desc.ClearTemporaryMessage();
         if (menu) menu.EnableInput(true);
@@ -190,16 +175,6 @@ public class MoveController : MonoBehaviour
 
 
     // ===== 유틸 =====
-    // 1) 유틸: Dir4 -> Animator Dir(Int) 매핑
-    private static int DirToAnimInt(Dir4 d) => d switch
-    {
-        Dir4.Up => 0,
-        Dir4.Down => 1,
-        Dir4.Left => 2,
-        Dir4.Right => 3,
-        _ => 0
-    };
-
     // 방향 → 그리드 델타 (부호 수정: Left -, Right +)
     private static Vector2Int DirToDelta(Dir4 d) => d switch
     {
@@ -265,5 +240,110 @@ public class MoveController : MonoBehaviour
         var srs = pawn.GetComponentsInChildren<SpriteRenderer>(true);
         for (int i = 0; i < srs.Length; i++)
             srs[i].sortingOrder = order;
+    }
+
+    private BattleMoveAnimatorSnapshot BeginMoveAnimation(Animator anim)
+    {
+        var snapshot = new BattleMoveAnimatorSnapshot(anim);
+        if (!anim) return snapshot;
+
+        anim.enabled = true;
+        SetAnimatorIntegerIfExists(anim, "hAxisRaw", 1);
+        SetAnimatorIntegerIfExists(anim, "vAxisRaw", 0);
+        SetAnimatorBoolIfExists(anim, "isChange", true);
+
+        if (!string.IsNullOrEmpty(chapter1RightWalkStateName))
+            anim.Play(chapter1RightWalkStateName, 0, 0f);
+
+        anim.Update(0f);
+
+        return snapshot;
+    }
+
+    private void EndMoveAnimation(Animator anim, BattleMoveAnimatorSnapshot snapshot)
+    {
+        if (!anim) return;
+
+        SetAnimatorBoolIfExists(anim, "isChange", false);
+
+        if (snapshot.HasHAxisRaw)
+            anim.SetInteger("hAxisRaw", snapshot.HAxisRaw);
+
+        if (snapshot.HasVAxisRaw)
+            anim.SetInteger("vAxisRaw", snapshot.VAxisRaw);
+
+        anim.enabled = snapshot.AnimatorWasEnabled;
+
+        snapshot.RestoreSprites();
+    }
+
+    private static void SetAnimatorBoolIfExists(Animator anim, string parameterName, bool value)
+    {
+        if (HasAnimatorParameter(anim, parameterName, AnimatorControllerParameterType.Bool))
+            anim.SetBool(parameterName, value);
+    }
+
+    private static void SetAnimatorIntegerIfExists(Animator anim, string parameterName, int value)
+    {
+        if (HasAnimatorParameter(anim, parameterName, AnimatorControllerParameterType.Int))
+            anim.SetInteger(parameterName, value);
+    }
+
+    private static bool HasAnimatorParameter(Animator anim, string parameterName, AnimatorControllerParameterType type)
+    {
+        if (anim == null || string.IsNullOrEmpty(parameterName)) return false;
+
+        var parameters = anim.parameters;
+        for (int i = 0; i < parameters.Length; i++)
+        {
+            var parameter = parameters[i];
+            if (parameter.type == type && parameter.name == parameterName)
+                return true;
+        }
+
+        return false;
+    }
+
+    private readonly struct BattleMoveAnimatorSnapshot
+    {
+        public readonly bool AnimatorWasEnabled;
+        public readonly bool HasHAxisRaw;
+        public readonly int HAxisRaw;
+        public readonly bool HasVAxisRaw;
+        public readonly int VAxisRaw;
+        private readonly SpriteRenderer[] spriteRenderers;
+        private readonly Sprite[] sprites;
+
+        public BattleMoveAnimatorSnapshot(Animator anim)
+        {
+            AnimatorWasEnabled = anim != null && anim.enabled;
+            HasHAxisRaw = HasAnimatorParameter(anim, "hAxisRaw", AnimatorControllerParameterType.Int);
+            HAxisRaw = HasHAxisRaw ? anim.GetInteger("hAxisRaw") : 0;
+            HasVAxisRaw = HasAnimatorParameter(anim, "vAxisRaw", AnimatorControllerParameterType.Int);
+            VAxisRaw = HasVAxisRaw ? anim.GetInteger("vAxisRaw") : 0;
+
+            spriteRenderers = anim ? anim.GetComponentsInChildren<SpriteRenderer>(true) : null;
+            if (spriteRenderers == null || spriteRenderers.Length == 0)
+            {
+                sprites = null;
+                return;
+            }
+
+            sprites = new Sprite[spriteRenderers.Length];
+            for (int i = 0; i < spriteRenderers.Length; i++)
+                sprites[i] = spriteRenderers[i] ? spriteRenderers[i].sprite : null;
+        }
+
+        public void RestoreSprites()
+        {
+            if (spriteRenderers == null || sprites == null) return;
+
+            int count = Mathf.Min(spriteRenderers.Length, sprites.Length);
+            for (int i = 0; i < count; i++)
+            {
+                if (spriteRenderers[i])
+                    spriteRenderers[i].sprite = sprites[i];
+            }
+        }
     }
 }

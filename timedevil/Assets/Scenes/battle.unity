@@ -231,6 +231,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   row: {fileID: 0}
   cardPrefab: {fileID: 1448559822}
+  cardDatabase: {fileID: 0}
   resourcesFolder: my_asset
   leftPadding: 5
   rightPadding: 5
@@ -1806,6 +1807,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   useImage: {fileID: 1522580513}
+  cardDatabase: {fileID: 0}
   resourcesFolder: my_asset
   maxPreviewSize: {x: 130, y: 200}
   fadeIn: 0.35
@@ -6169,7 +6171,7 @@ MonoBehaviour:
     m_RotationOrder: 4
   playerAnimator: {fileID: 2084521563}
   enemyAnimator: {fileID: 0}
-  moveTriggerName: Move
+  chapter1RightWalkStateName: Player_Right_Walk
   menu: {fileID: 1069897049}
   desc: {fileID: 1069897052}
 --- !u!114 &1201525411
@@ -11131,7 +11133,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 1445616784, guid: 87d139481be180d489cc61d75fc37661, type: 3}
+  m_Sprite: {fileID: 549295704, guid: 87d139481be180d489cc61d75fc37661, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -11790,7 +11792,7 @@ Animator:
   m_GameObject: {fileID: 2084521560}
   m_Enabled: 0
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 66b2d0b0bf6bda748b8d6f0cef92c9ef, type: 2}
+  m_Controller: {fileID: 9100000, guid: 713e7ae13e685944d92a6924f04c2277, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0

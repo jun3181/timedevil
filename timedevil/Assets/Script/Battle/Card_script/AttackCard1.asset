@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: AttackCard1
   type: 0
   display: "[\uBD88\uC548]"
-  explanation: "불안이 엄습한다"
+  explanation: "불안해서 가만히 있을 수가 없어."
   mainArtwork: {fileID: 21300000, guid: 09c421a116dd69e4b9d6cb687742c6ec, type: 3}
   arrowArtwork: {fileID: 0}
   effectTextOverride: "공격칸: 4"

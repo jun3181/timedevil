@@ -6,6 +6,7 @@ public class ShowCardController : MonoBehaviour
 {
     [Header("Target")]
     [SerializeField] private Image useImage;                 // ShowCard 안의 이미지
+    [SerializeField] private CardDatabaseSO cardDatabase;
     [SerializeField] private string resourcesFolder = "my_asset";
     [SerializeField] private Vector2 maxPreviewSize = new Vector2(130f, 200f);
 
@@ -16,6 +17,40 @@ public class ShowCardController : MonoBehaviour
     private CanvasGroup cg;
     private RectTransform imageRect;
 
+    private void EnsureCardDatabase()
+    {
+        if (cardDatabase) return;
+
+        var orchestrator = FindObjectOfType<CardUseOrchestrator>(true);
+        if (orchestrator && orchestrator.CardDatabase)
+            cardDatabase = orchestrator.CardDatabase;
+    }
+
+    private Sprite ResolveSprite(string id)
+    {
+        if (string.IsNullOrEmpty(id)) return null;
+
+        EnsureCardDatabase();
+        BaseCardSO card = cardDatabase ? cardDatabase.GetById(id) : null;
+        if (card && card.mainArtwork) return card.mainArtwork;
+
+        Sprite sprite = Resources.Load<Sprite>($"{resourcesFolder}/{id}");
+        if (sprite) return sprite;
+
+        string typeFolder = GetCardTypeFolder(id);
+        return !string.IsNullOrEmpty(typeFolder)
+            ? Resources.Load<Sprite>($"{resourcesFolder}/{typeFolder}/{id}")
+            : null;
+    }
+
+    private static string GetCardTypeFolder(string id)
+    {
+        if (id.StartsWith("AttackCard")) return "AttackCard";
+        if (id.StartsWith("DrawCard")) return "DrawCard";
+        if (id.StartsWith("MoveCard")) return "MoveCard";
+        return null;
+    }
+
     void Reset()
     {
         if (!useImage) useImage = GetComponentInChildren<Image>(true);
@@ -24,6 +59,7 @@ public class ShowCardController : MonoBehaviour
     void Awake()
     {
         if (!useImage) useImage = GetComponentInChildren<Image>(true);
+        EnsureCardDatabase();
         if (useImage) imageRect = useImage.rectTransform;
         cg = GetComponent<CanvasGroup>();
         if (!cg) cg = gameObject.AddComponent<CanvasGroup>();
@@ -39,7 +75,7 @@ public class ShowCardController : MonoBehaviour
     {
         if (!useImage) yield break;
 
-        Sprite sp = string.IsNullOrEmpty(id) ? null : Resources.Load<Sprite>($"{resourcesFolder}/{id}");
+        Sprite sp = ResolveSprite(id);
         useImage.sprite = sp;
         useImage.preserveAspect = true;
         useImage.enabled = sp != null;

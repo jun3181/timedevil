@@ -15,10 +15,18 @@ MonoBehaviour:
   id: DrawCard7
   displayName: "\uACBD\uBA78"
   type: 2
-  display: 
-  explanation: 
+  display: "[\uACBD\uBA78]\n\uC0C1\uB300\uC758 \uCE74\uB4DC 2\uC7A5\uC744 \uBC84\uB9B0\uB2E4."
+  explanation: "\uB098\uB3C4 \uC800\uB7F0 \uC9D3\uC740 \uC548\uD558\uB294\uB370."
+  mainArtwork: {fileID: 0}
+  arrowArtwork: {fileID: 0}
+  effectTextOverride: 
   cost: 1
   positive: 0
   negative: 3
   drawMode: 1
   amount: 2
+  refreshDiscardAmount: 1
+  refreshDrawAmount: 2
+  handEffectSequence:
+  - effectType: 1
+    amount: 1
