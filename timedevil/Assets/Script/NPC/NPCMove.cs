@@ -114,6 +114,7 @@ public class NPCMove : MonoBehaviour
         isPausingForAvoiding = false;
         UpdateLastDirectionFromVelocity();
         Moving = true;
+
         ApplyMoveAnimation(true);
     }
 
@@ -165,7 +166,6 @@ public class NPCMove : MonoBehaviour
         Moving = true;
         ApplyMoveAnimation(true);
     }
-
 
     private void UpdateLastDirectionFromVelocity() {
         if(velocity.sqrMagnitude <= 0.0001f) return;
