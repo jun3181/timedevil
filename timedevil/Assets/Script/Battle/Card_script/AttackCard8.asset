@@ -1,4 +1,4 @@
-﻿%YAML 1.1
+%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!114 &11400000
 MonoBehaviour:
@@ -16,10 +16,10 @@ MonoBehaviour:
   displayName: AttackCard8
   type: 0
   display: "[\uC2E0\uB8B0]"
-  explanation: "신뢰가 쌓인다"
+  explanation: "\uC2E0\uB8B0\uAC00 \uC313\uC778\uB2E4"
   mainArtwork: {fileID: 21300000, guid: fdecb3f4d91220548b314b7a4da90d0c, type: 3}
   arrowArtwork: {fileID: 0}
-  effectTextOverride: "공격칸: 8"
+  effectTextOverride: "\uACF5\uACA9\uCE78: 8"
   cost: 3
   positive: 8
   negative: 0
@@ -81,7 +81,8 @@ MonoBehaviour:
     projectileScale: 0
     labelsA: 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
     labelsB: 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-    explosionPrefab: {fileID: 1957720001998704, guid: 2a06d83ae8c0a7341a64faa85a9a3221, type: 3}
+    explosionPrefab: {fileID: 1957720001998704, guid: 2a06d83ae8c0a7341a64faa85a9a3221,
+      type: 3}
     explosionLifetime: 0.3
     explosionScale: 1
     clipKey: 
