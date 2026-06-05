@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f22452449156fa44981c0c8e88237897, type: 3}
+  m_Name: Enemy3
+  m_EditorClassIdentifier: 
+  enemyId: Enemy3
+  displayName: Enemy3
+  stateSprite: {fileID: -1447738478, guid: 92fa455d9cc74c84ea30d676273c3360, type: 3}
+  gameplaySprite: {fileID: -249255737, guid: 92fa455d9cc74c84ea30d676273c3360, type: 3}
+  maxHP: 60
+  baseATK: 5
+  baseDEF: 5
+  baseSPD: 10
+  deckIds:
+  - DrawCard10
+  - DrawCard4
+  - AttackCard8
+  - AttackCard9
+  - AttackCard10
+  - MoveCard5
+  - MoveCard3
+  - MoveCard7
+  - AttackCard2
+  - AttackCard1
+  - MoveCard10
+  - DrawCard3
+  - DrawCard1

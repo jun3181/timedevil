@@ -7,6 +7,8 @@ public class BattleCollisionTransition : MonoBehaviour
 {
     [Header("Battle")]
     [SerializeField] private string battleSceneName = "BattleScene";
+    [SerializeField] private EnemyDatabaseSO enemyDatabase;
+    [SerializeField] private EnemySO encounterEnemy;
     [SerializeField] private string enemyId = "Enemy1";
     [SerializeField] private Transform enemySnapshotTarget;
     [SerializeField] private Transform chasingObject;
@@ -57,6 +59,7 @@ public class BattleCollisionTransition : MonoBehaviour
     private static readonly System.Collections.Generic.Dictionary<string, float> _reenterBlockedUntil = new();
     private static readonly System.Collections.Generic.Dictionary<string, ForcedChasingState> _forceStateAfterReturn = new();
     private static DelayCoroutineRunner _delayRunner;
+    private static bool _returnRestoreHooked;
 
     private sealed class DelayCoroutineRunner : MonoBehaviour { }
 
@@ -66,10 +69,14 @@ public class BattleCollisionTransition : MonoBehaviour
         public bool hasValue;
         public Vector3 position;
         public Quaternion rotation;
+        public bool delayActivation;
+        public float activationDelaySeconds;
     }
 
     private void Start()
     {
+        SyncEnemyIdFromEncounterEnemy();
+
         if (playerTransform == null)
         {
             var pm = FindObjectOfType<PlayerMainManager>(true);
@@ -164,6 +171,8 @@ public class BattleCollisionTransition : MonoBehaviour
 
     private void EnterBattle(Transform player, string colliderName)
     {
+        string resolvedEnemyId = ResolveEnemyId();
+
         if (forceActivateChasingObject)
             SaveForcedChasingStateForReturn();
 
@@ -270,12 +279,41 @@ public class BattleCollisionTransition : MonoBehaviour
         );
 
         if (debugLog)
-            Debug.Log($"[BattleCollisionTransition] enter by '{colliderName}' -> scene='{battleSceneName}', enemyId='{enemyId}', returnPos=({returnPos.x:F2},{returnPos.y:F2}), camRestore={restoreCam}, camMode={camMode}");
+            Debug.Log($"[BattleCollisionTransition] enter by '{colliderName}' -> scene='{battleSceneName}', enemyId='{resolvedEnemyId}', returnPos=({returnPos.x:F2},{returnPos.y:F2}), camRestore={restoreCam}, camMode={camMode}");
 
-        BattleSceneLoader.Go(battleSceneName, enemyId, player, enemy);
+        BattleSceneLoader.Go(battleSceneName, resolvedEnemyId, player, enemy);
 
         if (disableAfterEnter)
             gameObject.SetActive(false);
+    }
+
+    private string ResolveEnemyId()
+    {
+        SyncEnemyIdFromEncounterEnemy();
+
+        string resolvedId = !string.IsNullOrWhiteSpace(enemyId) ? enemyId : "Enemy1";
+
+        if (enemyDatabase != null && enemyDatabase.GetById(resolvedId) == null)
+            Debug.LogWarning($"[BattleCollisionTransition] Enemy id '{resolvedId}' is not found in EnemyDatabaseSO.");
+
+        return resolvedId;
+    }
+
+    private void SyncEnemyIdFromEncounterEnemy()
+    {
+        if (encounterEnemy == null) return;
+        if (string.IsNullOrWhiteSpace(encounterEnemy.enemyId))
+        {
+            Debug.LogWarning("[BattleCollisionTransition] Encounter Enemy has an empty enemyId.");
+            return;
+        }
+
+        enemyId = encounterEnemy.enemyId;
+    }
+
+    private void OnValidate()
+    {
+        SyncEnemyIdFromEncounterEnemy();
     }
 
     private struct PauseState
@@ -343,13 +381,15 @@ public class BattleCollisionTransition : MonoBehaviour
     private void ApplyForcedReturnStateIfPending()
     {
         if (!forceActivateChasingObject) return;
-        if (chasingObject == null) return;
 
         string key = GetRuntimeKey();
         if (!_forceStateAfterReturn.TryGetValue(key, out ForcedChasingState state)) return;
 
-        if (!chasingObject.gameObject.activeSelf)
-            chasingObject.gameObject.SetActive(true);
+        if (chasingObject == null)
+        {
+            _forceStateAfterReturn.Remove(key);
+            return;
+        }
 
         if (state.hasValue)
         {
@@ -362,6 +402,11 @@ public class BattleCollisionTransition : MonoBehaviour
         _followArmedAfterReturn = true;
 
         _forceStateAfterReturn.Remove(key);
+
+        if (state.delayActivation)
+            GetDelayRunner().StartCoroutine(CoActivateAfterDelay(chasingObject.gameObject, state.activationDelaySeconds));
+        else if (!chasingObject.gameObject.activeSelf)
+            chasingObject.gameObject.SetActive(true);
 
         TryDelayEnemySnapshotTargetOnReturn();
 
@@ -379,18 +424,81 @@ public class BattleCollisionTransition : MonoBehaviour
         return _delayRunner;
     }
 
+    private static void EnsureReturnRestoreHook()
+    {
+        if (_returnRestoreHooked) return;
+
+        SceneManager.sceneLoaded += OnSceneLoadedApplyPendingReturnState;
+        _returnRestoreHooked = true;
+    }
+
+    private static void ReleaseReturnRestoreHook()
+    {
+        if (!_returnRestoreHooked) return;
+
+        SceneManager.sceneLoaded -= OnSceneLoadedApplyPendingReturnState;
+        _returnRestoreHooked = false;
+    }
+
+    private static void OnSceneLoadedApplyPendingReturnState(Scene scene, LoadSceneMode mode)
+    {
+        if (_forceStateAfterReturn.Count == 0)
+        {
+            ReleaseReturnRestoreHook();
+            return;
+        }
+
+        var transitions = Object.FindObjectsOfType<BattleCollisionTransition>(true);
+        for (int i = 0; i < transitions.Length; i++)
+        {
+            if (transitions[i] == null) continue;
+            transitions[i].ApplyForcedReturnStateIfPending();
+        }
+
+        if (_forceStateAfterReturn.Count == 0)
+            ReleaseReturnRestoreHook();
+    }
+
     private void TryDelayEnemySnapshotTargetOnReturn()
     {
         if (!delayEnemySnapshotTargetOnReturn) return;
         if (enemySnapshotTarget == null) return;
+        if (ShouldDelayChasingObjectOnReturn())
+            return;
 
         var enemyObj = enemySnapshotTarget.gameObject;
+        if (enemyObj == gameObject) return;
         if (!enemyObj.activeSelf) return;
 
         float wait = Mathf.Max(0f, enemySnapshotReactivateSeconds);
         if (wait <= 0f) return;
 
         GetDelayRunner().StartCoroutine(CoDelayEnemySnapshotTarget(enemyObj, wait));
+    }
+
+    private bool ShouldDelayChasingObjectOnReturn()
+    {
+        if (!delayEnemySnapshotTargetOnReturn) return false;
+        if (chasingObject == null || enemySnapshotTarget == null) return false;
+        if (enemySnapshotReactivateSeconds <= 0f) return false;
+
+        return enemySnapshotTarget == chasingObject ||
+               enemySnapshotTarget.IsChildOf(chasingObject) ||
+               chasingObject.IsChildOf(enemySnapshotTarget);
+    }
+
+    private static IEnumerator CoActivateAfterDelay(GameObject enemyObj, float wait)
+    {
+        if (enemyObj == null) yield break;
+
+        enemyObj.SetActive(false);
+        yield return new WaitForSecondsRealtime(Mathf.Max(0f, wait));
+
+        if (enemyObj != null)
+        {
+            enemyObj.SetActive(true);
+            Physics2D.SyncTransforms();
+        }
     }
 
     private IEnumerator CoDelayEnemySnapshotTarget(GameObject enemyObj, float wait)
@@ -400,7 +508,7 @@ public class BattleCollisionTransition : MonoBehaviour
         if (debugLog)
             Debug.Log($"[BattleCollisionTransition] disable enemySnapshotTarget for {wait:F2}s: '{enemyObj.name}'");
 
-        yield return new WaitForSeconds(wait);
+        yield return new WaitForSecondsRealtime(wait);
 
         if (enemyObj != null)
             enemyObj.SetActive(true);
@@ -425,6 +533,8 @@ public class BattleCollisionTransition : MonoBehaviour
 
     private void SaveForcedChasingStateForReturn()
     {
+        EnsureReturnRestoreHook();
+
         string key = GetRuntimeKey();
 
         if (chasingObject == null)
@@ -437,7 +547,9 @@ public class BattleCollisionTransition : MonoBehaviour
         {
             hasValue = true,
             position = chasingObject.position,
-            rotation = chasingObject.rotation
+            rotation = chasingObject.rotation,
+            delayActivation = ShouldDelayChasingObjectOnReturn(),
+            activationDelaySeconds = Mathf.Max(0f, enemySnapshotReactivateSeconds)
         };
     }
 

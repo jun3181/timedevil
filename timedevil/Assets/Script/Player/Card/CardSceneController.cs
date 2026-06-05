@@ -37,7 +37,10 @@ public class CardSceneController : MonoBehaviour
 
     void Start()
     {
-        var runtime = CardStateRuntime.Instance;
+        var runtime = EnsureCardStateRuntime();
+        if (runtime != null)
+            runtime.EnsureDefaultBattleCardsSaved();
+
         var data = runtime != null ? runtime.Data : new CardSaveData();
 
         var owned = data.owned ?? new List<string>();
@@ -105,41 +108,78 @@ public class CardSceneController : MonoBehaviour
             return;
         }
 
-        var list = inDeck ? deckSlots : cardSlots;
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            SwitchPanel();
+            return;
+        }
 
+        var list = inDeck ? deckSlots : cardSlots;
         if (list.Count == 0)
         {
             UpdateSelector();
             UpdateExplain();
-            if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.DownArrow))
-            {
-                inDeck = !inDeck;
-                currentIndex = 0;
-            }
             return;
         }
 
         if (Input.GetKeyDown(KeyCode.RightArrow))
         {
-            currentIndex = (currentIndex + 1) % list.Count;
-            UpdateSelector(); UpdateExplain();
+            MoveSelector(1, 0);
         }
         else if (Input.GetKeyDown(KeyCode.LeftArrow))
         {
-            currentIndex = (currentIndex - 1 + list.Count) % list.Count;
-            UpdateSelector(); UpdateExplain();
+            MoveSelector(-1, 0);
         }
-        else if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.DownArrow))
+        else if (Input.GetKeyDown(KeyCode.UpArrow))
         {
-            inDeck = !inDeck;
-            currentIndex = 0;
-            UpdateSelector(); UpdateExplain();
+            MoveSelector(0, -1);
+        }
+        else if (Input.GetKeyDown(KeyCode.DownArrow))
+        {
+            MoveSelector(0, 1);
         }
         else if (Input.GetKeyDown(KeyCode.E))
         {
             if (!inDeck) MoveCard_toDeck_and_RemoveFromCard();
             else MoveCard_toCard_and_RemoveFromDeck();
         }
+    }
+
+    void SwitchPanel()
+    {
+        inDeck = !inDeck;
+        currentIndex = 0;
+        UpdateSelector();
+        UpdateExplain();
+    }
+
+    void MoveSelector(int deltaColumn, int deltaRow)
+    {
+        var list = inDeck ? deckSlots : cardSlots;
+        if (list.Count == 0) return;
+
+        int columns = GetCurrentColumnCount();
+        int currentColumn = currentIndex % columns;
+
+        if (deltaColumn < 0 && currentColumn == 0) return;
+        if (deltaColumn > 0 && currentColumn >= columns - 1) return;
+
+        int next = currentIndex + deltaColumn + (deltaRow * columns);
+        if (next < 0 || next >= list.Count) return;
+
+        currentIndex = next;
+        UpdateSelector();
+        UpdateExplain();
+    }
+
+    int GetCurrentColumnCount()
+    {
+        Transform panel = inDeck ? deckPanel : cardPanel;
+        var grid = panel ? panel.GetComponent<GridLayoutGroup>() : null;
+        if (grid != null && grid.constraint == GridLayoutGroup.Constraint.FixedColumnCount)
+            return Mathf.Max(1, grid.constraintCount);
+
+        return 1;
     }
 
     // ----- 이동 로직 -----
@@ -209,19 +249,61 @@ public class CardSceneController : MonoBehaviour
         var slot = go.GetComponent<CardSlot>();
         if (!slot) slot = go.AddComponent<CardSlot>();
 
-        var sprite = Resources.Load<Sprite>($"{resourcesFolder}/{cardId}");
+        var sprite = LoadCardSprite(cardId);
         slot.Setup(cardId, sprite);
 
         list.Add(slot);
     }
 
+    CardStateRuntime EnsureCardStateRuntime()
+    {
+        if (CardStateRuntime.Instance != null)
+            return CardStateRuntime.Instance;
+
+        var go = new GameObject("CardStateRuntime (Auto)");
+        var runtime = go.AddComponent<CardStateRuntime>();
+        Debug.Log("[CardScene] Auto-created CardStateRuntime.");
+        return runtime;
+    }
+
+    Sprite LoadCardSprite(string cardId)
+    {
+        if (string.IsNullOrEmpty(cardId)) return null;
+
+        var sprite = Resources.Load<Sprite>($"{resourcesFolder}/{cardId}");
+        if (sprite) return sprite;
+
+        string typeFolder = GetCardTypeFolder(cardId);
+        if (!string.IsNullOrEmpty(typeFolder))
+            sprite = Resources.Load<Sprite>($"{resourcesFolder}/{typeFolder}/{cardId}");
+
+        if (!sprite)
+            Debug.LogWarning($"[CardScene] Card sprite not found: {cardId}");
+
+        return sprite;
+    }
+
+    static string GetCardTypeFolder(string cardId)
+    {
+        if (cardId.StartsWith("AttackCard")) return "AttackCard";
+        if (cardId.StartsWith("DrawCard")) return "DrawCard";
+        if (cardId.StartsWith("MoveCard")) return "MoveCard";
+        return null;
+    }
+
     void UpdateSelector()
     {
         var list = inDeck ? deckSlots : cardSlots;
-        if (list.Count == 0) return;
+        if (!selector) return;
+        if (list.Count == 0)
+        {
+            selector.gameObject.SetActive(false);
+            return;
+        }
 
+        selector.gameObject.SetActive(true);
         currentIndex = Mathf.Clamp(currentIndex, 0, list.Count - 1);
-        if (selector) selector.position = list[currentIndex].transform.position;
+        selector.position = list[currentIndex].transform.position;
     }
 
     void UpdateExplain()

@@ -45,6 +45,7 @@ public class NPCMove : MonoBehaviour
     private int appliedVAxisRaw;
     private bool appliedIsChange;
     private Coroutine idleAnimationCoroutine;
+    private bool holdWalkAnimationUntilExplicitStop;
 
     private Vector2 colliderGlobalOffset = new();
     // private Vector2 collisionDetectionPadding = new(0.02f, 0.02f);
@@ -127,6 +128,7 @@ public class NPCMove : MonoBehaviour
     public void Idle() {
         Moving = false;
         isPausingForAvoiding = true;
+        holdWalkAnimationUntilExplicitStop = false;
         CancelPendingIdleAnimation();
         ApplyMoveAnimation(false);
     }
@@ -136,6 +138,12 @@ public class NPCMove : MonoBehaviour
         Moving = false;
         isPausingForAvoiding = false;
         takingTime = 0;
+
+        if(holdWalkAnimationUntilExplicitStop) {
+            CancelPendingIdleAnimation();
+            return;
+        }
+
         ScheduleIdleAnimation();
     }
 
@@ -203,6 +211,21 @@ public class NPCMove : MonoBehaviour
 
         StopCoroutine(idleAnimationCoroutine);
         idleAnimationCoroutine = null;
+    }
+
+    public void BeginHeldWalkAnimation() {
+        holdWalkAnimationUntilExplicitStop = true;
+        CancelPendingIdleAnimation();
+    }
+
+    public void EndHeldWalkAnimation() {
+        holdWalkAnimationUntilExplicitStop = false;
+        CancelPendingIdleAnimation();
+
+        if(Moving) return;
+
+        isPausingForAvoiding = false;
+        ApplyMoveAnimation(false);
     }
 
     private void ApplyMoveAnimation(bool isChange) {

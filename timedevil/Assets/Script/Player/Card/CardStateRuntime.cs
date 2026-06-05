@@ -6,15 +6,12 @@ public class CardStateRuntime : MonoBehaviour
     public static CardStateRuntime Instance { get; private set; }
 
     //  덱 최대 장수
-    public const int MAX_DECK = 30;
+    public const int MAX_DECK = 13;
     private static readonly string[] DefaultCardIds =
     {
-        "AttackCard1", "AttackCard2", "AttackCard3", "AttackCard4", "AttackCard5",
-        "AttackCard6", "AttackCard7", "AttackCard8", "AttackCard9", "AttackCard10",
-        "DrawCard1", "DrawCard2", "DrawCard3", "DrawCard4", "DrawCard5",
-        "DrawCard6", "DrawCard7", "DrawCard8", "DrawCard9", "DrawCard10",
-        "MoveCard1", "MoveCard2", "MoveCard3", "MoveCard4", "MoveCard5",
-        "MoveCard6", "MoveCard7", "MoveCard8", "MoveCard9", "MoveCard10"
+        "AttackCard1", "AttackCard2", "AttackCard3", "AttackCard4",
+        "DrawCard1", "DrawCard2", "DrawCard3", "DrawCard4",
+        "MoveCard1", "MoveCard2", "MoveCard3", "MoveCard4", "MoveCard5"
     };
 
     [Header("자동 저장 옵션 (기본 꺼짐)")]
@@ -34,9 +31,8 @@ public class CardStateRuntime : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        // 파일이 없으면 비어있는 상태로 시작
         Data = CardSaveStore.Load();
-        UseDefaultBattleCards();
+        EnsureDefaultBattleCardsSaved();
 
 #if UNITY_EDITOR
         Debug.Log($"[CardStateRuntime] Loaded. owned={Data.owned?.Count ?? 0}, deck={Data.deck?.Count ?? 0}");
@@ -63,6 +59,14 @@ public class CardStateRuntime : MonoBehaviour
 #if UNITY_EDITOR
         Debug.Log("[CardStateRuntime] SaveNow → " + CardSaveStore.GetPath());
 #endif
+    }
+
+    public void EnsureDefaultBattleCardsSaved()
+    {
+        if (!NeedsDefaultBattleCards(Data)) return;
+
+        UseDefaultBattleCards();
+        CardSaveStore.Save(Data);
     }
 
     // ----- Owned 관리 -----
@@ -130,6 +134,14 @@ public class CardStateRuntime : MonoBehaviour
     private bool ShouldSkipEmptyInitialSave()
     {
         return IsEmpty(Data) && !File.Exists(CardSaveStore.GetPath());
+    }
+
+    private static bool NeedsDefaultBattleCards(CardSaveData d)
+    {
+        if (d == null) return true;
+        int ownedCount = d.owned?.Count ?? 0;
+        int deckCount = d.deck?.Count ?? 0;
+        return ownedCount == 0 || deckCount == 0 || deckCount > MAX_DECK;
     }
 
     private static bool IsEmpty(CardSaveData d)

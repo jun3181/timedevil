@@ -95,6 +95,7 @@ public class PanelController : MonoBehaviour
     private bool menuPanelsHidden;
     private int externalMenuHideRequestCount;
     private bool initialSyncRequested;
+    private bool turnEventSubscribed;
 
     private TurnState lastTurnState = TurnState.PlayerTurn;
     private bool lastHandSelectMode;
@@ -103,7 +104,7 @@ public class PanelController : MonoBehaviour
     {
         if (!menu) menu = FindObjectOfType<BattleMenuController>(true);
         if (!handUI) handUI = FindObjectOfType<HandUI>(true);
-        if (!turnManager) turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
+        ResolveTurnManager();
         if (!orchestrator) orchestrator = FindObjectOfType<CardUseOrchestrator>(true);
     }
 
@@ -111,7 +112,7 @@ public class PanelController : MonoBehaviour
     {
         if (!menu) menu = FindObjectOfType<BattleMenuController>(true);
         if (!handUI) handUI = FindObjectOfType<HandUI>(true);
-        if (!turnManager) turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
+        ResolveTurnManager();
         if (!orchestrator) orchestrator = FindObjectOfType<CardUseOrchestrator>(true);
 
         CacheShownBasePositions();
@@ -127,7 +128,7 @@ public class PanelController : MonoBehaviour
     void OnEnable()
     {
         if (menu) menu.onSubmit.AddListener(OnMenuSubmit);
-        if (!turnManager) turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
+        SubscribeTurnManagerEvents();
         if (syncInitialViewWithTurnState && !initialSyncRequested)
         {
             initialSyncRequested = true;
@@ -138,11 +139,14 @@ public class PanelController : MonoBehaviour
     void OnDisable()
     {
         if (menu) menu.onSubmit.RemoveListener(OnMenuSubmit);
-        if (turnManager) turnManager.OnTurnChanged -= HandleTurnChanged;
+        UnsubscribeTurnManagerEvents();
     }
 
     void Update()
     {
+        if (!turnEventSubscribed)
+            SubscribeTurnManagerEvents();
+
         bool qDown = Input.GetKeyDown(KeyCode.Q);
         bool handSelecting = handUI && handUI.IsInSelectMode;
 
@@ -165,7 +169,7 @@ public class PanelController : MonoBehaviour
 
         if (!returnOnPlayerTurnStart) return;
 
-        if (!turnManager) turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
+        ResolveTurnManager();
         if (!orchestrator) orchestrator = FindObjectOfType<CardUseOrchestrator>(true);
         if (!turnManager) return;
 
@@ -259,7 +263,7 @@ public class PanelController : MonoBehaviour
 
     private IEnumerator Co_SyncInitialViewWithTurnState()
     {
-        if (!turnManager) turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
+        ResolveTurnManager();
         if (!turnManager) yield break;
 
         // 첫 턴이 실제로 확정될 때까지 기다렸다가 즉시 반영 (프레임 타임아웃 없음)
@@ -294,8 +298,59 @@ public class PanelController : MonoBehaviour
 
     // 일부 브랜치/프리팹 상태에서 OnTurnChanged 구독 코드가 남아 있을 수 있어
     // 컴파일 오류(CS0103) 방지를 위해 안전한 핸들러를 유지한다.
-    private void HandleTurnChanged(TurnState _)
+    private void ResolveTurnManager()
     {
+        if (turnManager) return;
+
+        var instance = TurnManager.Instance;
+        if (instance) turnManager = instance;
+        else turnManager = FindObjectOfType<TurnManager>(true);
+    }
+
+    private void SubscribeTurnManagerEvents()
+    {
+        if (turnEventSubscribed) return;
+
+        ResolveTurnManager();
+        if (!turnManager) return;
+
+        turnManager.OnTurnChanged += HandleTurnChanged;
+        turnEventSubscribed = true;
+        lastTurnState = turnManager.currentTurn;
+
+        if (turnManager.HasFirstTurnDecided)
+            HandleTurnChanged(turnManager.currentTurn);
+    }
+
+    private void UnsubscribeTurnManagerEvents()
+    {
+        if (!turnEventSubscribed) return;
+
+        if (turnManager)
+            turnManager.OnTurnChanged -= HandleTurnChanged;
+
+        turnEventSubscribed = false;
+    }
+
+    private void HandleTurnChanged(TurnState state)
+    {
+        bool wasEnemyTurn = lastTurnState == TurnState.EnemyTurn;
+        bool isEnemyTurn = state == TurnState.EnemyTurn;
+
+        if (isEnemyTurn)
+        {
+            pendingReturnByEnd = false;
+            SetGameplayView(true);
+            SetBattleMenuPanelsHidden(true);
+        }
+        else if (wasEnemyTurn && (pendingReturnByEnd || isGameplayView))
+        {
+            SetGameplayViewDelayed(false, turnTransitionDelay);
+            pendingReturnByEnd = false;
+            SetBattleMenuPanelsHidden(false, true);
+        }
+
+        lastTurnState = state;
     }
 
     [ContextMenu("Re-cache Shown Base From Current")]
