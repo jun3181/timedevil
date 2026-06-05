@@ -24,6 +24,9 @@ public class CardSceneController : MonoBehaviour
     [SerializeField] private GameObject cardSlotPrefab;              // Image 하나 들어있는 프리팹
     [SerializeField] private string resourcesFolder = "my_asset";    // Resources/my_asset/<CardId>
 
+    [Header("Paging")]
+    [SerializeField] private int cardsPerPage = 25;
+
     [Header("Return Settings")]
     [SerializeField] private float graceSeconds = 1.0f;              // 복귀 직후 충돌 무적 시간(옵션)
     [SerializeField] private string worldVcamName = "CM vcam1";      // 복귀 씬에서 쓸 vcam 이름(없으면 자동 탐색)
@@ -33,6 +36,8 @@ public class CardSceneController : MonoBehaviour
     private readonly List<CardSlot> cardSlots = new();
     private readonly List<CardSlot> deckSlots = new();
     private int currentIndex = 0;
+    private int cardPageIndex = 0;
+    private int deckPageIndex = 0;
     private bool inDeck = false; // false = Card영역, true = Deck영역
 
     void Start()
@@ -159,13 +164,32 @@ public class CardSceneController : MonoBehaviour
         if (list.Count == 0) return;
 
         int columns = GetCurrentColumnCount();
-        int currentColumn = currentIndex % columns;
+        int pageSize = GetPageSize();
+        int pageStart = (currentIndex / pageSize) * pageSize;
+        int pageEnd = Mathf.Min(pageStart + pageSize, list.Count);
+        int visibleIndex = currentIndex - pageStart;
+        int currentColumn = visibleIndex % columns;
 
         if (deltaColumn < 0 && currentColumn == 0) return;
         if (deltaColumn > 0 && currentColumn >= columns - 1) return;
 
         int next = currentIndex + deltaColumn + (deltaRow * columns);
-        if (next < 0 || next >= list.Count) return;
+        if (deltaColumn != 0 && (next < pageStart || next >= pageEnd)) return;
+
+        if (deltaRow > 0 && next >= pageEnd && pageEnd < list.Count)
+        {
+            int nextPageCount = Mathf.Min(pageSize, list.Count - pageEnd);
+            next = pageEnd + Mathf.Min(currentColumn, nextPageCount - 1);
+        }
+        else if (deltaRow < 0 && next < pageStart && pageStart > 0)
+        {
+            int previousPageEnd = pageStart;
+            next = Mathf.Min(previousPageEnd - 1, previousPageEnd - columns + currentColumn);
+        }
+        else if (next < pageStart || next >= pageEnd)
+        {
+            return;
+        }
 
         currentIndex = next;
         UpdateSelector();
@@ -180,6 +204,56 @@ public class CardSceneController : MonoBehaviour
             return Mathf.Max(1, grid.constraintCount);
 
         return 1;
+    }
+
+    int GetPageSize()
+    {
+        return Mathf.Max(1, cardsPerPage);
+    }
+
+    void SetCurrentPageFromIndex()
+    {
+        int page = currentIndex / GetPageSize();
+        if (inDeck) deckPageIndex = page;
+        else cardPageIndex = page;
+    }
+
+    int ClampPageIndex(List<CardSlot> list, int pageIndex)
+    {
+        if (list == null || list.Count == 0) return 0;
+        int maxPage = (list.Count - 1) / GetPageSize();
+        return Mathf.Clamp(pageIndex, 0, maxPage);
+    }
+
+    void UpdatePageVisibility()
+    {
+        cardPageIndex = ClampPageIndex(cardSlots, cardPageIndex);
+        deckPageIndex = ClampPageIndex(deckSlots, deckPageIndex);
+
+        SetPageVisible(cardSlots, cardPageIndex);
+        SetPageVisible(deckSlots, deckPageIndex);
+
+        Canvas.ForceUpdateCanvases();
+        RebuildPanelLayout(cardPanel);
+        RebuildPanelLayout(deckPanel);
+    }
+
+    void SetPageVisible(List<CardSlot> list, int pageIndex)
+    {
+        int start = pageIndex * GetPageSize();
+        int end = Mathf.Min(start + GetPageSize(), list.Count);
+
+        for (int i = 0; i < list.Count; i++)
+        {
+            if (list[i] == null) continue;
+            list[i].gameObject.SetActive(i >= start && i < end);
+        }
+    }
+
+    void RebuildPanelLayout(Transform panel)
+    {
+        if (panel is RectTransform rect)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(rect);
     }
 
     // ----- 이동 로직 -----
@@ -294,15 +368,20 @@ public class CardSceneController : MonoBehaviour
     void UpdateSelector()
     {
         var list = inDeck ? deckSlots : cardSlots;
-        if (!selector) return;
         if (list.Count == 0)
         {
+            UpdatePageVisibility();
+            if (!selector) return;
             selector.gameObject.SetActive(false);
             return;
         }
 
-        selector.gameObject.SetActive(true);
         currentIndex = Mathf.Clamp(currentIndex, 0, list.Count - 1);
+        SetCurrentPageFromIndex();
+        UpdatePageVisibility();
+
+        if (!selector) return;
+        selector.gameObject.SetActive(true);
         selector.position = list[currentIndex].transform.position;
     }
 

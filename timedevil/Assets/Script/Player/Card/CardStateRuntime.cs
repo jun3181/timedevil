@@ -1,13 +1,27 @@
 ﻿using UnityEngine;
 using System.Linq;
 using System.IO;
+using System.Collections.Generic;
+
 public class CardStateRuntime : MonoBehaviour
 {
     public static CardStateRuntime Instance { get; private set; }
 
     //  덱 최대 장수
     public const int MAX_DECK = 13;
-    private static readonly string[] DefaultCardIds =
+    private static readonly string[] DefaultOwnedCardIds =
+        Enumerable.Range(1, 4).Select(i => $"AttackCard{i}")
+            .Concat(Enumerable.Range(1, 5).Select(i => $"DrawCard{i}"))
+            .Concat(Enumerable.Range(1, 4).Select(i => $"MoveCard{i}"))
+            .ToArray();
+
+    private static readonly string[] ManagedDefaultCardIds =
+        Enumerable.Range(1, 10).Select(i => $"AttackCard{i}")
+            .Concat(Enumerable.Range(1, 10).Select(i => $"DrawCard{i}"))
+            .Concat(Enumerable.Range(1, 10).Select(i => $"MoveCard{i}"))
+            .ToArray();
+
+    private static readonly string[] LegacyDefaultDeckIds =
     {
         "AttackCard1", "AttackCard2", "AttackCard3", "AttackCard4",
         "DrawCard1", "DrawCard2", "DrawCard3", "DrawCard4",
@@ -69,9 +83,9 @@ public class CardStateRuntime : MonoBehaviour
 
     public void EnsureDefaultBattleCardsSaved()
     {
-        if (!NeedsDefaultBattleCards(Data)) return;
+        bool changed = EnsureDefaultPlayerCards();
+        if (!changed) return;
 
-        UseDefaultBattleCards();
         CardSaveStore.Save(Data);
     }
 
@@ -128,13 +142,61 @@ public class CardStateRuntime : MonoBehaviour
     }
 
     // --- Helpers ---
-    private void UseDefaultBattleCards()
+    private bool EnsureDefaultPlayerCards()
     {
         if (Data == null) Data = new CardSaveData();
 
-        var defaults = DefaultCardIds.ToList();
-        Data.owned = defaults.ToList();
-        Data.deck = defaults.ToList();
+        bool changed = false;
+        if (Data.owned == null)
+        {
+            Data.owned = new List<string>();
+            changed = true;
+        }
+
+        if (Data.deck == null)
+        {
+            Data.deck = new List<string>();
+            changed = true;
+        }
+
+        if (ContainsOnlyManagedDefaultCards(Data.owned))
+        {
+            var defaults = DefaultOwnedCardIds.ToList();
+            if (!Data.owned.SequenceEqual(defaults))
+            {
+                Data.owned = defaults;
+                changed = true;
+            }
+        }
+        else
+        {
+            foreach (var id in DefaultOwnedCardIds)
+            {
+                if (Data.owned.Contains(id)) continue;
+                Data.owned.Add(id);
+                changed = true;
+            }
+        }
+
+        if (IsLegacyDefaultDeck(Data.deck))
+        {
+            Data.deck.Clear();
+            changed = true;
+        }
+
+        var normalizedDeck = Data.deck
+            .Where(id => !string.IsNullOrEmpty(id) && Data.owned.Contains(id))
+            .Distinct()
+            .Take(MAX_DECK)
+            .ToList();
+
+        if (!Data.deck.SequenceEqual(normalizedDeck))
+        {
+            Data.deck = normalizedDeck;
+            changed = true;
+        }
+
+        return changed;
     }
 
     private bool ShouldSkipEmptyInitialSave()
@@ -142,12 +204,17 @@ public class CardStateRuntime : MonoBehaviour
         return IsEmpty(Data) && !File.Exists(CardSaveStore.GetPath());
     }
 
-    private static bool NeedsDefaultBattleCards(CardSaveData d)
+    private static bool IsLegacyDefaultDeck(List<string> deck)
     {
-        if (d == null) return true;
-        int ownedCount = d.owned?.Count ?? 0;
-        int deckCount = d.deck?.Count ?? 0;
-        return ownedCount == 0 || deckCount == 0 || deckCount > MAX_DECK;
+        if (deck == null || deck.Count != LegacyDefaultDeckIds.Length) return false;
+
+        return deck.Distinct().Count() == LegacyDefaultDeckIds.Length
+            && LegacyDefaultDeckIds.All(deck.Contains);
+    }
+
+    private static bool ContainsOnlyManagedDefaultCards(List<string> owned)
+    {
+        return owned == null || owned.All(id => ManagedDefaultCardIds.Contains(id));
     }
 
     private static bool IsEmpty(CardSaveData d)
