@@ -24,7 +24,7 @@ public class PlayerDataRuntime : MonoBehaviour
         if (Data == null)
         {
             Data = new PlayerData();
-            Data.InitDefaults("Player", 20, 10, 5, 5);
+            Data.InitDefaults("Player", 60, 10, 5, 10);
         }
     }
 

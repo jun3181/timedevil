@@ -25,7 +25,7 @@ public class CardStateRuntime : MonoBehaviour
         // 싱글톤 + 씬 유지
         if (Instance != null && Instance != this)
         {
-            Destroy(gameObject);
+            Destroy(this);
             return;
         }
         Instance = this;
@@ -37,6 +37,12 @@ public class CardStateRuntime : MonoBehaviour
 #if UNITY_EDITOR
         Debug.Log($"[CardStateRuntime] Loaded. owned={Data.owned?.Count ?? 0}, deck={Data.deck?.Count ?? 0}");
 #endif
+    }
+
+    void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
     }
 
     void OnDisable()
