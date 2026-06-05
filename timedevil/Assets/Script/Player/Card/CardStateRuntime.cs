@@ -180,7 +180,7 @@ public class CardStateRuntime : MonoBehaviour
 
         if (IsLegacyDefaultDeck(Data.deck))
         {
-            Data.deck.Clear();
+            Data.deck = DefaultOwnedCardIds.ToList();
             changed = true;
         }
 
@@ -189,6 +189,11 @@ public class CardStateRuntime : MonoBehaviour
             .Distinct()
             .Take(MAX_DECK)
             .ToList();
+
+        if (normalizedDeck.Count == 0)
+        {
+            normalizedDeck = DefaultOwnedCardIds.ToList();
+        }
 
         if (!Data.deck.SequenceEqual(normalizedDeck))
         {

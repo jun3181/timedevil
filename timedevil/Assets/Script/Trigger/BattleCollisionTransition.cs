@@ -153,7 +153,7 @@ public class BattleCollisionTransition : MonoBehaviour
 
     private IEnumerator CoEnterBattle(Transform player, string colliderName)
     {
-        var pauseState = ApplyPauseOnEnter();
+        var pauseState = ApplyPauseOnEnter(player);
         float wait = Mathf.Max(0f, pauseSecondsBeforeBattle);
         if (wait > 0f)
         {
@@ -322,17 +322,32 @@ public class BattleCollisionTransition : MonoBehaviour
         public Transform target;
         public Vector3 lockedPosition;
         public Rigidbody2D rb;
+        public PlayerMove playerMove;
+        public bool hasPlayerTarget;
+        public Transform playerTarget;
+        public Vector3 playerLockedPosition;
+        public Rigidbody2D playerRb;
     }
 
-    private PauseState ApplyPauseOnEnter()
+    private PauseState ApplyPauseOnEnter(Transform player)
     {
-        Transform target = pauseTargetObject != null ? pauseTargetObject : null;
+        Transform target = pauseTargetObject != null ? pauseTargetObject : ResolvePauseTarget(player);
+        PlayerMove playerMove = ResolvePausePlayerMove(player);
+        Transform playerTarget = playerMove != null ? playerMove.transform : ResolvePauseTarget(player);
+
         Rigidbody2D rb = pauseTargetRigidbody2D != null
             ? pauseTargetRigidbody2D
-            : (target != null ? target.GetComponent<Rigidbody2D>() : null);
+            : ResolvePauseRigidbody2D(target);
+        Rigidbody2D playerRb = ResolvePauseRigidbody2D(playerTarget);
 
         if (rb != null)
             rb.velocity = Vector2.zero;
+
+        if (playerRb != null && playerRb != rb)
+            playerRb.velocity = Vector2.zero;
+
+        if (playerMove != null)
+            playerMove.SetMoveInput(0, 0, false, false, false, false);
 
         if (pauseTargetController != null)
             pauseTargetController.enabled = false;
@@ -342,7 +357,12 @@ public class BattleCollisionTransition : MonoBehaviour
             hasTarget = target != null,
             target = target,
             lockedPosition = target != null ? target.position : Vector3.zero,
-            rb = rb
+            rb = rb,
+            playerMove = playerMove,
+            hasPlayerTarget = playerTarget != null,
+            playerTarget = playerTarget,
+            playerLockedPosition = playerTarget != null ? playerTarget.position : Vector3.zero,
+            playerRb = playerRb
         };
 
         return state;
@@ -353,8 +373,75 @@ public class BattleCollisionTransition : MonoBehaviour
         if (state.rb != null)
             state.rb.velocity = Vector2.zero;
 
+        if (state.playerRb != null && state.playerRb != state.rb)
+            state.playerRb.velocity = Vector2.zero;
+
+        if (state.playerMove != null)
+            state.playerMove.SetMoveInput(0, 0, false, false, false, false);
+
         if (state.hasTarget && state.target != null)
             state.target.position = state.lockedPosition;
+
+        if (state.hasPlayerTarget && state.playerTarget != null && state.playerTarget != state.target)
+            state.playerTarget.position = state.playerLockedPosition;
+    }
+
+    private Transform ResolvePauseTarget(Transform player)
+    {
+        if (playerTransform != null)
+            return playerTransform;
+
+        if (player == null)
+            return null;
+
+        var pm = player.GetComponentInParent<PlayerMove>();
+        if (pm != null)
+            return pm.transform;
+
+        var manager = player.GetComponentInParent<PlayerMainManager>();
+        if (manager != null)
+            return manager.transform;
+
+        return player;
+    }
+
+    private PlayerMove ResolvePausePlayerMove(Transform player)
+    {
+        if (player != null)
+        {
+            var pm = player.GetComponentInParent<PlayerMove>();
+            if (pm != null)
+                return pm;
+        }
+
+        if (playerTransform != null)
+        {
+            var pm = playerTransform.GetComponent<PlayerMove>();
+            if (pm != null)
+                return pm;
+
+            pm = playerTransform.GetComponentInChildren<PlayerMove>(true);
+            if (pm != null)
+                return pm;
+        }
+
+        return FindObjectOfType<PlayerMove>(true);
+    }
+
+    private static Rigidbody2D ResolvePauseRigidbody2D(Transform target)
+    {
+        if (target == null)
+            return null;
+
+        var rb = target.GetComponent<Rigidbody2D>();
+        if (rb != null)
+            return rb;
+
+        rb = target.GetComponentInParent<Rigidbody2D>();
+        if (rb != null)
+            return rb;
+
+        return target.GetComponentInChildren<Rigidbody2D>(true);
     }
 
     private void Update()
