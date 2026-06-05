@@ -10,9 +10,9 @@ public class CardStateRuntime : MonoBehaviour
     //  덱 최대 장수
     public const int MAX_DECK = 13;
     private static readonly string[] DefaultOwnedCardIds =
-        Enumerable.Range(1, 4).Select(i => $"AttackCard{i}")
-            .Concat(Enumerable.Range(1, 5).Select(i => $"DrawCard{i}"))
-            .Concat(Enumerable.Range(1, 4).Select(i => $"MoveCard{i}"))
+        Enumerable.Range(1, 10).Select(i => $"AttackCard{i}")
+            .Concat(Enumerable.Range(1, 10).Select(i => $"DrawCard{i}"))
+            .Concat(Enumerable.Range(1, 10).Select(i => $"MoveCard{i}"))
             .ToArray();
 
     private static readonly string[] ManagedDefaultCardIds =
@@ -26,6 +26,13 @@ public class CardStateRuntime : MonoBehaviour
         "AttackCard1", "AttackCard2", "AttackCard3", "AttackCard4",
         "DrawCard1", "DrawCard2", "DrawCard3", "DrawCard4",
         "MoveCard1", "MoveCard2", "MoveCard3", "MoveCard4", "MoveCard5"
+    };
+
+    private static readonly string[] PreviousDefaultDeckIds =
+    {
+        "AttackCard1", "AttackCard2", "AttackCard3", "AttackCard4",
+        "DrawCard1", "DrawCard2", "DrawCard3", "DrawCard4", "DrawCard5",
+        "MoveCard1", "MoveCard2", "MoveCard3", "MoveCard4"
     };
 
     [Header("자동 저장 옵션 (기본 꺼짐)")]
@@ -206,10 +213,16 @@ public class CardStateRuntime : MonoBehaviour
 
     private static bool IsLegacyDefaultDeck(List<string> deck)
     {
-        if (deck == null || deck.Count != LegacyDefaultDeckIds.Length) return false;
+        return MatchesDeck(deck, LegacyDefaultDeckIds)
+            || MatchesDeck(deck, PreviousDefaultDeckIds);
+    }
 
-        return deck.Distinct().Count() == LegacyDefaultDeckIds.Length
-            && LegacyDefaultDeckIds.All(deck.Contains);
+    private static bool MatchesDeck(List<string> deck, string[] ids)
+    {
+        if (deck == null || ids == null || deck.Count != ids.Length) return false;
+
+        return deck.Distinct().Count() == ids.Length
+            && ids.All(deck.Contains);
     }
 
     private static bool ContainsOnlyManagedDefaultCards(List<string> owned)
