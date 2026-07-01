@@ -294,7 +294,6 @@ GameObject:
   - component: {fileID: 152032122}
   - component: {fileID: 152032121}
   - component: {fileID: 152032120}
-  - component: {fileID: 152032119}
   m_Layer: 0
   m_Name: FD_Character_015_Idle_0 (3)
   m_TagString: Untagged
@@ -302,24 +301,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &152032119
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 152032118}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 47b124e1d5ae1c34b8e75f7795a66a30, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Wandering: 1
-  MaxCooltime: 1
-  MinCooltime: 1
-  MaxDistance: 5
-  MinDistance: 3
-  Debuged: 1
 --- !u!114 &152032120
 MonoBehaviour:
   m_ObjectHideFlags: 0
