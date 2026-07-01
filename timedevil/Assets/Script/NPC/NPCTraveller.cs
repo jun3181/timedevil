@@ -2,8 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]
-public class NPCTraveller : MonoBehaviour
+public class NPCTraveller : NPCMover
 {
     public enum NPCTravellerMode {
         FullyRandom, // 한번의 순회 동안 동일한 노드를 거칠 수 있음
@@ -34,7 +33,8 @@ public class NPCTraveller : MonoBehaviour
 
     private IEnumerator travelCoroutine = null;
 
-    void Awake() {
+    protected override void Awake() {
+        base.Awake();
         for(int i=0; i<initialVertexes.Count; i++) {
             if(initialVertexes[i] == null) {
                 initialVertexes.RemoveAt(i);
