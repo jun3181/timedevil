@@ -19,8 +19,8 @@ public class NPCTraveller : MonoBehaviour
     private TravellerMode travellerMode = TravellerMode.Salesman;
 
     [SerializeField]
-    [Header("순회점")]
-    private List<GameObject> vertexes = new();
+    [Header("초기 순회점")]
+    private List<GameObject> initialVertexes = new();
 
     [SerializeField]
     [Header("디버그 메시지 출력")]
@@ -82,6 +82,17 @@ public class NPCTraveller : MonoBehaviour
         if(travelCoroutine != null) return false;
 
         return vertexSet.Remove(vertex);
+    }
+
+    public bool RemoveVertex(string name) {
+        if(travelCoroutine != null) return false;
+
+        foreach(var vertex in vertexSet) {
+            if(vertex.name == name)
+                return vertexSet.Remove(vertex);
+        }
+
+        return false;
     }
 
     private IEnumerator TravelRepeatedly() {
