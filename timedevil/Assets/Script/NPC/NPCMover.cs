@@ -5,11 +5,13 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody2D),typeof(Collider2D))]
 public class NPCMover : MonoBehaviour
 {
+    [SerializeField]
     [Header("이동 속력")]
-    public float Speed = 1f;
+    private float speed = 1f;
 
-    [Header("노클립")]
-    public bool ignoringCollision = false;
+    [SerializeField]
+    [Header("충돌 무시 여부")]
+    private bool ignoringCollision = true;
 
     protected Rigidbody2D rb2d;
     protected Collider2D cd2d;
@@ -30,7 +32,7 @@ public class NPCMover : MonoBehaviour
     }
 
     protected IEnumerator MoveTo(Vector2 dest) {
-        if(movementCoroutine != null || Speed==0) yield break;
+        if(movementCoroutine != null || speed==0) yield break;
 
         if(ignoringCollision)
             movementCoroutine = MoveIgnoringCollision();
@@ -40,7 +42,7 @@ public class NPCMover : MonoBehaviour
         startPoint = rb2d.position;
         endPoint = dest;
         estimatedTime = (endPoint - startPoint).magnitude;
-        velocityPerRoutine = (endPoint - startPoint).normalized * Speed * coroutineIntervalTime;
+        velocityPerRoutine = (endPoint - startPoint).normalized * speed * coroutineIntervalTime;
         takingTime = 0f;
 
         yield return movementCoroutine;
