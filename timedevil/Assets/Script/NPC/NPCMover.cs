@@ -9,7 +9,7 @@ public class NPCMover : MonoBehaviour
     public float Speed = 1f;
 
     [Header("노클립")]
-    public bool isNoclip = false;
+    public bool ignoringCollision = false;
 
     protected Rigidbody2D rb2d;
     protected Collider2D cd2d;
@@ -32,8 +32,8 @@ public class NPCMover : MonoBehaviour
     protected IEnumerator MoveTo(Vector2 dest) {
         if(movementCoroutine != null || Speed==0) yield break;
 
-        if(isNoclip)
-            movementCoroutine = MoveNoclip();
+        if(ignoringCollision)
+            movementCoroutine = MoveIgnoringCollision();
         else
             movementCoroutine = Move();
 
@@ -49,8 +49,8 @@ public class NPCMover : MonoBehaviour
     protected IEnumerator Resume() {
         if(movementCoroutine != null || estimatedTime == 0f) yield break;
 
-        if(isNoclip)
-            movementCoroutine = MoveNoclip();
+        if(ignoringCollision)
+            movementCoroutine = MoveIgnoringCollision();
         else
             movementCoroutine = Move();
 
@@ -66,7 +66,7 @@ public class NPCMover : MonoBehaviour
         movementCoroutine = null;
     }
 
-    private IEnumerator MoveNoclip() {
+    private IEnumerator MoveIgnoringCollision() {
         Vector2 nextPoint;
         while(true) {
             nextPoint = rb2d.position + velocityPerRoutine;
