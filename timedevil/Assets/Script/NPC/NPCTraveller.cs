@@ -5,7 +5,7 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]
 public class NPCTraveller : MonoBehaviour
 {
-    public enum TravellerMode {
+    public enum NPCTravellerMode {
         FullyRandom, // 한번의 순회 동안 동일한 노드를 거칠 수 있음
         Salesman // 한번의 순회 동안 동일한 노드를 거치지 않음
     }
@@ -16,7 +16,7 @@ public class NPCTraveller : MonoBehaviour
 
     [SerializeField]
     [Header("순회 모드")]
-    private TravellerMode travellerMode = TravellerMode.Salesman;
+    private NPCTravellerMode travellerMode = NPCTravellerMode.Salesman;
 
     [SerializeField]
     [Header("초기 순회점")]
@@ -104,7 +104,37 @@ public class NPCTraveller : MonoBehaviour
         return false;
     }
 
+    private void ResetCircuitNodes() {
+        if(travellerMode == NPCTravellerMode.FullyRandom) {
+            List<GameObject> shuffled_nodes = new();
+            int ex_vertex_i, vertex_i;
+
+            // Work in Progress
+        } else if(travellerMode == NPCTravellerMode.Salesman) {
+            List<GameObject> shuffled_nodes = new();
+            int i;
+
+            foreach(var vertex in vertexSet) {
+                i = Random.Range(0, shuffled_nodes.Count + 1);
+                if(i != shuffled_nodes.Count) {
+                    shuffled_nodes.Insert(i, vertex);
+                } else {
+                    shuffled_nodes.Add(vertex);
+                }
+            }
+
+            circuitNodes = new Queue<GameObject>(shuffled_nodes);
+        }
+
+    }
+
     private IEnumerator TravelRepeatedly() {
-        yield break;
+        GameObject nextNode;
+        while(true) {
+            if(circuitNodes.Count==0) {
+                ResetCircuitNodes();
+            }
+            nextNode = circuitNodes.Dequeue();
+        }
     }
 }
