@@ -87,7 +87,6 @@ public sealed class NPCTraveller : NPCMover
             StopCoroutine(travelCoroutine);
 
         travelCoroutine = null;
-        lateNode = null;
     }
 
     public bool AddVertex(GameObject vertex) {
@@ -130,6 +129,10 @@ public sealed class NPCTraveller : NPCMover
                 } else {
                     shuffled_nodes.Add(vertex);
                 }
+            }
+
+            if(shuffled_nodes[0]==lateNode) {
+                (shuffled_nodes[0], shuffled_nodes[1]) = (shuffled_nodes[1], shuffled_nodes[0]);
             }
 
             circuitNodes = new Queue<GameObject>(shuffled_nodes);
