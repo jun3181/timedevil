@@ -34,7 +34,17 @@ public class NPCTraveller : MonoBehaviour
 
     private IEnumerator travelCoroutine = null;
 
+    void Awake() {
+        for(int i=0; i<initialVertexes.Count; i++) {
+            if(initialVertexes[i] == null) {
+                initialVertexes.RemoveAt(i);
+                i--;
+            }
+        }
+    }
+
     void OnEnable() {
+        vertexSet = new(initialVertexes);
 
         if(vertexSet.Count < 2) {
             if(debuged) Debug.LogError($"{gameObject.name}.TravellingNPC의 유효한 순회 정점이 2개 미만입니다.\n정점 수: {vertexSet.Count}");
@@ -54,7 +64,6 @@ public class NPCTraveller : MonoBehaviour
         StartCoroutine(travelCoroutine);
 
         return true;
-
     }
 
     // 순회 완전 정지(재개X)
