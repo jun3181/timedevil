@@ -20,8 +20,8 @@ public class NPCMover : MonoBehaviour
     private float estimatedTime;
     private float takingTime;
 
-    private static float coroutineIntervalTime = Time.fixedDeltaTime;
-    private static WaitForSeconds coroutineIntervalWFS = new(coroutineIntervalTime);
+    private static readonly float coroutineIntervalTime = 0.02f;
+    private static readonly WaitForSeconds coroutineIntervalWFS = new(coroutineIntervalTime);
 
     private IEnumerator movementCoroutine = null;
     protected virtual void Awake() {
@@ -29,25 +29,41 @@ public class NPCMover : MonoBehaviour
         cd2d = GetComponent<Collider2D>();
     }
 
-    protected bool MoveTo(Vector2 dest) {
-        if(movementCoroutine != null) return false;
+    protected IEnumerator MoveTo(Vector2 dest) {
+        if(movementCoroutine != null || Speed==0) yield break;
 
         if(isNoclip)
             movementCoroutine = MoveNoclip();
         else
             movementCoroutine = Move();
 
-        if(estimatedTime==0f) {
-            startPoint = rb2d.position;
-            endPoint = dest;
-            estimatedTime = (endPoint - startPoint).magnitude;
-            velocityPerRoutine = (endPoint - startPoint).normalized * Speed * coroutineIntervalTime;
-            takingTime = 0f;
-        }
+        startPoint = rb2d.position;
+        endPoint = dest;
+        estimatedTime = (endPoint - startPoint).magnitude;
+        velocityPerRoutine = (endPoint - startPoint).normalized * Speed * coroutineIntervalTime;
+        takingTime = 0f;
 
-        StartCoroutine(movementCoroutine);
+        yield return movementCoroutine;
+    }
 
-        return true;
+    protected IEnumerator Resume() {
+        if(movementCoroutine != null || estimatedTime == 0f) yield break;
+
+        if(isNoclip)
+            movementCoroutine = MoveNoclip();
+        else
+            movementCoroutine = Move();
+
+        yield return movementCoroutine;
+    }
+
+    protected void Stop() {
+        movementCoroutine = null;
+        estimatedTime = 0f;
+    }
+
+    protected void Idle() {
+        movementCoroutine = null;
     }
 
     private IEnumerator MoveNoclip() {
@@ -65,6 +81,7 @@ public class NPCMover : MonoBehaviour
         }
 
         estimatedTime = 0f;
+        movementCoroutine = null;
 
         yield break;
     }

@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class NPCTraveller : NPCMover
+public sealed class NPCTraveller : NPCMover
 {
     public enum NPCTravellerMode {
         FullyRandom, // 한번의 순회 동안 동일한 노드를 거칠 수 있음
@@ -30,6 +30,7 @@ public class NPCTraveller : NPCMover
 
     // 한번의 순회 동안 거칠 정점들
     private Queue<GameObject> circuitNodes = new();
+    private GameObject lateNode = null;
 
     private IEnumerator travelCoroutine = null;
 
@@ -67,18 +68,26 @@ public class NPCTraveller : NPCMover
     }
 
     // 순회 완전 정지(재개X)
-    public void Stop() {
-        Idle();
+    public new void Stop() {
+        base.Stop();
+        if(travelCoroutine != null)
+            StopCoroutine(travelCoroutine);
+
+        travelCoroutine = null;
+        lateNode = null;
 
         circuitNodes.Clear();
         circuitNodes.TrimExcess();
     }
 
     // 순회 일시 정지(재개 가능)
-    public void Idle() {
-        StopCoroutine(travelCoroutine);
+    public new void Idle() {
+        base.Idle();
+        if(travelCoroutine!=null)
+            StopCoroutine(travelCoroutine);
 
         travelCoroutine = null;
+        lateNode = null;
     }
 
     public bool AddVertex(GameObject vertex) {
@@ -129,12 +138,17 @@ public class NPCTraveller : NPCMover
     }
 
     private IEnumerator TravelRepeatedly() {
-        GameObject nextNode;
+        if(lateNode!=null) {
+            yield return Resume();
+            lateNode = null;
+        }
+
         while(true) {
             if(circuitNodes.Count==0) {
                 ResetCircuitNodes();
             }
-            nextNode = circuitNodes.Dequeue();
+            lateNode = circuitNodes.Dequeue();
+            yield return MoveTo(lateNode.transform.position);
         }
     }
 }
