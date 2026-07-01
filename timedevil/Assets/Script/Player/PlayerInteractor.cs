@@ -20,7 +20,7 @@ public class PlayerInteractor : MonoBehaviour
 
     private Collider2D currentHit;
     private GameObject currentTarget;
-    private IInteractable currentInteractable;
+    private IInteractable[] currentInteractables = System.Array.Empty<IInteractable>();
 
     private static readonly string[] RequiredLayers =
         { "Dialog", "teleport", "item_get", "Object", "Save" };
@@ -88,16 +88,16 @@ public class PlayerInteractor : MonoBehaviour
             currentHit = nextHit;
             currentTarget = nextTarget;
 
-            currentInteractable = currentHit
-                ? (currentHit.GetComponent<IInteractable>() ?? currentHit.GetComponentInParent<IInteractable>())
-                : null;
+            currentInteractables = currentHit
+                ? InteractableInvoker.GetInteractables(currentHit.gameObject)
+                : System.Array.Empty<IInteractable>();
 
             if (debugLog)
             {
                 if (currentTarget)
                 {
                     string layerName = LayerMask.LayerToName(currentTarget.layer);
-                    Debug.Log($"[PlayerInteractor] Target -> {currentTarget.name} (layer={layerName}) IInteractable={(currentInteractable != null ? "YES" : "NO")}");
+                    Debug.Log($"[PlayerInteractor] Target -> {currentTarget.name} (layer={layerName}) IInteractable={(currentInteractables.Length > 0 ? $"YES ({currentInteractables.Length})" : "NO")}");
                 }
                 else
                 {
@@ -114,7 +114,7 @@ public class PlayerInteractor : MonoBehaviour
     {
         currentHit = null;
         currentTarget = null;
-        currentInteractable = null;
+        currentInteractables = System.Array.Empty<IInteractable>();
     }
 
     public bool TryInteract()
@@ -129,9 +129,10 @@ public class PlayerInteractor : MonoBehaviour
         if (DialogueManager.instance != null && DialogueManager.instance.isDialogueActive)
             return false;
 
-        if (currentInteractable != null)
+        if (currentInteractables.Length > 0)
         {
-            currentInteractable.Interact();
+            for (int i = 0; i < currentInteractables.Length; i++)
+                currentInteractables[i].Interact();
             return true;
         }
 

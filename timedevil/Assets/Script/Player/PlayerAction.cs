@@ -150,15 +150,9 @@ public class PlayerAction : MonoBehaviour
                 return;
             }
 
-            // scanObject에서 'IInteractable' 인터페이스를 가진 컴포넌트를 찾음
-            IInteractable interactable = scanObject.GetComponent<IInteractable>();
-
-            if (interactable != null) // 인터페이스를 가진 오브젝트라면 (대화, 컷신 등)
-            {
-                // 상대방이 누구든 상관없이 Interact() 함수를 호출
-                interactable.Interact();
-            }
-            else // 인터페이스가 없는 특별한 오브젝트라면 (기존 로직)
+            // scanObject에서 'IInteractable' 인터페이스를 가진 컴포넌트를 모두 찾음
+            // 같은 오브젝트에 여러 상호작용 컴포넌트가 있으면 함께 실행한다.
+            if (!InteractableInvoker.TryInteract(scanObject)) // 인터페이스가 없는 특별한 오브젝트라면 (기존 로직)
             {
                 if (scanObject.layer == LayerMask.NameToLayer("teleport"))
                 {
