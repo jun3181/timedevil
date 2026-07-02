@@ -124,7 +124,7 @@ public class DialogueManager : MonoBehaviour
                 }
             }
         }
-        OnDialogueStart();
+        OnDialogueStart?.Invoke();
 
         //  기본 동작: 첫 줄 출력 시도
         // 컷씬에서는 blockInput=true로 해두면 여기서 막혀서 "대기(큐만 채움)" 상태가 됨.
@@ -312,6 +312,6 @@ public class DialogueManager : MonoBehaviour
             dialogueText.maxVisibleCharacters = int.MaxValue;
         }
 
-        OnDialogueEnd();
+        OnDialogueEnd?.Invoke();
     }
 }
