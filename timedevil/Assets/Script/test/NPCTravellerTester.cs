@@ -16,6 +16,6 @@ public class NPCTravellerTester : MonoBehaviour
         if(!A)
             npcTraveller.Stop();
         else
-            npcTraveller.Travel();
+            npcTraveller.Move();
     }
 }

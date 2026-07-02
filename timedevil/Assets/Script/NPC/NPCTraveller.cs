@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public sealed class NPCTraveller : NPCMover
+public sealed class NPCTraveller : NPCMover, INPCMovement
 {
     public enum NPCTravellerMode {
         FullyRandom, // 한번의 순회 동안 동일한 노드를 거칠 수 있음
@@ -53,12 +53,12 @@ public sealed class NPCTraveller : NPCMover
         }
 
         if(enabled && isAutoStarted) {
-            Travel();
+            Move();
         }
     }
     
     // 순회 시작(혹은, 재개)
-    public bool Travel() {
+    public bool Move() {
         if(!enabled || travelCoroutine!=null) return false;
 
         travelCoroutine = TravelRepeatedly();
