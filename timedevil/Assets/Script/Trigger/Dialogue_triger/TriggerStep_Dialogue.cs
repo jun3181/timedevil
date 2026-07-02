@@ -27,14 +27,14 @@ public class TriggerStep_Dialogue : TriggerStepBase
 
     [Header("NPC Idle")]
     [Tooltip("대화 진행 중 움직임을 일시정지 시킬 NPC")]
-    [SerializeField] private List<GameObject> idledNpcs = new();
+    [SerializeField] private List<GameObject> dialogueNpcs = new();
 
     private bool _heldLock = false;
     private List<INPCMovement> _npcMovements = new();
 
     void Start() {
         INPCMovement npcMovement;
-        foreach(GameObject npc in idledNpcs) {
+        foreach(GameObject npc in dialogueNpcs) {
             npcMovement = npc.GetComponent<INPCMovement>();
             if(npcMovement!=null) {
                 _npcMovements.Add(npcMovement);
