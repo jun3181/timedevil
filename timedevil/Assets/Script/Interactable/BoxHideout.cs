@@ -2,13 +2,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(SpriteRenderer), typeof(Collider2D))]
+[RequireComponent(typeof(SpriteRenderer), typeof(Collider2D), typeof(AudioSource))]
 public class BoxHideout : MonoBehaviour, IInteractable
 {
     private static GameObject player = null;
     private static SpriteRenderer playerSpriteRenderer = null;
     private static Collider2D playerCollider2D = null;
     private static PlayerMove playerMove = null;
+
+    private static readonly WaitForSeconds changingBoxRoutineIntervalWFS = new(1.5f);
 
     [Header("상자가 열려있을 때 | 닫혀있을 때")]
     [SerializeField] private Sprite openedBoxSprite;
@@ -25,7 +27,8 @@ public class BoxHideout : MonoBehaviour, IInteractable
     private SpriteRenderer spriteRenderer;
     private AudioSource audioSource;
 
-    private IEnumerator stealthingCoroutine;
+    private IEnumerator stealthingRoutine;
+    private IEnumerator changingBoxRoutine;
 
     void Awake()
     {
@@ -45,6 +48,7 @@ public class BoxHideout : MonoBehaviour, IInteractable
             closedBoxSprite = spriteRenderer.sprite;
         }
         audioSource = GetComponent<AudioSource>();
+        audioSource.clip = openingBoxSound;
     }
 
     void OnEnable() {
@@ -57,10 +61,10 @@ public class BoxHideout : MonoBehaviour, IInteractable
     }
 
     public void Interact() {
-        if(!enabled || stealthingCoroutine!=null) return;
+        if(!enabled || stealthingRoutine!=null) return;
 
-        stealthingCoroutine = Stealth();
-        StartCoroutine(stealthingCoroutine);
+        stealthingRoutine = Stealth();
+        StartCoroutine(stealthingRoutine);
     }
 
     private IEnumerator Stealth() {
@@ -69,15 +73,40 @@ public class BoxHideout : MonoBehaviour, IInteractable
         playerCollider2D.enabled = false;
         playerSpriteRenderer.enabled = false;
 
+        if(changingBoxRoutine!=null) {
+            StopCoroutine(changingBoxRoutine);
+        }
+        changingBoxRoutine = ChangeBox();
+        StartCoroutine(changingBoxRoutine);
+
+        // Escape
         while(true) {
             yield return null;
             if(Input.GetKeyDown(KeyCode.E)) break;
         }
 
+        if(changingBoxRoutine != null) {
+            StopCoroutine(changingBoxRoutine);
+        }
+        changingBoxRoutine = ChangeBox();
+        StartCoroutine(changingBoxRoutine);
+
         playerMove.speed = origin_speed;
         playerCollider2D.enabled = true;
         playerSpriteRenderer.enabled = true;
-        stealthingCoroutine = null;
+        stealthingRoutine = null;
         yield break;
+    }
+
+    private IEnumerator ChangeBox() {
+        if(spriteRenderer.sprite!=openedBoxSprite){
+            spriteRenderer.sprite = openedBoxSprite;
+            audioSource.Play();
+        }
+
+        yield return changingBoxRoutineIntervalWFS;
+
+        spriteRenderer.sprite = closedBoxSprite;
+        changingBoxRoutine = null;
     }
 }
