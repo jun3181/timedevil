@@ -5,6 +5,9 @@ using UnityEngine;
 [RequireComponent(typeof(SpriteRenderer), typeof(Collider2D))]
 public class BoxHideout : MonoBehaviour, IInteractable
 {
+    private static GameObject player = null;
+    private static SpriteRenderer playerSpriteRenderer = null;
+    private static Collider2D playerCollider2D = null;
     private static PlayerMove playerMove = null;
 
     [Header("상자가 열려있을 때 | 닫혀있을 때")]
@@ -12,9 +15,8 @@ public class BoxHideout : MonoBehaviour, IInteractable
     [Tooltip("지정하지 않을 경우 현재 적용된 스프라이트 사용")]
     [SerializeField] private Sprite closedBoxSprite;
 
-    [Header("상자를 여는 소리 | 닫는 소리")]
+    [Header("상자를 여는 소리")]
     [SerializeField] private AudioClip openingBoxSound;
-    [SerializeField] private AudioClip closingBoxSound;
 
     [SerializeField]
     [Header("디버그 메시지")]
@@ -22,6 +24,8 @@ public class BoxHideout : MonoBehaviour, IInteractable
 
     private SpriteRenderer spriteRenderer;
     private AudioSource audioSource;
+
+    private IEnumerator stealthingCoroutine;
 
     void Awake()
     {
@@ -44,11 +48,36 @@ public class BoxHideout : MonoBehaviour, IInteractable
     }
 
     void OnEnable() {
-        if(playerMove == null)
-            playerMove = GameObject.FindWithTag("Player").GetComponent<PlayerMove>();
+        if(player == null){
+            player = GameObject.FindWithTag("Player");
+            playerSpriteRenderer = player.GetComponent<SpriteRenderer>();
+            playerCollider2D = player.GetComponent<Collider2D>();
+            playerMove = player.GetComponent<PlayerMove>();
+        }
     }
 
     public void Interact() {
-        if(!enabled) return;
+        if(!enabled || stealthingCoroutine!=null) return;
+
+        stealthingCoroutine = Stealth();
+        StartCoroutine(stealthingCoroutine);
+    }
+
+    private IEnumerator Stealth() {
+        float origin_speed = playerMove.speed;
+        playerMove.speed = 0f;
+        playerCollider2D.enabled = false;
+        playerSpriteRenderer.enabled = false;
+
+        while(true) {
+            yield return null;
+            if(Input.GetKeyDown(KeyCode.E)) break;
+        }
+
+        playerMove.speed = origin_speed;
+        playerCollider2D.enabled = true;
+        playerSpriteRenderer.enabled = true;
+        stealthingCoroutine = null;
+        yield break;
     }
 }
