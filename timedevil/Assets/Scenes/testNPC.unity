@@ -1388,7 +1388,7 @@ MonoBehaviour:
   blockWorldAdvance: 0
   autoAdvance: 0
   autoDelay: 1.5
-  idledNpcs:
+  dialogueNpcs:
   - {fileID: 152032118}
 --- !u!1 &536647450
 GameObject:
