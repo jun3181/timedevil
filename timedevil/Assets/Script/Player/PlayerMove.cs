@@ -96,6 +96,10 @@ public class PlayerMove : MonoBehaviour
             facing = (this.v > 0) ? Vector3.up : Vector3.down;
     }
 
+    public void ChangeSpeed(float speed) {
+        this.speed = speed;
+    }
+
 
     private void LogAnimatorTrace(bool hDown, bool vDown, bool hUp, bool vUp, bool hasMoveInput)
     {
