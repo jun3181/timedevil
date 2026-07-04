@@ -44,6 +44,10 @@ public sealed class BoxHideout : BaseHideout, IInteractable
                 return;
             }
             closedBoxSprite = spriteRenderer.sprite;
+        } else {
+            if(spriteRenderer.sprite==null) {
+                spriteRenderer.sprite = closedBoxSprite;
+            }
         }
         audioSource = GetComponent<AudioSource>();
         audioSource.clip = openingBoxSound;
