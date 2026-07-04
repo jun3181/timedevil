@@ -10,12 +10,14 @@ public class BoxHideout : MonoBehaviour, IInteractable
     private static Collider2D playerCollider2D = null;
     private static PlayerMove playerMove = null;
 
-    private static readonly WaitForSeconds changingBoxRoutineIntervalWFS = new(1.5f);
-
     [Header("상자가 열려있을 때 | 닫혀있을 때")]
     [SerializeField] private Sprite openedBoxSprite;
     [Tooltip("지정하지 않을 경우 현재 적용된 스프라이트 사용")]
     [SerializeField] private Sprite closedBoxSprite;
+
+    [Header("상자가 열리고 닫히는 시간")]
+    [SerializeField] private float changingBoxRoutineInterval = 1.5f;
+    private WaitForSeconds changingBoxRoutineIntervalWFS;
 
     [Header("상자를 여는 소리")]
     [SerializeField] private AudioClip openingBoxSound;
@@ -49,6 +51,8 @@ public class BoxHideout : MonoBehaviour, IInteractable
         }
         audioSource = GetComponent<AudioSource>();
         audioSource.clip = openingBoxSound;
+
+        changingBoxRoutineIntervalWFS = new(changingBoxRoutineInterval);
     }
 
     void OnEnable() {
