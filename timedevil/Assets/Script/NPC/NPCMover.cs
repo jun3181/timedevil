@@ -5,6 +5,10 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody2D),typeof(Collider2D))]
 public class NPCMover : MonoBehaviour
 {
+    public enum NPCMoverCollisionHandlingType {
+        Stop, Idle, IdleUntilResumable
+    }
+
     [SerializeField]
     [Header("이동 속력")]
     private float speed = 1f;
@@ -12,6 +16,9 @@ public class NPCMover : MonoBehaviour
     [SerializeField]
     [Header("충돌 무시 여부")]
     private bool ignoringCollision = true;
+
+    protected NPCMoverCollisionHandlingType collisionHandlingType = NPCMoverCollisionHandlingType.Stop;
+    protected bool IsCollided { get; private set; }
 
     protected Rigidbody2D rb2d;
     protected Collider2D cd2d;
@@ -68,6 +75,14 @@ public class NPCMover : MonoBehaviour
         movementCoroutine = null;
     }
 
+    protected void OnCollisionEnter2D() {
+        IsCollided = true;
+    }
+
+    protected void OnCollisionExit2D() {
+        IsCollided = false;
+    }
+
     private IEnumerator MoveIgnoringCollision() {
         Vector2 nextPoint;
         while(true) {
@@ -89,6 +104,41 @@ public class NPCMover : MonoBehaviour
     }
 
     private IEnumerator Move() {
+        Vector2 nextPoint;
+        while(true) {
+            if(IsCollided) {
+                switch(collisionHandlingType) {
+                    case NPCMoverCollisionHandlingType.Stop:
+                        Stop();
+                        yield break;
+                    case NPCMoverCollisionHandlingType.Idle:
+                        Idle();
+                        yield break;
+                    case NPCMoverCollisionHandlingType.IdleUntilResumable:
+                        yield return null;
+
+                        while(true) {
+                            if(IsCollided) yield return null;
+                            else break;
+                        }
+                        break;
+                }
+            }
+
+            nextPoint = rb2d.position + velocityPerRoutine;
+            takingTime = (nextPoint - startPoint).magnitude;
+            if(takingTime < estimatedTime) {
+                rb2d.MovePosition(nextPoint);
+            } else {
+                rb2d.MovePosition(endPoint);
+                break;
+            }
+            yield return coroutineIntervalWFS;
+        }
+
+        estimatedTime = 0f;
+        movementCoroutine = null;
+
         yield break;
     }
 }
