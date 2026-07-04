@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(SpriteRenderer), typeof(Collider2D), typeof(AudioSource))]
-public class BoxHideout : BaseHideout, IInteractable
+public sealed class BoxHideout : BaseHideout, IInteractable
 {
     [Header("상자가 열려있을 때 | 닫혀있을 때")]
     [SerializeField] private Sprite openedBoxSprite;
