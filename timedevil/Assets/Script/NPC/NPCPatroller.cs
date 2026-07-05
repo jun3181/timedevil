@@ -12,7 +12,7 @@ public class NPCPatroller : NPCMover, INPCMovement
     public static float disappearanceXDistance = 5f;
 
     public delegate void NPCPatrollerEventHandler(int id);
-    public static event NPCPatrollerEventHandler OnDisappeared;
+    public static event NPCPatrollerEventHandler OnDisappearing;
 
     private static int patrollerCounter = 0;
 
@@ -44,7 +44,6 @@ public class NPCPatroller : NPCMover, INPCMovement
             playerRigidbody2D = player.GetComponent<Rigidbody2D>();
             playerMove = player.GetComponent<PlayerMove>();
         }
-        Move();
     }
 
     public bool Move() {
@@ -93,7 +92,8 @@ public class NPCPatroller : NPCMover, INPCMovement
         float xDistance = Mathf.Abs(playerRigidbody2D.position.x - rb2d.position.x);
         if(xDistance>disappearanceXDistance) {
             ResetFields();
-            OnDisappeared?.Invoke(PatrollerID);
+            gameObject.SetActive(false);
+            OnDisappearing?.Invoke(PatrollerID);
 
             yield break;
         }
@@ -107,7 +107,8 @@ public class NPCPatroller : NPCMover, INPCMovement
             xDistance = Mathf.Abs(playerRigidbody2D.position.x - rb2d.position.x);
             if(xDistance > disappearanceXDistance) {
                 ResetFields();
-                OnDisappeared?.Invoke(PatrollerID);
+                gameObject.SetActive(false);
+                OnDisappearing?.Invoke(PatrollerID);
 
                 yield break;
             }
