@@ -4,53 +4,49 @@ using UnityEngine;
 
 public class NPCPatroller : NPCMover, INPCMovement
 {
-    public enum NPCPatrollerDirection {
+    public enum NPCPatrollerDirection
+    {
         Left, Right
     }
 
-    public override float Speed
-    {
-        set
-        {
-            if(value < 0) return;
-            
-            base.Speed = value;
-            if(direction==NPCPatrollerDirection.Left) {
-                velocityPerRoutine = Vector2.left * value;
-            } else {
-                velocityPerRoutine = Vector2.right * value;
-            }
-        }
+    public static float disappearanceXDistance = 5f;
 
-        get
-        {
-            return base.Speed;
-        }
-    }
+    public delegate void NPCPatrollerEventHandler(int id);
+    public static event NPCPatrollerEventHandler OnDisappeared;
 
-    public NPCPatrollerDirection Direction
-    {
-        set
-        {
-            if(patrollingCoroutine != null) return;
-            if(value == NPCPatrollerDirection.Left)
-                velocityPerRoutine = Vector2.left * base.Speed;
-            else
-                velocityPerRoutine = Vector2.right * base.Speed;
+    private static int patrollerCounter = 0;
 
-            direction = value;
-        }
+    private static GameObject player;
+    private static Rigidbody2D playerRigidbody2D;
+    private static PlayerMove playerMove;
 
-        get
-        {
-            return direction;
-        }
-    }
+    public int PatrollerID { get; private set; }
 
-    private NPCPatrollerDirection direction = NPCPatrollerDirection.Left;
-    private Vector2 velocityPerRoutine;
+    private Vector2 playerFirstPoint;
+    private Vector2 firstDestinationPoint;
+    private Vector2 extraDestinationPoint;
+
+    private NPCPatrollerDirection direction;
 
     private IEnumerator patrollingCoroutine = null;
+
+    protected override void Awake() {
+        base.Awake();
+        PatrollerID = patrollerCounter++;
+
+        firstDestinationPoint = new(float.PositiveInfinity, float.PositiveInfinity);
+        extraDestinationPoint = new(float.PositiveInfinity, float.PositiveInfinity);
+    }
+
+    void Start() {
+        if(player==null) {
+            player = GameObject.FindWithTag("Player");
+            playerRigidbody2D = player.GetComponent<Rigidbody2D>();
+            playerMove = player.GetComponent<PlayerMove>();
+        }
+        Move();
+    }
+
     public bool Move() {
         if(patrollingCoroutine != null) return false;
 
@@ -64,8 +60,8 @@ public class NPCPatroller : NPCMover, INPCMovement
         base.Stop();
         if(patrollingCoroutine!=null) {
             StopCoroutine(patrollingCoroutine);
-            patrollingCoroutine = null;
         }
+        ResetFields();
     }
 
     public new void Idle() {
@@ -77,6 +73,51 @@ public class NPCPatroller : NPCMover, INPCMovement
     }
 
     private IEnumerator Patrol() {
-        yield break;
+        float xOffset;
+        if(firstDestinationPoint.x==float.PositiveInfinity) {
+            playerFirstPoint = playerRigidbody2D.position;
+
+            xOffset = (playerFirstPoint.x - rb2d.position.x) * 2;
+            if(xOffset < 0)
+                direction = NPCPatrollerDirection.Left;
+            else
+                direction = NPCPatrollerDirection.Right;
+
+            firstDestinationPoint = rb2d.position;
+            firstDestinationPoint.x += xOffset;
+            yield return MoveTo(firstDestinationPoint);
+        } else {
+            yield return Resume();
+        }
+
+        float xDistance = Mathf.Abs(playerRigidbody2D.position.x - rb2d.position.x);
+        if(xDistance>disappearanceXDistance) {
+            ResetFields();
+            OnDisappeared?.Invoke(PatrollerID);
+
+            yield break;
+        }
+
+        xOffset = (direction==NPCPatrollerDirection.Left) ? -disappearanceXDistance : disappearanceXDistance;
+        extraDestinationPoint = firstDestinationPoint;
+        while(true) {
+            extraDestinationPoint.x += xOffset;
+            yield return MoveTo(extraDestinationPoint);
+
+            xDistance = Mathf.Abs(playerRigidbody2D.position.x - rb2d.position.x);
+            if(xDistance > disappearanceXDistance) {
+                ResetFields();
+                OnDisappeared?.Invoke(PatrollerID);
+
+                yield break;
+            }
+        }
+    }
+
+    private void ResetFields() {
+        patrollingCoroutine = null;
+
+        firstDestinationPoint.x = float.PositiveInfinity;
+        extraDestinationPoint.x = float.PositiveInfinity;
     }
 }
