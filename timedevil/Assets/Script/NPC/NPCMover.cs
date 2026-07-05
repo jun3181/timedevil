@@ -9,7 +9,7 @@ public class NPCMover : MonoBehaviour
         Stop, Idle, IdleUntilResumable
     }
 
-    public float Speed
+    public virtual float Speed
     {
         set
         {
