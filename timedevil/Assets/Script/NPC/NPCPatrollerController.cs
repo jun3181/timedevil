@@ -56,29 +56,25 @@ public class NPCPatrollerController : MonoBehaviour
         }
     }
 
-    public bool StartSpawningRepeatedly() {
+    public bool StartSpawningRegularly() {
         if(spawningCoroutine != null) return false;
 
-        spawningCoroutine = SpawnRepeatedly();
+        spawningCoroutine = SpawnRegularly();
         StartCoroutine(spawningCoroutine);
 
         return true;
     }
 
-    public void StopSpawningRepeatedly() {
+    public void StopSpawningRegularly() {
         if(spawningCoroutine!=null) {
             StopCoroutine(spawningCoroutine);
             spawningCoroutine = null;
         }
     }
 
-    public bool SpawnDirectly() {
-        if(disappearedTroops.Count == 0) return false;
+    public 
 
-        GameObject troop = disappearedTroops.Dequeue();
-    }
-
-    private IEnumerator SpawnRepeatedly() {
+    private IEnumerator SpawnRegularly() {
         Vector2 startPoint = new();
         float routineInterval, deltaXWithPlayer;
         GameObject troop;
@@ -105,25 +101,8 @@ public class NPCPatrollerController : MonoBehaviour
 
             troop.GetComponent<Rigidbody2D>().MovePosition(startPoint);
             troop.GetComponent<NPCPatroller>().Move();
+            latestSpawnTime = Time.time;
         }
-    }
-
-    private IEnumerator DelaySpawn(GameObject troop, float delay) {
-        yield return new WaitForSeconds(delay);
-
-        Vector2 startPoint = new();
-        float deltaXWithPlayer = Random.Range(minDeltaXWithPlayer, maxDeltaXWithPlayer);
-        if(Random.Range(0, 2) == 0) {
-            startPoint.x = playerRigidbody2D.position.x - deltaXWithPlayer;
-        } else {
-            startPoint.x = playerRigidbody2D.position.x + deltaXWithPlayer;
-        }
-        startPoint.y = Random.Range(minSpawnYPosition, maxSpawnYPosition);
-
-        troop.SetActive(true);
-
-        troop.GetComponent<Rigidbody2D>().MovePosition(startPoint);
-        troop.GetComponent<NPCPatroller>().Move();
     }
 
     private void TroopDisappearingEventHandler(int id) {
