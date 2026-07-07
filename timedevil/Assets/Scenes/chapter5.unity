@@ -170,7 +170,7 @@ MonoBehaviour:
   startMode: 1
   followTarget: {fileID: 0}
   confinerBounds: {fileID: 0}
-  orthoSize: 3
+  orthoSize: 7
   fixedOrCutsceneAnchor: {fileID: 17564523}
   debugLog: 1
 --- !u!114 &17564525
@@ -1477,13 +1477,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   troopPrefab: {fileID: 7522993159658721311, guid: eb4bf685996cd1140b5fe7b4f58ad935,
     type: 3}
-  minRegularSpawnInterval: 2
-  maxRegularSpawnInterval: 5
+  maxRegularSpawnInterval: 20
+  minRegularSpawnInterval: 8
   maxInstantSpawnInterval: 5
-  minDeltaXWithCameraBound: 4
-  maxDeltaXWithCameraBound: 8
-  minSpawnYPosition: -2.5
+  maxDeltaXWithCameraBound: 20
+  minDeltaXWithCameraBound: 12
   maxSpawnYPosition: 1.7
+  minSpawnYPosition: -2.5
+  spawnYMargin: 0.1
 --- !u!4 &1092870392
 Transform:
   m_ObjectHideFlags: 0
