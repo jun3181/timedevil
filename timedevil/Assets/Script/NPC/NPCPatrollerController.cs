@@ -30,18 +30,21 @@ public class NPCPatrollerController : MonoBehaviour
     [SerializeField] private float maxDeltaXWithCameraBound = 8f;
 
     [Header("순찰병 스폰 Y좌표 범위")]
-    [SerializeField] private float minSpawnYPosition = 1.5f;
-    [SerializeField] private float maxSpawnYPosition = -3f;
+    [SerializeField] private float minSpawnYPosition = -3f;
+    [SerializeField] private float maxSpawnYPosition = 1.5f;
 
-    private GameObject[] instantiatedTroops = new GameObject[3];
+    private GameObject[] instantiatedTroops;
     private Queue<GameObject> disappearedTroops = new();
 
-    private float latestSpawnTime = 0f;
+    private float firstLaneYPosition = 0f;
+    private float laneYSize = 0f;
+    private int laneCounter = 0;
+    private float latestSpawnTime;
 
     private IEnumerator spawningCoroutine;
 
     void Awake() {
-        if(instance!=null) {
+        if(instance!=null || troopPrefab==null) {
             Destroy(gameObject);
         }
 
@@ -53,12 +56,21 @@ public class NPCPatrollerController : MonoBehaviour
 
         NPCPatroller.OnDisappearing += TroopDisappearingEventHandler;
 
-        for(int i=0; i<instantiatedTroops.Length; i++) {
-            instantiatedTroops[i] = Instantiate(troopPrefab);
-            instantiatedTroops[i].SetActive(false);
-            disappearedTroops.Enqueue(instantiatedTroops[i]);
-        }
+        GameObject instantiatedTroop = Instantiate(troopPrefab);
+        Collider2D troopCollider2D = instantiatedTroop.GetComponent<Collider2D>();
 
+        int n = Mathf.FloorToInt((maxSpawnYPosition - minSpawnYPosition) / (2 * (troopCollider2D.bounds.size.y + Physics2D.defaultContactOffset)) + 1);
+        laneYSize = troopCollider2D.bounds.size.y + Physics2D.defaultContactOffset;
+        firstLaneYPosition = (maxSpawnYPosition+minSpawnYPosition)/2 - ((n - 1) * laneYSize) - (troopCollider2D.offset.y*troopCollider2D.transform.localScale.y);
+        laneCounter = (n - 1) * 2 + 1;
+
+        Debug.Log(firstLaneYPosition);
+
+        for(int i=0; i<laneCounter; i++) {
+            instantiatedTroop = Instantiate(troopPrefab);
+            instantiatedTroop.transform.position = new Vector2(0, firstLaneYPosition + laneYSize * i);
+        }
+        
         StartSpawningRegularly();
     }
 
