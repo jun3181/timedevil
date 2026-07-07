@@ -599,11 +599,8 @@ MonoBehaviour:
   isAutoStarted: 1
   travellerMode: 1
   initialVertexes:
-  - {fileID: 1049649054}
   - {fileID: 1858652520}
   - {fileID: 925467304}
-  - {fileID: 578022403}
-  - {fileID: 536647450}
   debuged: 1
 --- !u!114 &152032126
 MonoBehaviour:

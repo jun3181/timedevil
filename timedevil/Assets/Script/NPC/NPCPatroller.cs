@@ -36,10 +36,8 @@ public class NPCPatroller : NPCMover, INPCMovement
 
         firstDestinationPoint = new(float.PositiveInfinity, float.PositiveInfinity);
         extraDestinationPoint = new(float.PositiveInfinity, float.PositiveInfinity);
-    }
 
-    void Start() {
-        if(player==null) {
+        if(player == null) {
             player = GameObject.FindWithTag("Player");
             playerRigidbody2D = player.GetComponent<Rigidbody2D>();
             playerMove = player.GetComponent<PlayerMove>();
@@ -82,6 +80,7 @@ public class NPCPatroller : NPCMover, INPCMovement
             else
                 direction = NPCPatrollerDirection.Right;
 
+            Debug.Log($"{gameObject.name}의 좌표 {rb2d.position}");
             firstDestinationPoint = rb2d.position;
             firstDestinationPoint.x += xOffset;
             yield return MoveTo(firstDestinationPoint);
