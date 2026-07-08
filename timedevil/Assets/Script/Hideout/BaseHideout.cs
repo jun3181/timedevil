@@ -8,6 +8,11 @@ public class BaseHideout : MonoBehaviour
     public delegate void HideoutEventHandler(string name);
     public static event HideoutEventHandler OnStealthingEnter;
     public static event HideoutEventHandler OnStealthingExit;
+    
+    public static bool Hiding
+    {
+        get; private set;
+    }
 
     protected static GameObject player = null;
     protected static SpriteRenderer playerSpriteRenderer = null;
@@ -30,10 +35,12 @@ public class BaseHideout : MonoBehaviour
     }
 
     protected void RaiseStealthingEnterEvent(string name) {
+        Hiding = true;
         OnStealthingEnter?.Invoke(name);
     }
 
     protected void RaiseStealthingExitEvent(string name) {
+        Hiding = false;
         OnStealthingExit?.Invoke(name);
     }
 }
