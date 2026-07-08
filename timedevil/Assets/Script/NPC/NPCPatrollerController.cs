@@ -35,6 +35,7 @@ public class NPCPatrollerController : MonoBehaviour
 
     private GameObject[] instantiatedTroops;
     private Rigidbody2D[] instantiatedTroopRigidbody2Ds;
+    private GameObject[] instantiatedTroopPlayerDetactors;
     private readonly List<GameObject> disappearedTroops = new();
     private GameObject latestPopedTroop;
 
@@ -72,9 +73,11 @@ public class NPCPatrollerController : MonoBehaviour
 
         instantiatedTroops = new GameObject[laneCounter];
         instantiatedTroopRigidbody2Ds = new Rigidbody2D[laneCounter];
+        instantiatedTroopPlayerDetactors = new GameObject[laneCounter];
 
         instantiatedTroops[0] = instantiatedTroop;
         instantiatedTroopRigidbody2Ds[0] = instantiatedTroop.GetComponent<Rigidbody2D>();
+        instantiatedTroopPlayerDetactors[0] = instantiatedTroop.transform.Find("PlayerDetactor").gameObject;
         instantiatedTroop.transform.position = new(0, firstLaneYPosition);
         instantiatedTroop.SetActive(false);
 
@@ -83,6 +86,7 @@ public class NPCPatrollerController : MonoBehaviour
             instantiatedTroop.transform.position = new(0, firstLaneYPosition + laneYSize * i);
             instantiatedTroops[i] = instantiatedTroop;
             instantiatedTroopRigidbody2Ds[i] = instantiatedTroop.GetComponent<Rigidbody2D>();
+            instantiatedTroopPlayerDetactors[i] = instantiatedTroop.transform.Find("PlayerDetactor").gameObject;
             disappearedTroops.Add(instantiatedTroop);
             
             instantiatedTroop.SetActive(false);
@@ -127,10 +131,16 @@ public class NPCPatrollerController : MonoBehaviour
         troop = disappearedTroops[randomIndex];
         disappearedTroops.RemoveAt(randomIndex);
 
+        Collider2D cd2d = instantiatedTroopPlayerDetactors[randomIndex].GetComponent<Collider2D>();
+
         float routineInterval = Random.Range(0, maxDirectSpawnInterval);
-        StartCoroutine(DelaySpawn(troop, routineInterval));
+        StartCoroutine(DelaySpawn(troop, cd2d, routineInterval));
 
         return true;
+    }
+
+    public new void StopAllCoroutines() {
+        base.StopAllCoroutines();
     }
 
     public void IdleAllTroops() {
@@ -168,18 +178,22 @@ public class NPCPatrollerController : MonoBehaviour
             latestPopedTroop = troop;
             disappearedTroops.RemoveAt(randomIndex);
 
+            Collider2D cd2d = instantiatedTroopPlayerDetactors[randomIndex].GetComponent<Collider2D>();
+
             routineInterval = Random.Range(minRegularSpawnInterval, maxRegularSpawnInterval);
-            yield return DelaySpawn(troop, routineInterval);
+            yield return DelaySpawn(troop, cd2d, routineInterval);
         }
     }
 
-    private IEnumerator DelaySpawn(GameObject troop, float delay) {
+    private IEnumerator DelaySpawn(GameObject troop, Collider2D cd2d, float delay) {
         yield return new WaitForSeconds(delay);
 
         Vector2 startPoint = new();
+        Vector2 cd2dOffset = cd2d.offset;
         float deltaXWithCameraBound = Random.Range(minDeltaXWithCameraBound, maxDeltaXWithCameraBound);
         if(Random.Range(0, 2) == 0) {
             startPoint.x = playerRigidbody2D.position.x - deltaXWithCameraBound;
+            cd2dOffset.x *= -1;
         } else {
             startPoint.x = playerRigidbody2D.position.x + deltaXWithCameraBound;
         }
@@ -188,6 +202,7 @@ public class NPCPatrollerController : MonoBehaviour
         troop.SetActive(true);
 
         troop.transform.position = (startPoint);
+        cd2d.offset = cd2dOffset;
         Physics2D.SyncTransforms();
 
         troop.GetComponent<NPCPatroller>().Move();
