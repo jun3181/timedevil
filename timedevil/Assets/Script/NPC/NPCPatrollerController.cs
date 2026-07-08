@@ -35,7 +35,7 @@ public class NPCPatrollerController : MonoBehaviour
 
     private GameObject[] instantiatedTroops;
     private Rigidbody2D[] instantiatedTroopRigidbody2Ds;
-    private GameObject[] instantiatedTroopPlayerDetactors;
+    private GameObject[] instantiatedTroopPlayerDetectors;
     private readonly List<GameObject> disappearedTroops = new();
     private GameObject latestPopedTroop;
 
@@ -73,12 +73,13 @@ public class NPCPatrollerController : MonoBehaviour
 
         instantiatedTroops = new GameObject[laneCounter];
         instantiatedTroopRigidbody2Ds = new Rigidbody2D[laneCounter];
-        instantiatedTroopPlayerDetactors = new GameObject[laneCounter];
+        instantiatedTroopPlayerDetectors = new GameObject[laneCounter];
 
         instantiatedTroops[0] = instantiatedTroop;
         instantiatedTroopRigidbody2Ds[0] = instantiatedTroop.GetComponent<Rigidbody2D>();
-        instantiatedTroopPlayerDetactors[0] = instantiatedTroop.transform.Find("PlayerDetactor").gameObject;
+        instantiatedTroopPlayerDetectors[0] = instantiatedTroop.transform.Find("PlayerDetector").gameObject;
         instantiatedTroop.transform.position = new(0, firstLaneYPosition);
+        disappearedTroops.Add(instantiatedTroop);
         instantiatedTroop.SetActive(false);
 
         for(int i=1; i<laneCounter; i++) {
@@ -86,7 +87,7 @@ public class NPCPatrollerController : MonoBehaviour
             instantiatedTroop.transform.position = new(0, firstLaneYPosition + laneYSize * i);
             instantiatedTroops[i] = instantiatedTroop;
             instantiatedTroopRigidbody2Ds[i] = instantiatedTroop.GetComponent<Rigidbody2D>();
-            instantiatedTroopPlayerDetactors[i] = instantiatedTroop.transform.Find("PlayerDetactor").gameObject;
+            instantiatedTroopPlayerDetectors[i] = instantiatedTroop.transform.Find("PlayerDetector").gameObject;
             disappearedTroops.Add(instantiatedTroop);
             
             instantiatedTroop.SetActive(false);
@@ -131,7 +132,7 @@ public class NPCPatrollerController : MonoBehaviour
         troop = disappearedTroops[randomIndex];
         disappearedTroops.RemoveAt(randomIndex);
 
-        Collider2D cd2d = instantiatedTroopPlayerDetactors[randomIndex].GetComponent<Collider2D>();
+        Collider2D cd2d = troop.transform.Find("PlayerDetector").gameObject.GetComponent<Collider2D>();
 
         float routineInterval = Random.Range(0, maxDirectSpawnInterval);
         StartCoroutine(DelaySpawn(troop, cd2d, routineInterval));
@@ -178,8 +179,8 @@ public class NPCPatrollerController : MonoBehaviour
             latestPopedTroop = troop;
             disappearedTroops.RemoveAt(randomIndex);
 
-            Collider2D cd2d = instantiatedTroopPlayerDetactors[randomIndex].GetComponent<Collider2D>();
-
+            Collider2D cd2d = troop.transform.Find("PlayerDetector").gameObject.GetComponent<Collider2D>();
+            
             routineInterval = Random.Range(minRegularSpawnInterval, maxRegularSpawnInterval);
             yield return DelaySpawn(troop, cd2d, routineInterval);
         }
@@ -193,9 +194,10 @@ public class NPCPatrollerController : MonoBehaviour
         float deltaXWithCameraBound = Random.Range(minDeltaXWithCameraBound, maxDeltaXWithCameraBound);
         if(Random.Range(0, 2) == 0) {
             startPoint.x = playerRigidbody2D.position.x - deltaXWithCameraBound;
-            cd2dOffset.x *= -1;
+            cd2dOffset.x = 2;
         } else {
             startPoint.x = playerRigidbody2D.position.x + deltaXWithCameraBound;
+            cd2dOffset.x = -2;
         }
         startPoint.y = troop.transform.position.y;
 
