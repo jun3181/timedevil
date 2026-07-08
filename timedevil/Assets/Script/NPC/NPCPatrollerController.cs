@@ -87,8 +87,6 @@ public class NPCPatrollerController : MonoBehaviour
             
             instantiatedTroop.SetActive(false);
         }
-        
-        StartSpawningRegularly();
     }
 
     public bool StartSpawningRegularly() {
@@ -156,7 +154,7 @@ public class NPCPatrollerController : MonoBehaviour
         int randomIndex;
         float routineInterval;
 
-        if((latestPopedTroop==null || !latestPopedTroop.activeSelf) && !disappearedTroops.Contains(latestPopedTroop)) {
+        if(latestPopedTroop!=null && !latestPopedTroop.activeSelf && !disappearedTroops.Contains(latestPopedTroop)) {
             disappearedTroops.Add(latestPopedTroop);
         }
 
@@ -178,7 +176,7 @@ public class NPCPatrollerController : MonoBehaviour
     private IEnumerator DelaySpawn(GameObject troop, float delay) {
         yield return new WaitForSeconds(delay);
 
-        Vector2 startPoint;
+        Vector2 startPoint = new();
         float deltaXWithCameraBound = Random.Range(minDeltaXWithCameraBound, maxDeltaXWithCameraBound);
         if(Random.Range(0, 2) == 0) {
             startPoint.x = playerRigidbody2D.position.x - deltaXWithCameraBound;
