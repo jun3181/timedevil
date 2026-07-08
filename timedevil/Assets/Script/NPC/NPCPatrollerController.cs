@@ -36,6 +36,7 @@ public class NPCPatrollerController : MonoBehaviour
     private GameObject[] instantiatedTroops;
     private Rigidbody2D[] instantiatedTroopRigidbody2Ds;
     private readonly List<GameObject> disappearedTroops = new();
+    private GameObject latestPopedTroop;
 
     private float firstLaneYPosition = 0f;
     private float laneYSize = 0f;
@@ -134,10 +135,30 @@ public class NPCPatrollerController : MonoBehaviour
         return true;
     }
 
+    public void IdleAllTroops() {
+        foreach(var troop in instantiatedTroops) {
+            if(troop.activeSelf) {
+                troop.GetComponent<NPCPatroller>().Idle();
+            }
+        }
+    }
+
+    public void ResumeAllTroops() {
+        foreach(var troop in instantiatedTroops) {
+            if(troop.activeSelf) {
+                troop.GetComponent<NPCPatroller>().Move();
+            }
+        }
+    }
+
     private IEnumerator SpawnRegularly() {
         GameObject troop;
         int randomIndex;
         float routineInterval;
+
+        if((latestPopedTroop==null || !latestPopedTroop.activeSelf) && !disappearedTroops.Contains(latestPopedTroop)) {
+            disappearedTroops.Add(latestPopedTroop);
+        }
 
         while(true) {
             while(disappearedTroops.Count == 0) {
@@ -146,6 +167,7 @@ public class NPCPatrollerController : MonoBehaviour
 
             randomIndex = Random.Range(0, disappearedTroops.Count);
             troop = disappearedTroops[randomIndex];
+            latestPopedTroop = troop;
             disappearedTroops.RemoveAt(randomIndex);
 
             routineInterval = Random.Range(minRegularSpawnInterval, maxRegularSpawnInterval);

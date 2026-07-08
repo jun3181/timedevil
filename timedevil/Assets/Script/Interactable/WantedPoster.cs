@@ -18,8 +18,18 @@ public class WantedPoster : MonoBehaviour, IInteractable
     }
 
     public void Interact() {
+        NPCPatrollerController.instance.StopSpawningRegularly();
+        NPCPatrollerController.instance.IdleAllTroops();
+        DialogueManager.OnDialogueEnd += OnDialogueEndEventHandler;
+
         DialogueManager.instance.StartDialogue(dialogue);
 
         Destroy(gameObject);
+    }
+
+    private void OnDialogueEndEventHandler() {
+        DialogueManager.OnDialogueEnd -= OnDialogueEndEventHandler;
+        NPCPatrollerController.instance.SpawnDirectly();
+        NPCPatrollerController.instance.ResumeAllTroops();
     }
 }
