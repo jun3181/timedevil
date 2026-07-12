@@ -9,7 +9,7 @@ public class NPCPatroller : NPCMover, INPCMovement
         Left, Right
     }
 
-    public static float disappearanceXDistance = 5f;
+    public static float disappearanceXDistance;
 
     public delegate void NPCPatrollerEventHandler(int id);
     public static event NPCPatrollerEventHandler OnDisappearing;
@@ -74,7 +74,7 @@ public class NPCPatroller : NPCMover, INPCMovement
         if(firstDestinationPoint.x==float.PositiveInfinity) {
             playerFirstPoint = playerRigidbody2D.position;
 
-            xOffset = (playerFirstPoint.x - rb2d.position.x) * 2;
+            xOffset = (playerFirstPoint.x>rb2d.position.x) ?  disappearanceXDistance : -disappearanceXDistance;
             if(xOffset < 0)
                 direction = NPCPatrollerDirection.Left;
             else
@@ -83,12 +83,14 @@ public class NPCPatroller : NPCMover, INPCMovement
             Debug.Log($"{gameObject.name}의 좌표 {rb2d.position}");
             firstDestinationPoint = rb2d.position;
             firstDestinationPoint.x += xOffset;
+            Debug.Log(firstDestinationPoint);
             yield return MoveTo(firstDestinationPoint);
         } else {
             yield return Resume();
         }
 
         float xDistance = Mathf.Abs(playerRigidbody2D.position.x - rb2d.position.x);
+        Debug.Log(disappearanceXDistance);
         if(xDistance>disappearanceXDistance) {
             ResetFields();
             gameObject.SetActive(false);

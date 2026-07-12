@@ -5,7 +5,7 @@ using UnityEngine;
 [RequireComponent(typeof(Collider2D))]
 public class BaseHideout : MonoBehaviour
 {
-    public delegate void HideoutEventHandler(string name);
+    public delegate void HideoutEventHandler();
     public static event HideoutEventHandler OnStealthingEnter;
     public static event HideoutEventHandler OnStealthingExit;
     
@@ -36,11 +36,11 @@ public class BaseHideout : MonoBehaviour
 
     protected void RaiseStealthingEnterEvent(string name) {
         Hiding = true;
-        OnStealthingEnter?.Invoke(name);
+        OnStealthingEnter?.Invoke();
     }
 
     protected void RaiseStealthingExitEvent(string name) {
         Hiding = false;
-        OnStealthingExit?.Invoke(name);
+        OnStealthingExit?.Invoke();
     }
 }

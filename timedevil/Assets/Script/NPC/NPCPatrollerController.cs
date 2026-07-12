@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
 using UnityEngine;
+using UnityEngine.U2D.IK;
 
 public class NPCPatrollerController : MonoBehaviour
 {
@@ -23,26 +24,19 @@ public class NPCPatrollerController : MonoBehaviour
     [SerializeField] private float maxDirectSpawnInterval = 3f;
 
     [Header("순찰병 스폰시 카메라 경계와 X좌표 차 범위")]
-    [SerializeField] private float maxDeltaXWithCameraBound = 8f;
-    [SerializeField] private float minDeltaXWithCameraBound = 4f;
+    [SerializeField] private float maxSpawnDeltaXWithCameraBound = 8f;
+    [SerializeField] private float minSpawnDeltaXWithCameraBound = 4f;
 
-    [Header("순찰병 스폰 Y좌표 범위")]
-    [SerializeField] private float maxSpawnYPosition = 1.5f;
-    [SerializeField] private float minSpawnYPosition = -3f;
+    [Header("순찰병 디스폰시 카메라 경계와 X좌표 차")]
+    [SerializeField] private float dispawnDeltaXWithCameraBound = 5f;
 
-    [Header("순찰병 스폰 Y좌표 마진")]
-    [SerializeField] private float spawnYMargin = 0.02f;
+    [Header("순찰병 스폰 Y좌표")]
+    [SerializeField] private float spawnYPosition = 1.5f;
 
-    private GameObject[] instantiatedTroops;
-    private Rigidbody2D[] instantiatedTroopRigidbody2Ds;
-    private GameObject[] instantiatedTroopPlayerDetectors;
-    private readonly List<GameObject> disappearedTroops = new();
-    private GameObject latestPopedTroop;
-
-    private float firstLaneYPosition = 0f;
-    private float laneYSize = 0f;
-    private int laneCounter = 0;
-    private float latestSpawnTime;
+    private GameObject troop;
+    private Rigidbody2D troopRigidbody2D;
+    private NPCPatrollerPlayerDetector troopPlayerDetector;
+    private bool isTroopAppeared = false;
 
     private IEnumerator regularlySpawningCoroutine;
 
@@ -53,54 +47,33 @@ public class NPCPatrollerController : MonoBehaviour
 
         instance = this;
 
-        if(spawnYMargin < Physics2D.defaultContactOffset) {
-            spawnYMargin = Physics2D.defaultContactOffset;
-        }
-
         player = GameObject.FindWithTag("Player");
         playerRigidbody2D = player.GetComponent<Rigidbody2D>();
         playerCamera = GameObject.FindWithTag("MainCamera").GetComponent<Camera>();
 
         NPCPatroller.OnDisappearing += TroopDisappearingEventHandler;
 
-        GameObject instantiatedTroop = Instantiate(troopPrefab);
-        Collider2D troopCollider2D = instantiatedTroop.GetComponent<Collider2D>();
+        troop = Instantiate(troopPrefab);
+        troopRigidbody2D = troop.GetComponent<Rigidbody2D>();
+        troopPlayerDetector = troop.transform.Find("PlayerDetector").gameObject.GetComponent<NPCPatrollerPlayerDetector>();
 
-        int n = Mathf.FloorToInt((maxSpawnYPosition - minSpawnYPosition) / (2 * (troopCollider2D.bounds.size.y + spawnYMargin)) + 1);
-        laneYSize = troopCollider2D.bounds.size.y + spawnYMargin;
-        firstLaneYPosition = (maxSpawnYPosition+minSpawnYPosition)/2 - ((n - 1) * laneYSize) - (troopCollider2D.offset.y*troopCollider2D.transform.localScale.y);
-        laneCounter = (n - 1) * 2 + 1;
+        troop.transform.position = new(0, spawnYPosition);
+        troop.SetActive(false);
 
-        instantiatedTroops = new GameObject[laneCounter];
-        instantiatedTroopRigidbody2Ds = new Rigidbody2D[laneCounter];
-        instantiatedTroopPlayerDetectors = new GameObject[laneCounter];
-
-        instantiatedTroops[0] = instantiatedTroop;
-        instantiatedTroopRigidbody2Ds[0] = instantiatedTroop.GetComponent<Rigidbody2D>();
-        instantiatedTroopPlayerDetectors[0] = instantiatedTroop.transform.Find("PlayerDetector").gameObject;
-        instantiatedTroop.transform.position = new(0, firstLaneYPosition);
-        disappearedTroops.Add(instantiatedTroop);
-        instantiatedTroop.SetActive(false);
-
-        for(int i=1; i<laneCounter; i++) {
-            instantiatedTroop = Instantiate(troopPrefab);
-            instantiatedTroop.transform.position = new(0, firstLaneYPosition + laneYSize * i);
-            instantiatedTroops[i] = instantiatedTroop;
-            instantiatedTroopRigidbody2Ds[i] = instantiatedTroop.GetComponent<Rigidbody2D>();
-            instantiatedTroopPlayerDetectors[i] = instantiatedTroop.transform.Find("PlayerDetector").gameObject;
-            disappearedTroops.Add(instantiatedTroop);
-            
-            instantiatedTroop.SetActive(false);
-        }
+        BaseHideout.OnStealthingEnter += StopSpawningRegularly;
+        BaseHideout.OnStealthingExit += StartSpawningRegularly;
     }
 
-    public bool StartSpawningRegularly() {
-        if(regularlySpawningCoroutine != null) return false;
+    void OnDestroy() {
+        BaseHideout.OnStealthingEnter -= StopSpawningRegularly;
+        BaseHideout.OnStealthingExit -= StartSpawningRegularly;
+    }
+
+    public void StartSpawningRegularly() {
+        if(regularlySpawningCoroutine != null) return;
 
         regularlySpawningCoroutine = SpawnRegularly();
         StartCoroutine(regularlySpawningCoroutine);
-
-        return true;
     }
 
     public void StopSpawningRegularly() {
@@ -110,32 +83,13 @@ public class NPCPatrollerController : MonoBehaviour
         }
     }
 
-    public bool SpawnDirectly() {
-        if(disappearedTroops.Count == 0) return false;
+    public bool StartSpawningInstantly() {
+        if(isTroopAppeared) return false;
 
-        GameObject troop;
-        Vector2 troopVelocity;
-        Vector2 troopPosition;
-        for(int i=0; i<instantiatedTroops.Length; i++) {
-            troop = instantiatedTroops[i];
-            troopVelocity = instantiatedTroopRigidbody2Ds[i].velocity;
-            troopPosition = instantiatedTroopRigidbody2Ds[i].position;
-            // 플래이어의 방향으로 이동하고 있는 정찰병이 있다면 리턴
-            if(troop.activeSelf && troopVelocity.x*(playerRigidbody2D.position.x-troopPosition.x)>0) {
-                return false;
-            }
-        }
+        isTroopAppeared = true;
 
-        StopSpawningRegularly();
-
-        int randomIndex = Random.Range(0, disappearedTroops.Count);
-        troop = disappearedTroops[randomIndex];
-        disappearedTroops.RemoveAt(randomIndex);
-
-        Collider2D cd2d = troop.transform.Find("PlayerDetector").gameObject.GetComponent<Collider2D>();
-
-        float routineInterval = Random.Range(0, maxDirectSpawnInterval);
-        StartCoroutine(DelaySpawn(troop, cd2d, routineInterval));
+        SpawnTroop();
+        StartSpawningRegularly();
 
         return true;
     }
@@ -145,53 +99,43 @@ public class NPCPatrollerController : MonoBehaviour
     }
 
     public void IdleAllTroops() {
-        foreach(var troop in instantiatedTroops) {
-            if(troop.activeSelf) {
-                troop.GetComponent<NPCPatroller>().Idle();
-            }
-        }
+        if(troop.activeSelf)
+            troop.GetComponent<NPCPatroller>().Idle();
     }
 
     public void ResumeAllTroops() {
-        foreach(var troop in instantiatedTroops) {
-            if(troop.activeSelf) {
-                troop.GetComponent<NPCPatroller>().Move();
-            }
-        }
+        if(troop.activeSelf)
+            troop.GetComponent<NPCPatroller>().Move();
     }
 
     private IEnumerator SpawnRegularly() {
-        GameObject troop;
-        int randomIndex;
         float routineInterval;
 
-        if(latestPopedTroop!=null && !latestPopedTroop.activeSelf && !disappearedTroops.Contains(latestPopedTroop)) {
-            disappearedTroops.Add(latestPopedTroop);
-        }
-
         while(true) {
-            while(disappearedTroops.Count == 0) {
+            if(isTroopAppeared) {
                 yield return null;
+                continue;
             }
-
-            randomIndex = Random.Range(0, disappearedTroops.Count);
-            troop = disappearedTroops[randomIndex];
-            latestPopedTroop = troop;
-            disappearedTroops.RemoveAt(randomIndex);
-
-            Collider2D cd2d = troop.transform.Find("PlayerDetector").gameObject.GetComponent<Collider2D>();
             
             routineInterval = Random.Range(minRegularSpawnInterval, maxRegularSpawnInterval);
-            yield return DelaySpawn(troop, cd2d, routineInterval);
+            yield return new WaitForSeconds(routineInterval);
+
+            if(isTroopAppeared) {
+                continue;
+            }
+
+            SpawnTroop();
         }
     }
 
-    private IEnumerator DelaySpawn(GameObject troop, Collider2D cd2d, float delay) {
-        yield return new WaitForSeconds(delay);
+    private void SpawnTroop() {
+        NPCPatroller.disappearanceXDistance = playerCamera.orthographicSize * playerCamera.aspect + dispawnDeltaXWithCameraBound;
 
-        Vector2 startPoint = new();
+        Vector2 startPoint = troop.transform.position;
+        Collider2D cd2d = troopPlayerDetector.GetComponent<Collider2D>();
+
         Vector2 cd2dOffset = cd2d.offset;
-        float deltaXWithCameraBound = Random.Range(minDeltaXWithCameraBound, maxDeltaXWithCameraBound);
+        float deltaXWithCameraBound = Random.Range(minSpawnDeltaXWithCameraBound, maxSpawnDeltaXWithCameraBound) + playerCamera.orthographicSize * playerCamera.aspect;
         if(Random.Range(0, 2) == 0) {
             startPoint.x = playerRigidbody2D.position.x - deltaXWithCameraBound;
             cd2dOffset.x = 2;
@@ -199,7 +143,6 @@ public class NPCPatrollerController : MonoBehaviour
             startPoint.x = playerRigidbody2D.position.x + deltaXWithCameraBound;
             cd2dOffset.x = -2;
         }
-        startPoint.y = troop.transform.position.y;
 
         troop.SetActive(true);
 
@@ -208,11 +151,9 @@ public class NPCPatrollerController : MonoBehaviour
         Physics2D.SyncTransforms();
 
         troop.GetComponent<NPCPatroller>().Move();
-
-        StartSpawningRegularly();
     }
 
     private void TroopDisappearingEventHandler(int id) {
-        disappearedTroops.Add(instantiatedTroops[id]);
+        isTroopAppeared = false;
     }
 }

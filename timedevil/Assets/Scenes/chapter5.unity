@@ -187,7 +187,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   vcam: {fileID: 943340929}
   clamp2D: {fileID: 0}
-  defaultOrthoSize: 5
+  defaultOrthoSize: 7
   forceNoDamping: 1
   autoBindPlayerOnSceneLoad: 0
   reacquireVcamOnSceneLoad: 1
@@ -1480,11 +1480,10 @@ MonoBehaviour:
   maxRegularSpawnInterval: 20
   minRegularSpawnInterval: 8
   maxDirectSpawnInterval: 3
-  maxDeltaXWithCameraBound: 20
-  minDeltaXWithCameraBound: 12
-  maxSpawnYPosition: 1.7
-  minSpawnYPosition: -0.47
-  spawnYMargin: 0.2
+  maxSpawnDeltaXWithCameraBound: 8
+  minSpawnDeltaXWithCameraBound: 4
+  dispawnDeltaXWithCameraBound: 2
+  spawnYPosition: 1.5
 --- !u!4 &1092870392
 Transform:
   m_ObjectHideFlags: 0
@@ -67358,7 +67357,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cc96fdd452eeb3048b5cee7bc0bc1cde, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 5
+  speed: 3
   rb: {fileID: 1371882226}
   anim: {fileID: 1371882225}
   driveAnimator: 1
