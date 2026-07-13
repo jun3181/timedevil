@@ -9,6 +9,19 @@ public class NPCMover : MonoBehaviour
         Stop, Idle, IdleUntilResumable
     }
 
+    public virtual float Speed
+    {
+        set
+        {
+            velocityPerRoutine = value * coroutineIntervalTime * (endPoint - startPoint).normalized;
+            speed = value;
+        }
+        get
+        {
+            return speed;
+        }
+    }
+
     [SerializeField]
     [Header("이동 속력")]
     private float speed = 1f;
@@ -23,8 +36,8 @@ public class NPCMover : MonoBehaviour
     protected Rigidbody2D rb2d;
     protected Collider2D cd2d;
 
-    private Vector2 startPoint;
-    private Vector2 endPoint;
+    private Vector2 startPoint = Vector2.zero;
+    private Vector2 endPoint = Vector2.zero;
     private Vector2 velocityPerRoutine;
     private float estimatedTime;
     private float takingTime;
@@ -49,7 +62,7 @@ public class NPCMover : MonoBehaviour
         startPoint = rb2d.position;
         endPoint = dest;
         estimatedTime = (endPoint - startPoint).magnitude;
-        velocityPerRoutine = (endPoint - startPoint).normalized * speed * coroutineIntervalTime;
+        velocityPerRoutine = speed * coroutineIntervalTime * (endPoint - startPoint).normalized;
         takingTime = 0f;
 
         yield return movementCoroutine;

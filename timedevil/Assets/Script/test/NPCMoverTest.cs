@@ -2,17 +2,20 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class NPCMoverTest : NPCMover
+public class NPCMoverTest : MonoBehaviour
 {
     public bool btn = true;
-    public GameObject target;
+    private NPCMover npcMover;
 
     void Start()
     {
-        Debug.Log(MoveTo(target.transform.position));
+        npcMover = GetComponent<NPCMover>();
     }
 
     void Update() {
-        if(!btn) Stop();
+        if(!btn)
+            npcMover.Speed = 10f;
+        else
+            npcMover.Speed = 3f;
     }
 }
