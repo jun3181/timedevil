@@ -1041,7 +1041,7 @@ MonoBehaviour:
   routes:
   - key: Trigger1
     steps:
-    - {fileID: 406902705}
+    - {fileID: 1068492696}
     blockPlayerInputWhileRunning: 0
   allowReentrySameKey: 0
   debugLog: 1
@@ -1365,73 +1365,6 @@ MonoBehaviour:
   effect: {fileID: 91694823}
   playEnterOnStart: 1
   debugLog: 1
---- !u!1 &406902703
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 406902704}
-  - component: {fileID: 406902705}
-  m_Layer: 0
-  m_Name: DialogueTrigger
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &406902704
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 406902703}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1552804672}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &406902705
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 406902703}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 44c2cf90ffa778c4ea238a05c5ee2213, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  dialogue:
-    name: 
-    sentences: []
-    leftPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
-    rightPortrait: {fileID: 21300000, guid: f12142a398bc44c4abf724068d96ca08, type: 3}
-    lines:
-    - text: "\uC548\uB155"
-      speakerName: "\uB8E8\uC2DC"
-      leftPortrait: {fileID: 0}
-      rightPortrait: {fileID: 0}
-      focus: 1
-    - text: "\uC798\uAC00"
-      speakerName: "\uC5C4\uB9C8"
-      leftPortrait: {fileID: 0}
-      rightPortrait: {fileID: 0}
-      focus: 2
-  waitUntilDone: 1
-  lockPlayerInput: 1
-  blockWorldAdvance: 0
-  autoAdvance: 0
-  autoDelay: 1.5
-  dialogueNpcs:
-  - {fileID: 152032118}
 --- !u!1 &536647450
 GameObject:
   m_ObjectHideFlags: 0
@@ -2502,8 +2435,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c16556b31149d8f4fbaa0d446de73bfa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cardIds:
-  - AttackCard1
+  cardInfos:
+  - type: 0
+    index: 3
+  - type: 0
+    index: 3
 --- !u!1 &1085637592
 GameObject:
   m_ObjectHideFlags: 0
@@ -3304,7 +3240,6 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 406902704}
   - {fileID: 1068492695}
   m_Father: {fileID: 214428857}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
