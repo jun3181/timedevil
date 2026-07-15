@@ -132,22 +132,19 @@ public class NPCPatrollerController : MonoBehaviour
         NPCPatroller.disappearanceXDistance = playerCamera.orthographicSize * playerCamera.aspect + dispawnDeltaXWithCameraBound;
 
         Vector2 startPoint = troop.transform.position;
-        Collider2D cd2d = troopPlayerDetector.GetComponent<Collider2D>();
 
-        Vector2 cd2dOffset = cd2d.offset;
         float deltaXWithCameraBound = Random.Range(minSpawnDeltaXWithCameraBound, maxSpawnDeltaXWithCameraBound) + playerCamera.orthographicSize * playerCamera.aspect;
         if(Random.Range(0, 2) == 0) {
             startPoint.x = playerRigidbody2D.position.x - deltaXWithCameraBound;
-            cd2dOffset.x = 2;
+            troop.transform.rotation = Quaternion.Euler(0, 180, 0);
         } else {
             startPoint.x = playerRigidbody2D.position.x + deltaXWithCameraBound;
-            cd2dOffset.x = -2;
+            troop.transform.rotation = Quaternion.Euler(0, 0, 0);
         }
 
         troop.SetActive(true);
 
         troop.transform.position = (startPoint);
-        cd2d.offset = cd2dOffset;
         Physics2D.SyncTransforms();
 
         troop.GetComponent<NPCPatroller>().Move();

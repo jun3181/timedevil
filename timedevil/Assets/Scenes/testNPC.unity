@@ -2438,10 +2438,7 @@ MonoBehaviour:
   db: {fileID: 11400000, guid: c0cc44962aa33464ca629e77b4d09b2b, type: 2}
   cards:
   - {fileID: 11400000, guid: 63d5b1efcea947efb479bc0f1d2e1c06, type: 2}
-  - {fileID: 11400000, guid: b6b54e74805440edbde06e5b762aa266, type: 2}
-  - {fileID: 0}
   - {fileID: 11400000, guid: 63d5b1efcea947efb479bc0f1d2e1c06, type: 2}
-  - {fileID: 11400000, guid: 1561766a8534b2b45a6ed999c86d65f4, type: 2}
 --- !u!1 &1085637592
 GameObject:
   m_ObjectHideFlags: 0

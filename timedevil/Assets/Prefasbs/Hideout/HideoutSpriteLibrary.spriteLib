@@ -1,0 +1,84 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &1
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5e6fedc2472449cead18ef23b5cb30d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Library:
+  - m_Name: Obstacle
+    m_Hash: 902381543
+    m_CategoryList: []
+    m_OverrideEntries:
+    - m_Name: Hanger1
+      m_Hash: 723004556
+      m_Sprite: {fileID: 21300000, guid: 6dcb63c5924fd634fb84b3ead441a622, type: 3}
+      m_FromMain: 0
+      m_SpriteOverride: {fileID: 21300000, guid: 6dcb63c5924fd634fb84b3ead441a622,
+        type: 3}
+    - m_Name: Hanger2
+      m_Hash: 840006966
+      m_Sprite: {fileID: 21300000, guid: 097389edd2ca51945929ad831249aa7c, type: 3}
+      m_FromMain: 0
+      m_SpriteOverride: {fileID: 21300000, guid: 097389edd2ca51945929ad831249aa7c,
+        type: 3}
+    - m_Name: Rock1
+      m_Hash: 988957644
+      m_Sprite: {fileID: 21300000, guid: 84b950fafa00eec4f988130502c3e348, type: 3}
+      m_FromMain: 0
+      m_SpriteOverride: {fileID: 21300000, guid: 84b950fafa00eec4f988130502c3e348,
+        type: 3}
+    - m_Name: Rock2
+      m_Hash: 603658870
+      m_Sprite: {fileID: 21300000, guid: a2accbd2045413a43aace53350cd96cd, type: 3}
+      m_FromMain: 0
+      m_SpriteOverride: {fileID: 21300000, guid: a2accbd2045413a43aace53350cd96cd,
+        type: 3}
+    - m_Name: Rock3
+      m_Hash: 352070368
+      m_Sprite: {fileID: 21300000, guid: 7a9aeee4d504b5243a8ac59a8ed814df, type: 3}
+      m_FromMain: 0
+      m_SpriteOverride: {fileID: 21300000, guid: 7a9aeee4d504b5243a8ac59a8ed814df,
+        type: 3}
+    - m_Name: Bush1
+      m_Hash: 314415878
+      m_Sprite: {fileID: 21300000, guid: 1153ebba836cbf945b4adae60a5d4d25, type: 3}
+      m_FromMain: 0
+      m_SpriteOverride: {fileID: 21300000, guid: 1153ebba836cbf945b4adae60a5d4d25,
+        type: 3}
+    - m_Name: Bush2
+      m_Hash: 196397756
+      m_Sprite: {fileID: 21300000, guid: 3123dde2f4c32cb45a13340f32ff6df6, type: 3}
+      m_FromMain: 0
+      m_SpriteOverride: {fileID: 21300000, guid: 3123dde2f4c32cb45a13340f32ff6df6,
+        type: 3}
+    - m_Name: Bush3
+      m_Hash: 1018427946
+      m_Sprite: {fileID: 21300000, guid: f2c697791332bcf41ab7d27051f02480, type: 3}
+      m_FromMain: 0
+      m_SpriteOverride: {fileID: 21300000, guid: f2c697791332bcf41ab7d27051f02480,
+        type: 3}
+    - m_Name: Bush4
+      m_Hash: 584544137
+      m_Sprite: {fileID: 21300000, guid: 57cb7229c56e82e4690ee98048f725de, type: 3}
+      m_FromMain: 0
+      m_SpriteOverride: {fileID: 21300000, guid: 57cb7229c56e82e4690ee98048f725de,
+        type: 3}
+    m_FromMain: 0
+    m_EntryOverrideCount: 9
+  - m_Name: Box
+    m_Hash: 820252378
+    m_CategoryList: []
+    m_OverrideEntries: []
+    m_FromMain: 0
+    m_EntryOverrideCount: 0
+  m_PrimaryLibraryGUID: 
+  m_ModificationHash: 639197297624856671
+  m_Version: 1

@@ -9,8 +9,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8254293724965864549}
-  - component: {fileID: 3041384922435613007}
   - component: {fileID: 7434271745994220268}
+  - component: {fileID: 2316201696297370358}
   m_Layer: 0
   m_Name: PlayerDetector
   m_TagString: Untagged
@@ -33,8 +33,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 8333397184577897112}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!58 &3041384922435613007
-CircleCollider2D:
+--- !u!114 &7434271745994220268
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2224781603309485832}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 67975e1182919744b818117bccf44025, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dialogue:
+    name: 
+    sentences: []
+    leftPortrait: {fileID: 0}
+    rightPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
+    lines:
+    - text: "\u3141\u3134\u3147\u3139"
+      speakerName: "\uC21C\uCC30\uBCD1"
+      leftPortrait: {fileID: 0}
+      rightPortrait: {fileID: 0}
+      focus: 0
+    - text: "\uD5C9... \uBB50\uB4E0\uC9C0 \uD560\uAC8C\uC694! \uC81C\uBC1C \uC0B4\uB824\uB9CC
+        \uC8FC\uC138\uC694!"
+      speakerName: Lucy
+      leftPortrait: {fileID: 0}
+      rightPortrait: {fileID: 0}
+      focus: 2
+--- !u!60 &2316201696297370358
+PolygonCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -65,38 +94,23 @@ CircleCollider2D:
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: -2, y: -0.34}
-  serializedVersion: 2
-  m_Radius: 3
---- !u!114 &7434271745994220268
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2224781603309485832}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 67975e1182919744b818117bccf44025, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  dialogue:
-    name: 
-    sentences: []
-    leftPortrait: {fileID: 0}
-    rightPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
-    lines:
-    - text: "\u3141\u3134\u3147\u3139"
-      speakerName: "\uC21C\uCC30\uBCD1"
-      leftPortrait: {fileID: 0}
-      rightPortrait: {fileID: 0}
-      focus: 0
-    - text: "\uD5C9... \uBB50\uB4E0\uC9C0 \uD560\uAC8C\uC694! \uC81C\uBC1C \uC0B4\uB824\uB9CC
-        \uC8FC\uC138\uC694!"
-      speakerName: Lucy
-      leftPortrait: {fileID: 0}
-      rightPortrait: {fileID: 0}
-      focus: 2
+  m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0, y: 0}
+    oldSize: {x: 0, y: 0}
+    newSize: {x: 0, y: 0}
+    adaptiveTilingThreshold: 0
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Points:
+    m_Paths:
+    - - {x: -1.928824, y: 3.6930068}
+      - {x: -3.1230116, y: -0.44643465}
+      - {x: -1.8078296, y: -4.3433924}
+      - {x: 0.71486115, y: -0.3482559}
+  m_UseDelaunayMesh: 0
 --- !u!1 &7522993159658721311
 GameObject:
   m_ObjectHideFlags: 0
@@ -126,8 +140,8 @@ Transform:
   m_GameObject: {fileID: 7522993159658721311}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 60, y: 0, z: -0.04332176}
-  m_LocalScale: {x: 1.5, y: 1.5, z: 1}
+  m_LocalPosition: {x: 60, y: 0, z: 0}
+  m_LocalScale: {x: 1.5, y: 1.5, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8254293724965864549}
