@@ -86,8 +86,6 @@ public class NPCPatrollerController : MonoBehaviour
     public bool StartSpawningInstantly() {
         if(isTroopAppeared) return false;
 
-        isTroopAppeared = true;
-
         SpawnTroop();
         StartSpawningRegularly();
 
@@ -129,6 +127,7 @@ public class NPCPatrollerController : MonoBehaviour
     }
 
     private void SpawnTroop() {
+        isTroopAppeared = true;
         NPCPatroller.disappearanceXDistance = playerCamera.orthographicSize * playerCamera.aspect + dispawnDeltaXWithCameraBound;
 
         Vector2 startPoint = troop.transform.position;
