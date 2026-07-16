@@ -39,6 +39,8 @@ public class WantedPoster : MonoBehaviour, IInteractable
     }
 
     public void Interact() {
+        if(BaseHideout.Hiding) return;
+
         DetachingCounter++;
 
         NPCPatrollerController.instance.StopSpawningRegularly();
