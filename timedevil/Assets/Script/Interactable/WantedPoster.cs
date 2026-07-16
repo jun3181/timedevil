@@ -52,6 +52,7 @@ public class WantedPoster : MonoBehaviour, IInteractable
 
     private void OnDialogueEndEventHandler() {
         DialogueManager.OnDialogueEnd -= OnDialogueEndEventHandler;
+        NPCPatrollerController.instance.ResumeAllTroops();
         NPCPatrollerController.instance.StartSpawningInstantly();
     }
 }
