@@ -33,6 +33,9 @@ public class NPCPatrollerController : MonoBehaviour
     [Header("순찰병 스폰 Y좌표")]
     [SerializeField] private float spawnYPosition = 1.5f;
 
+    [Header("순찰병 즉시 스폰 후 반복 스폰")]
+    public bool spawningRegularlyAfterInstantSpawn = true;
+
     private GameObject troop;
     private Rigidbody2D troopRigidbody2D;
     private NPCPatrollerPlayerDetector troopPlayerDetector;
@@ -60,13 +63,13 @@ public class NPCPatrollerController : MonoBehaviour
         troop.transform.position = new(0, spawnYPosition);
         troop.SetActive(false);
 
-        BaseHideout.OnStealthingEnter += StopSpawningRegularly;
-        BaseHideout.OnStealthingExit += StartSpawningRegularly;
+        BaseHideout.OnStealthingEnter += OnStealthingEnterEventHandler;
+        BaseHideout.OnStealthingExit += OnStealthingExitEventHandler;
     }
 
     void OnDestroy() {
-        BaseHideout.OnStealthingEnter -= StopSpawningRegularly;
-        BaseHideout.OnStealthingExit -= StartSpawningRegularly;
+        BaseHideout.OnStealthingEnter -= OnStealthingEnterEventHandler;
+        BaseHideout.OnStealthingExit -= OnStealthingExitEventHandler;
     }
 
     public void StartSpawningRegularly() {
@@ -87,7 +90,8 @@ public class NPCPatrollerController : MonoBehaviour
         if(isTroopAppeared) return false;
 
         SpawnTroop();
-        StartSpawningRegularly();
+        if(spawningRegularlyAfterInstantSpawn)
+            StartSpawningRegularly();
 
         return true;
     }
@@ -151,5 +155,19 @@ public class NPCPatrollerController : MonoBehaviour
 
     private void TroopDisappearingEventHandler(int id) {
         isTroopAppeared = false;
+    }
+
+    private void OnStealthingEnterEventHandler() {
+        if(WantedPoster.DetachingCounter == 0 || WantedPoster.DetachingCounter == WantedPoster.InstanceCounter)
+            return;
+        else
+            StopSpawningRegularly();
+    }
+
+    private void OnStealthingExitEventHandler() {
+        if(WantedPoster.DetachingCounter == 0 || WantedPoster.DetachingCounter == WantedPoster.InstanceCounter)
+            return;
+        else
+            StartSpawningRegularly();
     }
 }
