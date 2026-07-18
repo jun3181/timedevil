@@ -39,7 +39,6 @@ public class NPCPatrollerController : MonoBehaviour
     private GameObject troop;
     private Rigidbody2D troopRigidbody2D;
     private NPCPatrollerPlayerDetector troopPlayerDetector;
-    private bool isTroopAppeared = false;
 
     private IEnumerator regularlySpawningCoroutine;
 
@@ -53,8 +52,6 @@ public class NPCPatrollerController : MonoBehaviour
         player = GameObject.FindWithTag("Player");
         playerRigidbody2D = player.GetComponent<Rigidbody2D>();
         playerCamera = GameObject.FindWithTag("MainCamera").GetComponent<Camera>();
-
-        NPCPatroller.OnDisappearing += TroopDisappearingEventHandler;
 
         troop = Instantiate(troopPrefab);
         troopRigidbody2D = troop.GetComponent<Rigidbody2D>();
@@ -87,7 +84,9 @@ public class NPCPatrollerController : MonoBehaviour
     }
 
     public bool StartSpawningInstantly() {
-        if(isTroopAppeared) return false;
+        if(troop.activeSelf) return false;
+
+        Debug.Log("StartSpawningInstantly");
 
         SpawnTroop();
         if(spawningRegularlyAfterInstantSpawn)
@@ -114,7 +113,7 @@ public class NPCPatrollerController : MonoBehaviour
         float routineInterval;
 
         while(true) {
-            if(isTroopAppeared) {
+            if(troop.activeSelf) {
                 yield return null;
                 continue;
             }
@@ -122,7 +121,7 @@ public class NPCPatrollerController : MonoBehaviour
             routineInterval = Random.Range(minRegularSpawnInterval, maxRegularSpawnInterval);
             yield return new WaitForSeconds(routineInterval);
 
-            if(isTroopAppeared) {
+            if(troop.activeSelf) {
                 continue;
             }
 
@@ -131,7 +130,6 @@ public class NPCPatrollerController : MonoBehaviour
     }
 
     private void SpawnTroop() {
-        isTroopAppeared = true;
         NPCPatroller.disappearanceXDistance = playerCamera.orthographicSize * playerCamera.aspect + dispawnDeltaXWithCameraBound;
 
         Vector2 startPoint = troop.transform.position;
@@ -151,10 +149,6 @@ public class NPCPatrollerController : MonoBehaviour
         Physics2D.SyncTransforms();
 
         troop.GetComponent<NPCPatroller>().Move();
-    }
-
-    private void TroopDisappearingEventHandler(int id) {
-        isTroopAppeared = false;
     }
 
     private void OnStealthingEnterEventHandler() {
