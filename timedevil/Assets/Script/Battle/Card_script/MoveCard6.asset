@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: MoveCard6
   type: 3
   display: "[\uC808\uB9DD]\n\uC67C\uCABD\uC73C\uB85C \uD55C \uCE78 \uC774\uB3D9"
-  explanation: 
+  explanation: "더는 못 버티겠어. 왼쪽으로라도 벗어나야 해."
   cost: 1
   positive: 0
   negative: 0

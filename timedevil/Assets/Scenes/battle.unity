@@ -231,6 +231,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   row: {fileID: 0}
   cardPrefab: {fileID: 1448559822}
+  cardDatabase: {fileID: 0}
   resourcesFolder: my_asset
   leftPadding: 5
   rightPadding: 5
@@ -1334,7 +1335,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &519244439
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1806,6 +1807,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   useImage: {fileID: 1522580513}
+  cardDatabase: {fileID: 0}
   resourcesFolder: my_asset
   maxPreviewSize: {x: 130, y: 200}
   fadeIn: 0.35
@@ -5620,9 +5622,9 @@ Transform:
   m_GameObject: {fileID: 1064948986}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 3.344, y: 2.502, z: -2}
+  m_LocalPosition: {x: 3.5, y: 2.502, z: -2}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 1809357712}
   m_Father: {fileID: 0}
@@ -6132,6 +6134,17 @@ MonoBehaviour:
   originCol_Enemy: 1
   playerGridOrigin: {fileID: 1330316358}
   enemyGridOrigin: {fileID: 1767689043}
+  useGridObjectAsOrigin: 1
+  gridRoot: {fileID: 0}
+  autoFindBoardCenters: 1
+  playerBoardCenter: {fileID: 0}
+  enemyBoardCenter: {fileID: 0}
+  playerBoardCenterLocal: {x: -4.325, y: 0.155}
+  enemyBoardCenterLocal: {x: 3.675, y: 0.155}
+  useGridScaleForCell: 1
+  gridScaleReference: {fileID: 0}
+  playerGridScaleReference: {fileID: 0}
+  enemyGridScaleReference: {fileID: 0}
   playerPawn: {fileID: 1345401700}
   enemyPawn: {fileID: 1064948988}
   keepPawnZ: 1
@@ -6142,6 +6155,11 @@ MonoBehaviour:
   enemySortingOrder: 20
   playerRC: {x: 4, y: 1}
   enemyRC: {x: 2, y: 2}
+  alignPawnsToStartGridOnStart: 1
+  playerStartRC: {x: 4, y: 1}
+  enemyStartRC: {x: 2, y: 2}
+  syncGridFromPawnPositionsOnStart: 1
+  snapPawnsToGridOnStart: 1
   perCellSeconds: 0.15
   ease:
     serializedVersion: 2
@@ -6169,7 +6187,7 @@ MonoBehaviour:
     m_RotationOrder: 4
   playerAnimator: {fileID: 2084521563}
   enemyAnimator: {fileID: 0}
-  moveTriggerName: Move
+  chapter1RightWalkStateName: Player_Right_Walk
   menu: {fileID: 1069897049}
   desc: {fileID: 1069897052}
 --- !u!114 &1201525411
@@ -6208,6 +6226,10 @@ MonoBehaviour:
   useDynamicEffectSorting: 1
   effectSortingPadding: 12
   anim: {fileID: 1575189429}
+  moveController: {fileID: 0}
+  useMoveControllerGrid: 1
+  gridHitSizeScale: 1
+  scaleProjectileHitboxesWithGrid: 1
   playerCentersPos:
   - {x: -5.98, y: 3.71, z: -2}
   - {x: -4.69, y: 3.71, z: -2}
@@ -6849,9 +6871,9 @@ Transform:
   m_GameObject: {fileID: 1345401698}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -3.43, y: 2.46, z: 0}
+  m_LocalPosition: {x: -3.24, y: 2.46, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 2084521561}
   m_Father: {fileID: 0}
@@ -10799,7 +10821,7 @@ Transform:
   m_GameObject: {fileID: 1575189427}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.2202735, y: -0.47123986, z: -0.10652664}
+  m_LocalPosition: {x: 0.45, y: 1.68, z: -0.10652664}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -11131,7 +11153,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 1445616784, guid: 87d139481be180d489cc61d75fc37661, type: 3}
+  m_Sprite: {fileID: 549295704, guid: 87d139481be180d489cc61d75fc37661, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -11199,7 +11221,7 @@ Transform:
   m_GameObject: {fileID: 1809357711}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.01, y: 0.38, z: 0}
+  m_LocalPosition: {x: -0.01, y: 0.55, z: 0}
   m_LocalScale: {x: 1.7676, y: 1.7676, z: 1.7676}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -11722,7 +11744,7 @@ Transform:
   m_GameObject: {fileID: 2084521560}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.01, y: 0.38, z: -2}
+  m_LocalPosition: {x: 0.06, y: 0.55, z: -2}
   m_LocalScale: {x: 1.7676, y: 1.7676, z: 1.7676}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -11790,7 +11812,7 @@ Animator:
   m_GameObject: {fileID: 2084521560}
   m_Enabled: 0
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 66b2d0b0bf6bda748b8d6f0cef92c9ef, type: 2}
+  m_Controller: {fileID: 9100000, guid: 713e7ae13e685944d92a6924f04c2277, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -12043,9 +12065,9 @@ Transform:
   m_GameObject: {fileID: 2126204886}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.27, y: 1.69, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalPosition: {x: 0.45, y: 0.89, z: 0}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 1021224432}
   - {fileID: 1436804472}
