@@ -27,6 +27,7 @@ public class PlayerAction : MonoBehaviour
 
     Vector3 dirVec = Vector3.down;
     GameObject scanObject;
+    bool isInteractionSequenceRunning;
 
     // ===== Unity =====
     void Awake()
@@ -142,7 +143,7 @@ public class PlayerAction : MonoBehaviour
         // --- Raycast 로직 끝 ---
 
         // 상호작용
-        if (!manager.isAction && Input.GetKeyDown(KeyCode.E) && scanObject != null)
+        if (!manager.isAction && !isInteractionSequenceRunning && Input.GetKeyDown(KeyCode.E) && scanObject != null)
         {
             // 대화가 진행 중이면 다른 상호작용을 막음
             if (DialogueManager.instance != null && DialogueManager.instance.isDialogueActive)
@@ -151,12 +152,12 @@ public class PlayerAction : MonoBehaviour
             }
 
             // scanObject에서 'IInteractable' 인터페이스를 가진 컴포넌트를 찾음
-            IInteractable interactable = scanObject.GetComponent<IInteractable>();
+            IInteractable[] interactables = scanObject.GetComponents<IInteractable>();
 
-            if (interactable != null) // 인터페이스를 가진 오브젝트라면 (대화, 컷신 등)
+            if (interactables != null && interactables.Length > 0) // 인터페이스를 가진 오브젝트라면 (대화, 컷신 등)
             {
-                // 상대방이 누구든 상관없이 Interact() 함수를 호출
-                interactable.Interact();
+                // 한 오브젝트에 여러 상호작용 컴포넌트가 있으면 인스펙터 순서대로 실행
+                StartCoroutine(InteractSequentially(interactables));
             }
             else // 인터페이스가 없는 특별한 오브젝트라면 (기존 로직)
             {
@@ -184,5 +185,20 @@ public class PlayerAction : MonoBehaviour
     {
         // 이동 (물리 효과는 FixedUpdate에서 처리)
         rigid.velocity = new Vector2(h, v).normalized * Speed;
+    }
+
+    private IEnumerator InteractSequentially(IInteractable[] interactables)
+    {
+        isInteractionSequenceRunning = true;
+
+        for (int i = 0; i < interactables.Length; i++)
+        {
+            interactables[i]?.Interact();
+
+            if (i < interactables.Length - 1 && DialogueManager.instance != null)
+                yield return new WaitWhile(() => DialogueManager.instance != null && DialogueManager.instance.isDialogueActive);
+        }
+
+        isInteractionSequenceRunning = false;
     }
 }

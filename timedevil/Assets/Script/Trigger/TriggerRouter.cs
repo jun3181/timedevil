@@ -28,6 +28,7 @@ public class TriggerRouter : MonoBehaviour
 
     private readonly Dictionary<string, Route> _map = new();
     private readonly HashSet<string> _runningKeys = new();
+    private readonly HashSet<string> _inputBlockSuspendedKeys = new();
     private int _heldRouteInputLockCount = 0;
 
     private void Awake()
@@ -137,6 +138,21 @@ public class TriggerRouter : MonoBehaviour
 
                     if (debugLog) Debug.Log($"[TriggerRouter]  step[{i}] -> {step.GetType().Name} ({step.name})");
 
+                    bool suspendedInputBlockForStep = false;
+                    if (route.blockPlayerInputWhileRunning && step.AllowPlayerInputWhileExecuting)
+                    {
+                        _inputBlockSuspendedKeys.Add(key);
+                        suspendedInputBlockForStep = true;
+
+                        if (heldInputLock && GameManager.Instance != null)
+                        {
+                            GameManager.Instance.UnlockAction();
+                            heldInputLock = false;
+                            _heldRouteInputLockCount = Mathf.Max(0, _heldRouteInputLockCount - 1);
+                            if (debugLog) Debug.Log($"[TriggerRouter] INPUT UNLOCK for input-allowed step key='{key}' step={step.GetType().Name}");
+                        }
+                    }
+                    
                     IEnumerator it = null;
                     try
                     {
@@ -149,6 +165,19 @@ public class TriggerRouter : MonoBehaviour
 
                     if (it != null)
                         yield return it;
+
+                    if (suspendedInputBlockForStep)
+                    {
+                        _inputBlockSuspendedKeys.Remove(key);
+
+                        if (route.blockPlayerInputWhileRunning && GameManager.Instance != null)
+                        {
+                            GameManager.Instance.LockAction();
+                            heldInputLock = true;
+                            _heldRouteInputLockCount++;
+                            if (debugLog) Debug.Log($"[TriggerRouter] INPUT LOCK restored key='{key}'");
+                        }
+                    }
 
                     // step 정상 종료 후: 다음 step 인덱스로 전진 저장
                     WorldNPCStateService.Instance?.SaveTriggerRouteProgress(runtimeId, key, i + 1, true);
@@ -168,6 +197,7 @@ public class TriggerRouter : MonoBehaviour
 
             if (debugLog) Debug.Log($"[TriggerRouter] END key='{key}'");
             _runningKeys.Remove(key);
+            _inputBlockSuspendedKeys.Remove(key);
 
             // 정상 완주 시에만 progress 제거.
             // 씬 전환/중단으로 코루틴이 끝난 경우(progress가 있어야 복귀 후 resume 가능)
@@ -189,6 +219,7 @@ public class TriggerRouter : MonoBehaviour
             if (r == null) continue;
             if (!r.blockPlayerInputWhileRunning) continue;
             if (string.IsNullOrWhiteSpace(r.key)) continue;
+            if (_inputBlockSuspendedKeys.Contains(r.key)) continue;
             if (_runningKeys.Contains(r.key)) return true;
         }
 
