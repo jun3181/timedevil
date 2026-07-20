@@ -99,7 +99,7 @@ public class NPCPatroller : NPCMover, INPCMovement
             yield break;
         }
 
-        xOffset = (direction==NPCPatrollerDirection.Left) ? -disappearanceXDistance : disappearanceXDistance;
+        xOffset = (direction==NPCPatrollerDirection.Left) ? -3 : 3;
         extraDestinationPoint = firstDestinationPoint;
         while(true) {
             extraDestinationPoint.x += xOffset;

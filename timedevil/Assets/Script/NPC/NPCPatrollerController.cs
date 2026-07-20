@@ -33,10 +33,12 @@ public class NPCPatrollerController : MonoBehaviour
     [Header("순찰병 스폰 Y좌표")]
     [SerializeField] private float spawnYPosition = 1.5f;
 
+    [Header("순찰병 즉시 스폰 후 반복 스폰")]
+    public bool spawningRegularlyAfterInstantSpawn = true;
+
     private GameObject troop;
     private Rigidbody2D troopRigidbody2D;
     private NPCPatrollerPlayerDetector troopPlayerDetector;
-    private bool isTroopAppeared = false;
 
     private IEnumerator regularlySpawningCoroutine;
 
@@ -51,8 +53,6 @@ public class NPCPatrollerController : MonoBehaviour
         playerRigidbody2D = player.GetComponent<Rigidbody2D>();
         playerCamera = GameObject.FindWithTag("MainCamera").GetComponent<Camera>();
 
-        NPCPatroller.OnDisappearing += TroopDisappearingEventHandler;
-
         troop = Instantiate(troopPrefab);
         troopRigidbody2D = troop.GetComponent<Rigidbody2D>();
         troopPlayerDetector = troop.transform.Find("PlayerDetector").gameObject.GetComponent<NPCPatrollerPlayerDetector>();
@@ -60,13 +60,13 @@ public class NPCPatrollerController : MonoBehaviour
         troop.transform.position = new(0, spawnYPosition);
         troop.SetActive(false);
 
-        BaseHideout.OnStealthingEnter += StopSpawningRegularly;
-        BaseHideout.OnStealthingExit += StartSpawningRegularly;
+        BaseHideout.OnStealthingEnter += OnStealthingEnterEventHandler;
+        BaseHideout.OnStealthingExit += OnStealthingExitEventHandler;
     }
 
     void OnDestroy() {
-        BaseHideout.OnStealthingEnter -= StopSpawningRegularly;
-        BaseHideout.OnStealthingExit -= StartSpawningRegularly;
+        BaseHideout.OnStealthingEnter -= OnStealthingEnterEventHandler;
+        BaseHideout.OnStealthingExit -= OnStealthingExitEventHandler;
     }
 
     public void StartSpawningRegularly() {
@@ -84,12 +84,13 @@ public class NPCPatrollerController : MonoBehaviour
     }
 
     public bool StartSpawningInstantly() {
-        if(isTroopAppeared) return false;
+        if(troop.activeSelf) return false;
 
-        isTroopAppeared = true;
+        Debug.Log("StartSpawningInstantly");
 
         SpawnTroop();
-        StartSpawningRegularly();
+        if(spawningRegularlyAfterInstantSpawn)
+            StartSpawningRegularly();
 
         return true;
     }
@@ -112,7 +113,7 @@ public class NPCPatrollerController : MonoBehaviour
         float routineInterval;
 
         while(true) {
-            if(isTroopAppeared) {
+            if(troop.activeSelf) {
                 yield return null;
                 continue;
             }
@@ -120,7 +121,7 @@ public class NPCPatrollerController : MonoBehaviour
             routineInterval = Random.Range(minRegularSpawnInterval, maxRegularSpawnInterval);
             yield return new WaitForSeconds(routineInterval);
 
-            if(isTroopAppeared) {
+            if(troop.activeSelf) {
                 continue;
             }
 
@@ -132,28 +133,35 @@ public class NPCPatrollerController : MonoBehaviour
         NPCPatroller.disappearanceXDistance = playerCamera.orthographicSize * playerCamera.aspect + dispawnDeltaXWithCameraBound;
 
         Vector2 startPoint = troop.transform.position;
-        Collider2D cd2d = troopPlayerDetector.GetComponent<Collider2D>();
 
-        Vector2 cd2dOffset = cd2d.offset;
         float deltaXWithCameraBound = Random.Range(minSpawnDeltaXWithCameraBound, maxSpawnDeltaXWithCameraBound) + playerCamera.orthographicSize * playerCamera.aspect;
         if(Random.Range(0, 2) == 0) {
             startPoint.x = playerRigidbody2D.position.x - deltaXWithCameraBound;
-            cd2dOffset.x = 2;
+            troop.transform.rotation = Quaternion.Euler(0, 180, 0);
         } else {
             startPoint.x = playerRigidbody2D.position.x + deltaXWithCameraBound;
-            cd2dOffset.x = -2;
+            troop.transform.rotation = Quaternion.Euler(0, 0, 0);
         }
 
         troop.SetActive(true);
 
         troop.transform.position = (startPoint);
-        cd2d.offset = cd2dOffset;
         Physics2D.SyncTransforms();
 
         troop.GetComponent<NPCPatroller>().Move();
     }
 
-    private void TroopDisappearingEventHandler(int id) {
-        isTroopAppeared = false;
+    private void OnStealthingEnterEventHandler() {
+        if(WantedPoster.DetachingCounter == 0 || WantedPoster.DetachingCounter == WantedPoster.InstanceCounter)
+            return;
+        else
+            StopSpawningRegularly();
+    }
+
+    private void OnStealthingExitEventHandler() {
+        if(WantedPoster.DetachingCounter == 0 || WantedPoster.DetachingCounter == WantedPoster.InstanceCounter)
+            return;
+        else
+            StartSpawningRegularly();
     }
 }

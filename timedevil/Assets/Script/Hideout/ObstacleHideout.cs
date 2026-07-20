@@ -28,7 +28,7 @@ public sealed class ObstacleHideout : BaseHideout
 
     void OnTriggerExit2D(Collider2D other) {
         if(other.CompareTag("Player")) {
-            RaiseStealthingEnterEvent(gameObject.name);
+            RaiseStealthingExitEvent(gameObject.name);
 
             Color new_color = playerSpriteRenderer.color;
             new_color.a = 1;

@@ -4,35 +4,35 @@ using UnityEngine;
 
 public class TriggerStep_Card : TriggerStepBase
 {
-    [System.Serializable]
-    public enum CardType {
-        Attack, Move, Draw
-    }
-
-    [System.Serializable]
-    public struct CardInfo {
-        public CardType type;
-        public uint index;
-    }
 
     [SerializeField]
-    [Header("ID")]
+    [Header("DB")]
+    [Tooltip("설정한 카드들이 유효한 지 검증용")]
+    private CardDatabaseSO db;
+
+    [SerializeField]
+    [Header("Cards")]
     [Tooltip("트리거 작동시 지급될 카드들의 타입과 이름들")]
-    private List<CardInfo> cardInfos = new();
-
-    private List<string> cardIds = new();
-
+    private List<BaseCardSO> cards = new();
+    
     void Awake() {
-        foreach(CardInfo info in cardInfos) {
-            if(info.index == 0) continue;
-            cardIds.Add(info.type.ToString() + "Card" + info.index.ToString());
+        HashSet<BaseCardSO> registered_cards = new();
+        for(int i = 0; i < cards.Count; i++) {
+            if(cards[i]==null || !db.GetById(cards[i].id)) {
+                cards.RemoveAt(i);
+                i--;
+                continue;
+            }
+            registered_cards.Add(cards[i]);
         }
+
+        cards = new List<BaseCardSO>(registered_cards);
     }
 
     public override IEnumerator Execute(TriggerContext ctx) {
         if(CardStateRuntime.Instance == null) yield break;
-        foreach(string id in cardIds) {
-            CardStateRuntime.Instance.AddOwned(id);
+        foreach(var card in cards) {
+            CardStateRuntime.Instance.AddOwned(card.id);
         }
         yield break;
     }
