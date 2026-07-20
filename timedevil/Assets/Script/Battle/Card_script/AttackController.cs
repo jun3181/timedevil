@@ -15,6 +15,12 @@ public class AttackController : MonoBehaviour
     [SerializeField] private int effectSortingPadding = 12;
 
     [SerializeField] private AttackAnimationController anim;
+    [SerializeField] private MoveController moveController;
+
+    [Header("Grid Source")]
+    [SerializeField] private bool useMoveControllerGrid = true;
+    [SerializeField] private float gridHitSizeScale = 1f;
+    [SerializeField] private bool scaleProjectileHitboxesWithGrid = true;
 
     [Header("Manual Centers (World Positions)")]
     [SerializeField] private Vector3[] playerCentersPos = new Vector3[16];
@@ -33,11 +39,14 @@ public class AttackController : MonoBehaviour
     [Header("Hit/VFX")]
     [SerializeField] private HPController hp;
     [SerializeField] private bool oneHitPerCard = true;
+    private readonly Vector3[] playerGridCenters = new Vector3[16];
+    private readonly Vector3[] enemyGridCenters = new Vector3[16];
 
     void Awake()
     {
         if (!hp) hp = FindObjectOfType<HPController>(true);
         if (!anim) anim = FindObjectOfType<AttackAnimationController>(true);
+        if (!moveController) moveController = FindObjectOfType<MoveController>(true);
     }
 
     public IEnumerator Execute(AttackCardSO so, Faction self, Faction foe)
@@ -47,12 +56,14 @@ public class AttackController : MonoBehaviour
 
         hp?.BeginCardHitTest(foe);
 
-        var centersSelf = (self == Faction.Player) ? playerCentersPos : enemyCentersPos;
-        var centersFoe = (foe == Faction.Player) ? playerCentersPos : enemyCentersPos;
+        var centersSelf = ResolveCenters(self);
+        var centersFoe = ResolveCenters(foe);
         if (centersSelf == null || centersSelf.Length < 16 || centersFoe == null || centersFoe.Length < 16)
         { Debug.LogWarning("[AttackController] centers arrays must have 16 elements."); yield break; }
 
+        Vector2 foeTileSize = ResolveTileSize(foe);
         anim.EnsurePool(16);
+        anim.SetTileSize(foeTileSize);
 
         //                       :              
         if (so.waves == null || so.waves.Length == 0)
@@ -64,11 +75,11 @@ public class AttackController : MonoBehaviour
 
             if (IsAllZero(mask)) yield break;
 
-            anim.PlaceAndShowMask(mask, centersFoe);
+            anim.PlaceAndShowMask(mask, centersFoe, foeTileSize);
             yield return RunWarningTimeline(mask, times);
             anim.HideAll();
 
-            yield return RunDirectHitsByDelays(mask, times, centersFoe, so, self, foe);
+            yield return RunDirectHitsByDelays(mask, times, centersFoe, foeTileSize, so, self, foe);
             yield break;
         }
 
@@ -96,7 +107,7 @@ public class AttackController : MonoBehaviour
             }
 
             // (       "       "       )
-            anim.PlaceAndShowMask(warnMask, centersFoe);
+            anim.PlaceAndShowMask(warnMask, centersFoe, foeTileSize);
 
             //             SFX/VFX(    )
             if (!w.sfxEveryHit && w.sfx)
@@ -111,19 +122,57 @@ public class AttackController : MonoBehaviour
             // Hook     
             if (w.projectilePrefab != null)                       // Launcher Hook (                      )
             {
-                yield return LaunchProjectilesByLabels(w, self, foe, centersSelf, centersFoe, so);
+                yield return LaunchProjectilesByLabels(w, self, foe, centersSelf, centersFoe, foeTileSize, so);
             }
             else if (w.explosionPrefab != null)                   // Explosion Hook
             {
-                yield return RunExplosionHook(warnMask, w.hitDelays, centersFoe, w, so, self, foe);
+                yield return RunExplosionHook(warnMask, w.hitDelays, centersFoe, foeTileSize, w, so, self, foe);
             }
             else                                                  // Hook                    
             {
-                yield return RunDirectHitsByDelays(warnMask, w.hitDelays, centersFoe, so, self, foe);
+                yield return RunDirectHitsByDelays(warnMask, w.hitDelays, centersFoe, foeTileSize, so, self, foe);
             }
 
             if (w.delayAfter > 0f) yield return new WaitForSeconds(w.delayAfter);
         }
+    }
+
+    private Vector3[] ResolveCenters(Faction side)
+    {
+        Vector3[] gridCenters = side == Faction.Player ? playerGridCenters : enemyGridCenters;
+        if (useMoveControllerGrid && moveController != null &&
+            moveController.TryBuildPatternCenters(side, gridCenters, tileZ))
+        {
+            return gridCenters;
+        }
+
+        return side == Faction.Player ? playerCentersPos : enemyCentersPos;
+    }
+
+    private Vector2 ResolveTileSize(Faction side)
+    {
+        if (useMoveControllerGrid && moveController != null)
+        {
+            Vector2 cellSize = moveController.GetCellSize(side);
+            return new Vector2(
+                Mathf.Max(0.01f, cellSize.x * Mathf.Max(0.01f, gridHitSizeScale)),
+                Mathf.Max(0.01f, cellSize.y * Mathf.Max(0.01f, gridHitSizeScale))
+            );
+        }
+
+        return new Vector2(Mathf.Max(0.01f, tileWidth), Mathf.Max(0.01f, tileHeight));
+    }
+
+    private Vector2 ResolveProjectileHitSize(AttackCardSO.Wave w, Vector2 foeTileSize)
+    {
+        float width = Mathf.Max(0.01f, w.projectileHitWidth);
+        float height = Mathf.Max(0.01f, w.projectileHitHeight);
+        if (!useMoveControllerGrid || !scaleProjectileHitboxesWithGrid)
+            return new Vector2(width, height);
+
+        float sx = foeTileSize.x / Mathf.Max(0.0001f, tileWidth);
+        float sy = foeTileSize.y / Mathf.Max(0.0001f, tileHeight);
+        return new Vector2(width * sx, height * sy);
     }
 
     //                                                                                           
@@ -173,7 +222,7 @@ public class AttackController : MonoBehaviour
     //                                                                                           
     private IEnumerator RunDirectHitsByDelays(
         bool[] mask, float[] delays, Vector3[] centers,
-        AttackCardSO so, Faction self, Faction foe)
+        Vector2 hitSize, AttackCardSO so, Faction self, Faction foe)
     {
         bool damageApplied = false;
         var running = new List<Coroutine>(16);
@@ -186,7 +235,7 @@ public class AttackController : MonoBehaviour
                 var pos = centers[i]; pos.z = tileZ;
 
                 running.Add(StartCoroutine(CoDelayThenRectHit(
-                    d, pos, so, self, foe,
+                    d, pos, hitSize, so, self, foe,
                     () => damageApplied, () => damageApplied = true
                 )));
             }
@@ -195,13 +244,13 @@ public class AttackController : MonoBehaviour
     }
 
     private IEnumerator CoDelayThenRectHit(
-        float delay, Vector3 center, AttackCardSO so, Faction self, Faction foe,
+        float delay, Vector3 center, Vector2 hitSize, AttackCardSO so, Faction self, Faction foe,
         Func<bool> getDamageApplied, Action setDamageAppliedTrue)
     {
         if (delay > 0f) yield return new WaitForSeconds(delay);
         if (getDamageApplied() && oneHitPerCard) yield break;
 
-        if (CheckRectHitNow(center, tileWidth, tileHeight))
+        if (CheckRectHitNow(center, hitSize.x, hitSize.y))
         {
             ApplyDamage(so, self, foe);
             setDamageAppliedTrue();
@@ -213,7 +262,7 @@ public class AttackController : MonoBehaviour
     //                                                                                           
     private IEnumerator RunExplosionHook(
         bool[] mask, float[] hitDelays, Vector3[] centersFoe,
-        AttackCardSO.Wave w, AttackCardSO so, Faction self, Faction foe)
+        Vector2 hitSize, AttackCardSO.Wave w, AttackCardSO so, Faction self, Faction foe)
     {
         if (w.explosionPrefab == null) yield break;
 
@@ -246,7 +295,7 @@ public class AttackController : MonoBehaviour
                 var pos = centersFoe[i]; pos.z = tileZ; //        Z       
 
                 running.Add(StartCoroutine(CoDelayThenRectHit(
-                    d, pos, so, self, foe,
+                    d, pos, hitSize, so, self, foe,
                     () => damageApplied, () => damageApplied = true
                 )));
             }
@@ -261,13 +310,14 @@ public class AttackController : MonoBehaviour
     //                                                                                           
     private IEnumerator LaunchProjectilesByLabels(
         AttackCardSO.Wave w, Faction self, Faction foe,
-        Vector3[] centersA, Vector3[] centersB, AttackCardSO so)
+        Vector3[] centersA, Vector3[] centersB, Vector2 foeTileSize, AttackCardSO so)
     {
         var labA = w.labelsA ?? new int[16];
         var labB = w.labelsB ?? new int[16];
 
         var mapA = GroupLabelIndices(labA);
         var mapB = GroupLabelIndices(labB);
+        Vector2 projectileHitSize = ResolveProjectileHitSize(w, foeTileSize);
 
         bool damageApplied = false;
         var running = new List<Coroutine>();
@@ -293,7 +343,7 @@ public class AttackController : MonoBehaviour
                         launchDelay = Mathf.Max(0f, w.hitDelays[srcIdx]); //                 
 
                     running.Add(StartCoroutine(CoLaunchProjectileLine_MoveHit(
-                        w, startPos, endPos, launchDelay, so, self, foe,
+                        w, startPos, endPos, launchDelay, projectileHitSize, so, self, foe,
                         () => damageApplied, () => damageApplied = true
                     )));
                 }
@@ -320,6 +370,7 @@ public class AttackController : MonoBehaviour
     private IEnumerator CoLaunchProjectileLine_MoveHit(
         AttackCardSO.Wave w,
         Vector3 startPos, Vector3 endPos, float delay,
+        Vector2 projectileHitSize,
         AttackCardSO so, Faction self, Faction foe,
         Func<bool> getDamageApplied, Action setDamageAppliedTrue)
     {
@@ -338,8 +389,8 @@ public class AttackController : MonoBehaviour
         float t = (dist <= 0.0001f || speed <= 0f) ? 1f : 0f; //      0             
 
         //                   
-        float hbW = Mathf.Max(0.01f, w.projectileHitWidth);
-        float hbH = Mathf.Max(0.01f, w.projectileHitHeight);
+        float hbW = Mathf.Max(0.01f, projectileHitSize.x);
+        float hbH = Mathf.Max(0.01f, projectileHitSize.y);
 
         while (t < 1f)
         {
