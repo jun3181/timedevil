@@ -20,6 +20,24 @@ public class MoveController : MonoBehaviour
     [SerializeField] private Transform playerGridOrigin;
     [SerializeField] private Transform enemyGridOrigin;
 
+    [Header("Grid Root Origin")]
+    [SerializeField] private bool useGridObjectAsOrigin = true;
+    [SerializeField] private Transform gridRoot;
+    [SerializeField] private bool autoFindBoardCenters = true;
+    [SerializeField] private Transform playerBoardCenter;
+    [SerializeField] private Transform enemyBoardCenter;
+    [SerializeField] private Vector2 playerBoardCenterLocal = new Vector2(-4.325f, 0.155f);
+    [SerializeField] private Vector2 enemyBoardCenterLocal = new Vector2(3.675f, 0.155f);
+
+    [Header("Grid Scale")]
+    [SerializeField] private bool useGridScaleForCell = true;
+    [SerializeField] private Transform gridScaleReference;
+    [SerializeField] private Transform playerGridScaleReference;
+    [SerializeField] private Transform enemyGridScaleReference;
+    private Transform cachedAutoGridScaleReference;
+    private Transform cachedPlayerBoardCenter;
+    private Transform cachedEnemyBoardCenter;
+
     [Header("Actors")]
     [SerializeField] private Transform playerPawn;
     [SerializeField] private Transform enemyPawn;
@@ -34,22 +52,40 @@ public class MoveController : MonoBehaviour
     [SerializeField] private Vector2Int playerRC = new Vector2Int(4, 1); // (row, col)
     [SerializeField] private Vector2Int enemyRC  = new Vector2Int(2, 2);
 
+    [Header("Initial Grid Sync")]
+    [SerializeField] private bool alignPawnsToStartGridOnStart = true;
+    [SerializeField] private Vector2Int playerStartRC = new Vector2Int(4, 1);
+    [SerializeField] private Vector2Int enemyStartRC = new Vector2Int(2, 2);
+    [SerializeField] private bool syncGridFromPawnPositionsOnStart = false;
+    [SerializeField] private bool snapPawnsToGridOnStart = true;
+
     [Header("Animation")]
     [SerializeField] private float perCellSeconds = 0.15f;
     [SerializeField] private AnimationCurve ease = AnimationCurve.EaseInOut(0, 0, 1, 1);
     [SerializeField] private Animator playerAnimator;
     [SerializeField] private Animator enemyAnimator;
-    [SerializeField] private string moveTriggerName = "Move";
+    [SerializeField] private string chapter1RightWalkStateName = "Player_Right_Walk";
 
     [Header("UI Lock")]
     [SerializeField] private BattleMenuController menu;
     [SerializeField] private DescriptionPanelController desc;
     private bool _ownsTempMessage;
+    private bool _initialGridAligned;
 
     void Reset()
     {
         menu ??= FindObjectOfType<BattleMenuController>(true);
         desc ??= FindObjectOfType<DescriptionPanelController>(true);
+    }
+
+    void Awake()
+    {
+        AlignInitialPawnsToGrid();
+    }
+
+    void Start()
+    {
+        AlignInitialPawnsToGrid();
     }
 
     void LateUpdate()
@@ -65,15 +101,15 @@ public class MoveController : MonoBehaviour
         if (who == Faction.Player)
         {
             playerRC = rc;
-            if (snap && playerPawn && playerGridOrigin)
-                playerPawn.position = RCToWorld(rc, playerGridOrigin, originRow_Player, originCol_Player, keepPawnZ ? playerPawnZ : playerPawn.position.z);
+            if (snap && playerPawn && HasCoordinateSource(who))
+                playerPawn.position = GridToWorld(who, rc, keepPawnZ ? playerPawnZ : playerPawn.position.z);
             ApplySorting(playerPawn, playerSortingOrder);
         }
         else
         {
             enemyRC = rc;
-            if (snap && enemyPawn && enemyGridOrigin)
-                enemyPawn.position = RCToWorld(rc, enemyGridOrigin, originRow_Enemy, originCol_Enemy, keepPawnZ ? enemyPawnZ : enemyPawn.position.z);
+            if (snap && enemyPawn && HasCoordinateSource(who))
+                enemyPawn.position = GridToWorld(who, rc, keepPawnZ ? enemyPawnZ : enemyPawn.position.z);
             ApplySorting(enemyPawn, enemySortingOrder);
         }
 
@@ -81,6 +117,63 @@ public class MoveController : MonoBehaviour
     }
 
     public Vector2Int GetGrid(Faction who) => (who == Faction.Player) ? playerRC : enemyRC;
+
+    public Transform GetPawn(Faction who) => (who == Faction.Player) ? playerPawn : enemyPawn;
+
+    public Vector2 GetCellSize(Faction who)
+    {
+        Transform root = GetGridRoot();
+        if (useGridObjectAsOrigin && root)
+            return MeasureRootCellSize(root);
+
+        Transform origin = GetGridOrigin(who);
+        return GetCellStep(origin, who);
+    }
+
+    public Vector3 GridToWorld(Faction who, Vector2Int rc, float z)
+    {
+        Transform root = GetGridRoot();
+        if (useGridObjectAsOrigin && root)
+            return GridRootRCToWorld(who, ClampRC(rc), root, z);
+
+        Transform origin = GetGridOrigin(who);
+        if (!origin) return Vector3.positiveInfinity;
+
+        return RCToWorld(ClampRC(rc), origin, GetOriginRow(who), GetOriginCol(who), GetCellStep(origin, who), z);
+    }
+
+    public Vector2Int WorldToGrid(Faction who, Vector3 world)
+    {
+        Transform root = GetGridRoot();
+        if (useGridObjectAsOrigin && root)
+            return ClampRC(GridRootWorldToRC(who, world, root));
+
+        Transform origin = GetGridOrigin(who);
+        if (!origin) return GetGrid(who);
+
+        return ClampRC(WorldToNearestRC(world, origin, GetOriginRow(who), GetOriginCol(who), GetCellStep(origin, who)));
+    }
+
+    public bool TryBuildPatternCenters(Faction who, Vector3[] centers16, float z)
+    {
+        if (centers16 == null || centers16.Length < 16) return false;
+
+        if (!HasCoordinateSource(who)) return false;
+
+        for (int i = 0; i < 16; i++)
+            centers16[i] = GridToWorld(who, PatternIndexToRC(i), z);
+
+        return true;
+    }
+
+    public void AlignInitialPawnsToGrid()
+    {
+        if (_initialGridAligned) return;
+
+        bool playerAligned = SyncInitialPawnWithGrid(Faction.Player);
+        bool enemyAligned = SyncInitialPawnWithGrid(Faction.Enemy);
+        _initialGridAligned = playerAligned && enemyAligned;
+    }
 
     public IEnumerator Execute(MoveCardSO so, Faction self, Faction foe)
     {
@@ -99,14 +192,10 @@ public class MoveController : MonoBehaviour
 
         var target = (so.moveMode == MoveMode.UpMove) ? self : foe;
 
-        Transform origin = (target == Faction.Player) ? playerGridOrigin : enemyGridOrigin;
-        int oRow = (target == Faction.Player) ? originRow_Player : originRow_Enemy;
-        int oCol = (target == Faction.Player) ? originCol_Player : originCol_Enemy;
-
         Transform pawn = (target == Faction.Player) ? playerPawn : enemyPawn;
         Animator anim = (target == Faction.Player) ? playerAnimator : enemyAnimator;
 
-        if (!pawn || !origin)
+        if (!pawn || !HasCoordinateSource(target))
         {
             Debug.LogWarning("[MoveController] Pawn/Origin 누락");
             if (_ownsTempMessage && desc) desc.ClearTemporaryMessage();
@@ -118,22 +207,11 @@ public class MoveController : MonoBehaviour
 
         Vector2Int curRC = GetGrid(target);
         Vector2Int deltaRC = DirToDelta(so.where) * Mathf.Max(0, so.amount);
+        Vector2Int endRC = ClampRC(curRC + deltaRC);
 
         Vector3 startPos = pawn.position;
         if (keepPawnZ)
             startPos.z = (target == Faction.Player) ? playerPawnZ : enemyPawnZ;
-        Vector3 worldDelta = RCDeltaToWorldDelta(deltaRC, origin, oRow, oCol);
-        Vector3 rawEndPos = startPos + worldDelta;
-
-        var (minX, maxX, minY, maxY) = ComputeWorldBounds(origin, oRow, oCol);
-        Vector3 clampedEndPos = new Vector3(
-            Mathf.Clamp(rawEndPos.x, minX, maxX),
-            Mathf.Clamp(rawEndPos.y, minY, maxY),
-            keepPawnZ ? ((target == Faction.Player) ? playerPawnZ : enemyPawnZ) : startPos.z
-        );
-
-        Vector2Int endRC = WorldToNearestRC(clampedEndPos, origin, oRow, oCol);
-        endRC = ClampRC(endRC);
 
         // ▶ 이동 칸 수 계산(애니/트윈 공용)
         int cellsDistance = Mathf.Abs(endRC.x - curRC.x) + Mathf.Abs(endRC.y - curRC.y);
@@ -147,25 +225,10 @@ public class MoveController : MonoBehaviour
             yield break;
         }
 
-        // ▶ 애니 파라미터 세팅(변수 이름 충돌 방지)
-        int animDir;
-        if (endRC.y < curRC.y) animDir = 2; // Left
-        else if (endRC.y > curRC.y) animDir = 3; // Right
-        else if (endRC.x < curRC.x) animDir = 0; // Up
-        else animDir = 1; // Down
-        if (anim)
-        {
-            anim.SetInteger("Dir", animDir);
-            anim.SetBool("Moving", true);
+        // Play chapter1's right-walk animation only while this move tween is running.
+        BattleMoveAnimatorSnapshot animSnapshot = BeginMoveAnimation(anim);
 
-            float animDuration = Mathf.Max(0.001f, perCellSeconds * cellsDistance);
-            anim.SetFloat("MoveSpeed", 1f / animDuration);
-        }
-
-        Vector3 endPos = RCToWorld(endRC, origin, oRow, oCol, keepPawnZ ? ((target == Faction.Player) ? playerPawnZ : enemyPawnZ) : startPos.z);
-
-        if (anim && !string.IsNullOrEmpty(moveTriggerName))
-            anim.SetTrigger(moveTriggerName);
+        Vector3 endPos = GridToWorld(target, endRC, keepPawnZ ? ((target == Faction.Player) ? playerPawnZ : enemyPawnZ) : startPos.z);
 
         float tweenDuration = perCellSeconds * Mathf.Max(1, cellsDistance);
 
@@ -182,7 +245,7 @@ public class MoveController : MonoBehaviour
 
         SetGrid(target, endRC.x, endRC.y, snap: false);
 
-        if (anim) anim.SetBool("Moving", false);
+        EndMoveAnimation(anim, animSnapshot);
 
         if (_ownsTempMessage && desc) desc.ClearTemporaryMessage();
         if (menu) menu.EnableInput(true);
@@ -190,16 +253,6 @@ public class MoveController : MonoBehaviour
 
 
     // ===== 유틸 =====
-    // 1) 유틸: Dir4 -> Animator Dir(Int) 매핑
-    private static int DirToAnimInt(Dir4 d) => d switch
-    {
-        Dir4.Up => 0,
-        Dir4.Down => 1,
-        Dir4.Left => 2,
-        Dir4.Right => 3,
-        _ => 0
-    };
-
     // 방향 → 그리드 델타 (부호 수정: Left -, Right +)
     private static Vector2Int DirToDelta(Dir4 d) => d switch
     {
@@ -210,46 +263,272 @@ public class MoveController : MonoBehaviour
         _ => Vector2Int.zero
     };
 
-    // 보드 월드 경계 계산(그리드 한계 → 월드 좌표)
-    private (float minX, float maxX, float minY, float maxY) ComputeWorldBounds(Transform origin, int oRow, int oCol)
+    private bool SyncInitialPawnWithGrid(Faction who)
     {
-        float minX = origin.position.x + (1    - oCol) * cell;
-        float maxX = origin.position.x + (cols - oCol) * cell;
-        float maxY = origin.position.y + (oRow - 1   ) * cell;   // row=1(윗줄)이 +Y 최대
-        float minY = origin.position.y + (oRow - rows) * cell;   // row=rows(아랫줄)이 -Y 최소
+        Transform pawn = GetPawn(who);
+        if (!pawn || !HasCoordinateSource(who)) return false;
+
+        if (alignPawnsToStartGridOnStart)
+        {
+            Vector2Int startRC = GetStartGrid(who);
+            SetGrid(who, startRC.x, startRC.y, snap: true);
+            return true;
+        }
+
+        Vector2Int rc = GetGrid(who);
+        if (syncGridFromPawnPositionsOnStart)
+            rc = WorldToGrid(who, pawn.position);
+
+        if (syncGridFromPawnPositionsOnStart || snapPawnsToGridOnStart)
+            SetGrid(who, rc.x, rc.y, snapPawnsToGridOnStart);
+
+        return true;
+    }
+
+    private Transform GetGridOrigin(Faction who)
+    {
+        return who == Faction.Player ? playerGridOrigin : enemyGridOrigin;
+    }
+
+    private int GetOriginRow(Faction who)
+    {
+        return who == Faction.Player ? originRow_Player : originRow_Enemy;
+    }
+
+    private int GetOriginCol(Faction who)
+    {
+        return who == Faction.Player ? originCol_Player : originCol_Enemy;
+    }
+
+    private Vector2Int GetStartGrid(Faction who)
+    {
+        return ClampRC(who == Faction.Player ? playerStartRC : enemyStartRC);
+    }
+
+    private Vector2Int PatternIndexToRC(int index)
+    {
+        int safeCols = Mathf.Max(1, cols);
+        int safeIndex = Mathf.Max(0, index);
+        int r = (safeIndex / safeCols) + 1;
+        int c = (safeIndex % safeCols) + 1;
+        return ClampRC(new Vector2Int(r, c));
+    }
+
+    private bool HasCoordinateSource(Faction who)
+    {
+        if (useGridObjectAsOrigin && GetGridRoot()) return true;
+        return GetGridOrigin(who) != null;
+    }
+
+    private Transform GetGridRoot()
+    {
+        if (gridRoot) return gridRoot;
+        if (cachedAutoGridScaleReference) return cachedAutoGridScaleReference;
+
+        Grid[] grids = FindObjectsOfType<Grid>(true);
+        for (int i = 0; i < grids.Length; i++)
+        {
+            if (grids[i] != null && grids[i].name == "Grid")
+            {
+                cachedAutoGridScaleReference = grids[i].transform;
+                return cachedAutoGridScaleReference;
+            }
+        }
+
+        if (grids.Length == 1 && grids[0] != null)
+            cachedAutoGridScaleReference = grids[0].transform;
+
+        return cachedAutoGridScaleReference;
+    }
+
+    private Vector3 GridRootRCToWorld(Faction who, Vector2Int rc, Transform root, float z)
+    {
+        Vector2 center = GetBoardCenterLocal(who);
+        float centerCol = (cols + 1) * 0.5f;
+        float centerRow = (rows + 1) * 0.5f;
+        float safeCell = Mathf.Max(0.0001f, cell);
+        Vector3 local = new Vector3(
+            center.x + (rc.y - centerCol) * safeCell,
+            center.y + (centerRow - rc.x) * safeCell,
+            0f
+        );
+
+        Vector3 world = root.TransformPoint(local);
+        world.z = z;
+        return world;
+    }
+
+    private Vector2Int GridRootWorldToRC(Faction who, Vector3 world, Transform root)
+    {
+        Vector3 local = root.InverseTransformPoint(world);
+        Vector2 center = GetBoardCenterLocal(who);
+        float centerCol = (cols + 1) * 0.5f;
+        float centerRow = (rows + 1) * 0.5f;
+        float safeCell = Mathf.Max(0.0001f, cell);
+
+        int c = Mathf.RoundToInt(((local.x - center.x) / safeCell) + centerCol);
+        int r = Mathf.RoundToInt(centerRow - ((local.y - center.y) / safeCell));
+        return new Vector2Int(r, c);
+    }
+
+    private Vector2 GetBoardCenterLocal(Faction who)
+    {
+        Transform explicitCenter = who == Faction.Player ? playerBoardCenter : enemyBoardCenter;
+        if (explicitCenter)
+            return ToGridRootLocal(explicitCenter);
+
+        if (autoFindBoardCenters)
+        {
+            Transform found = GetAutoBoardCenter(who);
+            if (found)
+                return ToGridRootLocal(found);
+        }
+
+        return who == Faction.Player ? playerBoardCenterLocal : enemyBoardCenterLocal;
+    }
+
+    private Vector2 ToGridRootLocal(Transform target)
+    {
+        Transform root = GetGridRoot();
+        Vector3 local = root ? root.InverseTransformPoint(target.position) : target.localPosition;
+        return new Vector2(local.x, local.y);
+    }
+
+    private Transform GetAutoBoardCenter(Faction who)
+    {
+        if (who == Faction.Player && cachedPlayerBoardCenter) return cachedPlayerBoardCenter;
+        if (who == Faction.Enemy && cachedEnemyBoardCenter) return cachedEnemyBoardCenter;
+
+        Transform root = GetGridRoot();
+        if (!root) return null;
+
+        string expectedName = who == Faction.Player ? "Square" : "Square (1)";
+        Transform found = root.Find(expectedName);
+        if (!found)
+            found = FindExtremeBoardSprite(root, who);
+
+        if (who == Faction.Player)
+            cachedPlayerBoardCenter = found;
+        else
+            cachedEnemyBoardCenter = found;
+
+        return found;
+    }
+
+    private Transform FindExtremeBoardSprite(Transform root, Faction who)
+    {
+        SpriteRenderer[] renderers = root.GetComponentsInChildren<SpriteRenderer>(true);
+        Transform best = null;
+        float bestX = who == Faction.Player ? float.PositiveInfinity : float.NegativeInfinity;
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            SpriteRenderer sr = renderers[i];
+            if (!sr || sr.transform == root) continue;
+
+            Vector3 local = root.InverseTransformPoint(sr.transform.position);
+            if (who == Faction.Player)
+            {
+                if (local.x < bestX)
+                {
+                    bestX = local.x;
+                    best = sr.transform;
+                }
+            }
+            else if (local.x > bestX)
+            {
+                bestX = local.x;
+                best = sr.transform;
+            }
+        }
+
+        return best;
+    }
+
+    private Vector2 MeasureRootCellSize(Transform root)
+    {
+        float safeCell = Mathf.Max(0.0001f, cell);
+        Vector3 origin = root.TransformPoint(Vector3.zero);
+        Vector3 right = root.TransformPoint(new Vector3(safeCell, 0f, 0f));
+        Vector3 up = root.TransformPoint(new Vector3(0f, safeCell, 0f));
+
+        return new Vector2(
+            Mathf.Max(0.0001f, Vector3.Distance(origin, right)),
+            Mathf.Max(0.0001f, Vector3.Distance(origin, up))
+        );
+    }
+
+    // 보드 월드 경계 계산(그리드 한계 → 월드 좌표)
+    private (float minX, float maxX, float minY, float maxY) ComputeWorldBounds(Transform origin, int oRow, int oCol, Vector2 cellStep)
+    {
+        float minX = origin.position.x + (1    - oCol) * cellStep.x;
+        float maxX = origin.position.x + (cols - oCol) * cellStep.x;
+        float maxY = origin.position.y + (oRow - 1   ) * cellStep.y;   // row=1(윗줄)이 +Y 최대
+        float minY = origin.position.y + (oRow - rows) * cellStep.y;   // row=rows(아랫줄)이 -Y 최소
         if (minX > maxX) (minX, maxX) = (maxX, minX);
         if (minY > maxY) (minY, maxY) = (maxY, minY);
         return (minX, maxX, minY, maxY);
     }
 
     // (r,c) → 월드 좌표
-    private Vector3 RCToWorld(Vector2Int rc, Transform origin, int oRow, int oCol, float baseZ)
+    private Vector3 RCToWorld(Vector2Int rc, Transform origin, int oRow, int oCol, Vector2 cellStep, float baseZ)
     {
-        float x = origin.position.x + (rc.y - oCol) * cell;
-        float y = origin.position.y + (oRow - rc.x) * cell;
+        float x = origin.position.x + (rc.y - oCol) * cellStep.x;
+        float y = origin.position.y + (oRow - rc.x) * cellStep.y;
         return new Vector3(x, y, baseZ);   // ← 전달받은 z를 그대로 사용
     }
 
     // 월드 델타 계산: 그리드 델타를 월드 벡터로 (Pawn 기준 상대 이동)
-    private Vector3 RCDeltaToWorldDelta(Vector2Int dRC, Transform origin, int oRow, int oCol)
+    private Vector3 RCDeltaToWorldDelta(Vector2Int dRC, Vector2 cellStep)
     {
         // 열(+1) → +X, 열(-1) → -X
         // 행(-1: Up) → +Y, 행(+1: Down) → -Y
-        float dx = dRC.y * cell;
-        float dy = (-dRC.x) * cell;
+        float dx = dRC.y * cellStep.x;
+        float dy = (-dRC.x) * cellStep.y;
         return new Vector3(dx, dy, 0f);
     }
 
     // 월드 좌표 → 가장 가까운 그리드 (반올림)
-    private Vector2Int WorldToNearestRC(Vector3 world, Transform origin, int oRow, int oCol)
+    private Vector2Int WorldToNearestRC(Vector3 world, Transform origin, int oRow, int oCol, Vector2 cellStep)
     {
-        float relX = (world.x - origin.position.x) / cell;
-        float relY = (world.y - origin.position.y) / cell;
+        float relX = (world.x - origin.position.x) / cellStep.x;
+        float relY = (world.y - origin.position.y) / cellStep.y;
 
         int c = Mathf.RoundToInt(relX + oCol);
         int r = Mathf.RoundToInt(oRow - relY);
 
         return new Vector2Int(r, c);
+    }
+
+    private Vector2 GetCellStep(Transform origin, Faction target)
+    {
+        float baseCell = Mathf.Max(0.0001f, cell);
+        if (!useGridScaleForCell)
+            return new Vector2(baseCell, baseCell);
+
+        Transform reference = GetGridScaleReference(target);
+        if (!reference) reference = origin;
+        if (!reference)
+            return new Vector2(baseCell, baseCell);
+
+        Vector3 scale = reference.lossyScale;
+        float sx = Mathf.Abs(scale.x);
+        float sy = Mathf.Abs(scale.y);
+        if (sx <= 0.0001f) sx = 1f;
+        if (sy <= 0.0001f) sy = 1f;
+
+        return new Vector2(baseCell * sx, baseCell * sy);
+    }
+
+    private Transform GetGridScaleReference(Faction target)
+    {
+        Transform specific = target == Faction.Player ? playerGridScaleReference : enemyGridScaleReference;
+        if (specific) return specific;
+        if (gridScaleReference) return gridScaleReference;
+        if (useGridObjectAsOrigin && gridRoot) return gridRoot;
+        if (cachedAutoGridScaleReference) return cachedAutoGridScaleReference;
+
+        return GetGridRoot();
     }
 
     private Vector2Int ClampRC(Vector2Int rc)
@@ -265,5 +544,110 @@ public class MoveController : MonoBehaviour
         var srs = pawn.GetComponentsInChildren<SpriteRenderer>(true);
         for (int i = 0; i < srs.Length; i++)
             srs[i].sortingOrder = order;
+    }
+
+    private BattleMoveAnimatorSnapshot BeginMoveAnimation(Animator anim)
+    {
+        var snapshot = new BattleMoveAnimatorSnapshot(anim);
+        if (!anim) return snapshot;
+
+        anim.enabled = true;
+        SetAnimatorIntegerIfExists(anim, "hAxisRaw", 1);
+        SetAnimatorIntegerIfExists(anim, "vAxisRaw", 0);
+        SetAnimatorBoolIfExists(anim, "isChange", true);
+
+        if (!string.IsNullOrEmpty(chapter1RightWalkStateName))
+            anim.Play(chapter1RightWalkStateName, 0, 0f);
+
+        anim.Update(0f);
+
+        return snapshot;
+    }
+
+    private void EndMoveAnimation(Animator anim, BattleMoveAnimatorSnapshot snapshot)
+    {
+        if (!anim) return;
+
+        SetAnimatorBoolIfExists(anim, "isChange", false);
+
+        if (snapshot.HasHAxisRaw)
+            anim.SetInteger("hAxisRaw", snapshot.HAxisRaw);
+
+        if (snapshot.HasVAxisRaw)
+            anim.SetInteger("vAxisRaw", snapshot.VAxisRaw);
+
+        anim.enabled = snapshot.AnimatorWasEnabled;
+
+        snapshot.RestoreSprites();
+    }
+
+    private static void SetAnimatorBoolIfExists(Animator anim, string parameterName, bool value)
+    {
+        if (HasAnimatorParameter(anim, parameterName, AnimatorControllerParameterType.Bool))
+            anim.SetBool(parameterName, value);
+    }
+
+    private static void SetAnimatorIntegerIfExists(Animator anim, string parameterName, int value)
+    {
+        if (HasAnimatorParameter(anim, parameterName, AnimatorControllerParameterType.Int))
+            anim.SetInteger(parameterName, value);
+    }
+
+    private static bool HasAnimatorParameter(Animator anim, string parameterName, AnimatorControllerParameterType type)
+    {
+        if (anim == null || string.IsNullOrEmpty(parameterName)) return false;
+
+        var parameters = anim.parameters;
+        for (int i = 0; i < parameters.Length; i++)
+        {
+            var parameter = parameters[i];
+            if (parameter.type == type && parameter.name == parameterName)
+                return true;
+        }
+
+        return false;
+    }
+
+    private readonly struct BattleMoveAnimatorSnapshot
+    {
+        public readonly bool AnimatorWasEnabled;
+        public readonly bool HasHAxisRaw;
+        public readonly int HAxisRaw;
+        public readonly bool HasVAxisRaw;
+        public readonly int VAxisRaw;
+        private readonly SpriteRenderer[] spriteRenderers;
+        private readonly Sprite[] sprites;
+
+        public BattleMoveAnimatorSnapshot(Animator anim)
+        {
+            AnimatorWasEnabled = anim != null && anim.enabled;
+            HasHAxisRaw = HasAnimatorParameter(anim, "hAxisRaw", AnimatorControllerParameterType.Int);
+            HAxisRaw = HasHAxisRaw ? anim.GetInteger("hAxisRaw") : 0;
+            HasVAxisRaw = HasAnimatorParameter(anim, "vAxisRaw", AnimatorControllerParameterType.Int);
+            VAxisRaw = HasVAxisRaw ? anim.GetInteger("vAxisRaw") : 0;
+
+            spriteRenderers = anim ? anim.GetComponentsInChildren<SpriteRenderer>(true) : null;
+            if (spriteRenderers == null || spriteRenderers.Length == 0)
+            {
+                sprites = null;
+                return;
+            }
+
+            sprites = new Sprite[spriteRenderers.Length];
+            for (int i = 0; i < spriteRenderers.Length; i++)
+                sprites[i] = spriteRenderers[i] ? spriteRenderers[i].sprite : null;
+        }
+
+        public void RestoreSprites()
+        {
+            if (spriteRenderers == null || sprites == null) return;
+
+            int count = Mathf.Min(spriteRenderers.Length, sprites.Length);
+            for (int i = 0; i < count; i++)
+            {
+                if (spriteRenderers[i])
+                    spriteRenderers[i].sprite = sprites[i];
+            }
+        }
     }
 }

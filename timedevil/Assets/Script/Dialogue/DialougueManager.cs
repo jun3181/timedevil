@@ -8,6 +8,10 @@ public class DialogueManager : MonoBehaviour
 {
     public static DialogueManager instance;
 
+    public delegate void DialogueManagerEventHandler();
+    public static event DialogueManagerEventHandler OnDialogueEnd;
+    public static event DialogueManagerEventHandler OnDialogueStart;
+
     [Header("UI Root")]
     public GameObject uiRoot;            // 예: UI_Dialogue/Panel
     public TMP_Text nameText;            // Name Text
@@ -120,6 +124,7 @@ public class DialogueManager : MonoBehaviour
                 }
             }
         }
+        OnDialogueStart?.Invoke();
 
         //  기본 동작: 첫 줄 출력 시도
         // 컷씬에서는 blockInput=true로 해두면 여기서 막혀서 "대기(큐만 채움)" 상태가 됨.
@@ -306,5 +311,7 @@ public class DialogueManager : MonoBehaviour
             dialogueText.text = "";
             dialogueText.maxVisibleCharacters = int.MaxValue;
         }
+
+        OnDialogueEnd?.Invoke();
     }
 }

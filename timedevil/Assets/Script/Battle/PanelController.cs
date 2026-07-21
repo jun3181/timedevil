@@ -173,15 +173,10 @@ public class PanelController : MonoBehaviour
         if (cur != lastTurnState)
         {
             bool enemyToPlayer = (lastTurnState == TurnState.EnemyTurn && cur == TurnState.PlayerTurn);
-            bool playerToEnemy = (lastTurnState == TurnState.PlayerTurn && cur == TurnState.EnemyTurn);
             if (enemyToPlayer && (pendingReturnByEnd || isGameplayView))
             {
                 SetGameplayViewDelayed(false, turnTransitionDelay);
                 pendingReturnByEnd = false;
-            }
-            else if (playerToEnemy && isGameplayView)
-            {
-                SetGameplayViewDelayed(false, turnTransitionDelay);
             }
             lastTurnState = cur;
         }
@@ -228,7 +223,10 @@ public class PanelController : MonoBehaviour
             delayedViewRoutine = null;
         }
 
-        if (recacheShownBaseBeforeViewChange && on != isGameplayView)
+        // An interrupted animation is between the shown/hidden endpoints, so its
+        // current position cannot be used as a new shown base. Re-caching it here
+        // makes rapid opposite inputs accumulate a positional offset.
+        if (recacheShownBaseBeforeViewChange && on != isGameplayView && !isAnimating)
             CacheShownBaseFromCurrentViewState();
 
         if (isAnimating && running != null)
