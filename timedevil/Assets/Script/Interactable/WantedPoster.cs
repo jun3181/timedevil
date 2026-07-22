@@ -29,6 +29,10 @@ public class WantedPoster : MonoBehaviour, IInteractable
     [Header("제거시 대사")]
     private Dialogue dialogue;
 
+    [SerializeField]
+    [Header("제거시 비활성화될 벽")]
+    private Collider2D progressBarrier;
+
     void Start() {
         instanceCounter++;
         gameObject.layer = LayerMask.NameToLayer("Dialog");
@@ -40,6 +44,9 @@ public class WantedPoster : MonoBehaviour, IInteractable
 
     public void Interact() {
         if(BaseHideout.Hiding) return;
+
+        if(progressBarrier)
+            progressBarrier.enabled = false;
 
         DetachingCounter++;
 
