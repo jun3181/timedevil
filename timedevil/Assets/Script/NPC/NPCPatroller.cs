@@ -90,7 +90,6 @@ public class NPCPatroller : NPCMover, INPCMovement
         }
 
         float xDistance = Mathf.Abs(playerRigidbody2D.position.x - rb2d.position.x);
-        Debug.Log(disappearanceXDistance);
         if(xDistance>disappearanceXDistance) {
             ResetFields();
             gameObject.SetActive(false);
