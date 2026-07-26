@@ -4096,6 +4096,59 @@ MonoBehaviour:
   lineAdvanceLockSeconds: 0.08
   isDialogueActive: 0
   blockInput: 0
+--- !u!1 &1929334288
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1929334290}
+  - component: {fileID: 1929334289}
+  m_Layer: 0
+  m_Name: EndingDeterminer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1929334289
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1929334288}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 51fffdb59a3757b42b0c24a0f6f4fe47, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  db: {fileID: 0}
+  primaryCards:
+  - {fileID: 11400000, guid: 63d5b1efcea947efb479bc0f1d2e1c06, type: 2}
+  - {fileID: 11400000, guid: 56ac51b93d9a415589e38e61fc3cc60a, type: 2}
+  - {fileID: 11400000, guid: 3242b6e98d704a2caf1259c7a1b08366, type: 2}
+  - {fileID: 11400000, guid: b60743a0113e4d27adc77f173c344fe7, type: 2}
+  - {fileID: 11400000, guid: 4655b1f5b6830ab44bc223a60347263b, type: 2}
+  - {fileID: 11400000, guid: 7ba96f3d45ae5e94188863bd07ff03fc, type: 2}
+  - {fileID: 11400000, guid: ac2a2bdd99c12cd4b95c91c63d27879c, type: 2}
+--- !u!4 &1929334290
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1929334288}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 3.779442, y: -1.3236535, z: 0.0028160666}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1991373661
 GameObject:
   m_ObjectHideFlags: 0
@@ -4211,3 +4264,4 @@ SceneRoots:
   - {fileID: 807904450}
   - {fileID: 84994929}
   - {fileID: 1190234236}
+  - {fileID: 1929334290}
