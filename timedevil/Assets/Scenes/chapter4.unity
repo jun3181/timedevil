@@ -10757,6 +10757,10 @@ MonoBehaviour:
     steps:
     - {fileID: 1800117764}
     blockPlayerInputWhileRunning: 0
+  - key: ReturnToGStopTravellers
+    steps:
+    - {fileID: 1416083529}
+    blockPlayerInputWhileRunning: 0
   allowReentrySameKey: 1
   debugLog: 1
 --- !u!1 &136504539
@@ -187683,6 +187687,8 @@ GameObject:
   - component: {fileID: 1416083525}
   - component: {fileID: 1416083527}
   - component: {fileID: 1416083526}
+  - component: {fileID: 1416083528}
+  - component: {fileID: 1416083529}
   m_Layer: 8
   m_Name: C to G
   m_TagString: Untagged
@@ -187731,6 +187737,49 @@ MonoBehaviour:
   lockPlayerInput: 1
   notifyWarpToCinemachine: 1
   snapCameraWhenFixed: 1
+  debugLog: 1
+--- !u!114 &1416083528
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1416083524}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ce93e8c1aea7be47b2ae567f67bd88f, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  router: {fileID: 130122663}
+  routeKey: ReturnToGStopTravellers
+  blockIfDialogueActive: 1
+  blockIfGameActionLocked: 0
+  debugLog: 1
+--- !u!114 &1416083529
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1416083524}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d86a88e97e1a864f8df9c988b3463ff, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  disableObjects:
+  - {fileID: 1324626613}
+  - {fileID: 1366788367}
+  - {fileID: 791012596}
+  - {fileID: 1670349998}
+  - {fileID: 1448692654}
+  - {fileID: 1306708044}
+  - {fileID: 1052734712}
+  - {fileID: 2038405651}
+  - {fileID: 1444011561}
+  enableObjects: []
+  disableFirst: 1
+  waitOneFrameBeforeApply: 0
   debugLog: 1
 --- !u!61 &1416083527
 BoxCollider2D:
