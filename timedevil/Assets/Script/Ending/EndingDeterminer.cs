@@ -16,10 +16,6 @@ public class EndingDeterminer: MonoBehaviour
     private static EndingState state = EndingState.None;
 
     [SerializeField]
-    [Header("카드 데이터배이스")]
-    private CardDatabaseSO db;
-
-    [SerializeField]
     [Header("7개의 주요 카드")]
     private List<BaseCardSO> primaryCards = new();
 
