@@ -20,7 +20,8 @@ public class PlayerInteractor : MonoBehaviour
 
     private Collider2D currentHit;
     private GameObject currentTarget;
-    private IInteractable currentInteractable;
+    private IInteractable[] currentInteractables;
+    private bool isInteractionSequenceRunning;
 
     private static readonly string[] RequiredLayers =
         { "Dialog", "teleport", "item_get", "Object", "Save" };
@@ -88,8 +89,8 @@ public class PlayerInteractor : MonoBehaviour
             currentHit = nextHit;
             currentTarget = nextTarget;
 
-            currentInteractable = currentHit
-                ? (currentHit.GetComponent<IInteractable>() ?? currentHit.GetComponentInParent<IInteractable>())
+            currentInteractables = currentHit
+                ? GetInteractablesInCallOrder(currentHit)
                 : null;
 
             if (debugLog)
@@ -97,7 +98,7 @@ public class PlayerInteractor : MonoBehaviour
                 if (currentTarget)
                 {
                     string layerName = LayerMask.LayerToName(currentTarget.layer);
-                    Debug.Log($"[PlayerInteractor] Target -> {currentTarget.name} (layer={layerName}) IInteractable={(currentInteractable != null ? "YES" : "NO")}");
+                    Debug.Log($"[PlayerInteractor] Target -> {currentTarget.name} (layer={layerName}) IInteractable={(HasInteractables() ? "YES" : "NO")}");
                 }
                 else
                 {
@@ -114,7 +115,7 @@ public class PlayerInteractor : MonoBehaviour
     {
         currentHit = null;
         currentTarget = null;
-        currentInteractable = null;
+        currentInteractables = null;
     }
 
     public bool TryInteract()
@@ -124,14 +125,14 @@ public class PlayerInteractor : MonoBehaviour
             Debug.Log($"[TryInteract] target={(currentTarget ? currentTarget.name : "null")} activeDialogue={(DialogueManager.instance && DialogueManager.instance.isDialogueActive)}");
         }
 
-        if (!currentTarget) return false;
+        if (!currentTarget || isInteractionSequenceRunning) return false;
 
         if (DialogueManager.instance != null && DialogueManager.instance.isDialogueActive)
             return false;
 
-        if (currentInteractable != null)
+        if (HasInteractables())
         {
-            currentInteractable.Interact();
+            StartCoroutine(InteractSequentially(currentInteractables));
             return true;
         }
 
@@ -141,5 +142,34 @@ public class PlayerInteractor : MonoBehaviour
             Debug.LogWarning($"[TryInteract] FAIL: '{currentTarget.name}' (layer={layerName}) has no IInteractable (on hit or parent).");
         }
         return false;
+    }
+
+    private bool HasInteractables()
+    {
+        return currentInteractables != null && currentInteractables.Length > 0;
+    }
+
+    private static IInteractable[] GetInteractablesInCallOrder(Collider2D hit)
+    {
+        IInteractable[] interactables = hit.GetComponents<IInteractable>();
+        if (interactables != null && interactables.Length > 0)
+            return interactables;
+
+        return hit.GetComponentsInParent<IInteractable>();
+    }
+
+    private System.Collections.IEnumerator InteractSequentially(IInteractable[] interactables)
+    {
+        isInteractionSequenceRunning = true;
+
+        for (int i = 0; i < interactables.Length; i++)
+        {
+            interactables[i]?.Interact();
+
+            if (i < interactables.Length - 1 && DialogueManager.instance != null)
+                yield return new WaitWhile(() => DialogueManager.instance != null && DialogueManager.instance.isDialogueActive);
+        }
+
+        isInteractionSequenceRunning = false;
     }
 }

@@ -227,7 +227,10 @@ public class PanelController : MonoBehaviour
             delayedViewRoutine = null;
         }
 
-        if (recacheShownBaseBeforeViewChange && on != isGameplayView)
+        // An interrupted animation is between the shown/hidden endpoints, so its
+        // current position cannot be used as a new shown base. Re-caching it here
+        // makes rapid opposite inputs accumulate a positional offset.
+        if (recacheShownBaseBeforeViewChange && on != isGameplayView && !isAnimating)
             CacheShownBaseFromCurrentViewState();
 
         if (isAnimating && running != null)
