@@ -1,5 +1,6 @@
 // Assets/Script/Trigger/Steps/TriggerStep_Dialogue.cs
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -24,7 +25,22 @@ public class TriggerStep_Dialogue : TriggerStepBase
     [SerializeField] private bool autoAdvance = false;
     [Min(0.01f)][SerializeField] private float autoDelay = 1.5f;
 
+    [Header("NPC Idle")]
+    [Tooltip("대화 진행 중 움직임을 일시정지 시킬 NPC")]
+    [SerializeField] private List<GameObject> dialogueNpcs = new();
+
     private bool _heldLock = false;
+    private List<INPCMovement> _npcMovements = new();
+
+    void Start() {
+        INPCMovement npcMovement;
+        foreach(GameObject npc in dialogueNpcs) {
+            npcMovement = npc.GetComponent<INPCMovement>();
+            if(npcMovement!=null) {
+                _npcMovements.Add(npcMovement);
+            }
+        }
+    }
 
     public override IEnumerator Execute(TriggerContext ctx)
     {
@@ -38,6 +54,11 @@ public class TriggerStep_Dialogue : TriggerStepBase
         {
             GameManager.Instance.LockAction();
             _heldLock = true;
+        }
+
+        if(_npcMovements.Count != 0) {
+            IdleNPCMovement();
+            DialogueManager.OnDialogueEnd += ResumeNPCMovement;
         }
 
         // blockInput을 StartDialogue 전에 켜면 "첫 줄 출력"이 막히므로,
@@ -77,5 +98,19 @@ public class TriggerStep_Dialogue : TriggerStepBase
             GameManager.Instance.UnlockAction();
             _heldLock = false;
         }
+    }
+
+    private void IdleNPCMovement() {
+        foreach(INPCMovement npcMovement in _npcMovements) {
+            npcMovement.Idle();
+        }
+    }
+
+    private void ResumeNPCMovement() {
+        foreach(INPCMovement npcMovement in _npcMovements) {
+            npcMovement.Move();
+        }
+
+        DialogueManager.OnDialogueEnd -= ResumeNPCMovement;
     }
 }

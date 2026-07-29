@@ -4,7 +4,7 @@ using UnityEngine;
 public class PlayerMove : MonoBehaviour
 {
     [Header("Move")]
-    [SerializeField] private float speed = 3f;
+    public float speed = 3f;
 
     [Header("Refs")]
     [SerializeField] private Rigidbody2D rb;
@@ -95,7 +95,6 @@ public class PlayerMove : MonoBehaviour
         else if (vDown || (this.v != 0 && !isHorizonMove))
             facing = (this.v > 0) ? Vector3.up : Vector3.down;
     }
-
 
     private void LogAnimatorTrace(bool hDown, bool vDown, bool hUp, bool vUp, bool hasMoveInput)
     {

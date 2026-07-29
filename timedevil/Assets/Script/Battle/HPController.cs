@@ -42,12 +42,12 @@ public class HPController : MonoBehaviour
         if (!playerPawn)
         {
             var mc = FindObjectOfType<MoveController>(true);
-            if (mc) playerPawn = mc.GetComponentInChildren<Transform>();
+            if (mc) playerPawn = mc.GetPawn(Faction.Player);
         }
         if (!enemyPawn)
         {
             var mc = FindObjectOfType<MoveController>(true);
-            if (mc) enemyPawn = mc.GetComponentInChildren<Transform>();
+            if (mc) enemyPawn = mc.GetPawn(Faction.Enemy);
         }
     }
 

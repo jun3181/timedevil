@@ -66,6 +66,27 @@ public class AttackAnimationController : MonoBehaviour
         if (_seq == null || _seq.Length < _pool.Count) _seq = new int[_pool.Count];
     }
 
+    public void SetTileSize(Vector2 size)
+    {
+        tileWidth = Mathf.Max(0.01f, size.x);
+        tileHeight = Mathf.Max(0.01f, size.y);
+
+        for (int i = 0; i < _pool.Count; i++)
+        {
+            var go = _pool[i];
+            if (!go) continue;
+
+            var sr = go.GetComponent<SpriteRenderer>();
+            if (sr) go.transform.localScale = ComputeSpriteScale(sr);
+        }
+    }
+
+    public void PlaceAndShowMask(bool[] mask16, Vector3[] centers16, Vector2 tileSize)
+    {
+        SetTileSize(tileSize);
+        PlaceAndShowMask(mask16, centers16);
+    }
+
     /// <summary> ũ  ġŰ 'ǥ غ(0)' </summary>
     public void PlaceAndShowMask(bool[] mask16, Vector3[] centers16)
     {
