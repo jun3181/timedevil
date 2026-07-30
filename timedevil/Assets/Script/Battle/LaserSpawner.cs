@@ -29,11 +29,8 @@ public sealed class LaserSpawner : MonoBehaviour
     [SerializeField, Min(0f), Tooltip("레이저가 사라진 뒤 다음 예고까지의 시간(초)")]
     private float spawnInterval = 0.5f;
 
-    [SerializeField, Tooltip("활성화되면 시작과 동시에 반복 생성을 시작합니다.")]
+    [SerializeField, Tooltip("컴포넌트가 활성화될 때마다 반복 생성을 시작합니다.")]
     private bool playOnStart = true;
-
-    [SerializeField, Tooltip("레이저의 Z축 각도를 매번 무작위로 정합니다.")]
-    private bool randomizeRotation;
 
     private Coroutine spawnRoutine;
     private GameObject currentLaser;
@@ -43,7 +40,7 @@ public sealed class LaserSpawner : MonoBehaviour
         spawnArea = GetComponent<BoxCollider2D>();
     }
 
-    private void Start()
+    private void OnEnable()
     {
         if (playOnStart)
         {
@@ -105,13 +102,7 @@ public sealed class LaserSpawner : MonoBehaviour
     private IEnumerator SpawnLaser()
     {
         Vector3 position = GetRandomPosition();
-        Quaternion rotation = laserPrefab.transform.rotation;
-        if (randomizeRotation)
-        {
-            rotation = Quaternion.Euler(0f, 0f, Random.Range(0f, 360f));
-        }
-
-        currentLaser = Instantiate(laserPrefab, position, rotation);
+        currentLaser = Instantiate(laserPrefab, position, laserPrefab.transform.rotation);
         SpriteRenderer[] renderers = currentLaser.GetComponentsInChildren<SpriteRenderer>(true);
         Collider2D[] colliders = currentLaser.GetComponentsInChildren<Collider2D>(true);
 

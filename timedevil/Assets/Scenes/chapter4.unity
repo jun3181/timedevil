@@ -27983,7 +27983,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 442213894}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4f4c61e41c5c4bfba5604e51751ea70b, type: 3}
   m_Name: 
@@ -27995,8 +27995,7 @@ MonoBehaviour:
   warningAlpha: 0.5
   activeDuration: 1
   spawnInterval: 0.5
-  playOnStart: 0
-  randomizeRotation: 0
+  playOnStart: 1
 --- !u!61 &442213896
 BoxCollider2D:
   m_ObjectHideFlags: 0
