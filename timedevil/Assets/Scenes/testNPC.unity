@@ -1063,7 +1063,8 @@ MonoBehaviour:
   routes:
   - key: a
     steps:
-    - {fileID: 717757963}
+    - {fileID: 717757966}
+    - {fileID: 594384170}
     blockPlayerInputWhileRunning: 0
   allowReentrySameKey: 0
   debugLog: 1
@@ -1558,7 +1559,6 @@ Transform:
   - {fileID: 1017193771}
   - {fileID: 256308207}
   - {fileID: 296072155}
-  - {fileID: 1426697037}
   - {fileID: 368353532}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1647,6 +1647,58 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!1 &594384169
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 594384171}
+  - component: {fileID: 594384170}
+  m_Layer: 0
+  m_Name: EndingDeterminer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &594384170
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 594384169}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: faa8b6248c2381c438e7addf0fad1662, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  primaryCards:
+  - {fileID: 11400000, guid: 63d5b1efcea947efb479bc0f1d2e1c06, type: 2}
+  - {fileID: 11400000, guid: 63d5b1efcea947efb479bc0f1d2e1c06, type: 2}
+  - {fileID: 11400000, guid: 63d5b1efcea947efb479bc0f1d2e1c06, type: 2}
+  - {fileID: 11400000, guid: 63d5b1efcea947efb479bc0f1d2e1c06, type: 2}
+  - {fileID: 11400000, guid: 63d5b1efcea947efb479bc0f1d2e1c06, type: 2}
+  - {fileID: 11400000, guid: 63d5b1efcea947efb479bc0f1d2e1c06, type: 2}
+  - {fileID: 11400000, guid: 63d5b1efcea947efb479bc0f1d2e1c06, type: 2}
+--- !u!4 &594384171
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 594384169}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1643994581}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &715557027
 GameObject:
   m_ObjectHideFlags: 0
@@ -1815,34 +1867,14 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 717757964}
-  - component: {fileID: 717757963}
+  - component: {fileID: 717757966}
   m_Layer: 0
-  m_Name: EndingDeterminer
+  m_Name: SceneChanger
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &717757963
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 717757962}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: faa8b6248c2381c438e7addf0fad1662, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  primaryCards:
-  - {fileID: 11400000, guid: 63d5b1efcea947efb479bc0f1d2e1c06, type: 2}
-  - {fileID: 11400000, guid: 81ccbf0eb48210e4b8c6e2ad8a4a0c9c, type: 2}
-  - {fileID: 11400000, guid: 5ae683c43c2ef22459062bcb1e53ed8e, type: 2}
-  - {fileID: 11400000, guid: 7d57032902df26c4c9840c08eb055a3e, type: 2}
-  - {fileID: 11400000, guid: a3bba8ae4ba14b2c81a7fa8589193a96, type: 2}
-  - {fileID: 11400000, guid: b6b54e74805440edbde06e5b762aa266, type: 2}
-  - {fileID: 11400000, guid: 00911d7e8a7e8e64d840152eef9a8188, type: 2}
 --- !u!4 &717757964
 Transform:
   m_ObjectHideFlags: 0
@@ -1858,6 +1890,43 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1643994581}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &717757966
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 717757962}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61928809365b3f84d88b83091a53fece, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sceneName: testMyroomEnding
+  loadMode: 0
+  useSceneVisitEffectRunner: 1
+  runnerOverride: {fileID: 0}
+  lockPlayerInput: 1
+  debugLog: 1
+  markAsSleepLoad: 0
+  loadSceneFromProgress: 0
+  fallbackDreamSceneName: Move_Tutorial
+  overrideCutsceneStartKey: 0
+  cutsceneStartKey: CutScene1
+  saveReturnContext: 0
+  returnPointOverride: {fileID: 0}
+  graceSeconds: 0.5
+  requestCameraRebind: 0
+  worldVcamName: CM vcam1
+  useOverlapSuppression: 1
+  suppressOverlapRadius: 0.6
+  suppressOverlapSeconds: 1.5
+  useReturnCameraOverride: 0
+  returnCameraModeOverride: 2
+  returnFixedCameraAnchorOverride: {fileID: 0}
+  returnConfinerBoundsOverride: {fileID: 0}
+  returnOrthoSizeOverride: 0
+  captureCameraSnapshot: 1
 --- !u!1 &807904447
 GameObject:
   m_ObjectHideFlags: 0
@@ -3259,12 +3328,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1426697036}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -10.591015, y: 2.6174486, z: 0.21375293}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 573854080}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1426697038
 MonoBehaviour:
@@ -3287,8 +3356,8 @@ MonoBehaviour:
     attack: 10
     defense: 5
     speed: 5
-    emotionPositive: 105
-    emotionNegative: 100
+    emotionPositive: 67
+    emotionNegative: 6767
 --- !u!1 &1450591479
 GameObject:
   m_ObjectHideFlags: 0
@@ -3542,6 +3611,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 717757964}
+  - {fileID: 594384171}
   m_Father: {fileID: 214428857}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1734753675
@@ -4404,3 +4474,4 @@ SceneRoots:
   - {fileID: 1805737769}
   - {fileID: 807904450}
   - {fileID: 84994929}
+  - {fileID: 1426697037}

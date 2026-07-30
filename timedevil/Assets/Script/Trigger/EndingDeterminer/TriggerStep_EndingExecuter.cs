@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TriggerStep_EndingDeterminer : TriggerStepBase
+public class TriggerStep_EndingExecuter : TriggerStepBase
 {
     public static EndingState State
     {
@@ -14,11 +14,20 @@ public class TriggerStep_EndingDeterminer : TriggerStepBase
 
     private static EndingState state = EndingState.None;
 
-    private static TriggerStep_EndingDeterminer instance;
+    private static TriggerStep_EndingExecuter instance;
 
     [SerializeField]
     [Header("7개의 주요 카드")]
     private List<BaseCardSO> primaryCards = new();
+
+    [SerializeField]
+    [Header("컷씬 라우터")]
+    private CutsceneRouter cutsceneRouter;
+
+    [Header("엔딩별 컷씬 이름")]
+    [SerializeField] private string goodEndingCutsceneKey;
+    [SerializeField] private string normalEndingCutsceneKey;
+    [SerializeField] private string badEndingCutsceneKey;
 
     void Start() {
         bool killSwitch = false;
@@ -53,20 +62,18 @@ public class TriggerStep_EndingDeterminer : TriggerStepBase
 
         if(negativeEmotion >= positiveEmotion) {
             state = EndingState.Bad;
-            Debug.Log(state);
-            yield break;
-        }
-
-        foreach(BaseCardSO primaryCard in primaryCards) {
-            if(!CardStateRuntime.Instance.Data.owned.Contains(primaryCard.id)) {
-                state = EndingState.Normal;
-                Debug.Log(state);
-                yield break;
+        } else {
+            foreach(BaseCardSO primaryCard in primaryCards) {
+                if(!CardStateRuntime.Instance.Data.owned.Contains(primaryCard.id)) {
+                    state = EndingState.Normal;
+                    break;
+                }
             }
+
+            if(state != EndingState.Normal)
+                state = EndingState.Good;
         }
 
-        state = EndingState.Good;
-        Debug.Log(state);
         yield break;
     }
 }
