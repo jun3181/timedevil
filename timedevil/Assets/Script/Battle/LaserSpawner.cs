@@ -29,7 +29,7 @@ public sealed class LaserSpawner : MonoBehaviour
     [SerializeField, Min(0f), Tooltip("레이저가 사라진 뒤 다음 예고까지의 시간(초)")]
     private float spawnInterval = 0.5f;
 
-    [SerializeField, Tooltip("활성화되면 시작과 동시에 반복 생성을 시작합니다.")]
+    [SerializeField, Tooltip("컴포넌트가 활성화될 때마다 반복 생성을 시작합니다.")]
     private bool playOnStart = true;
 
     [SerializeField, Tooltip("레이저의 Z축 각도를 매번 무작위로 정합니다.")]
@@ -43,7 +43,7 @@ public sealed class LaserSpawner : MonoBehaviour
         spawnArea = GetComponent<BoxCollider2D>();
     }
 
-    private void Start()
+    private void OnEnable()
     {
         if (playOnStart)
         {
