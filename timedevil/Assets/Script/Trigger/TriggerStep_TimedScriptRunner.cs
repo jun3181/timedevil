@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Events;
 
 /// <summary>
 /// Trigger step that enables the selected behaviours for a configured amount
@@ -22,10 +21,6 @@ public sealed class TriggerStep_TimedScriptRunner : TriggerStepBase
     [Header("Scripts To Run")]
     [Tooltip("These components are enabled at the start and restored when time runs out.")]
     [SerializeField] private List<MonoBehaviour> scripts = new List<MonoBehaviour>();
-
-    [Header("Events")]
-    [SerializeField] private UnityEvent onRunStarted;
-    [SerializeField] private UnityEvent onRunFinished;
 
     private readonly Dictionary<MonoBehaviour, bool> previousStates =
         new Dictionary<MonoBehaviour, bool>();
@@ -78,7 +73,6 @@ public sealed class TriggerStep_TimedScriptRunner : TriggerStepBase
         StopCoroutine(runningCoroutine);
         runningCoroutine = null;
         RestoreScripts();
-        onRunFinished?.Invoke();
     }
 
     private void OnDisable()
@@ -115,12 +109,9 @@ public sealed class TriggerStep_TimedScriptRunner : TriggerStepBase
                 Debug.LogWarning($"[{nameof(TriggerStep_TimedScriptRunner)}] '{script.name}' is on an inactive GameObject.", script);
         }
 
-        onRunStarted?.Invoke();
-
         if (seconds <= 0f)
         {
             RestoreScripts();
-            onRunFinished?.Invoke();
             return;
         }
 
@@ -136,7 +127,6 @@ public sealed class TriggerStep_TimedScriptRunner : TriggerStepBase
 
         RestoreScripts();
         runningCoroutine = null;
-        onRunFinished?.Invoke();
     }
 
     private void RestoreScripts()
