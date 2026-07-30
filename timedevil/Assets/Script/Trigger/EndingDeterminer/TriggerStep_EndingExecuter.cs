@@ -60,19 +60,27 @@ public class TriggerStep_EndingExecuter : TriggerStepBase
         int positiveEmotion = PlayerDataRuntime.Instance.Data.emotionPositive;
         int negativeEmotion = PlayerDataRuntime.Instance.Data.emotionNegative;
 
+        string cutsceneKey = "";
+
         if(negativeEmotion >= positiveEmotion) {
             state = EndingState.Bad;
+            cutsceneKey = badEndingCutsceneKey;
         } else {
             foreach(BaseCardSO primaryCard in primaryCards) {
                 if(!CardStateRuntime.Instance.Data.owned.Contains(primaryCard.id)) {
                     state = EndingState.Normal;
+                    cutsceneKey = normalEndingCutsceneKey;
                     break;
                 }
             }
 
-            if(state != EndingState.Normal)
+            if(state != EndingState.Normal){
                 state = EndingState.Good;
+                cutsceneKey = goodEndingCutsceneKey;
+            }
         }
+
+        cutsceneRouter.Play(cutsceneKey);
 
         yield break;
     }
