@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Collections;
 using UnityEngine;
 
 /// <summary>
@@ -48,6 +49,19 @@ public class QuestItemInteraction : MonoBehaviour, IInteractable
 
     [SerializeField, HideInInspector] private bool hasGivenReward = false;
 
+    [Header("Quest Completion Route")]
+    [Tooltip("완료 대화가 끝난 뒤 실행할 TriggerRouter. 비어 있으면 기존처럼 대화만 재생합니다.")]
+    [SerializeField] private TriggerRouter completionRouter;
+
+    [Tooltip("완료 대화가 끝난 뒤 실행할 Route Key")]
+    [SerializeField] private string completionRouteKey;
+
+    [Tooltip("켜져 있으면 이 오브젝트에서는 완료 Route를 한 번만 실행합니다.")]
+    [SerializeField] private bool triggerCompletionRouteOnlyOnce = true;
+
+    [SerializeField, HideInInspector] private bool hasTriggeredCompletionRoute = false;
+    private Coroutine completionRouteCoroutine;
+
     public void Interact()
     {
         if (DialogueManager.instance == null)
@@ -75,6 +89,46 @@ public class QuestItemInteraction : MonoBehaviour, IInteractable
             : selected;
 
         DialogueManager.instance.StartDialogue(dialogueToPlay);
+
+        if (isComplete)
+            TryScheduleCompletionRoute();
+    }
+
+    private void TryScheduleCompletionRoute()
+    {
+        if (completionRouter == null || string.IsNullOrWhiteSpace(completionRouteKey))
+            return;
+
+        if (triggerCompletionRouteOnlyOnce && hasTriggeredCompletionRoute)
+            return;
+
+        hasTriggeredCompletionRoute = true;
+
+        if (completionRouteCoroutine != null)
+            StopCoroutine(completionRouteCoroutine);
+
+        completionRouteCoroutine = StartCoroutine(CoRunCompletionRouteAfterDialogue());
+    }
+
+    private IEnumerator CoRunCompletionRouteAfterDialogue()
+    {
+        while (DialogueManager.instance != null && DialogueManager.instance.isDialogueActive)
+            yield return null;
+
+        GameObject playerObject = GameObject.FindWithTag("Player");
+        PlayerMove playerMove = playerObject != null ? playerObject.GetComponent<PlayerMove>() : null;
+        Collider2D playerCollider = playerObject != null ? playerObject.GetComponent<Collider2D>() : null;
+
+        TriggerContext context = new(
+            trigger: null,
+            router: completionRouter,
+            instigator: playerObject,
+            instigatorCollider: playerCollider,
+            playerMove: playerMove
+        );
+
+        completionRouter.RequestRoute(completionRouteKey, context);
+        completionRouteCoroutine = null;
     }
 
     private List<RewardItem> GiveCompletionRewardIfNeeded(bool isComplete)
