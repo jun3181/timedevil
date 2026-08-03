@@ -1,10 +1,21 @@
 ﻿using TMPro;
 using UnityEngine;
+using System.Collections;
 
 public class DescriptionPanelController : MonoBehaviour
 {
     [Header("Target UI")]
     [SerializeField] private TMP_Text descriptionText;
+
+    [Header("Panel Visibility")]
+    [SerializeField] private GameObject descriptionPanelRoot;
+    [SerializeField] private bool autoResolveDescriptionPanelRoot = true;
+    [SerializeField] private bool hideDescriptionPanelRootWhenItemViewExits = true;
+    [SerializeField] private bool animateDescriptionPanelRoot = true;
+    [SerializeField] private Vector2 descriptionPanelShownAnchoredPosition = new Vector2(9f, -260f);
+    [SerializeField] private float descriptionPanelHiddenY = -680f;
+    [SerializeField, Min(0.01f)] private float descriptionPanelRiseDuration = 0.28f;
+    [SerializeField] private AnimationCurve descriptionPanelRiseEase = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
     [Header("Sources")]
     [SerializeField] private BattleMenuController menu;
@@ -14,6 +25,26 @@ public class DescriptionPanelController : MonoBehaviour
     [Header("Enemy Hand (for End focus view)")]
     [SerializeField] private EnemyHandUI enemyHand;           //  추가
     [SerializeField] private CanvasGroup enemyHandCanvasGroup; // (선택) 적 손패용 CG
+
+    [Header("Item Hand")]
+    [SerializeField] private ItemHandUI itemHand;
+    [SerializeField] private RectTransform itemHandRect;
+    [SerializeField] private bool alignItemHandToDescriptionPanelCenterY = true;
+    [SerializeField] private bool animateItemHandWithDescriptionPanel = true;
+
+    [Header("Hand Preview Layout")]
+    [SerializeField] private RectTransform playerHandRect;
+    [SerializeField] private RectTransform enemyHandRect;
+    [SerializeField] private bool convertHandPositionsFromSeparatedRoot = true;
+    [SerializeField] private string separatedHandRootName = "hand01";
+    [SerializeField] private bool panelControllerOwnsPlayerActivePosition = true;
+    [SerializeField] private bool enemyTurnControllerOwnsEnemyTurnHand = true;
+    [SerializeField] private bool showPlayerHandPreviewOnCardFocus = false;
+    [SerializeField] private bool showEnemyHandPreviewOnEndFocus = false;
+    [SerializeField] private Vector2 playerPreviewAnchoredPosition = new Vector2(-280f, -250f);
+    [SerializeField] private Vector2 enemyPreviewAnchoredPosition = new Vector2(280f, -250f);
+    [SerializeField] private Vector2 playerActiveAnchoredPosition = new Vector2(-280f, -385f);
+    [SerializeField] private Vector2 enemyActiveAnchoredPosition = new Vector2(280f, -385f);
 
     [Header("Messages")]
     [TextArea] public string msgCard = "Card를 선택합니다.";
@@ -35,7 +66,14 @@ public class DescriptionPanelController : MonoBehaviour
     private bool _forcePlayerDiscard = false; //  강제 버림 모드
     private int _effectLockCount = 0;         // 카드 효과 실행 중 기본 문구 억제
     private bool _stateView = false;
+    private bool _stateViewShowPlayerHand = false;
+    private bool _stateViewShowEnemyHand = false;
     private string _stateViewMessage = null;
+    private bool _itemView = false;
+    private string _itemViewMessage = null;
+    private RectTransform _descriptionPanelRootRect;
+    private Coroutine _descriptionPanelMotionRoutine;
+    private bool _descriptionPanelRootShown;
 
     //  클래스 필드에 추가
     private bool _spectate = false;                    // 관전 플래그
@@ -45,18 +83,24 @@ public class DescriptionPanelController : MonoBehaviour
     void Reset()
     {
         if (!descriptionText) descriptionText = GetComponentInChildren<TMP_Text>(true);
+        ResolveDescriptionPanelRoot();
         if (!menu) menu = FindObjectOfType<BattleMenuController>(true);
         if (!hand) hand = FindObjectOfType<HandUI>(true);
         if (!enemyHand) enemyHand = FindObjectOfType<EnemyHandUI>(true);                 //  추가
+        ResolveHandRects();
+        ResolveItemHandRefs();
 
     }
 
     void Awake()
     {
         if (!descriptionText) descriptionText = GetComponentInChildren<TMP_Text>(true);
+        ResolveDescriptionPanelRoot();
         if (!menu) menu = FindObjectOfType<BattleMenuController>(true);
         if (!hand) hand = FindObjectOfType<HandUI>(true);
         if (!enemyHand) enemyHand = FindObjectOfType<EnemyHandUI>(true);                 //  추가
+        ResolveHandRects();
+        ResolveItemHandRefs();
 
     }
 
@@ -65,8 +109,8 @@ public class DescriptionPanelController : MonoBehaviour
         if (menu) menu.onFocusChanged.AddListener(OnMenuFocusChanged);
         if (hand != null)
         {
-            hand.onSelectModeChanged += _ => RefreshNow();
-            hand.onSelectIndexChanged += _ => RefreshNow();
+            hand.onSelectModeChanged += OnHandSelectModeChanged;
+            hand.onSelectIndexChanged += OnHandSelectIndexChanged;
         }
         _lastIndex = menu ? menu.Index : 0;
         RefreshNow();
@@ -77,14 +121,17 @@ public class DescriptionPanelController : MonoBehaviour
         if (menu) menu.onFocusChanged.RemoveListener(OnMenuFocusChanged);
         if (hand != null)
         {
-            hand.onSelectModeChanged -= _ => RefreshNow();
-            hand.onSelectIndexChanged -= _ => RefreshNow();
+            hand.onSelectModeChanged -= OnHandSelectModeChanged;
+            hand.onSelectIndexChanged -= OnHandSelectIndexChanged;
         }
+
+        StopDescriptionPanelMotion();
     }
 
     void Start()
     {
         if (clearOnAwake && descriptionText) descriptionText.text = string.Empty;
+        StartCoroutine(Co_RefreshAfterStartup());
     }
 
     void Update()
@@ -117,25 +164,42 @@ public class DescriptionPanelController : MonoBehaviour
         RefreshNow();
     }
 
+    private void OnHandSelectModeChanged(bool _)
+    {
+        RefreshNow();
+    }
+
+    private void OnHandSelectIndexChanged(int _)
+    {
+        RefreshNow();
+    }
+
     // TurnManager가 EnemyTurn 시작/종료 때 호출
     public void SetEnemyTurn(bool on)
     {
         _forceEnemyTurn = on;
+        ResolveHandRects();
 
         // 적턴이면 손패 UI 숨김, 아니라면 현재 메뉴 인덱스 기준으로 토글
         if (hand != null)
         {
-            if (on) hand.HideCards();
+            if (on)
+            {
+                hand.HideCards();
+            }
             else
             {
                 int idx = menu ? menu.Index : 0;
-                if (idx == 0) hand.ShowCards(); else hand.HideCards();
+                if (ShouldShowPlayerHandForMenuFocus(idx)) hand.ShowCards(); else hand.HideCards();
             }
         }
         //  적 턴엔 EnemyHand 표시, 플레이어 턴엔 나머지 로직(RefreshNow)에서 결정
         if (enemyHand != null)
         {
-            if (on) enemyHand.ShowAll();
+            if (on)
+            {
+                ShowEnemyHandForEnemyTurn();
+            }
             else enemyHand.HideAll();  // 플레이어 턴은 RefreshNow가 End(2)일 때 다시 켜줌
         }
         if (enemyHandCanvasGroup)
@@ -185,7 +249,21 @@ public class DescriptionPanelController : MonoBehaviour
 
     public void EnterStateView(string message)
     {
+        EnterStateView(message, false, Faction.Player);
+    }
+
+    public void EnterStateView(string message, bool showHand, Faction handSide)
+    {
+        bool showPlayerHand = showHand && handSide == Faction.Player;
+        bool showEnemyHand = showHand && handSide == Faction.Enemy;
+        EnterStateView(message, showPlayerHand, showEnemyHand, handSide);
+    }
+
+    public void EnterStateView(string message, bool showPlayerHand, bool showEnemyHand, Faction primaryHandSide)
+    {
         _stateView = true;
+        _stateViewShowPlayerHand = showPlayerHand;
+        _stateViewShowEnemyHand = showEnemyHand;
         _stateViewMessage = message;
         RefreshNow();
     }
@@ -193,7 +271,30 @@ public class DescriptionPanelController : MonoBehaviour
     public void ExitStateView()
     {
         _stateView = false;
+        _stateViewShowPlayerHand = false;
+        _stateViewShowEnemyHand = false;
         _stateViewMessage = null;
+        RefreshNow();
+    }
+
+    public void EnterItemInteractionView(string message = null)
+    {
+        _itemView = true;
+        _itemViewMessage = message;
+        SetDescriptionPanelRootVisible(true, true);
+        ShowItemHandForItemInteraction();
+        RefreshNow();
+    }
+
+    public void ExitItemInteractionView()
+    {
+        _itemView = false;
+        _itemViewMessage = null;
+
+        if (hideDescriptionPanelRootWhenItemViewExits)
+            SetDescriptionPanelRootVisible(false);
+
+        itemHand?.ExitItemInteractionMode(descriptionPanelRiseDuration, descriptionPanelRiseEase);
         RefreshNow();
     }
 
@@ -203,6 +304,12 @@ public class DescriptionPanelController : MonoBehaviour
         RefreshNow();
         yield return new WaitForSeconds(Mathf.Max(0.05f, seconds));
         _forcedMessage = null;
+        RefreshNow();
+    }
+
+    private System.Collections.IEnumerator Co_RefreshAfterStartup()
+    {
+        yield return null;
         RefreshNow();
     }
 
@@ -218,11 +325,29 @@ public class DescriptionPanelController : MonoBehaviour
 
         if (_stateView)
         {
-            if (handCanvasGroup) { handCanvasGroup.alpha = 0f; handCanvasGroup.interactable = false; handCanvasGroup.blocksRaycasts = false; }
-            if (hand) hand.HideCards();
+            if (_stateViewShowPlayerHand)
+            {
+                SetPlayerActivePositionIfOwnedHere();
+                if (handCanvasGroup) { handCanvasGroup.alpha = 1f; handCanvasGroup.interactable = false; handCanvasGroup.blocksRaycasts = false; }
+                if (hand) hand.ShowCards();
+            }
+            else
+            {
+                if (handCanvasGroup) { handCanvasGroup.alpha = 0f; handCanvasGroup.interactable = false; handCanvasGroup.blocksRaycasts = false; }
+                if (hand) hand.HideCards();
+            }
 
-            if (enemyHandCanvasGroup) { enemyHandCanvasGroup.alpha = 0f; enemyHandCanvasGroup.interactable = false; enemyHandCanvasGroup.blocksRaycasts = false; }
-            if (enemyHand) enemyHand.HideAll();
+            if (_stateViewShowEnemyHand)
+            {
+                SetEnemyHandPosition(enemyActiveAnchoredPosition);
+                if (enemyHandCanvasGroup) { enemyHandCanvasGroup.alpha = 1f; enemyHandCanvasGroup.interactable = false; enemyHandCanvasGroup.blocksRaycasts = false; }
+                if (enemyHand) enemyHand.ShowAll();
+            }
+            else
+            {
+                if (enemyHandCanvasGroup) { enemyHandCanvasGroup.alpha = 0f; enemyHandCanvasGroup.interactable = false; enemyHandCanvasGroup.blocksRaycasts = false; }
+                if (enemyHand) enemyHand.HideAll();
+            }
 
             descriptionText.text = string.IsNullOrEmpty(_stateViewMessage) ? msgState : _stateViewMessage;
             return;
@@ -234,6 +359,7 @@ public class DescriptionPanelController : MonoBehaviour
             // 보여줄 쪽만 ON, 나머지는 OFF (클릭/레이캐스트 모두 차단)
             if (_spectateSide == Faction.Player)
             {
+                SetPlayerHandPosition(playerActiveAnchoredPosition);
                 if (handCanvasGroup) { handCanvasGroup.alpha = 1f; handCanvasGroup.interactable = false; handCanvasGroup.blocksRaycasts = false; }
                 if (hand) hand.ShowCards();
 
@@ -242,6 +368,7 @@ public class DescriptionPanelController : MonoBehaviour
             }
             else // Enemy
             {
+                SetEnemyHandPosition(enemyActiveAnchoredPosition);
                 if (enemyHandCanvasGroup) { enemyHandCanvasGroup.alpha = 1f; enemyHandCanvasGroup.interactable = false; enemyHandCanvasGroup.blocksRaycasts = false; }
                 if (enemyHand) enemyHand.ShowAll();
 
@@ -256,10 +383,12 @@ public class DescriptionPanelController : MonoBehaviour
         // 1) 적 턴: EnemyHand 항상 ON, PlayerHand OFF
         if (_forceEnemyTurn)
         {
+            SetPlayerActivePositionIfOwnedHere();
+
             if (handCanvasGroup) { handCanvasGroup.alpha = 0f; handCanvasGroup.interactable = false; handCanvasGroup.blocksRaycasts = false; }
             if (hand) hand.HideCards();
 
-            if (enemyHand) enemyHand.ShowAll();
+            ShowEnemyHandForEnemyTurn();
             if (enemyHandCanvasGroup) { enemyHandCanvasGroup.alpha = 1f; enemyHandCanvasGroup.interactable = false; enemyHandCanvasGroup.blocksRaycasts = false; }
 
             descriptionText.text = !string.IsNullOrEmpty(_forcedMessage) ? _forcedMessage : msgEnemyTurn;
@@ -269,6 +398,8 @@ public class DescriptionPanelController : MonoBehaviour
         // 2) 강제 버림 페이즈: PlayerHand 항상 ON, EnemyHand OFF
         if (_forcePlayerDiscard)
         {
+            SetPlayerActivePositionIfOwnedHere();
+
             // EnemyHand 강제 OFF
             if (enemyHand) enemyHand.HideAll();
             if (enemyHandCanvasGroup) { enemyHandCanvasGroup.alpha = 0f; enemyHandCanvasGroup.interactable = false; enemyHandCanvasGroup.blocksRaycasts = false; }
@@ -284,26 +415,52 @@ public class DescriptionPanelController : MonoBehaviour
             return;
         }
 
+        if (_itemView)
+        {
+            if (handCanvasGroup) { handCanvasGroup.alpha = 0f; handCanvasGroup.interactable = false; handCanvasGroup.blocksRaycasts = false; }
+            if (hand) hand.HideCards();
+
+            if (enemyHand) enemyHand.HideAll();
+            if (enemyHandCanvasGroup) { enemyHandCanvasGroup.alpha = 0f; enemyHandCanvasGroup.interactable = false; enemyHandCanvasGroup.blocksRaycasts = false; }
+
+            SetDescriptionPanelRootVisible(true);
+            descriptionText.text = !string.IsNullOrEmpty(_itemViewMessage) ? _itemViewMessage : msgItem;
+            return;
+        }
+
         // 3) 평상시(플레이어 턴, 버림 페이즈 아님): 메뉴 인덱스 기반
         // PlayerHand: Card(0)에서만 표시
+        bool showPlayerHand = ShouldShowPlayerHandForMenuFocus(index);
         if (handCanvasGroup)
         {
-            bool showHand = (index == 0);
-            handCanvasGroup.alpha = showHand ? 1f : 0f;
-            handCanvasGroup.interactable = showHand;
-            handCanvasGroup.blocksRaycasts = showHand;
+            handCanvasGroup.alpha = showPlayerHand ? 1f : 0f;
+            handCanvasGroup.interactable = showPlayerHand;
+            handCanvasGroup.blocksRaycasts = showPlayerHand;
         }
         if (hand != null)
         {
-            if (index == 0) hand.ShowCards();
+            if (showPlayerHand)
+            {
+                if (hand.IsInSelectMode)
+                    SetPlayerActivePositionIfOwnedHere();
+                else
+                    SetPlayerHandPosition(playerPreviewAnchoredPosition);
+
+                hand.ShowCards();
+            }
             else hand.HideCards();
         }
 
         // EnemyHand: End(2)에서만 표시
         if (enemyHand != null)
         {
-            bool showEnemy = (index == endIndex);
-            if (showEnemy) enemyHand.ShowAll(); else enemyHand.HideAll();
+            bool showEnemy = ShouldShowEnemyHandForMenuFocus(index, endIndex);
+            if (showEnemy)
+            {
+                SetEnemyHandPosition(enemyPreviewAnchoredPosition);
+                enemyHand.ShowAll();
+            }
+            else enemyHand.HideAll();
             if (enemyHandCanvasGroup)
             {
                 enemyHandCanvasGroup.alpha = showEnemy ? 1f : 0f;
@@ -355,6 +512,196 @@ public class DescriptionPanelController : MonoBehaviour
     private int ResolveRunIndex()
     {
         return menu != null && menu.EntryCount >= 5 ? 4 : 3;
+    }
+
+    private bool ShouldShowPlayerHandForMenuFocus(int index)
+    {
+        return hand != null
+            && index == 0
+            && (hand.IsInSelectMode || showPlayerHandPreviewOnCardFocus);
+    }
+
+    private bool ShouldShowEnemyHandForMenuFocus(int index, int endIndex)
+    {
+        return enemyHand != null
+            && endIndex >= 0
+            && index == endIndex
+            && showEnemyHandPreviewOnEndFocus;
+    }
+
+    private void ResolveHandRects()
+    {
+        if (!hand) hand = FindObjectOfType<HandUI>(true);
+        if (!enemyHand) enemyHand = FindObjectOfType<EnemyHandUI>(true);
+
+        if (!playerHandRect && hand) playerHandRect = hand.GetComponent<RectTransform>();
+        if (!enemyHandRect && enemyHand) enemyHandRect = enemyHand.GetComponent<RectTransform>();
+    }
+
+    private void ResolveItemHandRefs()
+    {
+        if (!itemHand) itemHand = FindObjectOfType<ItemHandUI>(true);
+        if (!itemHandRect && itemHand) itemHandRect = itemHand.GetComponent<RectTransform>();
+    }
+
+    private void ShowItemHandForItemInteraction()
+    {
+        ResolveItemHandRefs();
+        RectTransform descriptionRect = GetDescriptionPanelRootRect();
+        if (!itemHand || !itemHandRect || !descriptionRect)
+            return;
+
+        Vector2 shown = GetDescriptionPanelShownPosition(descriptionRect);
+        float targetY = alignItemHandToDescriptionPanelCenterY
+            ? ConvertRootYToItemHandLocalY(shown.y)
+            : itemHandRect.anchoredPosition.y;
+        float hiddenY = ConvertRootYToItemHandLocalY(descriptionPanelHiddenY);
+        float duration = animateItemHandWithDescriptionPanel ? descriptionPanelRiseDuration : 0f;
+        itemHand.ShowForItemInteraction(targetY, hiddenY, duration, descriptionPanelRiseEase);
+    }
+
+    private float ConvertRootYToItemHandLocalY(float rootY)
+    {
+        if (!itemHandRect)
+            return rootY;
+
+        Vector2 current = itemHandRect.anchoredPosition;
+        Vector2 converted = HandPositionUtility.ToSeparatedRootLocal(
+            itemHandRect,
+            new Vector2(current.x, rootY),
+            convertHandPositionsFromSeparatedRoot,
+            separatedHandRootName);
+        return converted.y;
+    }
+
+    private void ResolveDescriptionPanelRoot()
+    {
+        if (descriptionPanelRoot || !autoResolveDescriptionPanelRoot || !descriptionText)
+            return;
+
+        Transform parent = descriptionText.transform.parent;
+        descriptionPanelRoot = parent ? parent.gameObject : descriptionText.gameObject;
+        _descriptionPanelRootRect = descriptionPanelRoot ? descriptionPanelRoot.GetComponent<RectTransform>() : null;
+    }
+
+    private void SetDescriptionPanelRootVisible(bool visible, bool animate = false)
+    {
+        ResolveDescriptionPanelRoot();
+        if (!descriptionPanelRoot)
+            return;
+
+        RectTransform rect = GetDescriptionPanelRootRect();
+
+        if (visible)
+        {
+            if (_descriptionPanelRootShown && descriptionPanelRoot.activeSelf)
+                return;
+
+            _descriptionPanelRootShown = true;
+            descriptionPanelRoot.SetActive(true);
+
+            Vector2 shown = GetDescriptionPanelShownPosition(rect);
+            if (!rect || !Application.isPlaying || !animate || !animateDescriptionPanelRoot)
+            {
+                if (rect) rect.anchoredPosition = shown;
+                return;
+            }
+
+            StopDescriptionPanelMotion();
+            Vector2 hidden = new Vector2(shown.x, descriptionPanelHiddenY);
+            rect.anchoredPosition = hidden;
+            _descriptionPanelMotionRoutine = StartCoroutine(Co_MoveDescriptionPanelRoot(rect, hidden, shown));
+            return;
+        }
+
+        _descriptionPanelRootShown = false;
+        StopDescriptionPanelMotion();
+        if (rect)
+        {
+            Vector2 shown = GetDescriptionPanelShownPosition(rect);
+            rect.anchoredPosition = new Vector2(shown.x, descriptionPanelHiddenY);
+        }
+
+        descriptionPanelRoot.SetActive(false);
+    }
+
+    private RectTransform GetDescriptionPanelRootRect()
+    {
+        if (!_descriptionPanelRootRect && descriptionPanelRoot)
+            _descriptionPanelRootRect = descriptionPanelRoot.GetComponent<RectTransform>();
+        return _descriptionPanelRootRect;
+    }
+
+    private Vector2 GetDescriptionPanelShownPosition(RectTransform rect)
+    {
+        return descriptionPanelShownAnchoredPosition;
+    }
+
+    private IEnumerator Co_MoveDescriptionPanelRoot(RectTransform rect, Vector2 from, Vector2 to)
+    {
+        float duration = Mathf.Max(0.01f, descriptionPanelRiseDuration);
+        float t = 0f;
+        while (t < duration)
+        {
+            t += Time.deltaTime;
+            float u = Mathf.Clamp01(t / duration);
+            float eased = descriptionPanelRiseEase != null ? descriptionPanelRiseEase.Evaluate(u) : u;
+            if (rect) rect.anchoredPosition = Vector2.LerpUnclamped(from, to, eased);
+            yield return null;
+        }
+
+        if (rect) rect.anchoredPosition = to;
+        _descriptionPanelMotionRoutine = null;
+    }
+
+    private void StopDescriptionPanelMotion()
+    {
+        if (_descriptionPanelMotionRoutine == null)
+            return;
+
+        StopCoroutine(_descriptionPanelMotionRoutine);
+        _descriptionPanelMotionRoutine = null;
+    }
+
+    private void SetPlayerHandPosition(Vector2 anchoredPosition)
+    {
+        ResolveHandRects();
+        if (playerHandRect)
+        {
+            playerHandRect.anchoredPosition = HandPositionUtility.ToSeparatedRootLocal(
+                playerHandRect,
+                anchoredPosition,
+                convertHandPositionsFromSeparatedRoot,
+                separatedHandRootName);
+        }
+    }
+
+    private void SetPlayerActivePositionIfOwnedHere()
+    {
+        if (!panelControllerOwnsPlayerActivePosition)
+            SetPlayerHandPosition(playerActiveAnchoredPosition);
+    }
+
+    private void SetEnemyHandPosition(Vector2 anchoredPosition)
+    {
+        ResolveHandRects();
+        if (enemyHandRect)
+        {
+            enemyHandRect.anchoredPosition = HandPositionUtility.ToSeparatedRootLocal(
+                enemyHandRect,
+                anchoredPosition,
+                convertHandPositionsFromSeparatedRoot,
+                separatedHandRootName);
+        }
+    }
+
+    private void ShowEnemyHandForEnemyTurn()
+    {
+        if (!enemyHand || enemyTurnControllerOwnsEnemyTurnHand)
+            return;
+
+        SetEnemyHandPosition(enemyActiveAnchoredPosition);
+        enemyHand.ShowAll();
     }
 
 
