@@ -39,6 +39,8 @@ public class DescriptionPanelController : MonoBehaviour
     [SerializeField] private string separatedHandRootName = "hand01";
     [SerializeField] private bool panelControllerOwnsPlayerActivePosition = true;
     [SerializeField] private bool enemyTurnControllerOwnsEnemyTurnHand = true;
+    [SerializeField] private bool showPlayerHandPreviewOnCardFocus = false;
+    [SerializeField] private bool showEnemyHandPreviewOnEndFocus = false;
     [SerializeField] private Vector2 playerPreviewAnchoredPosition = new Vector2(-280f, -250f);
     [SerializeField] private Vector2 enemyPreviewAnchoredPosition = new Vector2(280f, -250f);
     [SerializeField] private Vector2 playerActiveAnchoredPosition = new Vector2(-280f, -385f);
@@ -188,7 +190,7 @@ public class DescriptionPanelController : MonoBehaviour
             else
             {
                 int idx = menu ? menu.Index : 0;
-                if (idx == 0) hand.ShowCards(); else hand.HideCards();
+                if (ShouldShowPlayerHandForMenuFocus(idx)) hand.ShowCards(); else hand.HideCards();
             }
         }
         //  적 턴엔 EnemyHand 표시, 플레이어 턴엔 나머지 로직(RefreshNow)에서 결정
@@ -428,16 +430,16 @@ public class DescriptionPanelController : MonoBehaviour
 
         // 3) 평상시(플레이어 턴, 버림 페이즈 아님): 메뉴 인덱스 기반
         // PlayerHand: Card(0)에서만 표시
+        bool showPlayerHand = ShouldShowPlayerHandForMenuFocus(index);
         if (handCanvasGroup)
         {
-            bool showHand = (index == 0);
-            handCanvasGroup.alpha = showHand ? 1f : 0f;
-            handCanvasGroup.interactable = showHand;
-            handCanvasGroup.blocksRaycasts = showHand;
+            handCanvasGroup.alpha = showPlayerHand ? 1f : 0f;
+            handCanvasGroup.interactable = showPlayerHand;
+            handCanvasGroup.blocksRaycasts = showPlayerHand;
         }
         if (hand != null)
         {
-            if (index == 0)
+            if (showPlayerHand)
             {
                 if (hand.IsInSelectMode)
                     SetPlayerActivePositionIfOwnedHere();
@@ -452,7 +454,7 @@ public class DescriptionPanelController : MonoBehaviour
         // EnemyHand: End(2)에서만 표시
         if (enemyHand != null)
         {
-            bool showEnemy = (index == endIndex);
+            bool showEnemy = ShouldShowEnemyHandForMenuFocus(index, endIndex);
             if (showEnemy)
             {
                 SetEnemyHandPosition(enemyPreviewAnchoredPosition);
@@ -510,6 +512,21 @@ public class DescriptionPanelController : MonoBehaviour
     private int ResolveRunIndex()
     {
         return menu != null && menu.EntryCount >= 5 ? 4 : 3;
+    }
+
+    private bool ShouldShowPlayerHandForMenuFocus(int index)
+    {
+        return hand != null
+            && index == 0
+            && (hand.IsInSelectMode || showPlayerHandPreviewOnCardFocus);
+    }
+
+    private bool ShouldShowEnemyHandForMenuFocus(int index, int endIndex)
+    {
+        return enemyHand != null
+            && endIndex >= 0
+            && index == endIndex
+            && showEnemyHandPreviewOnEndFocus;
     }
 
     private void ResolveHandRects()

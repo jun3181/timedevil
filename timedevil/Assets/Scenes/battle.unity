@@ -757,6 +757,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   menu: {fileID: 1069897049}
+  itemHandRect: {fileID: 0}
+  forceFrontCanvas: 1
+  frontSortingOrder: 80
 --- !u!225 &334961077
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -1035,6 +1038,8 @@ MonoBehaviour:
   enemyPawn: {fileID: 1064948988}
   loadMyroomOnPlayerZeroHp: 1
   myroomSceneName: Myroom
+  returnToPreviousSceneOnEnemyZeroHp: 1
+  enemyDefeatReturnGraceSeconds: 1
 --- !u!1 &443751346
 GameObject:
   m_ObjectHideFlags: 0
@@ -1128,7 +1133,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: end
+  m_text: End
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -5847,6 +5852,10 @@ MonoBehaviour:
   database: {fileID: 11400000, guid: c0cc44962aa33464ca629e77b4d09b2b, type: 2}
   enemyHand: {fileID: 133108826}
   enemyHandCanvasGroup: {fileID: 133108823}
+  itemHand: {fileID: 0}
+  itemHandRect: {fileID: 0}
+  alignItemHandToDescriptionPanelCenterY: 1
+  animateItemHandWithDescriptionPanel: 1
   playerHandRect: {fileID: 860620048}
   enemyHandRect: {fileID: 133108822}
   convertHandPositionsFromSeparatedRoot: 1

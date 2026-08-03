@@ -128,6 +128,7 @@ public class CardUseOrchestrator : MonoBehaviour
 
         // D. 카드 사용 직전 선택 레이아웃을 즉시 정리해, 제거 후 남은 손패 y가 튀지 않게 한다.
         hand.ExitSelectMode(true);
+        hand.HideCards();
 
         // E. 카드 즉시 제거(덱 아래)
         var bdr = BattleDeckRuntime.Instance;

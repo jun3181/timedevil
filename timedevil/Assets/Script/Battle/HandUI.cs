@@ -50,6 +50,7 @@ public class HandUI : MonoBehaviour
     private Coroutine layoutRoutine;
     private Coroutine scaleRoutine;
     private readonly Dictionary<RectTransform, Vector2> cardRiseTargets = new();
+    private bool cardsVisible = true;
 
     public event System.Action<bool> onSelectModeChanged;
     public event System.Action<int> onSelectIndexChanged;
@@ -191,7 +192,10 @@ public class HandUI : MonoBehaviour
             ExitSelectMode();
         }
 
-        ShowCards();
+        if (cardsVisible || selecting)
+            ShowCards();
+        else
+            HideCards();
     }
 
     private void ClearSpawned()
@@ -206,12 +210,14 @@ public class HandUI : MonoBehaviour
 
     public void ShowCards()
     {
+        cardsVisible = true;
         for (int i = 0; i < spawned.Count; i++)
             if (spawned[i]) spawned[i].SetActive(true);
     }
 
     public void HideCards()
     {
+        cardsVisible = false;
         for (int i = 0; i < spawned.Count; i++)
             if (spawned[i]) spawned[i].SetActive(false);
         if (select) select.gameObject.SetActive(false);
