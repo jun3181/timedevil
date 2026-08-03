@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.SceneManagement;
+using TMPro;
 
 public enum TurnState { PlayerTurn, EnemyTurn }
 
@@ -59,6 +60,18 @@ public class TurnManager : MonoBehaviour
     [Header("Optional UI Controller")]
     [SerializeField] private BattleMenuController menu;
 
+    [Header("Turn Banner")]
+    [SerializeField] private bool showTurnBanner = true;
+    [SerializeField] private string playerTurnBannerMessage = "아군턴입니다!";
+    [SerializeField] private string enemyTurnBannerMessage = "상대턴입니다!";
+    [SerializeField] private Vector2 turnBannerCenter = new Vector2(0f, 110f);
+    [SerializeField] private Vector2 turnBannerSize = new Vector2(760f, 110f);
+    [SerializeField, Min(0.01f)] private float turnBannerInSeconds = 0.35f;
+    [SerializeField, Min(0f)] private float turnBannerHoldSeconds = 0.45f;
+    [SerializeField, Min(0.01f)] private float turnBannerOutSeconds = 0.35f;
+    [SerializeField] private Color turnBannerColor = Color.white;
+    [SerializeField, Min(1f)] private float turnBannerFontSize = 54f;
+
     [Header("Refs")]
     [SerializeField] private EnemyTurnController enemyTurnController;
     [SerializeField] private HandUI handUI;
@@ -72,8 +85,14 @@ public class TurnManager : MonoBehaviour
     [SerializeField] private EnemyHandUI enemyHandUI;
     [SerializeField] private EnemyDeckRuntime enemyDeck;
     [SerializeField] private ItemHandUI itemHand;
+    [SerializeField] private bool enemyTurnControllerOwnsHandReveal = true;
     [SerializeField] private float enemyDiscardRevealDelay = 3f;
     [SerializeField] private CardAnimeController cardAnime;
+
+    private RectTransform turnBannerRect;
+    private TMP_Text turnBannerText;
+    private CanvasGroup turnBannerGroup;
+    private Coroutine turnBannerRoutine;
 
     private bool playerInitialRevealDone = false;
     private bool enemyInitialRevealDone = false;
@@ -235,6 +254,7 @@ public class TurnManager : MonoBehaviour
         currentTurn = TurnState.PlayerTurn;
         HasFirstTurnDecided = true;
         OnTurnChanged?.Invoke(currentTurn);
+        PlayTurnBanner(currentTurn);
         IsPlayerDiscardPhase = false;
 
         if (cost) cost.ResetTurn();
@@ -270,6 +290,7 @@ public class TurnManager : MonoBehaviour
         currentTurn = TurnState.EnemyTurn;
         HasFirstTurnDecided = true;
         OnTurnChanged?.Invoke(currentTurn);
+        PlayTurnBanner(currentTurn);
         IsPlayerDiscardPhase = false;
 
         if (cost) cost.ResetTurn();
@@ -284,9 +305,13 @@ public class TurnManager : MonoBehaviour
         if (handUI) handUI.HideCards();
         if (desc) { desc.SetEnemyTurn(true); desc.SetPlayerDiscardMode(false); }
 
-        if (enemyHandUI) { enemyHandUI.gameObject.SetActive(true); enemyHandUI.RebuildFromHand(); }
+        if (!enemyTurnControllerOwnsHandReveal && enemyHandUI)
+        {
+            enemyHandUI.gameObject.SetActive(true);
+            enemyHandUI.RebuildFromHand();
+        }
 
-        if (!enemyInitialRevealDone && cardAnime != null)
+        if (!enemyTurnControllerOwnsHandReveal && !enemyInitialRevealDone && cardAnime != null)
         {
             enemyInitialRevealDone = true;
             StartCoroutine(Co_RevealEnemyInitialAfterFrame());
@@ -579,6 +604,104 @@ public class TurnManager : MonoBehaviour
         }
     }
 #endif
+
+    private void PlayTurnBanner(TurnState state)
+    {
+        if (!showTurnBanner) return;
+        string message = state == TurnState.PlayerTurn ? playerTurnBannerMessage : enemyTurnBannerMessage;
+        if (turnBannerRoutine != null)
+            StopCoroutine(turnBannerRoutine);
+        turnBannerRoutine = StartCoroutine(Co_PlayTurnBanner(message));
+    }
+
+    private System.Collections.IEnumerator Co_PlayTurnBanner(string message)
+    {
+        EnsureTurnBanner();
+        if (!turnBannerRect || turnBannerText == null || turnBannerGroup == null)
+            yield break;
+
+        turnBannerText.text = message ?? string.Empty;
+        turnBannerText.color = turnBannerColor;
+        turnBannerText.fontSize = turnBannerFontSize;
+        turnBannerRect.sizeDelta = turnBannerSize;
+        turnBannerRect.gameObject.SetActive(true);
+        turnBannerGroup.alpha = 1f;
+
+        RectTransform parent = turnBannerRect.parent as RectTransform;
+        float parentWidth = parent ? parent.rect.width : Screen.width;
+        float travel = parentWidth * 0.5f + turnBannerSize.x;
+        Vector2 left = turnBannerCenter + Vector2.left * travel;
+        Vector2 right = turnBannerCenter + Vector2.right * travel;
+
+        yield return TweenTurnBanner(left, turnBannerCenter, turnBannerInSeconds, 0f, 1f);
+        if (turnBannerHoldSeconds > 0f)
+            yield return new WaitForSecondsRealtime(turnBannerHoldSeconds);
+        yield return TweenTurnBanner(turnBannerCenter, right, turnBannerOutSeconds, 1f, 0f);
+
+        turnBannerGroup.alpha = 0f;
+        turnBannerRect.gameObject.SetActive(false);
+        turnBannerRoutine = null;
+    }
+
+    private System.Collections.IEnumerator TweenTurnBanner(Vector2 from, Vector2 to, float seconds, float fromAlpha, float toAlpha)
+    {
+        float duration = Mathf.Max(0.01f, seconds);
+        float t = 0f;
+        while (t < duration)
+        {
+            t += Time.unscaledDeltaTime;
+            float u = Mathf.Clamp01(t / duration);
+            float eased = 1f - Mathf.Pow(1f - u, 3f);
+            turnBannerRect.anchoredPosition = Vector2.LerpUnclamped(from, to, eased);
+            turnBannerGroup.alpha = Mathf.LerpUnclamped(fromAlpha, toAlpha, eased);
+            yield return null;
+        }
+
+        turnBannerRect.anchoredPosition = to;
+        turnBannerGroup.alpha = toAlpha;
+    }
+
+    private void EnsureTurnBanner()
+    {
+        if (turnBannerRect && turnBannerText != null && turnBannerGroup != null)
+            return;
+
+        Canvas canvas = FindObjectOfType<Canvas>(true);
+        if (!canvas) return;
+
+        var root = new GameObject("TurnBanner", typeof(RectTransform), typeof(CanvasGroup));
+        root.transform.SetParent(canvas.transform, false);
+
+        turnBannerRect = root.GetComponent<RectTransform>();
+        turnBannerRect.anchorMin = turnBannerRect.anchorMax = new Vector2(0.5f, 0.5f);
+        turnBannerRect.pivot = new Vector2(0.5f, 0.5f);
+        turnBannerRect.sizeDelta = turnBannerSize;
+        turnBannerRect.anchoredPosition = turnBannerCenter;
+
+        turnBannerGroup = root.GetComponent<CanvasGroup>();
+        turnBannerGroup.alpha = 0f;
+        turnBannerGroup.interactable = false;
+        turnBannerGroup.blocksRaycasts = false;
+
+        var textObject = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
+        textObject.transform.SetParent(root.transform, false);
+        var textRect = textObject.GetComponent<RectTransform>();
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.offsetMin = Vector2.zero;
+        textRect.offsetMax = Vector2.zero;
+
+        var text = textObject.GetComponent<TextMeshProUGUI>();
+        text.alignment = TextAlignmentOptions.Center;
+        text.enableWordWrapping = false;
+        text.raycastTarget = false;
+        text.fontStyle = FontStyles.Bold;
+        text.fontSize = turnBannerFontSize;
+        text.color = turnBannerColor;
+        turnBannerText = text;
+
+        root.SetActive(false);
+    }
 
     // ─────────────────────────────────────────
     // SFX helper
