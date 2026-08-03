@@ -11,9 +11,19 @@ public class HPController : MonoBehaviour
     [SerializeField] private Transform playerPawn;
     [SerializeField] private Transform enemyPawn;
 
+    [Header("Player Defeat")]
+    [SerializeField] private bool loadMyroomOnPlayerZeroHp = true;
+    [SerializeField] private string myroomSceneName = "Myroom";
+
+    [Header("Enemy Defeat")]
+    [SerializeField] private bool returnToPreviousSceneOnEnemyZeroHp = true;
+    [SerializeField, Min(0f)] private float enemyDefeatReturnGraceSeconds = 1f;
+
     public Faction CurrentDamageTarget { get; private set; } = Faction.Enemy;
 
     private HPUIBinder _hpUI;
+    private bool playerDefeatLoadStarted;
+    private bool enemyDefeatReturnStarted;
     public void InjectRefs(PlayerDataRuntime pdr, EnemyRuntime er, HPUIBinder binder = null)
     {
         if (pdr != null) playerData = pdr;
@@ -91,6 +101,8 @@ public class HPController : MonoBehaviour
                 WriteIntFieldOrProp(pd, "currentHP", cur);
                 Debug.Log($"[HP] Player -{amount} → {cur}");
                 _hpUI?.Refresh();
+                if (cur <= 0)
+                    HandlePlayerDefeat();
             }
             else
             {
@@ -105,6 +117,8 @@ public class HPController : MonoBehaviour
                 int raw = amount + Mathf.Max(0, enemyData.defense);
                 enemyData.TakeDamage(raw);   // 내부에서 OnChanged 호출 → HPUI 자동 갱신
                 Debug.Log($"[HP] Enemy -{amount} → {enemyData.currentHP}");
+                if (enemyData.IsDead)
+                    HandleEnemyDefeat();
             }
             else
             {
@@ -166,6 +180,24 @@ public class HPController : MonoBehaviour
     }
 
     // ---------- 리플렉션 보조 ----------
+    private void HandlePlayerDefeat()
+    {
+        if (!loadMyroomOnPlayerZeroHp || playerDefeatLoadStarted)
+            return;
+
+        playerDefeatLoadStarted = true;
+        SceneLoader.Load(myroomSceneName);
+    }
+
+    private void HandleEnemyDefeat()
+    {
+        if (!returnToPreviousSceneOnEnemyZeroHp || enemyDefeatReturnStarted)
+            return;
+
+        enemyDefeatReturnStarted = true;
+        SceneLoader.GoBackToReturnScene(enemyDefeatReturnGraceSeconds);
+    }
+
     private int ReadIntFrom(object obj, params string[] names)
     {
         if (obj == null || names == null) return 0;
