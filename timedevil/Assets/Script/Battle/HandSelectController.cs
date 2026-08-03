@@ -45,6 +45,8 @@ public class HandSelectController : MonoBehaviour
             hand.onSelectModeChanged -= OnHandSelectModeChanged;
             hand.onSelectIndexChanged -= OnHandIndexChanged;
         }
+
+        orchestrator?.ClearSelectedAttackWarning();
     }
 
     void Update()
@@ -53,6 +55,9 @@ public class HandSelectController : MonoBehaviour
 
         //  강제 버림 단계 중에는 메뉴 인덱스와 무관하게 손패 선택 유지
         bool inDiscard = TurnManager.Instance && TurnManager.Instance.IsPlayerDiscardPhase;
+
+        if (hand.IsReadOnlySelectMode)
+            return;
 
         // 일반 진입(카드 탭) — 단, 버림 단계가 아닐 때만
         if (!inDiscard && !hand.IsInSelectMode && menu.Index == 0 && Input.GetKeyDown(KeyCode.E))
@@ -102,15 +107,30 @@ public class HandSelectController : MonoBehaviour
 
     private void OnHandSelectModeChanged(bool on)
     {
-        if (!externalSelector) return;
-        externalSelector.enabled = on;
-        if (on) SnapExternalSelector(hand.CurrentSelectIndex);
+        if (externalSelector)
+        {
+            externalSelector.enabled = on;
+            if (on) SnapExternalSelector(hand.CurrentSelectIndex);
+        }
+
+        RefreshAttackWarningForSelection();
     }
 
     private void OnHandIndexChanged(int idx)
     {
-        if (!externalSelector) return;
-        SnapExternalSelector(idx);
+        if (externalSelector) SnapExternalSelector(idx);
+        RefreshAttackWarningForSelection();
+    }
+
+    private void RefreshAttackWarningForSelection()
+    {
+        if (!orchestrator) return;
+
+        bool inDiscard = TurnManager.Instance && TurnManager.Instance.IsPlayerDiscardPhase;
+        if (hand != null && hand.IsInSelectMode && !hand.IsReadOnlySelectMode && !inDiscard)
+            orchestrator.RefreshSelectedAttackWarning();
+        else
+            orchestrator.ClearSelectedAttackWarning();
     }
 
     private void SnapExternalSelector(int index)

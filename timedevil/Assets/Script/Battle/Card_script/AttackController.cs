@@ -49,7 +49,38 @@ public class AttackController : MonoBehaviour
         if (!moveController) moveController = FindObjectOfType<MoveController>(true);
     }
 
-    public IEnumerator Execute(AttackCardSO so, Faction self, Faction foe)
+    public void ShowPreviewWarning(AttackCardSO so, Faction foe)
+    {
+        if (!so || !anim)
+        {
+            ClearPreviewWarning();
+            return;
+        }
+
+        var centersFoe = ResolveCenters(foe);
+        if (centersFoe == null || centersFoe.Length < 16)
+        {
+            ClearPreviewWarning();
+            return;
+        }
+
+        bool[] previewMask = new bool[16];
+        if (!TryBuildCombinedWarningMask(so, previewMask))
+        {
+            ClearPreviewWarning();
+            return;
+        }
+
+        Vector2 foeTileSize = ResolveTileSize(foe);
+        anim.ShowBlinkingMask(previewMask, centersFoe, foeTileSize);
+    }
+
+    public void ClearPreviewWarning()
+    {
+        if (anim) anim.HideAll();
+    }
+
+    public IEnumerator Execute(AttackCardSO so, Faction self, Faction foe, bool skipWarningTimeline = false)
     {
         if (!so) yield break;
         if (!anim) { Debug.LogWarning("[AttackController] AttackAnimationController missing."); yield break; }
@@ -64,6 +95,7 @@ public class AttackController : MonoBehaviour
         Vector2 foeTileSize = ResolveTileSize(foe);
         anim.EnsurePool(16);
         anim.SetTileSize(foeTileSize);
+        if (skipWarningTimeline) anim.HideAll();
 
         //                       :              
         if (so.waves == null || so.waves.Length == 0)
@@ -75,11 +107,14 @@ public class AttackController : MonoBehaviour
 
             if (IsAllZero(mask)) yield break;
 
-            anim.PlaceAndShowMask(mask, centersFoe, foeTileSize);
-            yield return RunWarningTimeline(mask, times);
-            anim.HideAll();
+            if (!skipWarningTimeline)
+            {
+                anim.PlaceAndShowMask(mask, centersFoe, foeTileSize);
+                yield return RunWarningTimeline(mask, times);
+                anim.HideAll();
+            }
 
-            yield return RunDirectHitsByDelays(mask, times, centersFoe, foeTileSize, so, self, foe);
+            yield return RunDirectHitsByDelays(mask, skipWarningTimeline ? null : times, centersFoe, foeTileSize, so, self, foe);
             yield break;
         }
 
@@ -89,7 +124,7 @@ public class AttackController : MonoBehaviour
             var w = so.waves[wi];
             if (w == null) continue;
 
-            if (w.delayBefore > 0f) yield return new WaitForSeconds(w.delayBefore);
+            if (!skipWarningTimeline && w.delayBefore > 0f) yield return new WaitForSeconds(w.delayBefore);
 
             //                   /      
             bool[] warnMaskBase = new bool[16];
@@ -106,18 +141,21 @@ public class AttackController : MonoBehaviour
                 continue;
             }
 
-            // (       "       "       )
-            anim.PlaceAndShowMask(warnMask, centersFoe, foeTileSize);
+            if (!skipWarningTimeline)
+            {
+                // (       "       "       )
+                anim.PlaceAndShowMask(warnMask, centersFoe, foeTileSize);
 
-            //             SFX/VFX(    )
-            if (!w.sfxEveryHit && w.sfx)
-                AudioSource.PlayClipAtPoint(w.sfx, AveragePosition(warnMask, centersFoe));
-            if (!w.vfxEveryHit && w.vfxPrefab)
-                SpawnVfx(w.vfxPrefab, AveragePosition(warnMask, centersFoe), w.vfxLifetime);
+                //             SFX/VFX(    )
+                if (!w.sfxEveryHit && w.sfx)
+                    AudioSource.PlayClipAtPoint(w.sfx, AveragePosition(warnMask, centersFoe));
+                if (!w.vfxEveryHit && w.vfxPrefab)
+                    SpawnVfx(w.vfxPrefab, AveragePosition(warnMask, centersFoe), w.vfxLifetime);
 
-            //                   
-            yield return RunWarningTimeline(warnMask, warnTimes);
-            anim.HideAll();
+                // Warning timeline
+                yield return RunWarningTimeline(warnMask, warnTimes);
+                anim.HideAll();
+            }
 
             // Hook     
             if (w.projectilePrefab != null)                       // Launcher Hook (                      )
@@ -425,6 +463,32 @@ public class AttackController : MonoBehaviour
     //                                                                                           
     //           
     //                                                                                           
+    private bool TryBuildCombinedWarningMask(AttackCardSO so, bool[] outMask)
+    {
+        if (!so || outMask == null || outMask.Length < 16) return false;
+        Array.Clear(outMask, 0, outMask.Length);
+
+        if (so.waves == null || so.waves.Length == 0)
+        {
+            AttackCardSO.ParsePattern16(so.pattern16, outMask);
+            return !IsAllZero(outMask);
+        }
+
+        bool[] warnMaskBase = new bool[16];
+        for (int wi = 0; wi < so.waves.Length; wi++)
+        {
+            var w = so.waves[wi];
+            if (w == null) continue;
+
+            AttackCardSO.ParsePattern16(w.pattern16, warnMaskBase);
+            bool[] waveMask = BuildWarningMaskWithLabelsB(warnMaskBase, w.labelsB);
+            for (int i = 0; i < 16; i++)
+                outMask[i] = outMask[i] || waveMask[i];
+        }
+
+        return !IsAllZero(outMask);
+    }
+
     private bool[] BuildWarningMaskWithLabelsB(bool[] baseMask, int[] labelsB)
     {
         // baseMask OR (labelsB>0)

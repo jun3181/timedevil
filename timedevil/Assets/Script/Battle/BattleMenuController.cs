@@ -21,6 +21,18 @@ public class BattleMenuController : MonoBehaviour
     public int CurrentIndex => index;
     public int EntryCount => entries != null ? entries.Length : 0;
 
+    public GameObject GetEntryObject(int entryIndex)
+    {
+        if (entries == null || entryIndex < 0 || entryIndex >= entries.Length) return null;
+        return entries[entryIndex];
+    }
+
+    public RectTransform GetEntryRectTransform(int entryIndex)
+    {
+        var entry = GetEntryObject(entryIndex);
+        return entry ? entry.GetComponent<RectTransform>() : null;
+    }
+
     void Awake()
     {
         // 하이라이트만 먼저 적용(리스너가 없을 수도 있는 초기 프레임)

@@ -24,6 +24,9 @@ public class AttackAnimationController : MonoBehaviour
     [SerializeField] private float minWindow = 0.06f;   // ʹ ª  
     [SerializeField] private bool useUnscaledTime = false;
 
+    [Header("Preview Blink")]
+    [SerializeField, Min(0.06f)] private float previewBlinkSeconds = 1.1f;
+
     private Sprite _sprite;
     private readonly List<GameObject> _pool = new List<GameObject>();
     private Coroutine[] _routines;    // ŸϺ  ڷƾ
@@ -85,6 +88,49 @@ public class AttackAnimationController : MonoBehaviour
     {
         SetTileSize(tileSize);
         PlaceAndShowMask(mask16, centers16);
+    }
+
+    public void ShowBlinkingMask(bool[] mask16, Vector3[] centers16, Vector2 tileSize, float? alphaOverride = null)
+    {
+        SetTileSize(tileSize);
+        EnsurePool(16);
+
+        float alpha = Mathf.Clamp01(alphaOverride ?? peakAlpha);
+        float halfBlink = Mathf.Max(minWindow, previewBlinkSeconds) * 0.5f;
+        for (int i = 0; i < _pool.Count; i++)
+        {
+            var go = _pool[i];
+            if (!go) continue;
+
+            CancelIfAny(i);
+
+            bool on = (mask16 != null && i < mask16.Length && mask16[i]
+                    && centers16 != null && i < centers16.Length);
+
+            if (on)
+            {
+                var pos = centers16[i]; pos.z = tileZ;
+                go.transform.position = pos;
+
+                var sr = go.GetComponent<SpriteRenderer>();
+                if (sr)
+                {
+                    var c = sr.color; c.r = 1f; c.g = 0f; c.b = 0f; c.a = alpha;
+                    sr.color = c;
+                    go.transform.localScale = ComputeSpriteScale(sr);
+                    sr.sortingLayerName = sortingLayer;
+                    sr.sortingOrder = ResolveTopSortingOrder();
+                }
+
+                go.SetActive(true);
+                _seq[i]++;
+                _routines[i] = StartCoroutine(BlinkRoutine(i, halfBlink, alpha, _seq[i]));
+            }
+            else
+            {
+                go.SetActive(false);
+            }
+        }
     }
 
     /// <summary> ũ  ġŰ 'ǥ غ(0)' </summary>
@@ -210,6 +256,42 @@ public class AttackAnimationController : MonoBehaviour
 
         //  
         c.a = 0f; sr.color = c;
+    }
+
+    private IEnumerator BlinkRoutine(int idx, float halfSeconds, float peak, int mySeq)
+    {
+        if (idx < 0 || idx >= _pool.Count) yield break;
+        var go = _pool[idx]; if (!go || !go.activeInHierarchy) yield break;
+
+        var sr = go.GetComponent<SpriteRenderer>(); if (!sr) yield break;
+
+        var c = sr.color;
+        while (go.activeInHierarchy && mySeq == _seq[idx])
+        {
+            float t = 0f;
+            while (t < halfSeconds)
+            {
+                if (!go.activeInHierarchy || mySeq != _seq[idx]) yield break;
+                t += useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+                c.a = Mathf.Lerp(0f, peak, t / halfSeconds);
+                sr.color = c;
+                yield return null;
+            }
+
+            c.a = peak; sr.color = c;
+
+            t = 0f;
+            while (t < halfSeconds)
+            {
+                if (!go.activeInHierarchy || mySeq != _seq[idx]) yield break;
+                t += useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+                c.a = Mathf.Lerp(peak, 0f, t / halfSeconds);
+                sr.color = c;
+                yield return null;
+            }
+
+            c.a = 0f; sr.color = c;
+        }
     }
 
     private int ResolveTopSortingOrder()
