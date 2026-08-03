@@ -1,4 +1,4 @@
-﻿%YAML 1.1
+%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!114 &11400000
 MonoBehaviour:
@@ -16,10 +16,11 @@ MonoBehaviour:
   displayName: AttackCard3
   type: 0
   display: "[\uC9D1\uCC29]"
-  explanation: "내 거라고 생각하면, 멈출 수가 없어."
+  explanation: "\uB0B4 \uAC70\uB77C\uACE0 \uC0DD\uAC01\uD558\uBA74, \uBA48\uCD9C
+    \uC218\uAC00 \uC5C6\uC5B4."
   mainArtwork: {fileID: 21300000, guid: d1e82a7a08c26c04c969e64e3482557c, type: 3}
   arrowArtwork: {fileID: 0}
-  effectTextOverride: "공격칸: 4"
+  effectTextOverride: "\uACF5\uACA9\uCE78: 4"
   cost: 2
   positive: 0
   negative: 8
@@ -81,7 +82,8 @@ MonoBehaviour:
     projectileScale: 0
     labelsA: 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
     labelsB: 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-    explosionPrefab: {fileID: 1013674140931256, guid: ebf86d4ce48c77c40967eba4912f2444, type: 3}
+    explosionPrefab: {fileID: 1013674140931256, guid: ebf86d4ce48c77c40967eba4912f2444,
+      type: 3}
     explosionLifetime: 0.5
     explosionScale: 0.7
     clipKey: 

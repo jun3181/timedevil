@@ -8,7 +8,6 @@ public class EnemyRuntime : MonoBehaviour
 
     [Header("Bound SO (read-only source)")]
     [SerializeField] private EnemySO source;
-    public EnemySO Source => source;
 
     [Header("Runtime State")]
     public string enemyId;
@@ -19,18 +18,12 @@ public class EnemyRuntime : MonoBehaviour
     public int defense;
     public int speed;
 
-    public event Action OnChanged; // Raised when HP or runtime state changes.
+    public event Action OnChanged; // HP/버프 등 상태 변할 때
 
     void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
-    }
-
-    void OnDestroy()
-    {
-        if (Instance == this)
-            Instance = null;
     }
 
     public void InitializeFromSO(EnemySO so)
@@ -57,13 +50,12 @@ public class EnemyRuntime : MonoBehaviour
 
     public void ResetToEmpty()
     {
-        source = null;
         enemyId = enemyName = "";
         maxHP = currentHP = attack = defense = speed = 0;
         OnChanged?.Invoke();
     }
 
-    // --- Simple helpers ---
+    // --- 간단 유틸 ---
 
     public void TakeDamage(int raw)
     {

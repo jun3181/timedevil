@@ -14,8 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   enemyId: Enemy1
   displayName: Enemy1
-  stateSprite: {fileID: -182588553, guid: a07189f2cd2efe242958c37912e5b09f, type: 3}
-  gameplaySprite: {fileID: 190528857, guid: a07189f2cd2efe242958c37912e5b09f, type: 3}
   maxHP: 60
   baseATK: 8
   baseDEF: 3

@@ -39,7 +39,6 @@ public class HPController : MonoBehaviour
         if (!playerData) playerData = FindObjectOfType<PlayerDataRuntime>(true);
         if (!enemyData) enemyData = EnemyRuntime.Instance ?? FindObjectOfType<EnemyRuntime>(true);
         _hpUI = FindObjectOfType<HPUIBinder>(true);
-        _descriptionPanel = FindObjectOfType<DescriptionPanelController>(true);
 
         if (!playerPawn)
         {
@@ -173,59 +172,6 @@ public class HPController : MonoBehaviour
         if (who == Faction.Player && playerPawn) return playerPawn.position;
         if (who == Faction.Enemy && enemyPawn) return enemyPawn.position;
         return Vector3.positiveInfinity;
-    }
-
-    private void HandlePlayerDefeat()
-    {
-        if (playerDefeatTransitionStarted) return;
-        playerDefeatTransitionStarted = true;
-
-        if (string.IsNullOrWhiteSpace(playerDefeatSceneName))
-        {
-            Debug.LogWarning("[HPController] Player defeat scene name is empty.");
-            return;
-        }
-
-        var menu = FindObjectOfType<BattleMenuController>(true);
-        if (menu != null) menu.EnableInput(false);
-
-        var turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
-        if (turnManager != null) turnManager.StopAllCoroutines();
-
-        var enemyTurn = FindObjectOfType<EnemyTurnController>(true);
-        if (enemyTurn != null) enemyTurn.StopAllCoroutines();
-
-        StartCoroutine(Co_PlayerDefeatSequence());
-    }
-
-    private System.Collections.IEnumerator Co_PlayerDefeatSequence()
-    {
-        if (_descriptionPanel == null)
-            _descriptionPanel = FindObjectOfType<DescriptionPanelController>(true);
-
-        if (_descriptionPanel != null)
-            _descriptionPanel.ShowTemporaryExplanation(playerDefeatMessage);
-
-        yield return null;
-        while (Input.GetKey(playerDefeatContinueKey))
-            yield return null;
-
-        while (!Input.GetKeyDown(playerDefeatContinueKey))
-            yield return null;
-
-        PlayerReturnContext.ClearReturnCore();
-        MyroomEntryContext.SetRoom3();
-
-        Debug.Log($"[HPController] Player HP reached 0. Loading '{playerDefeatSceneName}' at Room3.");
-
-        var fader = FindObjectOfType<SceneFader>(true);
-        if (fader != null)
-        {
-            fader.LoadSceneWithFadeOut(playerDefeatSceneName);
-            yield break;
-        }
-
-        SceneLoader.Load(playerDefeatSceneName, useFaderIfExists: false);
     }
 
     public void BeginCardHitTest(Faction target)
