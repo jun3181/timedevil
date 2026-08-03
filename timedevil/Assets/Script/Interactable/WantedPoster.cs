@@ -5,6 +5,8 @@ using UnityEngine;
 [RequireComponent(typeof(Collider2D))]
 public class WantedPoster : MonoBehaviour, IInteractable
 {
+    private static Collider2D castleBarrier;
+
     private static int instanceCounter = 0;
     public static int InstanceCounter { get { return instanceCounter; } private set { instanceCounter = value; } }
 
@@ -14,9 +16,10 @@ public class WantedPoster : MonoBehaviour, IInteractable
         private set
         {
             detachingCounter = value;
-            Debug.Log(detachingCounter);
+            
             if(detachingCounter==instanceCounter) {
                 NPCPatrollerController.instance.spawningRegularlyAfterInstantSpawn = false;
+                castleBarrier.enabled = false;
             }
         }
         get
@@ -29,6 +32,10 @@ public class WantedPoster : MonoBehaviour, IInteractable
     [Header("제거시 대사")]
     private Dialogue dialogue;
 
+    [SerializeField]
+    [Header("제거시 비활성화될 벽")]
+    private Collider2D progressBarrier;
+
     void Start() {
         instanceCounter++;
         gameObject.layer = LayerMask.NameToLayer("Dialog");
@@ -36,10 +43,15 @@ public class WantedPoster : MonoBehaviour, IInteractable
         Collider2D cd2d = GetComponent<Collider2D>();
         cd2d.isTrigger = false;
 
+        if(!castleBarrier)
+            castleBarrier = GameObject.Find("InvisibleWall8").GetComponent<Collider2D>();
     }
 
     public void Interact() {
         if(BaseHideout.Hiding) return;
+
+        if(progressBarrier)
+            progressBarrier.enabled = false;
 
         DetachingCounter++;
 

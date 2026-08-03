@@ -11,6 +11,7 @@ public class MyroomEntryApplier : MonoBehaviour
     [SerializeField] private Transform room1Spawn;
     [SerializeField] private Transform room2Spawn;
     [SerializeField] private Transform room3Spawn;
+    [SerializeField] private Transform room4Spawn;
 
     [Header("Fallback (when no explicit context)")]
     [Tooltip("If enabled, fallbackPoint is applied when MyroomEntryContext is empty. If disabled, no forced reposition occurs.")]
@@ -91,6 +92,7 @@ public class MyroomEntryApplier : MonoBehaviour
             case MyroomEntryPoint.Room1: return room1Spawn;
             case MyroomEntryPoint.Room2: return room2Spawn;
             case MyroomEntryPoint.Room3: return room3Spawn;
+            case MyroomEntryPoint.Room4: return room4Spawn;
             default: return null;
         }
     }
