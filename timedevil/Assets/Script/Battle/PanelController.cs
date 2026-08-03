@@ -127,6 +127,7 @@ public class PanelController : MonoBehaviour
     private int externalMenuHideRequestCount;
     private int externalHandShowRequestCount;
     private bool initialSyncRequested;
+    private bool turnEventSubscribed;
 
     private TurnState lastTurnState = TurnState.PlayerTurn;
     private bool lastHandSelectMode;
@@ -193,6 +194,9 @@ public class PanelController : MonoBehaviour
 
     void Update()
     {
+        if (!turnEventSubscribed)
+            SubscribeTurnManagerEvents();
+
         bool qDown = Input.GetKeyDown(KeyCode.Q);
         bool handSelecting = handUI && handUI.IsInSelectMode;
 
@@ -218,7 +222,7 @@ public class PanelController : MonoBehaviour
 
         if (!returnOnPlayerTurnStart) return;
 
-        if (!turnManager) turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
+        ResolveTurnManager();
         if (!orchestrator) orchestrator = FindObjectOfType<CardUseOrchestrator>(true);
         if (!turnManager) return;
 
@@ -324,7 +328,7 @@ public class PanelController : MonoBehaviour
 
     private IEnumerator Co_SyncInitialViewWithTurnState()
     {
-        if (!turnManager) turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
+        ResolveTurnManager();
         if (!turnManager) yield break;
 
         // 첫 턴이 실제로 확정될 때까지 기다렸다가 즉시 반영 (프레임 타임아웃 없음)

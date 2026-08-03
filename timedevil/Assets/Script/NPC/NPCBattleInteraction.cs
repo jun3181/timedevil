@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(Collider2D))]
 public class NPCBattleInteraction : MonoBehaviour, IInteractable
@@ -35,10 +36,7 @@ public class NPCBattleInteraction : MonoBehaviour, IInteractable
     }
 
     void Start() {
-        PlayerMove pm = FindObjectOfType<PlayerMove>(true);
-        if(pm != null) {
-            player = pm.GetComponent<Transform>();
-        }
+        ResolvePlayer();
 
         enemy = GetComponent<Transform>();
         npcMoveController = GetComponent<INPCMoveController>();
@@ -52,7 +50,7 @@ public class NPCBattleInteraction : MonoBehaviour, IInteractable
             StartCoroutine(RunAfterDialogueFinish());
         } else {
             if(debuged) Debug.LogWarning($"{gameObject.name}에서 대사를 출력하려고 하였으나 DialogueManager.instance가 null입니다.");
-            BattleSceneLoader.Go(BATTLE_SCENE, enemySO.enemyId, player, null);
+            StartBattle(null);
         }
     }
 
@@ -62,7 +60,61 @@ public class NPCBattleInteraction : MonoBehaviour, IInteractable
             yield return null;
         }
 
-        BattleSceneLoader.Go(BATTLE_SCENE, enemySO.enemyId, player, enemy);
+        StartBattle(enemy);
         yield break;
+    }
+
+    private void StartBattle(Transform enemySnapshotTarget) {
+        ResolvePlayer();
+        SaveReturnCameraContext();
+        BattleSceneLoader.Go(BATTLE_SCENE, enemySO.enemyId, player, enemySnapshotTarget);
+    }
+
+    private void ResolvePlayer() {
+        if(player != null) return;
+
+        PlayerMove pm = FindObjectOfType<PlayerMove>(true);
+        if(pm != null) {
+            player = pm.transform;
+            return;
+        }
+
+        PlayerMainManager pmm = FindObjectOfType<PlayerMainManager>(true);
+        if(pmm != null) {
+            player = pmm.transform;
+        }
+    }
+
+    private void SaveReturnCameraContext() {
+        Vector2 returnPos = player != null ? (Vector2)player.position : (Vector2)transform.position;
+
+        bool restoreCam = false;
+        CameraModeId camMode = CameraModeId.Fixed;
+        float camOrtho = 0f;
+        Vector2 camFixed = returnPos;
+        string camBounds = null;
+
+        var cm = CameraManager.Instance != null ? CameraManager.Instance : FindObjectOfType<CameraManager>(true);
+        if(cm != null && cm.TryGetSnapshot(out camMode, out camOrtho, out Vector3 fixedPos, out string boundsName)) {
+            restoreCam = true;
+            camFixed = new Vector2(fixedPos.x, fixedPos.y);
+            camBounds = string.IsNullOrWhiteSpace(boundsName) ? null : boundsName;
+        }
+
+        PlayerReturnContext.SetReturnFromTrigger(
+            returnSceneName: SceneManager.GetActiveScene().name,
+            returnPosition: returnPos,
+            graceSeconds: 0f,
+            requestCameraRebind: false,
+            targetVcamName: null,
+            useOverlapSuppression: false,
+            overlapRadius: 0f,
+            overlapSeconds: 0f,
+            restoreCameraState: restoreCam,
+            cameraMode: camMode,
+            cameraOrthoSize: camOrtho,
+            cameraFixedPos: camFixed,
+            cameraBoundsName: camBounds
+        );
     }
 }

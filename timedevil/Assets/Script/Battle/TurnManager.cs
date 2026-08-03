@@ -139,6 +139,12 @@ public class TurnManager : MonoBehaviour
             s_MoveTutorialGateSeenThisSession = true;
     }
 
+    void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
+    }
+
     void Start()
     {
         pdr = FindObjectOfType<PlayerDataRuntime>(true);
@@ -253,6 +259,11 @@ public class TurnManager : MonoBehaviour
 
         if (cost) cost.ResetTurn();
         if (supportController) supportController.OnTurnStarted(Faction.Player);
+        if (IsPlayerDefeated())
+        {
+            if (menu) menu.EnableInput(false);
+            return;
+        }
         if (deck) deck.DrawOneIfNeeded();
 
         if (handUI) handUI.ShowCards();
@@ -284,6 +295,11 @@ public class TurnManager : MonoBehaviour
 
         if (cost) cost.ResetTurn();
         if (supportController) supportController.OnTurnStarted(Faction.Enemy);
+        if (IsPlayerDefeated())
+        {
+            if (menu) menu.EnableInput(false);
+            return;
+        }
 
         if (menu) menu.EnableInput(false);
         if (handUI) handUI.HideCards();
@@ -309,6 +325,9 @@ public class TurnManager : MonoBehaviour
     {
         if (enemyTurnController)
             yield return enemyTurnController.RunTurn();
+
+        if (IsPlayerDefeated())
+            yield break;
 
         // 적 손패 초과 자동 버림
         if (enemyDeck != null && cardAnime != null)
@@ -350,6 +369,12 @@ public class TurnManager : MonoBehaviour
         }
 
         BeginPlayerTurn();
+    }
+
+    private bool IsPlayerDefeated()
+    {
+        var data = pdr ? pdr.Data : PlayerDataRuntime.Instance?.Data;
+        return data != null && data.currentHP <= 0;
     }
 
     public void OnPlayerPressedEnd()
