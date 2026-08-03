@@ -37,6 +37,9 @@ public class BattleDeckRuntime : MonoBehaviour
         hand.Clear();
 
         var rt = CardStateRuntime.Instance;
+        if (rt != null)
+            rt.EnsureDefaultBattleCardsSaved();
+
         var src = rt != null ? rt.Data?.deck : null;
         if (src == null || src.Count == 0) return false;
 
