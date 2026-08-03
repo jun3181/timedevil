@@ -12,6 +12,7 @@ public class BattleBootstrap : MonoBehaviour
     [SerializeField] private EnemyRuntime enemyRuntimePrefab; // 없으면 런타임 자동 생성
 
     private EnemyRuntime enemyRt;
+    private bool initialized;
 
     void Awake()
     {
@@ -23,6 +24,14 @@ public class BattleBootstrap : MonoBehaviour
             Debug.Log("[BattleBootstrap] Auto-created PlayerDataRuntime in battle scene.");
         }
 
+        // Battle 씬을 직접 실행해도 cards.json 기본 생성/로드가 되도록 보장
+        if (CardStateRuntime.Instance == null)
+        {
+            var go = new GameObject("CardStateRuntime (Auto)");
+            go.AddComponent<CardStateRuntime>();
+            Debug.Log("[BattleBootstrap] Auto-created CardStateRuntime in battle scene.");
+        }
+
         // EnemyRuntime 확보
         enemyRt = EnemyRuntime.Instance ?? FindObjectOfType<EnemyRuntime>(true);
         if (enemyRt == null)
@@ -31,16 +40,26 @@ public class BattleBootstrap : MonoBehaviour
                 ? Instantiate(enemyRuntimePrefab)
                 : new GameObject("EnemyRuntime").AddComponent<EnemyRuntime>();
         }
+
+        InitializeBattleRuntime();
     }
 
 
     void Start()
+    {
+        InitializeBattleRuntime();
+    }
+
+    private void InitializeBattleRuntime()
     {
         if (enemyDatabase == null)
         {
             Debug.LogError("[BattleBootstrap] EnemyDatabaseSO is missing.");
             return;
         }
+
+        if (initialized) return;
+        initialized = true;
 
         // 1) 사용할 적 ID 결정
         string enemyId = BattleSceneLoader.enemyIdToLoad;

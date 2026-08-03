@@ -93,7 +93,11 @@ public class UiSequencePlayer : MonoBehaviour
     private bool isPlaying = false;
     private bool _stepEntered = false;
     private bool _waitingKeyReleaseAfterDialogue = false;
+    private bool _waitingAdvanceKeyRelease = false;
     private int _externalAutoAdvanceAfterDialogueRefCount = 0;
+    private DialogueManager _ownedDialogueManager = null;
+    private bool _ownedDialogueBlockInputWas = false;
+    private bool _ownsDialogueBlockInput = false;
 
     // lock runtime
     private bool _heldActionLock = false;
@@ -108,19 +112,18 @@ public class UiSequencePlayer : MonoBehaviour
         SetAllImagesActive(false);
 
         if (!playOnStart) return;
+
         if (!ShouldAutoPlayNow()) return;
 
         bool forcePlayInMoveTutorial = alwaysPlayInMoveTutorial && SceneManager.GetActiveScene().name == "Move_Tutorial";
+        bool isNewGameStart = GameStartContext.Mode == GameStartMode.NewGame;
+        bool isExplicitNewGameStart = isNewGameStart && GameStartContext.StartToken > 0;
 
         if (!forcePlayInMoveTutorial)
         {
-            //  먼저 시작하더라도 저장 파일이 하나라도 있으면 자동 스킵
-            if (skipIfSaveExists && HasAnySaveFile())
-                return;
-
             //  새 게임에서만: 이번 "버튼 클릭 토큰"에 대해 1회 seen 초기화
             if (resetSeenOnNewGameStart &&
-                GameStartContext.Mode == GameStartMode.NewGame &&
+                isExplicitNewGameStart &&
                 s_lastResetToken != GameStartContext.StartToken)
             {
                 s_lastResetToken = GameStartContext.StartToken;
@@ -131,6 +134,10 @@ public class UiSequencePlayer : MonoBehaviour
                     PlayerPrefs.Save();
                 }
             }
+
+            //  NewGame은 저장 파일 유무와 무관하게 첫 UI 재생을 보장
+            if (skipIfSaveExists && !isExplicitNewGameStart && HasAnySaveFile())
+                return;
 
             //  (seen 체크는 초기화 이후에)
             if (!string.IsNullOrEmpty(seenPrefKey) && PlayerPrefs.GetInt(seenPrefKey, 0) == 1)
@@ -143,6 +150,8 @@ public class UiSequencePlayer : MonoBehaviour
     private void Update()
     {
         if (!isPlaying) return;
+        EnsureInputLockWhilePlaying();
+
         if (sequenceSteps == null || sequenceSteps.Count == 0) return;
 
         EnterCurrentStepIfNeeded();
@@ -155,7 +164,15 @@ public class UiSequencePlayer : MonoBehaviour
             var dm = DialogueManager.instance;
 
             if (dm != null && dm.isDialogueActive)
+            {
+                if (ShouldAdvanceByKey(currentAdvanceKey))
+                {
+                    dm.DisplayNextSentence(ignoreBlockInput: true);
+                    WaitForAdvanceKeyRelease(currentAdvanceKey);
+                }
+
                 return;
+            }
 
             // 대화 종료 직후 같은 키 입력으로 다음 Step이 스킵되지 않도록 키를 한번 떼게 함
             if (_waitingKeyReleaseAfterDialogue)
@@ -169,15 +186,18 @@ public class UiSequencePlayer : MonoBehaviour
 
                 if (Input.GetKey(currentAdvanceKey)) return;
                 _waitingKeyReleaseAfterDialogue = false;
+                Next();
+                return;
             }
         }
 
-        if (Input.GetKeyDown(currentAdvanceKey))
+        if (ShouldAdvanceByKey(currentAdvanceKey))
             Next();
     }
 
     private void OnDestroy()
     {
+        RestoreDialogueInputOwnership();
         EndInputLockIfHeld();
     }
 
@@ -258,6 +278,8 @@ public class UiSequencePlayer : MonoBehaviour
         isPlaying = true;
         _stepEntered = false;
         _waitingKeyReleaseAfterDialogue = false;
+        _waitingAdvanceKeyRelease = false;
+        RestoreDialogueInputOwnership();
 
         BeginInputLock();
         EnterCurrentStepIfNeeded();
@@ -286,6 +308,8 @@ public class UiSequencePlayer : MonoBehaviour
             var dm = DialogueManager.instance;
             if (dm != null && dm.isDialogueActive)
                 return;
+
+            RestoreDialogueInputOwnership();
         }
         else
         {
@@ -302,6 +326,8 @@ public class UiSequencePlayer : MonoBehaviour
                 SetAllImagesActive(false);
                 _stepEntered = false;
                 _waitingKeyReleaseAfterDialogue = false;
+                _waitingAdvanceKeyRelease = false;
+                RestoreDialogueInputOwnership();
                 EnterCurrentStepIfNeeded();
                 return;
             }
@@ -318,12 +344,14 @@ public class UiSequencePlayer : MonoBehaviour
             }
 
             EndInputLockIfHeld();
+            RestoreDialogueInputOwnership();
             OnFinished?.Invoke();
             return;
         }
 
         _stepEntered = false;
         _waitingKeyReleaseAfterDialogue = false;
+        _waitingAdvanceKeyRelease = false;
         EnterCurrentStepIfNeeded();
     }
 
@@ -333,7 +361,9 @@ public class UiSequencePlayer : MonoBehaviour
         SetAllImagesActive(false);
         _stepEntered = false;
         _waitingKeyReleaseAfterDialogue = false;
+        _waitingAdvanceKeyRelease = false;
         EndInputLockIfHeld();
+        RestoreDialogueInputOwnership();
     }
 
     public void ResetSeenFlag()
@@ -347,27 +377,70 @@ public class UiSequencePlayer : MonoBehaviour
 
     private void BeginInputLock()
     {
-        if (lockActionViaGameManager && GameManager.Instance != null && !_heldActionLock)
+        if (lockActionViaGameManager && GameManager.Instance != null)
         {
-            GameManager.Instance.LockAction();
-            _heldActionLock = true;
+            if (!_heldActionLock || !GameManager.Instance.isAction)
+            {
+                GameManager.Instance.LockAction();
+                _heldActionLock = true;
+            }
         }
 
-        if (disablePlayerMoveComponent && _pmCached == null)
+        if (!disablePlayerMoveComponent)
+            return;
+
+        if (_pmCached == null)
         {
             _pmCached = FindObjectOfType<PlayerMove>(true);
             if (_pmCached != null)
-            {
                 _pmWasEnabled = _pmCached.enabled;
-                _pmCached.enabled = false;
-            }
         }
+
+        if (_pmCached != null)
+        {
+            ClearPlayerMotion(_pmCached);
+            _pmCached.enabled = false;
+        }
+    }
+
+    private void EnsureInputLockWhilePlaying()
+    {
+        BeginInputLock();
+    }
+
+    private bool ShouldAdvanceByKey(KeyCode key)
+    {
+        if (key == KeyCode.None) return false;
+
+        bool keyDown = Input.GetKeyDown(key);
+        bool keyHeld = Input.GetKey(key);
+
+        if (_waitingAdvanceKeyRelease)
+        {
+            if (keyHeld)
+                return false;
+
+            _waitingAdvanceKeyRelease = false;
+        }
+
+        return keyDown || keyHeld;
+    }
+
+    private void WaitForAdvanceKeyRelease(KeyCode key)
+    {
+        _waitingAdvanceKeyRelease = key != KeyCode.None && Input.GetKey(key);
+    }
+
+    private void WaitForCurrentAdvanceKeyRelease()
+    {
+        WaitForAdvanceKeyRelease(GetCurrentStepAdvanceKey());
     }
 
     private void EndInputLockIfHeld()
     {
         if (_pmCached != null)
         {
+            ClearPlayerMotion(_pmCached);
             _pmCached.enabled = _pmWasEnabled;
             _pmCached = null;
             _pmWasEnabled = false;
@@ -378,6 +451,37 @@ public class UiSequencePlayer : MonoBehaviour
             GameManager.Instance.UnlockAction();
             _heldActionLock = false;
         }
+    }
+
+    private static void ClearPlayerMotion(PlayerMove playerMove)
+    {
+        if (playerMove == null) return;
+
+        playerMove.SetMoveInput(0, 0, false, false, false, false);
+
+        var rb = playerMove.GetComponent<Rigidbody2D>();
+        if (rb != null)
+            rb.velocity = Vector2.zero;
+    }
+
+    private void OwnDialogueInput(DialogueManager dm, bool previousBlockInput)
+    {
+        _ownedDialogueManager = dm;
+        _ownedDialogueBlockInputWas = previousBlockInput;
+        _ownsDialogueBlockInput = dm != null;
+
+        if (dm != null)
+            dm.blockInput = true;
+    }
+
+    private void RestoreDialogueInputOwnership()
+    {
+        if (_ownsDialogueBlockInput && _ownedDialogueManager != null)
+            _ownedDialogueManager.blockInput = _ownedDialogueBlockInputWas;
+
+        _ownedDialogueManager = null;
+        _ownedDialogueBlockInputWas = false;
+        _ownsDialogueBlockInput = false;
     }
 
     private void SetAllImagesActive(bool active)
@@ -430,6 +534,7 @@ public class UiSequencePlayer : MonoBehaviour
                 step.uiObject.SetActive(true);
 
             _stepEntered = true;
+            WaitForCurrentAdvanceKeyRelease();
             return;
         }
 
@@ -448,8 +553,13 @@ public class UiSequencePlayer : MonoBehaviour
 
         if (dm.isDialogueActive) return;
 
+        bool previousBlockInput = dm.blockInput;
+        dm.blockInput = false;
         dm.StartDialogue(step.dialogue);
+        OwnDialogueInput(dm, previousBlockInput);
+
         _stepEntered = true;
         _waitingKeyReleaseAfterDialogue = true;
+        WaitForCurrentAdvanceKeyRelease();
     }
 }

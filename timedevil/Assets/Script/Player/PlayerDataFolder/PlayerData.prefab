@@ -48,10 +48,10 @@ MonoBehaviour:
   saveOnQuit: 1
   Data:
     playerName: Player
-    maxHP: 20
-    currentHP: 20
+    maxHP: 60
+    currentHP: 60
     attack: 10
     defense: 5
-    speed: 5
+    speed: 10
     emotionPositive: 0
     emotionNegative: 0

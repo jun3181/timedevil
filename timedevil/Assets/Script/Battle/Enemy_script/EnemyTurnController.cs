@@ -10,6 +10,13 @@ public class EnemyTurnController : MonoBehaviour
     [SerializeField] private CostController cost;
     [SerializeField] private ShowCardController showCard;
     [SerializeField] private DescriptionPanelController desc;
+    [SerializeField] private EnemyHandUI enemyHandUI;
+    [SerializeField] private RectTransform enemyHandRect;
+
+    [Header("Enemy Visuals")]
+    [SerializeField] private EnemyRuntime enemyRuntime;
+    [SerializeField] private SpriteRenderer stateEnemyRenderer;     // Enemy(tem)
+    [SerializeField] private SpriteRenderer gameplayEnemyRenderer;  // none
 
     //  추가: 적도 Draw 효과를 실행하기 위해 DrawController 참조
     [Header("Effect Controllers")]
@@ -21,10 +28,26 @@ public class EnemyTurnController : MonoBehaviour
 
 
     [Header("Timings")]
+    [SerializeField] private bool showCardPreviewEnabled = false;
     [SerializeField] private float previewSeconds = 1.2f;
-    [SerializeField] private float playInterval = 0.15f;
+    [SerializeField, Min(0f)] private float firstPlayDelaySeconds = 0.65f;
+    [SerializeField, Min(0f)] private float effectSettleSeconds = 0.65f;
+    [SerializeField, Min(0f)] private float playInterval = 0.15f;
+
+    [Header("Enemy Hand Reveal")]
+    [SerializeField] private bool revealHandBeforeFirstPlay = true;
+    [SerializeField] private Vector2 enemyHandActiveAnchoredPosition = new Vector2(280f, -385f);
+    [SerializeField] private bool convertEnemyHandPositionFromSeparatedRoot = true;
+    [SerializeField] private string separatedHandRootName = "hand01";
+    [SerializeField] private float handRiseYOffset = 260f;
+    [SerializeField, Min(0.01f)] private float handRiseDuration = 0.22f;
+    [SerializeField] private float handRiseStagger = 0.055f;
+    [SerializeField] private bool handRiseFade = true;
 
     public static event System.Action<bool> OnEnemyAttackWindowChanged;
+    private bool subscribedToEnemyRuntime;
+    private bool warnedMissingVisualRefs;
+    private bool warnedMissingSprites;
 
 
     void Awake()
@@ -34,14 +57,117 @@ public class EnemyTurnController : MonoBehaviour
         if (!cost) cost = FindObjectOfType<CostController>(true);
         if (!showCard) showCard = FindObjectOfType<ShowCardController>(true);
         if (!desc) desc = FindObjectOfType<DescriptionPanelController>(true);
+        if (!enemyHandUI) enemyHandUI = FindObjectOfType<EnemyHandUI>(true);
+        if (!enemyHandRect && enemyHandUI) enemyHandRect = enemyHandUI.GetComponent<RectTransform>();
         if (!drawController) drawController = FindObjectOfType<DrawController>(true); //  자동 결선
         if (!moveController) moveController = FindObjectOfType<MoveController>(true);   //  자동 결선
         if (!attackController) attackController = FindObjectOfType<AttackController>(true); //  자동 결선
         if (!supportController) supportController = FindObjectOfType<SupportController>(true);
 
+        BindEnemyVisualRenderers();
+        BindEnemyRuntime();
 
 
         Debug.Log($"[EnemyTurn] Controller bound on: {gameObject.scene.name}/{gameObject.name}");
+    }
+
+    IEnumerator Start()
+    {
+        RefreshEnemyVisuals();
+
+        // EnemyBootstrapper initializes the runtime in Start, so refresh once more
+        // after every Start method had a chance to run.
+        yield return null;
+        RefreshEnemyVisuals();
+    }
+
+    void OnDisable()
+    {
+        UnsubscribeEnemyRuntime();
+    }
+
+    public void RefreshEnemyVisuals()
+    {
+        BindEnemyVisualRenderers();
+        BindEnemyRuntime();
+        SubscribeEnemyRuntime();
+
+        EnemySO so = enemyRuntime ? enemyRuntime.Source : null;
+        if (!so) return;
+
+        Sprite stateSprite = so.stateSprite ? so.stateSprite : so.gameplaySprite;
+        Sprite gameplaySprite = so.gameplaySprite ? so.gameplaySprite : so.stateSprite;
+
+        if (!stateSprite && !gameplaySprite)
+        {
+            if (!warnedMissingSprites)
+            {
+                Debug.LogWarning($"[EnemyTurn] EnemySO '{so.enemyId}' has no enemy sprites. Existing scene sprites kept.");
+                warnedMissingSprites = true;
+            }
+            return;
+        }
+        warnedMissingSprites = false;
+
+        if (stateEnemyRenderer && stateSprite)
+            stateEnemyRenderer.sprite = stateSprite;
+
+        if (gameplayEnemyRenderer && gameplaySprite)
+            gameplayEnemyRenderer.sprite = gameplaySprite;
+    }
+
+    private void BindEnemyRuntime()
+    {
+        EnemyRuntime found = enemyRuntime ? enemyRuntime : (EnemyRuntime.Instance ?? FindObjectOfType<EnemyRuntime>(true));
+        if (found == enemyRuntime) return;
+
+        UnsubscribeEnemyRuntime();
+        enemyRuntime = found;
+    }
+
+    private void SubscribeEnemyRuntime()
+    {
+        if (subscribedToEnemyRuntime || !enemyRuntime) return;
+
+        enemyRuntime.OnChanged -= RefreshEnemyVisuals;
+        enemyRuntime.OnChanged += RefreshEnemyVisuals;
+        subscribedToEnemyRuntime = true;
+    }
+
+    private void UnsubscribeEnemyRuntime()
+    {
+        if (subscribedToEnemyRuntime && enemyRuntime)
+            enemyRuntime.OnChanged -= RefreshEnemyVisuals;
+
+        subscribedToEnemyRuntime = false;
+    }
+
+    private void BindEnemyVisualRenderers()
+    {
+        if (!stateEnemyRenderer)
+            stateEnemyRenderer = FindSpriteRendererUnder("Enemy(tem)");
+
+        if (!gameplayEnemyRenderer)
+            gameplayEnemyRenderer = FindSpriteRendererUnder("none");
+
+        if ((!stateEnemyRenderer || !gameplayEnemyRenderer) && !warnedMissingVisualRefs)
+        {
+            Debug.LogWarning("[EnemyTurn] Enemy visual renderers are not fully bound. Assign Enemy(tem) and none renderers in EnemyTurnController.");
+            warnedMissingVisualRefs = true;
+        }
+    }
+
+    private static SpriteRenderer FindSpriteRendererUnder(string rootName)
+    {
+        foreach (Transform t in FindObjectsOfType<Transform>(true))
+        {
+            if (t.name != rootName || !t.gameObject.scene.IsValid()) continue;
+
+            SpriteRenderer renderer = t.GetComponentInChildren<SpriteRenderer>(true);
+            if (renderer) return renderer;
+        }
+
+        return null;
     }
 
     public IEnumerator RunTurn()
@@ -51,6 +177,16 @@ public class EnemyTurnController : MonoBehaviour
         if (enemyDeck.GetHandIds().Count < enemyDeck.MaxHandSize)
             enemyDeck.DrawOneIfNeeded();
 
+        if (revealHandBeforeFirstPlay && enemyHandUI != null)
+        {
+            enemyHandUI.gameObject.SetActive(true);
+            if (!enemyHandRect) enemyHandRect = enemyHandUI.GetComponent<RectTransform>();
+            if (enemyHandRect) enemyHandRect.anchoredPosition = GetEnemyHandActivePosition();
+            enemyHandUI.RebuildFromHand();
+            yield return enemyHandUI.PlayCardsRiseStaggeredAndWait(handRiseYOffset, handRiseDuration, handRiseStagger, handRiseFade);
+        }
+
+        bool waitedBeforeFirstPlay = false;
         while (true)
         {
             var hand = enemyDeck.GetHandIds();
@@ -91,6 +227,12 @@ public class EnemyTurnController : MonoBehaviour
                 yield break;
             }
 
+            if (!waitedBeforeFirstPlay)
+            {
+                waitedBeforeFirstPlay = true;
+                yield return WaitBeforeFirstPlay();
+            }
+
             if (!cost.TryPay(playableCost))
             {
                 Debug.LogWarning("[EnemyTurn] 코스트 지불 실패 → 턴 종료");
@@ -115,7 +257,7 @@ public class EnemyTurnController : MonoBehaviour
             if (so is DrawCardSO dso && drawController != null)
             {
                 // (권장 UX) 먼저 프리뷰를 보여주고 …
-                if (showCard != null) yield return showCard.PreviewById(playableId, previewSeconds);
+                if (CanShowCardPreview()) yield return showCard.PreviewById(playableId, previewSeconds);
                 else yield return null;
 
                 // 플레이어 카드 사용 흐름과 맞춰, 효과 처리 전에 사용 카드를 손패에서 제거합니다.
@@ -128,7 +270,7 @@ public class EnemyTurnController : MonoBehaviour
             }
             else if (so is MoveCardSO mso && moveController != null)   //  추가된 분기
             {
-                if (showCard != null) yield return showCard.PreviewById(playableId, previewSeconds);
+                if (CanShowCardPreview()) yield return showCard.PreviewById(playableId, previewSeconds);
                 else yield return null;
 
                 //  적이 자신을 움직임: self=Enemy, foe=Player
@@ -136,27 +278,29 @@ public class EnemyTurnController : MonoBehaviour
             }
             else if (so is AttackCardSO aso && attackController != null)   //  추가된 부분
             {
-                if (showCard != null) yield return showCard.PreviewById(playableId, previewSeconds);
+                if (CanShowCardPreview()) yield return showCard.PreviewById(playableId, previewSeconds);
                 else yield return null;
 
                 //  핵심: 적이 공격 → self=Enemy, foe=Player
                 OnEnemyAttackWindowChanged?.Invoke(true);
-                yield return attackController.Execute(aso, Faction.Enemy, Faction.Player);
+                yield return attackController.Execute(aso, Faction.Enemy, Faction.Player, skipWarningTimeline: true);
                 OnEnemyAttackWindowChanged?.Invoke(false);
             }
             else if (so is SupportCardSO sso && supportController != null)
             {
-                if (showCard != null) yield return showCard.PreviewById(playableId, previewSeconds);
+                if (CanShowCardPreview()) yield return showCard.PreviewById(playableId, previewSeconds);
                 else yield return null;
 
                 yield return supportController.Execute(sso, Faction.Enemy, Faction.Player);
             }
             else
-                    {
+            {
                 // Draw가 아닌 카드면 기존 프리뷰 로직
-                if (showCard != null) yield return showCard.PreviewById(playableId, previewSeconds);
+                if (CanShowCardPreview()) yield return showCard.PreviewById(playableId, previewSeconds);
                 else yield return null;
             }
+
+            yield return WaitForEffectSettle();
 
             //  설명 해제
             if (desc) desc.ClearTemporaryMessage();
@@ -210,5 +354,31 @@ public class EnemyTurnController : MonoBehaviour
 
         Debug.LogWarning($"[EnemyTurn] cost fail: type '{t.Name}' has no int cost for id='{id}'");
         return 9999;
+    }
+
+    private Vector2 GetEnemyHandActivePosition()
+    {
+        return HandPositionUtility.ToSeparatedRootLocal(
+            enemyHandRect,
+            enemyHandActiveAnchoredPosition,
+            convertEnemyHandPositionFromSeparatedRoot,
+            separatedHandRootName);
+    }
+
+    private bool CanShowCardPreview()
+    {
+        return showCardPreviewEnabled && showCard != null;
+    }
+
+    private IEnumerator WaitBeforeFirstPlay()
+    {
+        if (firstPlayDelaySeconds > 0f)
+            yield return new WaitForSeconds(firstPlayDelaySeconds);
+    }
+
+    private IEnumerator WaitForEffectSettle()
+    {
+        if (effectSettleSeconds > 0f)
+            yield return new WaitForSeconds(effectSettleSeconds);
     }
 }
