@@ -14,28 +14,25 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/battle.unity
     guid: 8b7a6b5734c91e0418b766f87f200900
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/InventoryScene.unity
     guid: 440ebb3bf18c77e47b0ae70db5b399d9
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/Card.unity
     guid: fa5d82fc0c49c0d4395ecde3e6946e0a
   - enabled: 1
     path: Assets/Scenes/chapter1.unity
     guid: 12f15d779ee0e894aa06792f0f1c3a25
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/Move_Tutorial.unity
     guid: b0b5a15afadac974db5ac565b3e04c43
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/testbattle.unity
     guid: bb0162c838efe1d48ad767cf603f9d6c
   - enabled: 1
-    path: Assets/Scenes/Chapter3.unity
-    guid: 06773f927f3dc3742abb7ac5754b79c8
+    path: Assets/Scenes/Move_Tutorial.unity
+    guid: 2b38ce9f392a26446bac992989c130ea
   - enabled: 1
     path: Assets/Scenes/chapter2.unity
     guid: 576884d35e066eb4698fd244960f1d35
-  - enabled: 1
-    path: Assets/Scenes/chapter4.unity
-    guid: bce97f6cae990934a8dc3db825b17fe6
   m_configObjects: {}
