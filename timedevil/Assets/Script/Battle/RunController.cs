@@ -42,6 +42,7 @@ public class RunController : MonoBehaviour
     public void OnRunPressed()
     {
         if (isReturning) return;
+        if (!BattleTutorialGate.Allows(BattleTutorialAction.RunPanelInteract)) return;
 
         var tm = FindObjectOfType<TurnManager>(true);
         if (tm)
@@ -57,6 +58,7 @@ public class RunController : MonoBehaviour
 
         isReturning = true;
         if (menu) menu.EnableInput(false);
+        BattleTutorialGate.Report(BattleTutorialAction.RunPanelInteract);
 
         //  핵심: 돌아가면 카메라를 Player에 재바인딩하라는 플래그 세팅
         PlayerReturnContext.CameraRebindRequested = true;

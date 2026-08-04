@@ -431,6 +431,7 @@ public class TurnManager : MonoBehaviour
         if (currentTurn != TurnState.PlayerTurn) return;
         Debug.Log("[TurnManager] Player action committed → EnemyTurn");
         BeginEnemyTurn();
+        BattleTutorialGate.Report(BattleTutorialAction.TurnEnd);
     }
 
     private System.Collections.IEnumerator Co_RevealPlayerInitialAfterFrame()

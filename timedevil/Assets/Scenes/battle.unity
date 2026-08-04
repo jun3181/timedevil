@@ -1038,6 +1038,8 @@ MonoBehaviour:
   enemyPawn: {fileID: 1064948988}
   loadMyroomOnPlayerZeroHp: 1
   myroomSceneName: Myroom
+  playerDefeatMessage: HP reached 0. Press E to return to your room.
+  playerDefeatContinueKey: 101
   returnToPreviousSceneOnEnemyZeroHp: 1
   enemyDefeatReturnGraceSeconds: 1
 --- !u!1 &443751346
@@ -1437,6 +1439,143 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 519244438}
   m_CullTransparentMesh: 1
+--- !u!1 &568051756
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 568051758}
+  - component: {fileID: 568051757}
+  - component: {fileID: 568051759}
+  m_Layer: 0
+  m_Name: tutorial
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!212 &568051757
+SpriteRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 568051756}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6,
+    type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 1, y: 1}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 1
+  m_MaskInteraction: 0
+  m_SpriteSortPoint: 0
+--- !u!4 &568051758
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 568051756}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.15, y: -3.3, z: 0}
+  m_LocalScale: {x: 1.4212905, y: 1.4052904, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &568051759
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 568051756}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e64379afad5408fbeba8ab390bfb9e9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  autoStart: 1
+  playOnlyOnce: 0
+  playerPrefsKey: BattleTutorial_Default_Seen
+  steps:
+  - message: 123123
+    windowAnchoredPosition: {x: 0, y: 0}
+    windowSize: {x: 23.24, y: 38.31}
+    advanceMode: 0
+    requiredAction: 0
+    allowMenuNavigation: 0
+    allowCardSelectionNavigation: 0
+    allowStateNavigation: 0
+    allowCancelInput: 0
+    endTutorialAfterStep: 0
+    nextStepIndex: 0
+  - message: 333
+    windowAnchoredPosition: {x: 21.44, y: 0}
+    windowSize: {x: 23.24, y: 38.31}
+    advanceMode: 1
+    requiredAction: 3
+    allowMenuNavigation: 1
+    allowCardSelectionNavigation: 0
+    allowStateNavigation: 0
+    allowCancelInput: 0
+    endTutorialAfterStep: 0
+    nextStepIndex: 0
+  continueKey: 101
+  targetCanvas: {fileID: 0}
+  root: {fileID: 0}
+  rootGroup: {fileID: 0}
+  blocker: {fileID: 0}
+  window: {fileID: 0}
+  messageText: {fileID: 0}
+  createUiIfMissing: 1
+  blockerColor: {r: 0, g: 0, b: 0, a: 0.22}
+  windowColor: {r: 0.06, g: 0.07, b: 0.08, a: 0.94}
+  textColor: {r: 1, g: 1, b: 1, a: 1}
+  fontSize: 28
+  textPadding: {x: 28, y: 20, z: 28, w: 20}
 --- !u!1 &577577515
 GameObject:
   m_ObjectHideFlags: 0
@@ -1817,6 +1956,9 @@ MonoBehaviour:
   desc: {fileID: 1069897052}
   enemyHandUI: {fileID: 133108826}
   enemyHandRect: {fileID: 133108822}
+  enemyRuntime: {fileID: 0}
+  stateEnemyRenderer: {fileID: 0}
+  gameplayEnemyRenderer: {fileID: 0}
   drawController: {fileID: 1201525411}
   moveController: {fileID: 1201525410}
   attackController: {fileID: 0}
@@ -5862,6 +6004,8 @@ MonoBehaviour:
   separatedHandRootName: hand01
   panelControllerOwnsPlayerActivePosition: 1
   enemyTurnControllerOwnsEnemyTurnHand: 1
+  showPlayerHandPreviewOnCardFocus: 0
+  showEnemyHandPreviewOnEndFocus: 0
   playerPreviewAnchoredPosition: {x: -280, y: -250}
   enemyPreviewAnchoredPosition: {x: 280, y: -250}
   playerActiveAnchoredPosition: {x: -280, y: -385}
@@ -12786,3 +12930,5 @@ SceneRoots:
   - {fileID: 2097723557}
   - {fileID: 598643973}
   - {fileID: 1911001729}
+  - {fileID: 1754859556}
+  - {fileID: 568051758}

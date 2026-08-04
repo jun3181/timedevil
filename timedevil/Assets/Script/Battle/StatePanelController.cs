@@ -129,20 +129,42 @@ public class StatePanelController : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.Q))
         {
+            if (!BattleTutorialGate.Allows(BattleTutorialAction.StateCancel))
+                return;
+
             ExitStateMode(true);
+            BattleTutorialGate.Report(BattleTutorialAction.StateCancel);
             return;
         }
 
         if (Input.GetKeyDown(KeyCode.E))
         {
+            if (!BattleTutorialGate.Allows(BattleTutorialAction.StateHandInspect))
+                return;
+
+            bool wasInspecting = handInspectActive;
             EnterHandInspectMode();
+            if (!wasInspecting && handInspectActive)
+                BattleTutorialGate.Report(BattleTutorialAction.StateHandInspect);
             return;
         }
 
         if (Input.GetKeyDown(KeyCode.RightArrow))
+        {
+            if (!BattleTutorialGate.Allows(BattleTutorialAction.StateTargetMove))
+                return;
+
             MoveTarget(+1);
+            BattleTutorialGate.Report(BattleTutorialAction.StateTargetMove);
+        }
         else if (Input.GetKeyDown(KeyCode.LeftArrow))
+        {
+            if (!BattleTutorialGate.Allows(BattleTutorialAction.StateTargetMove))
+                return;
+
             MoveTarget(-1);
+            BattleTutorialGate.Report(BattleTutorialAction.StateTargetMove);
+        }
 
         UpdateSpeechBubble();
     }
@@ -150,7 +172,9 @@ public class StatePanelController : MonoBehaviour
     private void OnMenuSubmit(int index)
     {
         if (active || index != ResolveStateIndex()) return;
+        if (!BattleTutorialGate.Allows(BattleTutorialAction.StatePanelInteract)) return;
         EnterStateMode();
+        BattleTutorialGate.Report(BattleTutorialAction.StatePanelInteract);
     }
 
     private void EnterStateMode()
@@ -236,7 +260,11 @@ public class StatePanelController : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Q))
         {
+            if (!BattleTutorialGate.Allows(BattleTutorialAction.StateCancel))
+                return;
+
             ExitHandInspectMode(true);
+            BattleTutorialGate.Report(BattleTutorialAction.StateCancel);
             return;
         }
 
@@ -245,13 +273,21 @@ public class StatePanelController : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.RightArrow))
         {
+            if (!BattleTutorialGate.Allows(BattleTutorialAction.StateHandCardMove))
+                return;
+
             MoveHandInspectSelection(+1);
+            BattleTutorialGate.Report(BattleTutorialAction.StateHandCardMove);
             return;
         }
 
         if (Input.GetKeyDown(KeyCode.LeftArrow))
         {
+            if (!BattleTutorialGate.Allows(BattleTutorialAction.StateHandCardMove))
+                return;
+
             MoveHandInspectSelection(-1);
+            BattleTutorialGate.Report(BattleTutorialAction.StateHandCardMove);
             return;
         }
 
