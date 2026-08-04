@@ -127,6 +127,7 @@ public class PanelController : MonoBehaviour
     private int externalMenuHideRequestCount;
     private int externalHandShowRequestCount;
     private bool initialSyncRequested;
+    private bool turnEventSubscribed;
 
     private TurnState lastTurnState = TurnState.PlayerTurn;
     private bool lastHandSelectMode;
@@ -164,12 +165,7 @@ public class PanelController : MonoBehaviour
     void OnEnable()
     {
         if (menu) menu.onSubmit.AddListener(OnMenuSubmit);
-        if (!turnManager) turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
-        if (turnManager)
-        {
-            turnManager.OnTurnChanged -= HandleTurnChanged;
-            turnManager.OnTurnChanged += HandleTurnChanged;
-        }
+        SubscribeTurnManagerEvents();
 
         if (syncInitialViewWithTurnState && !initialSyncRequested)
         {
@@ -182,6 +178,7 @@ public class PanelController : MonoBehaviour
     {
         if (menu) menu.onSubmit.RemoveListener(OnMenuSubmit);
         if (turnManager) turnManager.OnTurnChanged -= HandleTurnChanged;
+        turnEventSubscribed = false;
 
         if (itemInteractionActive)
         {
@@ -193,6 +190,9 @@ public class PanelController : MonoBehaviour
 
     void Update()
     {
+        if (!turnEventSubscribed)
+            SubscribeTurnManagerEvents();
+
         bool qDown = Input.GetKeyDown(KeyCode.Q);
         bool handSelecting = handUI && handUI.IsInSelectMode;
 
@@ -200,7 +200,14 @@ public class PanelController : MonoBehaviour
 
         if (returnOnItemCancelKey && qDown && itemInteractionActive)
         {
+            if (!BattleTutorialGate.Allows(BattleTutorialAction.ItemCancel))
+            {
+                lastHandSelectMode = handSelecting;
+                return;
+            }
+
             ExitItemInteractionMode();
+            BattleTutorialGate.Report(BattleTutorialAction.ItemCancel);
             lastHandSelectMode = handSelecting;
             return;
         }
@@ -218,7 +225,7 @@ public class PanelController : MonoBehaviour
 
         if (!returnOnPlayerTurnStart) return;
 
-        if (!turnManager) turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
+        ResolveTurnManager();
         if (!orchestrator) orchestrator = FindObjectOfType<CardUseOrchestrator>(true);
         if (!turnManager) return;
 
@@ -239,27 +246,41 @@ public class PanelController : MonoBehaviour
     {
         if (usePanelSubmit && index == panelSubmitIndex)
         {
-            SetGameplayViewDelayed(true, submitViewDelay);
-            return;
-        }
-
-        if (useCardSubmit && index == cardSubmitIndex)
-        {
-            if (handUI != null && handUI.CardCount <= 0)
+            if (!BattleTutorialGate.Allows(BattleTutorialAction.StatePanelInteract))
                 return;
 
             SetGameplayViewDelayed(true, submitViewDelay);
             return;
         }
 
+        if (useCardSubmit && index == cardSubmitIndex)
+        {
+            if (!BattleTutorialGate.Allows(BattleTutorialAction.CardPanelInteract))
+                return;
+
+            if (handUI != null && handUI.CardCount <= 0)
+                return;
+
+            SetGameplayViewDelayed(true, submitViewDelay);
+            BattleTutorialGate.Report(BattleTutorialAction.CardPanelInteract);
+            return;
+        }
+
         if (useItemSubmit && index == itemSubmitIndex)
         {
+            if (!BattleTutorialGate.Allows(BattleTutorialAction.ItemPanelInteract))
+                return;
+
             EnterItemInteractionMode();
+            BattleTutorialGate.Report(BattleTutorialAction.ItemPanelInteract);
             return;
         }
 
         if (useEndSubmit && index == endSubmitIndex)
         {
+            if (!BattleTutorialGate.Allows(BattleTutorialAction.EndPanelInteract))
+                return;
+
             SetGameplayViewDelayed(true, submitViewDelay);
             pendingReturnByEnd = true;
         }
@@ -324,7 +345,7 @@ public class PanelController : MonoBehaviour
 
     private IEnumerator Co_SyncInitialViewWithTurnState()
     {
-        if (!turnManager) turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
+        ResolveTurnManager();
         if (!turnManager) yield break;
 
         // 첫 턴이 실제로 확정될 때까지 기다렸다가 즉시 반영 (프레임 타임아웃 없음)
@@ -356,6 +377,31 @@ public class PanelController : MonoBehaviour
 
     // 일부 브랜치/프리팹 상태에서 OnTurnChanged 구독 코드가 남아 있을 수 있어
     // 컴파일 오류(CS0103) 방지를 위해 안전한 핸들러를 유지한다.
+    private void ResolveTurnManager()
+    {
+        var resolved = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
+        if (resolved == turnManager)
+            return;
+
+        if (turnManager && turnEventSubscribed)
+            turnManager.OnTurnChanged -= HandleTurnChanged;
+
+        turnManager = resolved;
+        turnEventSubscribed = false;
+    }
+
+    private void SubscribeTurnManagerEvents()
+    {
+        ResolveTurnManager();
+        if (!turnManager)
+            return;
+
+        turnManager.OnTurnChanged -= HandleTurnChanged;
+        turnManager.OnTurnChanged += HandleTurnChanged;
+        turnEventSubscribed = true;
+        lastTurnState = turnManager.currentTurn;
+    }
+
     private void HandleTurnChanged(TurnState state)
     {
         bool enemyToPlayer = lastTurnState == TurnState.EnemyTurn && state == TurnState.PlayerTurn;

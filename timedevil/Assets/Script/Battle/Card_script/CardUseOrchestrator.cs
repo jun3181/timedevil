@@ -58,6 +58,7 @@ public class CardUseOrchestrator : MonoBehaviour
 
     public void UseCurrentSelected()
     {
+        if (!BattleTutorialGate.Allows(BattleTutorialAction.CardUse)) return;
         if (busy || hand == null || !hand.IsInSelectMode) return;
         int idx = hand.CurrentSelectIndex;
         if (idx < 0 || idx >= hand.CardCount) return;
@@ -135,6 +136,7 @@ public class CardUseOrchestrator : MonoBehaviour
         if (bdr != null) bdr.UseCardToBottom(handIndex);
         yield return null;               // 데이터 반영
         hand.RebuildFromHand();
+        BattleTutorialGate.Report(BattleTutorialAction.CardUse);
 
         // F. 관전 모드: 입력 OFF + 설명 고정
         if (menu) menu.EnableInput(false);
