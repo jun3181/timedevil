@@ -45,6 +45,13 @@ public class TriggerStep_Scene : TriggerStepBase
     [Tooltip("overrideCutsceneStartKey가 켜져 있을 때 다음 씬 CutsceneRouter에 전달할 Start Key")]
     [SerializeField] private string cutsceneStartKey = "CutScene1";
 
+    [Header("Scene Start Camera (optional)")]
+    [Tooltip("켜면 다음 씬 SceneCameraBootstrap의 시작 Ortho Size를 덮어씁니다. 0이면 CameraManager 기본값을 사용합니다.")]
+    [SerializeField] private bool overrideSceneStartOrthoSize = false;
+
+    [Tooltip("다음 씬 시작 카메라 Ortho Size. 0이면 텔레포트 afterOrthoSize=0처럼 기본값을 사용합니다.")]
+    [SerializeField] private float sceneStartOrthoSize = 0f;
+
     // =========================
     // Battle return context (existing)
     // =========================
@@ -131,6 +138,21 @@ public class TriggerStep_Scene : TriggerStepBase
         else
         {
             CutsceneStartContext.Clear();
+        }
+
+        if (overrideSceneStartOrthoSize)
+        {
+            SceneStartCameraContext.SetNext(targetScene, sceneStartOrthoSize);
+
+            if (debugLog)
+            {
+                string sizeText = sceneStartOrthoSize > 0f ? sceneStartOrthoSize.ToString("F2") : "default";
+                Debug.Log($"[TriggerStep_Scene] Queue Scene Start Ortho '{sizeText}' for scene '{targetScene}'");
+            }
+        }
+        else
+        {
+            SceneStartCameraContext.Clear();
         }
 
         // -------------------------

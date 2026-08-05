@@ -79,8 +79,10 @@ public class PlayerMainManager : MonoBehaviour
                 return;
             }
 
-            if (Input.GetKeyDown(KeyCode.UpArrow)) menu.Navigate(-1);
-            if (Input.GetKeyDown(KeyCode.DownArrow)) menu.Navigate(+1);
+            if (Input.GetKeyDown(KeyCode.UpArrow)) menu.NavigateVertical(-1);
+            if (Input.GetKeyDown(KeyCode.DownArrow)) menu.NavigateVertical(+1);
+            if (Input.GetKeyDown(KeyCode.LeftArrow)) menu.NavigateHorizontal(-1);
+            if (Input.GetKeyDown(KeyCode.RightArrow)) menu.NavigateHorizontal(+1);
 
             if (Input.GetKeyDown(keyInteractOrSubmit)) menu.SubmitCurrent();
             return;
