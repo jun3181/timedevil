@@ -28287,7 +28287,7 @@ GameObject:
   - component: {fileID: 442213896}
   - component: {fileID: 442213895}
   m_Layer: 0
-  m_Name: LaserSpawn
+  m_Name: PrefabSpawn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -28305,14 +28305,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4f4c61e41c5c4bfba5604e51751ea70b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  laserPrefab: {fileID: 2359201804419450085, guid: dfb9f296de05a98459117c79b6aa8bef,
+  prefab: {fileID: 2359201804419450085, guid: dfb9f296de05a98459117c79b6aa8bef,
     type: 3}
   spawnArea: {fileID: 442213896}
   warningDuration: 1
   warningAlpha: 0.5
   activeDuration: 1
-  spawnInterval: 0.5
-  playOnStart: 1
+  spawnOnEnable: 1
 --- !u!61 &442213896
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -227655,6 +227654,8 @@ MonoBehaviour:
   allowPlayerInputWhileExecuting: 0
   scripts:
   - {fileID: 442213895}
+  repeatPrefabSpawners: 1
+  repeatInterval: 2
 --- !u!4 &1739126048
 Transform:
   m_ObjectHideFlags: 0
