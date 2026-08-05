@@ -1,19 +1,20 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 /// <summary>
-/// BoxCollider2D로 지정한 구역 안에 레이저를 무작위로 생성합니다.
+/// BoxCollider2D로 지정한 구역 안에 프리팹을 무작위로 한 번 생성합니다.
 /// 생성 전에는 같은 오브젝트를 반투명하게 표시하고 충돌 판정을 끕니다.
 /// </summary>
 [DisallowMultipleComponent]
-public sealed class LaserSpawner : MonoBehaviour
+public sealed class PrefabSpawner : MonoBehaviour
 {
     [Header("필수 설정")]
-    [SerializeField, Tooltip("생성할 레이저 프리팹")]
-    private GameObject laserPrefab;
+    [SerializeField, FormerlySerializedAs("laserPrefab"), Tooltip("생성할 프리팹")]
+    private GameObject prefab;
 
-    [SerializeField, Tooltip("레이저가 생성될 범위. 회전/크기 변경도 반영됩니다.")]
+    [SerializeField, Tooltip("프리팹이 생성될 범위. 회전/크기 변경도 반영됩니다.")]
     private BoxCollider2D spawnArea;
 
     [Header("생성 설정")]
@@ -23,17 +24,14 @@ public sealed class LaserSpawner : MonoBehaviour
     [SerializeField, Range(0f, 1f), Tooltip("예고 상태의 투명도. 0.5는 50%입니다.")]
     private float warningAlpha = 0.5f;
 
-    [SerializeField, Min(0f), Tooltip("실제 레이저가 유지되는 시간(초)")]
+    [SerializeField, Min(0f), Tooltip("실제 프리팹이 유지되는 시간(초). 0이면 비활성화될 때까지 유지됩니다.")]
     private float activeDuration = 1f;
 
-    [SerializeField, Min(0f), Tooltip("레이저가 사라진 뒤 다음 예고까지의 시간(초)")]
-    private float spawnInterval = 0.5f;
-
-    [SerializeField, Tooltip("컴포넌트가 활성화될 때마다 반복 생성을 시작합니다.")]
-    private bool playOnStart = true;
+    [SerializeField, FormerlySerializedAs("playOnStart"), Tooltip("컴포넌트가 활성화될 때마다 한 번 생성합니다. TriggerStep_TimedScriptRunner에서 이 컴포넌트를 켜면 자동 실행됩니다.")]
+    private bool spawnOnEnable = true;
 
     private Coroutine spawnRoutine;
-    private GameObject currentLaser;
+    private GameObject currentInstance;
 
     private void Reset()
     {
@@ -42,36 +40,36 @@ public sealed class LaserSpawner : MonoBehaviour
 
     private void OnEnable()
     {
-        if (playOnStart)
+        if (spawnOnEnable)
         {
-            StartSpawning();
+            Spawn();
         }
     }
 
     private void OnDisable()
     {
-        StopSpawning();
+        StopSpawn();
     }
 
-    /// <summary>레이저 반복 생성을 시작합니다.</summary>
-    public void StartSpawning()
+    /// <summary>프리팹을 한 번 생성합니다.</summary>
+    public void Spawn()
     {
         if (spawnRoutine != null)
         {
             return;
         }
 
-        if (laserPrefab == null || spawnArea == null)
+        if (prefab == null || spawnArea == null)
         {
-            Debug.LogError($"[{nameof(LaserSpawner)}] Laser Prefab과 Spawn Area를 지정해야 합니다.", this);
+            Debug.LogError($"[{nameof(PrefabSpawner)}] Prefab과 Spawn Area를 지정해야 합니다.", this);
             return;
         }
 
-        spawnRoutine = StartCoroutine(SpawnLoop());
+        spawnRoutine = StartCoroutine(SpawnPrefab());
     }
 
-    /// <summary>반복 생성을 멈추고 현재 예고/레이저를 제거합니다.</summary>
-    public void StopSpawning()
+    /// <summary>현재 예고/프리팹을 제거합니다.</summary>
+    public void StopSpawn()
     {
         if (spawnRoutine != null)
         {
@@ -79,32 +77,19 @@ public sealed class LaserSpawner : MonoBehaviour
             spawnRoutine = null;
         }
 
-        if (currentLaser != null)
+        if (currentInstance != null)
         {
-            Destroy(currentLaser);
-            currentLaser = null;
+            Destroy(currentInstance);
+            currentInstance = null;
         }
     }
 
-    private IEnumerator SpawnLoop()
-    {
-        while (true)
-        {
-            yield return SpawnLaser();
-
-            if (spawnInterval > 0f)
-            {
-                yield return new WaitForSeconds(spawnInterval);
-            }
-        }
-    }
-
-    private IEnumerator SpawnLaser()
+    private IEnumerator SpawnPrefab()
     {
         Vector3 position = GetRandomPosition();
-        currentLaser = Instantiate(laserPrefab, position, laserPrefab.transform.rotation);
-        SpriteRenderer[] renderers = currentLaser.GetComponentsInChildren<SpriteRenderer>(true);
-        Collider2D[] colliders = currentLaser.GetComponentsInChildren<Collider2D>(true);
+        currentInstance = Instantiate(prefab, position, prefab.transform.rotation);
+        SpriteRenderer[] renderers = currentInstance.GetComponentsInChildren<SpriteRenderer>(true);
+        Collider2D[] colliders = currentInstance.GetComponentsInChildren<Collider2D>(true);
 
         var originalColors = new Color[renderers.Length];
         var colliderStates = new Dictionary<Collider2D, bool>(colliders.Length);
@@ -129,7 +114,7 @@ public sealed class LaserSpawner : MonoBehaviour
             yield return new WaitForSeconds(warningDuration);
         }
 
-        // 예고가 끝나면 원래 모습과 충돌 상태를 복구해 실제 레이저로 전환합니다.
+        // 예고가 끝나면 원래 모습과 충돌 상태를 복구해 실제 프리팹으로 전환합니다.
         for (int i = 0; i < renderers.Length; i++)
         {
             renderers[i].color = originalColors[i];
@@ -143,13 +128,17 @@ public sealed class LaserSpawner : MonoBehaviour
             }
         }
 
-        if (activeDuration > 0f)
+        if (activeDuration <= 0f)
         {
-            yield return new WaitForSeconds(activeDuration);
+            spawnRoutine = null;
+            yield break;
         }
 
-        Destroy(currentLaser);
-        currentLaser = null;
+        yield return new WaitForSeconds(activeDuration);
+
+        Destroy(currentInstance);
+        currentInstance = null;
+        spawnRoutine = null;
     }
 
     private Vector3 GetRandomPosition()
