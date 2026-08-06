@@ -1,40 +1,69 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class InventoryItemApplyer : MonoBehaviour
 {
-    [Header("페이지 메니저")]
-    [SerializeField]
-    private InventoryPageManagerKeys pageManager;
+    [Header("Page Manager")]
+    [SerializeField] private InventoryPageManagerKeys pageManager;
 
-    [Header("인벤토리 커서")]
-    [SerializeField]
-    private InventoryCursor inventoryCursor;
+    [Header("Inventory Cursor")]
+    [SerializeField] private InventoryCursor inventoryCursor;
 
-    [Header("ItemDatabaseSO")]
-    [SerializeField]
-    private ItemDatabaseSO db;
+    [Header("Item Database")]
+    [SerializeField] private ItemDatabaseSO db;
 
-    void Update() {
-        if(Input.GetKeyDown(KeyCode.E)) {
-            if(ItemRuntime.Instance == null || pageManager==null || inventoryCursor==null) return;
+    void Update()
+    {
+        if (!Input.GetKeyDown(KeyCode.E))
+            return;
 
-            InventoryDisplay page = pageManager.GetCurrentPage();
-            InventoryItemEntry entry = page.GetCursoredItemEntry();
-            if(entry == null) return;
+        if (ItemRuntime.Instance == null || pageManager == null || inventoryCursor == null)
+            return;
 
-            ItemSO so = db.GetById(entry.id);
-            if(so == null) return;
+        InventoryDisplay page = pageManager.GetCurrentPage();
+        if (page == null)
+            return;
 
-            if(so.itemScript != null) {
-                if(!so.itemScript.CanItemUsed(out string msg)) return;
-                so.itemScript.Run();
-            }
+        InventoryItemEntry entry = page.GetCursoredItemEntry();
+        if (entry == null)
+            return;
 
-            if(ItemRuntime.Instance == null) return;
-            ItemRuntime.Instance.AddQuantity(entry.id, -1);
-            page.DisplayCurrentPage();
+        ItemDatabaseSO database = db != null ? db : page.itemDatabase;
+        if (database == null)
+        {
+            Debug.LogWarning("ItemDatabaseSO is not assigned.");
+            return;
         }
+
+        ItemSO item = database.GetById(entry.id);
+        if (item == null)
+        {
+            Debug.LogWarning($"ItemSO not found for id '{entry.id}'.");
+            return;
+        }
+
+        if (!item.TryUse(out string message))
+        {
+            if (!string.IsNullOrEmpty(message))
+                Debug.LogWarning(message);
+            return;
+        }
+
+        if (ItemRuntime.Instance == null)
+            return;
+
+        if (item.consumeOnUse)
+            ItemRuntime.Instance.AddQuantity(entry.id, -1);
+
+        RefreshStateDisplays();
+        page.DisplayCurrentPage();
+    }
+
+    private void RefreshStateDisplays()
+    {
+        foreach (StatusPanel statusPanel in FindObjectsOfType<StatusPanel>(true))
+            statusPanel.Refresh();
+
+        foreach (HPUIBinder hpUIBinder in FindObjectsOfType<HPUIBinder>(true))
+            hpUIBinder.Refresh();
     }
 }

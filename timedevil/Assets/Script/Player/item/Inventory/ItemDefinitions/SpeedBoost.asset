@@ -10,11 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1abd44402ecbf5148b3b83ac1b008ac9, type: 3}
-  m_Name: EnergyDrink
+  m_Name: SpeedBoost
   m_EditorClassIdentifier: 
-  id: energy_drink
-  displayName: "\uC5D0\uB108\uC9C0 \uB4DC\uB9C1\uD06C"
-  type: 0
-  description: I can drink this over ten times a day...!
-  icon: {fileID: 1029240460, guid: d7006b5349a30144d9f8994ccaf1a844, type: 3}
-  defaultQuantity: 0
+  id: speed_boost
+  displayName: Speed Boost
+  type: 3
+  description: Increases speed by 1.
+  icon: {fileID: 0}
+  defaultQuantity: 1
+  effectAmount: 1
+  consumeOnUse: 1
+  itemScript: {fileID: 0}
