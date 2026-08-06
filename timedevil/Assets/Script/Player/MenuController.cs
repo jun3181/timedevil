@@ -1,4 +1,4 @@
-ï»¿// Assets/Script/Player/MenuController.cs
+// Assets/Script/Player/MenuController.cs
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
@@ -12,7 +12,8 @@ public class MenuController : MonoBehaviour
         Main,
         Item,
         Card,
-        Deck
+        Deck,
+        Status
     }
 
     private enum MenuPanelFocusArea
@@ -50,7 +51,7 @@ public class MenuController : MonoBehaviour
     [SerializeField] private Vector2 itemSize = new Vector2(190f, 58f);
     [SerializeField] private float itemFontSize = 42f;
     [SerializeField] private float cursorGapAfterText = 14f;
-    [SerializeField] private string[] menuLabels = { "item", "card", "deck", "option", "close", "exit" };
+    [SerializeField] private string[] menuLabels = { "item", "card", "deck", "option", "status", "exit" };
     [SerializeField] private bool hidePanelTextInRetroView = true;
     [SerializeField] private bool preserveManualLayout = true;
 
@@ -72,9 +73,9 @@ public class MenuController : MonoBehaviour
     [SerializeField] private Vector2 itemWindowPagePosition = new Vector2(390f, -225f);
     [SerializeField] private Vector2 itemWindowPageSize = new Vector2(120f, 50f);
     [SerializeField] private string itemCloseLabel = "close";
-    [SerializeField] private string emptyItemLabel = "ì—†ìŒ";
-    [SerializeField] private string[] itemPageOneLabels = { "ì•„ì´í…œ ì´ë¦„ x 2", "ì•„ì´í…œ ì´ë¦„ x 3", "ì•„ì´í…œ ì´ë¦„ x 1", "ì•„ì´í…œ ì´ë¦„" };
-    [SerializeField] private string[] itemPageTwoLabels = { "ì•„ì´í…œ ì´ë¦„ x 4", "ì•„ì´í…œ ì´ë¦„ x 5", "ì•„ì´í…œ ì´ë¦„ x 6", "ì•„ì´í…œ ì´ë¦„" };
+    [SerializeField] private string emptyItemLabel = "¾øÀ½";
+    [SerializeField] private string[] itemPageOneLabels = { "¾ÆÀÌÅÛ ÀÌ¸§ x 2", "¾ÆÀÌÅÛ ÀÌ¸§ x 3", "¾ÆÀÌÅÛ ÀÌ¸§ x 1", "¾ÆÀÌÅÛ ÀÌ¸§" };
+    [SerializeField] private string[] itemPageTwoLabels = { "¾ÆÀÌÅÛ ÀÌ¸§ x 4", "¾ÆÀÌÅÛ ÀÌ¸§ x 5", "¾ÆÀÌÅÛ ÀÌ¸§ x 6", "¾ÆÀÌÅÛ ÀÌ¸§" };
 
     [Header("Card Window View")]
     [SerializeField] private bool autoBuildCardWindow = true;
@@ -94,14 +95,28 @@ public class MenuController : MonoBehaviour
     [SerializeField] private Vector2 cardPreviewOffsetFromTopLeft = new Vector2(1320f, -50f);
     [SerializeField] private Vector2 cardPreviewSize = new Vector2(170f, 240f);
     [SerializeField] private string cardCloseLabel = "close";
-    [SerializeField] private string emptyCardLabel = "ì—†ìŒ";
+    [SerializeField] private string emptyCardLabel = "¾øÀ½";
 
     [Header("Deck Window View")]
     [SerializeField] private bool autoBuildDeckWindow = true;
     [SerializeField] private bool previewDeckWindowInEditor = false;
     [SerializeField] private bool preserveManualDeckLayout = true;
     [SerializeField] private string deckCloseLabel = "close";
-    [SerializeField] private string emptyDeckLabel = "ì—†ìŒ";
+    [SerializeField] private string emptyDeckLabel = "¾øÀ½";
+
+    [Header("Status Window View")]
+    [SerializeField] private bool autoBuildStatusWindow = true;
+    [SerializeField] private bool previewStatusWindowInEditor = false;
+    [SerializeField] private bool preserveManualStatusLayout = true;
+    [SerializeField] private Vector2 statusWindowOffsetFromTopLeft = new Vector2(690f, -50f);
+    [SerializeField] private Vector2 statusWindowSize = new Vector2(600f, 300f);
+    [SerializeField] private Vector2 statusWindowListOrigin = new Vector2(44f, -52f);
+    [SerializeField] private Vector2 statusWindowEntrySize = new Vector2(360f, 44f);
+    [SerializeField] private float statusWindowRowSpacing = 48f;
+    [SerializeField] private Vector2 statusWindowClosePosition = new Vector2(380f, -52f);
+    [SerializeField] private Vector2 statusWindowCloseSize = new Vector2(170f, 50f);
+    [SerializeField] private string statusCloseLabel = "close";
+    [SerializeField] private string emptyStatusLabel = "no data";
 
     private int currentIndex = 0;
     private bool isPaused = false;
@@ -112,6 +127,7 @@ public class MenuController : MonoBehaviour
     private bool itemWindowOpen = false;
     private bool cardWindowOpen = false;
     private bool deckWindowOpen = false;
+    private bool statusWindowOpen = false;
     private int itemCurrentPage = 0;
     private int itemCurrentIndex = 0;
     private int cardCurrentPage = 0;
@@ -142,14 +158,20 @@ public class MenuController : MonoBehaviour
     private TextMeshProUGUI deckWindowCloseText;
     private TextMeshProUGUI deckWindowPageText;
     private TextMeshProUGUI deckWindowCursorText;
+    private RectTransform statusWindowFrame;
+    private RectTransform statusWindowContentRoot;
+    private TextMeshProUGUI[] statusWindowTexts;
+    private TextMeshProUGUI statusWindowCloseText;
+    private TextMeshProUGUI statusWindowCursorText;
     private static Sprite generatedFrameSprite;
-    private static readonly string[] DefaultMenuLabels = { "item", "card", "deck", "option", "close", "exit" };
+    private static readonly string[] DefaultMenuLabels = { "item", "card", "deck", "option", "status", "exit" };
 
     public bool IsOpen => isPaused;
 
     private void Awake()
     {
         if (Application.isPlaying && !manager) manager = GameManager.Instance;
+        NormalizeMenuLabels();
         ResolveItemDatabase();
         ResolveCardDatabase();
         EnsureRetroMenuView();
@@ -165,6 +187,7 @@ public class MenuController : MonoBehaviour
     {
         itemEntriesPerPage = Mathf.Max(1, itemEntriesPerPage);
         cardEntriesPerPage = Mathf.Max(1, cardEntriesPerPage);
+        NormalizeMenuLabels();
         ResolveItemDatabase();
         ResolveCardDatabase();
 
@@ -201,6 +224,7 @@ public class MenuController : MonoBehaviour
         itemWindowOpen = false;
         cardWindowOpen = false;
         deckWindowOpen = false;
+        statusWindowOpen = false;
         itemCurrentPage = 0;
         itemCurrentIndex = 0;
         cardCurrentPage = 0;
@@ -227,10 +251,12 @@ public class MenuController : MonoBehaviour
         itemWindowOpen = false;
         cardWindowOpen = false;
         deckWindowOpen = false;
+        statusWindowOpen = false;
         focusMode = MenuFocusMode.Main;
         SetItemWindowVisible(false);
         SetCardWindowVisible(false);
         SetDeckWindowVisible(false);
+        SetStatusWindowVisible(false);
 
         if (menuUI) menuUI.SetActive(false);
         isPaused = false;
@@ -262,6 +288,12 @@ public class MenuController : MonoBehaviour
             return;
         }
 
+        if (focusMode == MenuFocusMode.Status && statusWindowOpen)
+        {
+            NavigateStatusWindowVertical(delta);
+            return;
+        }
+
         if (menuItems == null || menuItems.Length == 0) return;
 
         if (autoBuildRetroMenu)
@@ -289,6 +321,12 @@ public class MenuController : MonoBehaviour
         if (focusMode == MenuFocusMode.Deck && deckWindowOpen)
         {
             NavigateDeckWindowHorizontal(delta);
+            return;
+        }
+
+        if (focusMode == MenuFocusMode.Status && statusWindowOpen)
+        {
+            NavigateStatusWindowHorizontal(delta);
             return;
         }
 
@@ -323,6 +361,12 @@ public class MenuController : MonoBehaviour
             return;
         }
 
+        if (focusMode == MenuFocusMode.Status && statusWindowOpen)
+        {
+            SubmitStatusWindow();
+            return;
+        }
+
         if (debugMenu) Debug.Log($"[MenuController] Submit index={currentIndex}", this);
 
         switch (currentIndex)
@@ -343,13 +387,12 @@ public class MenuController : MonoBehaviour
                 Debug.Log("[MenuController] Option selected", this);
                 break;
 
-            case 4: // Close
-                Close();
+            case 4: // Status
+                OpenStatusWindow();
                 break;
 
             case 5: // Exit
-                Debug.Log("[MenuController] Exit selected", this);
-                Application.Quit();
+                QuitGame();
                 break;
         }
     }
@@ -419,6 +462,7 @@ public class MenuController : MonoBehaviour
         RefreshItemWindow();
         RefreshCardWindow();
         RefreshDeckWindow();
+        RefreshStatusWindow();
 
         if (panelText == null) return;
 
@@ -436,7 +480,7 @@ public class MenuController : MonoBehaviour
             case 1: panelText.text = "open card"; break;
             case 2: panelText.text = "open deck"; break;
             case 3: panelText.text = "open option"; break;
-            case 4: panelText.text = "close menu"; break;
+            case 4: panelText.text = "open status"; break;
             case 5: panelText.text = "game exit"; break;
         }
     }
@@ -491,6 +535,59 @@ public class MenuController : MonoBehaviour
         RefreshCardWindow();
         EnsureDeckWindowView();
         RefreshDeckWindow();
+        EnsureStatusWindowView();
+        RefreshStatusWindow();
+    }
+
+    public void BackOrClose()
+    {
+        if (!isPaused) return;
+
+        if (focusMode == MenuFocusMode.Item && itemWindowOpen)
+        {
+            CloseItemWindow();
+            return;
+        }
+
+        if (focusMode == MenuFocusMode.Card && cardWindowOpen)
+        {
+            CloseCardWindow();
+            return;
+        }
+
+        if (focusMode == MenuFocusMode.Deck && deckWindowOpen)
+        {
+            CloseDeckWindow();
+            return;
+        }
+
+        if (focusMode == MenuFocusMode.Status && statusWindowOpen)
+        {
+            CloseStatusWindow();
+            return;
+        }
+
+        Close();
+    }
+
+    private void NormalizeMenuLabels()
+    {
+        if (menuLabels == null || menuLabels.Length < DefaultMenuLabels.Length)
+            return;
+
+        if (!string.IsNullOrEmpty(menuLabels[4]) && menuLabels[4].ToLowerInvariant() == "close")
+            menuLabels[4] = "status";
+    }
+
+    private void QuitGame()
+    {
+        Debug.Log("[MenuController] Exit selected", this);
+
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
     }
 
     private void ResolveItemDatabase()
@@ -596,6 +693,8 @@ public class MenuController : MonoBehaviour
         SetCardWindowVisible(false);
         deckWindowOpen = false;
         SetDeckWindowVisible(false);
+        statusWindowOpen = false;
+        SetStatusWindowVisible(false);
 
         itemWindowOpen = true;
         focusMode = MenuFocusMode.Item;
@@ -1010,6 +1109,8 @@ public class MenuController : MonoBehaviour
         SetItemWindowVisible(false);
         deckWindowOpen = false;
         SetDeckWindowVisible(false);
+        statusWindowOpen = false;
+        SetStatusWindowVisible(false);
 
         cardWindowOpen = true;
         focusMode = MenuFocusMode.Card;
@@ -1436,6 +1537,8 @@ public class MenuController : MonoBehaviour
         SetItemWindowVisible(false);
         cardWindowOpen = false;
         SetCardWindowVisible(false);
+        statusWindowOpen = false;
+        SetStatusWindowVisible(false);
 
         deckWindowOpen = true;
         focusMode = MenuFocusMode.Deck;
@@ -1805,6 +1908,228 @@ public class MenuController : MonoBehaviour
 
         if (deckPreviewRoot != null)
             deckPreviewRoot.gameObject.SetActive(visible);
+    }
+
+    private void OpenStatusWindow()
+    {
+        if (!autoBuildStatusWindow)
+        {
+            Debug.Log("[MenuController] Status selected (UI disabled)", this);
+            return;
+        }
+
+        if (debugMenu) Debug.Log("[MenuController] Status window open", this);
+
+        itemWindowOpen = false;
+        SetItemWindowVisible(false);
+        cardWindowOpen = false;
+        SetCardWindowVisible(false);
+        deckWindowOpen = false;
+        SetDeckWindowVisible(false);
+
+        statusWindowOpen = true;
+        focusMode = MenuFocusMode.Status;
+
+        EnsureStatusWindowView();
+        RefreshStatusWindow();
+        HighlightCurrent();
+    }
+
+    private void CloseStatusWindow()
+    {
+        if (debugMenu) Debug.Log("[MenuController] Status window close", this);
+
+        statusWindowOpen = false;
+        focusMode = MenuFocusMode.Main;
+        SetStatusWindowVisible(false);
+        HighlightCurrent();
+    }
+
+    private void NavigateStatusWindowHorizontal(int delta)
+    {
+        if (delta != 0)
+            RefreshStatusWindow();
+    }
+
+    private void NavigateStatusWindowVertical(int delta)
+    {
+        if (delta != 0)
+            RefreshStatusWindow();
+    }
+
+    private void SubmitStatusWindow()
+    {
+        CloseStatusWindow();
+    }
+
+    private void EnsureStatusWindowView()
+    {
+        if (!autoBuildStatusWindow || menuUI == null) return;
+
+        RectTransform menuRoot = menuUI.transform as RectTransform;
+        if (menuRoot == null) return;
+
+        bool frameAlreadyExists = menuRoot.Find("StatusWindowFrame") != null;
+        statusWindowFrame = GetOrCreateRect(menuRoot, "StatusWindowFrame");
+        if (!preserveManualStatusLayout || !frameAlreadyExists)
+            CopyRectFromSourceOrDefault(statusWindowFrame, cardWindowFrame, statusWindowOffsetFromTopLeft, statusWindowSize);
+        statusWindowFrame.SetAsLastSibling();
+
+        Image frameImage = statusWindowFrame.GetComponent<Image>();
+        if (frameImage == null) frameImage = statusWindowFrame.gameObject.AddComponent<Image>();
+        frameImage.sprite = LoadMenuFrameSprite();
+        frameImage.type = Image.Type.Sliced;
+        frameImage.color = Color.white;
+        frameImage.raycastTarget = false;
+
+        bool contentAlreadyExists = menuRoot.Find("StatusWindowContent") != null;
+        statusWindowContentRoot = GetOrCreateRect(menuRoot, "StatusWindowContent");
+        if (!preserveManualStatusLayout || !contentAlreadyExists)
+            CopyRectFromSourceOrDefault(statusWindowContentRoot, cardWindowContentRoot, statusWindowOffsetFromTopLeft, statusWindowSize);
+        statusWindowContentRoot.SetAsLastSibling();
+
+        EnsureStatusWindowTexts();
+        SetStatusWindowVisible(statusWindowOpen || (!Application.isPlaying && previewStatusWindowInEditor));
+    }
+
+    private void EnsureStatusWindowTexts()
+    {
+        if (statusWindowContentRoot == null) return;
+
+        string[] labels = GetStatusLabels();
+        TextMeshProUGUI[] entries = new TextMeshProUGUI[labels.Length];
+
+        for (int i = 0; i < entries.Length; i++)
+        {
+            string entryName = $"StatusEntry_{i}";
+            bool alreadyExists = statusWindowContentRoot.Find(entryName) != null;
+            entries[i] = GetOrCreateText(statusWindowContentRoot, entryName);
+
+            StyleItemWindowText(
+                entries[i],
+                labels[i],
+                GetStatusEntryPosition(i),
+                statusWindowEntrySize,
+                !preserveManualStatusLayout || !alreadyExists
+            );
+        }
+
+        statusWindowTexts = entries;
+
+        bool closeAlreadyExists = statusWindowContentRoot.Find("StatusClose") != null;
+        statusWindowCloseText = GetOrCreateText(statusWindowContentRoot, "StatusClose");
+        StyleItemWindowText(
+            statusWindowCloseText,
+            statusCloseLabel,
+            statusWindowClosePosition,
+            statusWindowCloseSize,
+            !preserveManualStatusLayout || !closeAlreadyExists
+        );
+
+        bool cursorAlreadyExists = statusWindowContentRoot.Find("StatusCursor") != null;
+        statusWindowCursorText = GetOrCreateText(statusWindowContentRoot, "StatusCursor");
+        StyleItemWindowText(
+            statusWindowCursorText,
+            "<",
+            statusWindowClosePosition,
+            new Vector2(46f, statusWindowCloseSize.y),
+            !preserveManualStatusLayout || !cursorAlreadyExists
+        );
+        statusWindowCursorText.alignment = TextAlignmentOptions.Center;
+    }
+
+    private void RefreshStatusWindow()
+    {
+        if (!autoBuildStatusWindow || statusWindowContentRoot == null) return;
+
+        bool shouldShow = statusWindowOpen || (!Application.isPlaying && previewStatusWindowInEditor);
+        SetStatusWindowVisible(shouldShow);
+        if (!shouldShow) return;
+
+        string[] labels = GetStatusLabels();
+        if (statusWindowTexts != null)
+        {
+            for (int i = 0; i < statusWindowTexts.Length; i++)
+            {
+                if (statusWindowTexts[i] == null) continue;
+
+                string label = i < labels.Length ? labels[i] : "";
+                statusWindowTexts[i].text = label;
+                statusWindowTexts[i].gameObject.SetActive(!string.IsNullOrEmpty(label));
+            }
+        }
+
+        if (statusWindowCloseText != null)
+            statusWindowCloseText.text = string.IsNullOrEmpty(statusCloseLabel) ? "close" : statusCloseLabel;
+
+        MoveStatusWindowCursor();
+    }
+
+    private void MoveStatusWindowCursor()
+    {
+        if (statusWindowCursorText == null)
+            return;
+
+        bool shouldShow = statusWindowOpen || (!Application.isPlaying && previewStatusWindowInEditor);
+        statusWindowCursorText.gameObject.SetActive(shouldShow);
+        if (!shouldShow || statusWindowCloseText == null) return;
+
+        float textWidth = statusWindowCloseText.GetPreferredValues(statusWindowCloseText.text).x;
+        Vector2 targetPosition = statusWindowCloseText.rectTransform.anchoredPosition;
+
+        statusWindowCursorText.text = "<";
+        statusWindowCursorText.rectTransform.anchoredPosition = new Vector2(
+            targetPosition.x + textWidth + cursorGapAfterText,
+            targetPosition.y + 1f
+        );
+        statusWindowCursorText.transform.SetAsLastSibling();
+    }
+
+    private void SetStatusWindowVisible(bool visible)
+    {
+        if (statusWindowFrame != null)
+            statusWindowFrame.gameObject.SetActive(visible);
+
+        if (statusWindowContentRoot != null)
+            statusWindowContentRoot.gameObject.SetActive(visible);
+    }
+
+    private Vector2 GetStatusEntryPosition(int index)
+    {
+        return new Vector2(
+            statusWindowListOrigin.x,
+            statusWindowListOrigin.y - index * statusWindowRowSpacing
+        );
+    }
+
+    private string[] GetStatusLabels()
+    {
+        PlayerData player = GetPlayerDataForStatus();
+        if (player == null)
+            return new[] { string.IsNullOrEmpty(emptyStatusLabel) ? "no data" : emptyStatusLabel };
+
+        return new[]
+        {
+            $"name : {player.playerName}",
+            $"hp : {Mathf.Max(0, player.currentHP)}/{Mathf.Max(1, player.maxHP)}",
+            $"attack : {Mathf.Max(0, player.attack)}",
+            $"defense : {Mathf.Max(0, player.defense)}",
+            $"speed : {Mathf.Max(0, player.speed)}"
+        };
+    }
+
+    private PlayerData GetPlayerDataForStatus()
+    {
+        if (PlayerDataRuntime.Instance != null && PlayerDataRuntime.Instance.Data != null)
+            return PlayerDataRuntime.Instance.Data;
+
+        PlayerData saved = PlayerDataStore.Load();
+        if (saved != null)
+            return saved;
+
+        PlayerData fallback = new PlayerData();
+        fallback.InitDefaults();
+        return fallback;
     }
 
     private Vector2 GetCardEntryPosition(int index)
