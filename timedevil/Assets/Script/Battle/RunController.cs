@@ -50,6 +50,8 @@ public class RunController : MonoBehaviour
             if (tm.currentTurn != TurnState.PlayerTurn) return;
             if (tm.IsPlayerDiscardPhase) return;
         }
+        BattleTutorialGate.Report(BattleTutorialAction.RunPanelInteract);
+
         if (string.IsNullOrWhiteSpace(PlayerReturnContext.ReturnSceneName))
         {
             Debug.LogWarning("[RunController] 돌아갈 씬 정보가 없습니다.");
@@ -58,7 +60,6 @@ public class RunController : MonoBehaviour
 
         isReturning = true;
         if (menu) menu.EnableInput(false);
-        BattleTutorialGate.Report(BattleTutorialAction.RunPanelInteract);
 
         //  핵심: 돌아가면 카메라를 Player에 재바인딩하라는 플래그 세팅
         PlayerReturnContext.CameraRebindRequested = true;
