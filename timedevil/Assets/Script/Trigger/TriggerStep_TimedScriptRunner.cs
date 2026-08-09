@@ -22,6 +22,13 @@ public sealed class TriggerStep_TimedScriptRunner : TriggerStepBase
     [Tooltip("These components are enabled at the start and restored when time runs out.")]
     [SerializeField] private List<MonoBehaviour> scripts = new List<MonoBehaviour>();
 
+    [Header("Repeat Spawn Settings")]
+    [Tooltip("Run PrefabSpawner entries in Scripts To Run repeatedly while this timer is active.")]
+    [SerializeField] private bool repeatPrefabSpawners;
+    [Min(0.01f)]
+    [Tooltip("Seconds between repeated PrefabSpawner.Spawn() calls.")]
+    [SerializeField] private float repeatInterval = 1f;
+
     private readonly Dictionary<MonoBehaviour, bool> previousStates =
         new Dictionary<MonoBehaviour, bool>();
     private Coroutine runningCoroutine;
@@ -120,13 +127,48 @@ public sealed class TriggerStep_TimedScriptRunner : TriggerStepBase
 
     private IEnumerator RunTimer(float seconds)
     {
+        if (!repeatPrefabSpawners)
+        {
+            yield return WaitForDuration(seconds);
+            RestoreScripts();
+            runningCoroutine = null;
+            yield break;
+        }
+
+        float elapsed = 0f;
+        float nextSpawnAt = Mathf.Max(0.01f, repeatInterval);
+
+        while (elapsed < seconds)
+        {
+            yield return null;
+
+            elapsed += useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+            if (elapsed >= seconds || elapsed < nextSpawnAt)
+                continue;
+
+            SpawnPrefabSpawners();
+            nextSpawnAt += Mathf.Max(0.01f, repeatInterval);
+        }
+
+        RestoreScripts();
+        runningCoroutine = null;
+    }
+
+    private IEnumerator WaitForDuration(float seconds)
+    {
         if (useUnscaledTime)
             yield return new WaitForSecondsRealtime(seconds);
         else
             yield return new WaitForSeconds(seconds);
+    }
 
-        RestoreScripts();
-        runningCoroutine = null;
+    private void SpawnPrefabSpawners()
+    {
+        foreach (MonoBehaviour script in scripts)
+        {
+            if (script is PrefabSpawner spawner && spawner.enabled && spawner.gameObject.activeInHierarchy)
+                spawner.Spawn();
+        }
     }
 
     private void RestoreScripts()

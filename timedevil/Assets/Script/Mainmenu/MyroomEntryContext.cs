@@ -4,7 +4,8 @@ public enum MyroomEntryPoint
     None,
     Room1,
     Room2,
-    Room3
+    Room3,
+    Room4
 }
 
 public static class MyroomEntryContext
@@ -32,6 +33,11 @@ public static class MyroomEntryContext
     public static void SetRoom3()
     {
         _next = MyroomEntryPoint.Room3;
+    }
+
+    public static void SetRoom4() 
+    {
+        _next = MyroomEntryPoint.Room4;
     }
 
     // Consume only when an explicit entry exists.
