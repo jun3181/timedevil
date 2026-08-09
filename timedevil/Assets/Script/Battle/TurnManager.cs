@@ -184,6 +184,9 @@ public class TurnManager : MonoBehaviour
             return; // 인트로가 끝날 때까지 턴 진행 금지
         }
 
+        if (TryStartBattleTutorialScenario())
+            return;
+
         // 그 외: 정상 시작
         DecideFirstTurn();
     }
@@ -227,7 +230,21 @@ public class TurnManager : MonoBehaviour
             yield break;
         }
 
-        DecideFirstTurn();
+        if (!TryStartBattleTutorialScenario())
+            DecideFirstTurn();
+    }
+
+    private bool TryStartBattleTutorialScenario()
+    {
+        var scenario = BattleTutorialScenarioController.Instance
+            ? BattleTutorialScenarioController.Instance
+            : FindObjectOfType<BattleTutorialScenarioController>(true);
+
+        if (scenario == null || !scenario.ShouldControlBattleStart)
+            return false;
+
+        scenario.BeginControlledBattleStart(this);
+        return true;
     }
 
     void ResolvePlayerData()
@@ -610,6 +627,10 @@ public class TurnManager : MonoBehaviour
     {
         if (!showTurnBanner) return;
         string message = state == TurnState.PlayerTurn ? playerTurnBannerMessage : enemyTurnBannerMessage;
+        EnsureTurnBanner();
+        if (turnBannerRect)
+            turnBannerRect.SetAsLastSibling();
+
         if (turnBannerRoutine != null)
             StopCoroutine(turnBannerRoutine);
         turnBannerRoutine = StartCoroutine(Co_PlayTurnBanner(message));
@@ -621,6 +642,7 @@ public class TurnManager : MonoBehaviour
         if (!turnBannerRect || turnBannerText == null || turnBannerGroup == null)
             yield break;
 
+        turnBannerRect.SetAsLastSibling();
         turnBannerText.text = message ?? string.Empty;
         turnBannerText.color = turnBannerColor;
         turnBannerText.fontSize = turnBannerFontSize;

@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 public enum BattleTutorialAdvanceMode
 {
@@ -37,6 +38,8 @@ public static class BattleTutorialGate
     public static bool IsActive { get; private set; }
     public static BattleTutorialAdvanceMode Mode { get; private set; }
     public static BattleTutorialAction RequiredAction { get; private set; }
+    public static int LastInputConsumedFrame { get; private set; } = -1;
+    public static bool WasInputConsumedThisFrame => LastInputConsumedFrame == Time.frameCount;
 
     private static bool allowMenuNavigation;
     private static bool allowCardSelectionNavigation;
@@ -81,8 +84,16 @@ public static class BattleTutorialGate
         allowCancel = false;
     }
 
+    public static void MarkInputConsumedThisFrame()
+    {
+        LastInputConsumedFrame = Time.frameCount;
+    }
+
     public static bool Allows(BattleTutorialAction action)
     {
+        if (WasInputConsumedThisFrame)
+            return false;
+
         if (!IsActive)
             return true;
 
