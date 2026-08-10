@@ -252,6 +252,7 @@ public class StatePanelController : MonoBehaviour
     private void RefreshStateView()
     {
         ApplyHighlights();
+        EnsureStateHandsVisible();
         descriptionPanel?.EnterStateView(BuildCurrentStateText(), true, true, GetCurrentTargetFaction());
         UpdateSpeechBubble();
     }
@@ -301,6 +302,7 @@ public class StatePanelController : MonoBehaviour
             return;
 
         ResolveRefs();
+        EnsureStateHandsVisible();
 
         StateTarget target = targets[Mathf.Clamp(currentIndex, 0, targets.Count - 1)];
         handInspectFaction = target.faction;
@@ -340,6 +342,12 @@ public class StatePanelController : MonoBehaviour
             UpdateSpeechBubble();
 
         RefreshHandInspectText();
+    }
+
+    private void EnsureStateHandsVisible()
+    {
+        playerHand?.ShowCards();
+        enemyHand?.ShowAll();
     }
 
     private void ExitHandInspectMode(bool refreshStateView)

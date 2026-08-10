@@ -211,6 +211,8 @@ public class HandUI : MonoBehaviour
     public void ShowCards()
     {
         cardsVisible = true;
+        gameObject.SetActive(true);
+        RebuildFromRuntimeIfCardsMissing();
         for (int i = 0; i < spawned.Count; i++)
             if (spawned[i]) spawned[i].SetActive(true);
     }
@@ -242,6 +244,7 @@ public class HandUI : MonoBehaviour
 
     private void EnterSelectMode(bool readOnly, int startIndex, bool emphasizeReadOnlySelection)
     {
+        RebuildFromRuntimeIfCardsMissing();
         if (CardCount == 0) return;
 
         StopCardRiseAnimation(true);
@@ -253,6 +256,22 @@ public class HandUI : MonoBehaviour
         onSelectModeChanged?.Invoke(true);
 
         SetSelectIndexPublic(Mathf.Clamp(startIndex, 0, CardCount - 1)); // 오른쪽 끝부터
+    }
+
+    private void RebuildFromRuntimeIfCardsMissing()
+    {
+        if (spawned.Count > 0 && handIdsSnapshot.Count > 0)
+            return;
+
+        var rt = BattleDeckRuntime.Instance;
+        if (rt == null)
+            return;
+
+        var ids = rt.GetHandIds();
+        if (ids == null || ids.Count == 0)
+            return;
+
+        RebuildFromHand();
     }
 
     public void ExitSelectMode()
