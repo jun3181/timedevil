@@ -20,6 +20,8 @@ public class NPCPatroller : NPCMover, INPCMovement
     private static Rigidbody2D playerRigidbody2D;
     private static PlayerMove playerMove;
 
+    private Animator animator;
+
     public int PatrollerID { get; private set; }
 
     private Vector2 playerFirstPoint;
@@ -36,6 +38,8 @@ public class NPCPatroller : NPCMover, INPCMovement
 
         firstDestinationPoint = new(float.PositiveInfinity, float.PositiveInfinity);
         extraDestinationPoint = new(float.PositiveInfinity, float.PositiveInfinity);
+
+        animator = GetComponent<Animator>();
 
         if(player == null) {
             player = GameObject.FindWithTag("Player");
@@ -59,6 +63,8 @@ public class NPCPatroller : NPCMover, INPCMovement
             StopCoroutine(patrollingCoroutine);
         }
         ResetFields();
+
+        animator.SetBool("Moving", false);
     }
 
     public new void Idle() {
@@ -67,6 +73,8 @@ public class NPCPatroller : NPCMover, INPCMovement
             StopCoroutine(patrollingCoroutine);
             patrollingCoroutine = null;
         }
+
+        animator.SetBool("Moving", false);
     }
 
     private IEnumerator Patrol() {
@@ -83,14 +91,19 @@ public class NPCPatroller : NPCMover, INPCMovement
             Debug.Log($"{gameObject.name}의 좌표 {rb2d.position}");
             firstDestinationPoint = rb2d.position;
             firstDestinationPoint.x += xOffset;
-            Debug.Log(firstDestinationPoint);
+
+            animator.SetBool("Moving", true);
+            
             yield return MoveTo(firstDestinationPoint);
+            Debug.LogWarning("!1");
         } else {
+            animator.SetBool("Moving", true);
+
             yield return Resume();
+            Debug.LogWarning("!2");
         }
 
         float xDistance = Mathf.Abs(playerRigidbody2D.position.x - rb2d.position.x);
-        Debug.Log(disappearanceXDistance);
         if(xDistance>disappearanceXDistance) {
             ResetFields();
             gameObject.SetActive(false);
@@ -104,6 +117,7 @@ public class NPCPatroller : NPCMover, INPCMovement
         while(true) {
             extraDestinationPoint.x += xOffset;
             yield return MoveTo(extraDestinationPoint);
+            Debug.LogWarning("!3");
 
             xDistance = Mathf.Abs(playerRigidbody2D.position.x - rb2d.position.x);
             if(xDistance > disappearanceXDistance) {
@@ -121,5 +135,7 @@ public class NPCPatroller : NPCMover, INPCMovement
 
         firstDestinationPoint.x = float.PositiveInfinity;
         extraDestinationPoint.x = float.PositiveInfinity;
+
+        animator.SetBool("Moving", false);
     }
 }
