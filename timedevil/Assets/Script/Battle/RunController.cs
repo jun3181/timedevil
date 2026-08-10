@@ -42,6 +42,7 @@ public class RunController : MonoBehaviour
     public void OnRunPressed()
     {
         if (isReturning) return;
+        if (!BattleTutorialGate.Allows(BattleTutorialAction.RunPanelInteract)) return;
 
         var tm = FindObjectOfType<TurnManager>(true);
         if (tm)
@@ -49,6 +50,8 @@ public class RunController : MonoBehaviour
             if (tm.currentTurn != TurnState.PlayerTurn) return;
             if (tm.IsPlayerDiscardPhase) return;
         }
+        BattleTutorialGate.Report(BattleTutorialAction.RunPanelInteract);
+
         if (string.IsNullOrWhiteSpace(PlayerReturnContext.ReturnSceneName))
         {
             Debug.LogWarning("[RunController] 돌아갈 씬 정보가 없습니다.");

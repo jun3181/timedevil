@@ -4984,11 +4984,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   db: {fileID: 11400000, guid: e13b2b2f1c3ccab48851303d3588f4d9, type: 2}
-  itemInfos:
-  - itemSO: {fileID: 11400000, guid: e390458e198ca5c4faecf8eac3a3f7ac, type: 2}
-    quantity: 5
-  - itemSO: {fileID: 11400000, guid: b1dceafd8ffa2cb4cb22604a4cd9159f, type: 2}
-    quantity: 2
+  itemInfos: []
   beforeDialogue:
   - text: "\uC5B4? \uC774\uAC8C \uBB50\uC9C0?"
     speakerName: "\uB8E8\uC2DC"

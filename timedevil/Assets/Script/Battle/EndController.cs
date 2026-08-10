@@ -16,10 +16,15 @@ public class EndController : MonoBehaviour
 
         if (menu.Index == ResolveEndIndex() && Input.GetKeyDown(KeyCode.E))
         {
+            if (!BattleTutorialGate.Allows(BattleTutorialAction.EndPanelInteract)
+                && !BattleTutorialGate.Allows(BattleTutorialAction.TurnEnd))
+                return;
+
             if (TurnManager.Instance != null)
             {
                 //  먼저 강제 버림 단계 진입 시도
                 TurnManager.Instance.OnPlayerPressedEnd();
+                BattleTutorialGate.Report(BattleTutorialAction.EndPanelInteract);
             }
         }
     }

@@ -14,6 +14,8 @@ public class HPController : MonoBehaviour
     [Header("Player Defeat")]
     [SerializeField] private bool loadMyroomOnPlayerZeroHp = true;
     [SerializeField] private string myroomSceneName = "Myroom";
+    [SerializeField, TextArea] private string playerDefeatMessage = "HP reached 0. Press E to return to your room.";
+    [SerializeField] private KeyCode playerDefeatContinueKey = KeyCode.E;
 
     [Header("Enemy Defeat")]
     [SerializeField] private bool returnToPreviousSceneOnEnemyZeroHp = true;
@@ -22,6 +24,7 @@ public class HPController : MonoBehaviour
     public Faction CurrentDamageTarget { get; private set; } = Faction.Enemy;
 
     private HPUIBinder _hpUI;
+    private DescriptionPanelController _descriptionPanel;
     private bool playerDefeatLoadStarted;
     private bool enemyDefeatReturnStarted;
     public void InjectRefs(PlayerDataRuntime pdr, EnemyRuntime er, HPUIBinder binder = null)
@@ -177,10 +180,10 @@ public class HPController : MonoBehaviour
 
     private void HandlePlayerDefeat()
     {
-        if (playerDefeatTransitionStarted) return;
-        playerDefeatTransitionStarted = true;
+        if (!loadMyroomOnPlayerZeroHp || playerDefeatLoadStarted) return;
+        playerDefeatLoadStarted = true;
 
-        if (string.IsNullOrWhiteSpace(playerDefeatSceneName))
+        if (string.IsNullOrWhiteSpace(myroomSceneName))
         {
             Debug.LogWarning("[HPController] Player defeat scene name is empty.");
             return;
@@ -216,31 +219,21 @@ public class HPController : MonoBehaviour
         PlayerReturnContext.ClearReturnCore();
         MyroomEntryContext.SetRoom3();
 
-        Debug.Log($"[HPController] Player HP reached 0. Loading '{playerDefeatSceneName}' at Room3.");
+        Debug.Log($"[HPController] Player HP reached 0. Loading '{myroomSceneName}' at Room3.");
 
         var fader = FindObjectOfType<SceneFader>(true);
         if (fader != null)
         {
-            fader.LoadSceneWithFadeOut(playerDefeatSceneName);
+            fader.LoadSceneWithFadeOut(myroomSceneName);
             yield break;
         }
 
-        SceneLoader.Load(playerDefeatSceneName, useFaderIfExists: false);
+        SceneLoader.Load(myroomSceneName, useFaderIfExists: false);
     }
 
     public void BeginCardHitTest(Faction target)
     {
         CurrentDamageTarget = target;
-    }
-
-    // ---------- 리플렉션 보조 ----------
-    private void HandlePlayerDefeat()
-    {
-        if (!loadMyroomOnPlayerZeroHp || playerDefeatLoadStarted)
-            return;
-
-        playerDefeatLoadStarted = true;
-        SceneLoader.Load(myroomSceneName);
     }
 
     private void HandleEnemyDefeat()

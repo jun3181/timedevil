@@ -1038,6 +1038,8 @@ MonoBehaviour:
   enemyPawn: {fileID: 1064948988}
   loadMyroomOnPlayerZeroHp: 1
   myroomSceneName: Myroom
+  playerDefeatMessage: HP reached 0. Press E to return to your room.
+  playerDefeatContinueKey: 101
   returnToPreviousSceneOnEnemyZeroHp: 1
   enemyDefeatReturnGraceSeconds: 1
 --- !u!1 &443751346
@@ -1437,6 +1439,144 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 519244438}
   m_CullTransparentMesh: 1
+--- !u!1 &568051756
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 568051758}
+  - component: {fileID: 568051757}
+  - component: {fileID: 568051759}
+  m_Layer: 0
+  m_Name: tutorial
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!212 &568051757
+SpriteRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 568051756}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6,
+    type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 1, y: 1}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 1
+  m_MaskInteraction: 0
+  m_SpriteSortPoint: 0
+--- !u!4 &568051758
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 568051756}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.15, y: -3.3, z: 0}
+  m_LocalScale: {x: 1.4212905, y: 1.4052904, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &568051759
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 568051756}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e64379afad5408fbeba8ab390bfb9e9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  autoStart: 1
+  playOnlyOnce: 0
+  playerPrefsKey: BattleTutorial_Default_Seen
+  steps:
+  - message: 123123
+    windowAnchoredPosition: {x: 0, y: 0}
+    windowSize: {x: 23.24, y: 38.31}
+    advanceMode: 0
+    requiredAction: 0
+    allowMenuNavigation: 0
+    allowCardSelectionNavigation: 0
+    allowStateNavigation: 0
+    allowCancelInput: 0
+    endTutorialAfterStep: 0
+    nextStepIndex: 0
+  - message: 333
+    windowAnchoredPosition: {x: 21.44, y: 0}
+    windowSize: {x: 23.24, y: 38.31}
+    advanceMode: 1
+    requiredAction: 3
+    allowMenuNavigation: 1
+    allowCardSelectionNavigation: 0
+    allowStateNavigation: 0
+    allowCancelInput: 0
+    endTutorialAfterStep: 0
+    nextStepIndex: 0
+  continueKey: 101
+  targetCanvas: {fileID: 0}
+  root: {fileID: 0}
+  rootGroup: {fileID: 0}
+  blocker: {fileID: 0}
+  window: {fileID: 0}
+  messageText: {fileID: 0}
+  createUiIfMissing: 1
+  forceDedicatedRuntimeUi: 1
+  blockerColor: {r: 0, g: 0, b: 0, a: 0.22}
+  windowColor: {r: 0.06, g: 0.07, b: 0.08, a: 0.94}
+  textColor: {r: 1, g: 1, b: 1, a: 1}
+  fontSize: 28
+  textPadding: {x: 28, y: 20, z: 28, w: 20}
 --- !u!1 &577577515
 GameObject:
   m_ObjectHideFlags: 0
@@ -1817,6 +1957,9 @@ MonoBehaviour:
   desc: {fileID: 1069897052}
   enemyHandUI: {fileID: 133108826}
   enemyHandRect: {fileID: 133108822}
+  enemyRuntime: {fileID: 0}
+  stateEnemyRenderer: {fileID: 0}
+  gameplayEnemyRenderer: {fileID: 0}
   drawController: {fileID: 1201525411}
   moveController: {fileID: 1201525410}
   attackController: {fileID: 0}
@@ -5862,6 +6005,8 @@ MonoBehaviour:
   separatedHandRootName: hand01
   panelControllerOwnsPlayerActivePosition: 1
   enemyTurnControllerOwnsEnemyTurnHand: 1
+  showPlayerHandPreviewOnCardFocus: 0
+  showEnemyHandPreviewOnEndFocus: 0
   playerPreviewAnchoredPosition: {x: -280, y: -250}
   enemyPreviewAnchoredPosition: {x: 280, y: -250}
   playerActiveAnchoredPosition: {x: -280, y: -385}
@@ -11694,8 +11839,8 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: -0.01, y: 0.55, z: 0}
-  m_LocalScale: {x: 1.7676, y: 1.7676, z: 1.7676}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 1.08, y: 1.08, z: 1.08}
+  m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 1064948988}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -11969,6 +12114,8 @@ GameObject:
   - component: {fileID: 2043066779}
   - component: {fileID: 2043066781}
   - component: {fileID: 2043066782}
+  - component: {fileID: 2043066783}
+  - component: {fileID: 2043066784}
   m_Layer: 0
   m_Name: TurnManager
   m_TagString: Untagged
@@ -12083,6 +12230,993 @@ MonoBehaviour:
   runIndex: 4
   graceSeconds: 1
   worldVcamName: CM vcam1
+--- !u!114 &2043066783
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2043066778}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a24413ad9c94af3a7d73b17439f851a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playOnStart: 0
+  startDialogue:
+    defaultSpeakerName: 
+    defaultLeftPortrait: {fileID: 0}
+    defaultRightPortrait: {fileID: 0}
+    lines: []
+  advanceKey: 101
+  lockBattleInputWhileActive: 1
+  createTutorialControllerIfMissing: 1
+  targetCanvas: {fileID: 169161171}
+  root: {fileID: 0}
+  rootGroup: {fileID: 0}
+  window: {fileID: 0}
+  nameText: {fileID: 0}
+  dialogueText: {fileID: 0}
+  leftPortraitImage: {fileID: 0}
+  rightPortraitImage: {fileID: 0}
+  createUiIfMissing: 1
+  windowAnchoredPosition: {x: 0, y: 58}
+  windowSize: {x: 1180, y: 220}
+  windowColor: {r: 0.04, g: 0.045, b: 0.055, a: 0.95}
+  nameTextColor: {r: 0.95, g: 0.9, b: 0.72, a: 1}
+  dialogueTextColor: {r: 1, g: 1, b: 1, a: 1}
+  nameFontSize: 30
+  dialogueFontSize: 28
+  dimInactivePortrait: 1
+  activePortraitAlpha: 1
+  inactivePortraitAlpha: 0.35
+  useTypewriter: 1
+  charactersPerSecond: 38
+  punctuationExtraDelay: 0.08
+  lineAdvanceLockSeconds: 0.08
+--- !u!114 &2043066784
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2043066778}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: acbf799a45874eab84f67332e75d286d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  autoStart: 1
+  playOnlyOnce: 0
+  playerPrefsKey: BattleTutorialScenario_Seen
+  controlBattleStart: 1
+  turnManager: {fileID: 0}
+  dialogueController: {fileID: 0}
+  tutorialController: {fileID: 0}
+  menu: {fileID: 0}
+  cardUseOrchestrator: {fileID: 0}
+  scenarioSteps:
+  - label: Lock input for intro
+    type: 2
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 0
+  - label: Intro dialogue
+    type: 0
+    dialogue:
+      defaultSpeakerName: lucy
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines:
+      - text: "\uC800\uAC8C... \uBB50\uC57C?"
+        speakerName: 
+        leftPortrait: {fileID: 0}
+        rightPortrait: {fileID: 0}
+        focus: 0
+        lineTutorial:
+          enabled: 0
+          message: 
+          windowAnchoredPosition: {x: 0, y: 120}
+          windowSize: {x: 720, y: 220}
+        advanceTutorial:
+          enabled: 0
+          message: 
+          windowAnchoredPosition: {x: 0, y: 120}
+          windowSize: {x: 720, y: 220}
+      - text: "\uC774\uCABD\uC73C\uB85C \uC624\uACE0 \uC788\uC5B4...!"
+        speakerName: 
+        leftPortrait: {fileID: 0}
+        rightPortrait: {fileID: 0}
+        focus: 0
+        lineTutorial:
+          enabled: 0
+          message: 
+          windowAnchoredPosition: {x: 0, y: 120}
+          windowSize: {x: 720, y: 220}
+        advanceTutorial:
+          enabled: 0
+          message: 
+          windowAnchoredPosition: {x: 0, y: 120}
+          windowSize: {x: 720, y: 220}
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Start enemy turn
+    type: 3
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Wait for first player turn
+    type: 5
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Lock input before first explanation
+    type: 2
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 0
+  - label: After first enemy turn dialogue
+    type: 0
+    dialogue:
+      defaultSpeakerName: ???
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines:
+      - text: test
+        speakerName: ???
+        leftPortrait: {fileID: 0}
+        rightPortrait: {fileID: 0}
+        focus: 0
+        lineTutorial:
+          enabled: 0
+          message: 
+          windowAnchoredPosition: {x: 0, y: 120}
+          windowSize: {x: 720, y: 220}
+        advanceTutorial:
+          enabled: 0
+          message: 
+          windowAnchoredPosition: {x: 0, y: 120}
+          windowSize: {x: 720, y: 220}
+      - text: test
+        speakerName: ???
+        leftPortrait: {fileID: 0}
+        rightPortrait: {fileID: 0}
+        focus: 0
+        lineTutorial:
+          enabled: 0
+          message: 
+          windowAnchoredPosition: {x: 0, y: 120}
+          windowSize: {x: 720, y: 220}
+        advanceTutorial:
+          enabled: 0
+          message: 
+          windowAnchoredPosition: {x: 0, y: 120}
+          windowSize: {x: 720, y: 220}
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Enable state panel input
+    type: 2
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: State panel prompt
+    type: 1
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: "\uC88C\uC6B0 \uBC29\uD5A5\uD0A4\uB85C State \uD328\uB110\uC744 \uC120\uD0DD\uD558\uACE0
+        E\uB85C \uC0C1\uD0DC\uCC3D\uC744 \uC5EC\uC138\uC694."
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 5
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 0
+      allowStateNavigation: 0
+      allowCancelInput: 0
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: State hand inspect prompt
+    type: 1
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: "\uC0C1\uD0DC\uCC3D\uC5D0\uC11C\uB294 \uC801\uACFC \uC544\uAD70\uC744
+        \uD655\uC778\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4. E\uB97C \uB20C\uB7EC
+        \uC120\uD0DD\uD55C \uB300\uC0C1\uC758 \uC190\uD328\uB97C \uD06C\uAC8C \uD655\uC778\uD558\uC138\uC694."
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 15
+      allowMenuNavigation: 0
+      allowCardSelectionNavigation: 0
+      allowStateNavigation: 1
+      allowCancelInput: 0
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Close state hand prompt
+    type: 1
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: "\uC190\uD328 \uD655\uC778\uC744 \uB9C8\uCCE4\uB2E4\uBA74 Q\uB85C
+        \uD655\uB300\uB41C \uC190\uD328\uB97C \uB2EB\uC73C\uC138\uC694."
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 17
+      allowMenuNavigation: 0
+      allowCardSelectionNavigation: 0
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Close state panel prompt
+    type: 1
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: "\uD55C \uBC88 \uB354 Q\uB97C \uB20C\uB7EC State \uD328\uB110\uC744
+        \uB2EB\uACE0 \uC804\uD22C \uBA54\uB274\uB85C \uB3CC\uC544\uAC00\uC138\uC694."
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 17
+      allowMenuNavigation: 0
+      allowCardSelectionNavigation: 0
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Lock input before card dialogue
+    type: 2
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 0
+  - label: Before card use dialogue
+    type: 0
+    dialogue:
+      defaultSpeakerName: ???
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines:
+      - text: test
+        speakerName: 
+        leftPortrait: {fileID: 0}
+        rightPortrait: {fileID: 0}
+        focus: 0
+        lineTutorial:
+          enabled: 0
+          message: 
+          windowAnchoredPosition: {x: 0, y: 120}
+          windowSize: {x: 720, y: 220}
+        advanceTutorial:
+          enabled: 0
+          message: 
+          windowAnchoredPosition: {x: 0, y: 120}
+          windowSize: {x: 720, y: 220}
+      - text: test
+        speakerName: 
+        leftPortrait: {fileID: 0}
+        rightPortrait: {fileID: 0}
+        focus: 0
+        lineTutorial:
+          enabled: 0
+          message: 
+          windowAnchoredPosition: {x: 0, y: 120}
+          windowSize: {x: 720, y: 220}
+        advanceTutorial:
+          enabled: 0
+          message: 
+          windowAnchoredPosition: {x: 0, y: 120}
+          windowSize: {x: 720, y: 220}
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Enable card panel input
+    type: 2
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Card panel interaction prompt
+    type: 1
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: "Card \uD328\uB110\uC744 \uC120\uD0DD\uD558\uACE0 E\uB97C \uB20C\uB7EC
+        \uC190\uD328\uB97C \uD3BC\uCE58\uC138\uC694."
+      windowAnchoredPosition: {x: -360, y: 210}
+      windowSize: {x: 760, y: 170}
+      requiredAction: 3
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 0
+      allowStateNavigation: 0
+      allowCancelInput: 0
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Card selection prompt
+    type: 1
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: "\uC190\uD328\uAC00 \uBCF4\uC774\uBA74 E\uB97C \uD55C \uBC88 \uB354
+        \uB20C\uB7EC \uCE74\uB4DC \uC120\uD0DD \uC0C1\uD0DC\uB85C \uB4E4\uC5B4\uAC00\uC138\uC694."
+      windowAnchoredPosition: {x: -360, y: 300}
+      windowSize: {x: 760, y: 170}
+      requiredAction: 8
+      allowMenuNavigation: 0
+      allowCardSelectionNavigation: 0
+      allowStateNavigation: 0
+      allowCancelInput: 0
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Card use prompt
+    type: 1
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: "Card \uD328\uB110\uC744 \uC120\uD0DD\uD574 E\uB97C \uB204\uB978 \uB4A4,
+        \uC190\uD328\uC5D0\uC11C \uC0AC\uC6A9\uD560 \uCE74\uB4DC\uB97C \uACE8\uB77C
+        E\uB85C \uC0AC\uC6A9\uD558\uC138\uC694."
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 10
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 0
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Wait for card use to settle
+    type: 6
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Lock input before end turn dialogue
+    type: 2
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 0
+  - label: Before end turn dialogue
+    type: 0
+    dialogue:
+      defaultSpeakerName: ???
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines:
+      - text: "\uC774\uC81C \uB354 \uC774\uC0C1 \uD560 \uAC8C \uC5C6\uB294\uB370..."
+        speakerName: 
+        leftPortrait: {fileID: 0}
+        rightPortrait: {fileID: 0}
+        focus: 0
+        lineTutorial:
+          enabled: 0
+          message: 
+          windowAnchoredPosition: {x: 0, y: 120}
+          windowSize: {x: 720, y: 220}
+        advanceTutorial:
+          enabled: 0
+          message: 
+          windowAnchoredPosition: {x: 0, y: 120}
+          windowSize: {x: 720, y: 220}
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Enable end turn input
+    type: 2
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: End turn prompt
+    type: 1
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: "\uC190\uD328 \uC120\uD0DD \uC911\uC774\uB77C\uBA74 Q\uB85C \uB2EB\uACE0,
+        End \uD328\uB110\uC744 \uC120\uD0DD\uD55C \uB4A4 E\uB85C \uD134\uC744 \uC885\uB8CC\uD558\uC138\uC694."
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 13
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 0
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Wait for second enemy turn
+    type: 5
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 1
+    menuInputEnabled: 1
+  - label: Wait for second player turn
+    type: 5
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Lock input before run dialogue
+    type: 2
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 0
+  - label: Before run dialogue
+    type: 0
+    dialogue:
+      defaultSpeakerName: ???
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines:
+      - text: "\uC5EC\uAE34 \uB108\uBB34 \uC704\uD5D8\uD574...."
+        speakerName: 
+        leftPortrait: {fileID: 0}
+        rightPortrait: {fileID: 0}
+        focus: 0
+        lineTutorial:
+          enabled: 0
+          message: 
+          windowAnchoredPosition: {x: 0, y: 120}
+          windowSize: {x: 720, y: 220}
+        advanceTutorial:
+          enabled: 0
+          message: 
+          windowAnchoredPosition: {x: 0, y: 120}
+          windowSize: {x: 720, y: 220}
+      - text: "\uC9C0\uAE08\uC740 \uB3C4\uB9DD\uCCD0\uC57C\uACA0\uC5B4."
+        speakerName: 
+        leftPortrait: {fileID: 0}
+        rightPortrait: {fileID: 0}
+        focus: 0
+        lineTutorial:
+          enabled: 0
+          message: 
+          windowAnchoredPosition: {x: 0, y: 120}
+          windowSize: {x: 720, y: 220}
+        advanceTutorial:
+          enabled: 0
+          message: 
+          windowAnchoredPosition: {x: 0, y: 120}
+          windowSize: {x: 720, y: 220}
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Enable run input
+    type: 2
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Run prompt
+    type: 1
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: "Run \uD328\uB110\uC744 \uC120\uD0DD\uD558\uACE0 E\uB97C \uB20C\uB7EC
+        \uC804\uD22C\uC5D0\uC11C \uB3C4\uB9DD\uCE58\uC138\uC694."
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 7
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 0
+      allowStateNavigation: 0
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Mark tutorial seen
+    type: 7
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  scenarioStepsInitialized: 1
+  introDialogue:
+    defaultSpeakerName: ???
+    defaultLeftPortrait: {fileID: 0}
+    defaultRightPortrait: {fileID: 0}
+    lines:
+    - text: "\uC800\uAC8C... \uBB50\uC57C?"
+      speakerName: 
+      leftPortrait: {fileID: 0}
+      rightPortrait: {fileID: 0}
+      focus: 0
+      lineTutorial:
+        enabled: 0
+        message: 
+        windowAnchoredPosition: {x: 0, y: 120}
+        windowSize: {x: 720, y: 220}
+      advanceTutorial:
+        enabled: 0
+        message: 
+        windowAnchoredPosition: {x: 0, y: 120}
+        windowSize: {x: 720, y: 220}
+    - text: "\uC774\uCABD\uC73C\uB85C \uC624\uACE0 \uC788\uC5B4...!"
+      speakerName: 
+      leftPortrait: {fileID: 0}
+      rightPortrait: {fileID: 0}
+      focus: 0
+      lineTutorial:
+        enabled: 0
+        message: 
+        windowAnchoredPosition: {x: 0, y: 120}
+        windowSize: {x: 720, y: 220}
+      advanceTutorial:
+        enabled: 0
+        message: 
+        windowAnchoredPosition: {x: 0, y: 120}
+        windowSize: {x: 720, y: 220}
+  afterFirstEnemyTurnDialogue:
+    defaultSpeakerName: ???
+    defaultLeftPortrait: {fileID: 0}
+    defaultRightPortrait: {fileID: 0}
+    lines:
+    - text: test
+      speakerName: ???
+      leftPortrait: {fileID: 0}
+      rightPortrait: {fileID: 0}
+      focus: 0
+      lineTutorial:
+        enabled: 0
+        message: 
+        windowAnchoredPosition: {x: 0, y: 120}
+        windowSize: {x: 720, y: 220}
+      advanceTutorial:
+        enabled: 0
+        message: 
+        windowAnchoredPosition: {x: 0, y: 120}
+        windowSize: {x: 720, y: 220}
+    - text: test
+      speakerName: ???
+      leftPortrait: {fileID: 0}
+      rightPortrait: {fileID: 0}
+      focus: 0
+      lineTutorial:
+        enabled: 0
+        message: 
+        windowAnchoredPosition: {x: 0, y: 120}
+        windowSize: {x: 720, y: 220}
+      advanceTutorial:
+        enabled: 0
+        message: 
+        windowAnchoredPosition: {x: 0, y: 120}
+        windowSize: {x: 720, y: 220}
+  beforeCardUseDialogue:
+    defaultSpeakerName: ???
+    defaultLeftPortrait: {fileID: 0}
+    defaultRightPortrait: {fileID: 0}
+    lines:
+    - text: test
+      speakerName: 
+      leftPortrait: {fileID: 0}
+      rightPortrait: {fileID: 0}
+      focus: 0
+      lineTutorial:
+        enabled: 0
+        message: 
+        windowAnchoredPosition: {x: 0, y: 120}
+        windowSize: {x: 720, y: 220}
+      advanceTutorial:
+        enabled: 0
+        message: 
+        windowAnchoredPosition: {x: 0, y: 120}
+        windowSize: {x: 720, y: 220}
+    - text: test
+      speakerName: 
+      leftPortrait: {fileID: 0}
+      rightPortrait: {fileID: 0}
+      focus: 0
+      lineTutorial:
+        enabled: 0
+        message: 
+        windowAnchoredPosition: {x: 0, y: 120}
+        windowSize: {x: 720, y: 220}
+      advanceTutorial:
+        enabled: 0
+        message: 
+        windowAnchoredPosition: {x: 0, y: 120}
+        windowSize: {x: 720, y: 220}
+  beforeEndTurnDialogue:
+    defaultSpeakerName: ???
+    defaultLeftPortrait: {fileID: 0}
+    defaultRightPortrait: {fileID: 0}
+    lines:
+    - text: "\uC774\uC81C \uB354 \uC774\uC0C1 \uD560 \uAC8C \uC5C6\uB294\uB370..."
+      speakerName: 
+      leftPortrait: {fileID: 0}
+      rightPortrait: {fileID: 0}
+      focus: 0
+      lineTutorial:
+        enabled: 0
+        message: 
+        windowAnchoredPosition: {x: 0, y: 120}
+        windowSize: {x: 720, y: 220}
+      advanceTutorial:
+        enabled: 0
+        message: 
+        windowAnchoredPosition: {x: 0, y: 120}
+        windowSize: {x: 720, y: 220}
+  beforeRunDialogue:
+    defaultSpeakerName: ???
+    defaultLeftPortrait: {fileID: 0}
+    defaultRightPortrait: {fileID: 0}
+    lines:
+    - text: "\uC5EC\uAE34 \uB108\uBB34 \uC704\uD5D8\uD574...."
+      speakerName: 
+      leftPortrait: {fileID: 0}
+      rightPortrait: {fileID: 0}
+      focus: 0
+      lineTutorial:
+        enabled: 0
+        message: 
+        windowAnchoredPosition: {x: 0, y: 120}
+        windowSize: {x: 720, y: 220}
+      advanceTutorial:
+        enabled: 0
+        message: 
+        windowAnchoredPosition: {x: 0, y: 120}
+        windowSize: {x: 720, y: 220}
+    - text: "\uC9C0\uAE08\uC740 \uB3C4\uB9DD\uCCD0\uC57C\uACA0\uC5B4."
+      speakerName: 
+      leftPortrait: {fileID: 0}
+      rightPortrait: {fileID: 0}
+      focus: 0
+      lineTutorial:
+        enabled: 0
+        message: 
+        windowAnchoredPosition: {x: 0, y: 120}
+        windowSize: {x: 720, y: 220}
+      advanceTutorial:
+        enabled: 0
+        message: 
+        windowAnchoredPosition: {x: 0, y: 120}
+        windowSize: {x: 720, y: 220}
+  statePanelPrompt:
+    message: "\uC88C\uC6B0 \uBC29\uD5A5\uD0A4\uB85C State \uD328\uB110\uC744 \uC120\uD0DD\uD558\uACE0
+      E\uB85C \uC0C1\uD0DC\uCC3D\uC744 \uC5EC\uC138\uC694."
+    windowAnchoredPosition: {x: 0, y: 180}
+    windowSize: {x: 760, y: 180}
+    requiredAction: 5
+    allowMenuNavigation: 1
+    allowCardSelectionNavigation: 0
+    allowStateNavigation: 0
+    allowCancelInput: 0
+  stateHandInspectPrompt:
+    message: "\uC0C1\uD0DC\uCC3D\uC5D0\uC11C\uB294 \uC801\uACFC \uC544\uAD70\uC744
+      \uD655\uC778\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4. E\uB97C \uB20C\uB7EC \uC120\uD0DD\uD55C
+      \uB300\uC0C1\uC758 \uC190\uD328\uB97C \uD06C\uAC8C \uD655\uC778\uD558\uC138\uC694."
+    windowAnchoredPosition: {x: 0, y: 180}
+    windowSize: {x: 760, y: 180}
+    requiredAction: 15
+    allowMenuNavigation: 0
+    allowCardSelectionNavigation: 0
+    allowStateNavigation: 1
+    allowCancelInput: 0
+  closeStateHandPrompt:
+    message: "\uC190\uD328 \uD655\uC778\uC744 \uB9C8\uCCE4\uB2E4\uBA74 Q\uB85C \uD655\uB300\uB41C
+      \uC190\uD328\uB97C \uB2EB\uC73C\uC138\uC694."
+    windowAnchoredPosition: {x: 0, y: 180}
+    windowSize: {x: 760, y: 180}
+    requiredAction: 17
+    allowMenuNavigation: 0
+    allowCardSelectionNavigation: 0
+    allowStateNavigation: 1
+    allowCancelInput: 1
+  closeStatePanelPrompt:
+    message: "\uD55C \uBC88 \uB354 Q\uB97C \uB20C\uB7EC State \uD328\uB110\uC744
+      \uB2EB\uACE0 \uC804\uD22C \uBA54\uB274\uB85C \uB3CC\uC544\uAC00\uC138\uC694."
+    windowAnchoredPosition: {x: 0, y: 180}
+    windowSize: {x: 760, y: 180}
+    requiredAction: 17
+    allowMenuNavigation: 0
+    allowCardSelectionNavigation: 0
+    allowStateNavigation: 1
+    allowCancelInput: 1
+  cardPanelPrompt:
+    message: "Card \uD328\uB110\uC744 \uC120\uD0DD\uD558\uACE0 E\uB97C \uB20C\uB7EC
+      \uC190\uD328\uB97C \uD3BC\uCE58\uC138\uC694."
+    windowAnchoredPosition: {x: -360, y: 210}
+    windowSize: {x: 760, y: 170}
+    requiredAction: 3
+    allowMenuNavigation: 1
+    allowCardSelectionNavigation: 0
+    allowStateNavigation: 0
+    allowCancelInput: 0
+  cardSelectPrompt:
+    message: "\uC190\uD328\uAC00 \uBCF4\uC774\uBA74 E\uB97C \uD55C \uBC88 \uB354
+      \uB20C\uB7EC \uCE74\uB4DC \uC120\uD0DD \uC0C1\uD0DC\uB85C \uB4E4\uC5B4\uAC00\uC138\uC694."
+    windowAnchoredPosition: {x: -360, y: 300}
+    windowSize: {x: 760, y: 170}
+    requiredAction: 8
+    allowMenuNavigation: 0
+    allowCardSelectionNavigation: 0
+    allowStateNavigation: 0
+    allowCancelInput: 0
+  cardUsePrompt:
+    message: "Card \uD328\uB110\uC744 \uC120\uD0DD\uD574 E\uB97C \uB204\uB978 \uB4A4,
+      \uC190\uD328\uC5D0\uC11C \uC0AC\uC6A9\uD560 \uCE74\uB4DC\uB97C \uACE8\uB77C
+      E\uB85C \uC0AC\uC6A9\uD558\uC138\uC694."
+    windowAnchoredPosition: {x: 0, y: 180}
+    windowSize: {x: 760, y: 180}
+    requiredAction: 10
+    allowMenuNavigation: 1
+    allowCardSelectionNavigation: 1
+    allowStateNavigation: 0
+    allowCancelInput: 1
+  endTurnPrompt:
+    message: "\uC190\uD328 \uC120\uD0DD \uC911\uC774\uB77C\uBA74 Q\uB85C \uB2EB\uACE0,
+      End \uD328\uB110\uC744 \uC120\uD0DD\uD55C \uB4A4 E\uB85C \uD134\uC744 \uC885\uB8CC\uD558\uC138\uC694."
+    windowAnchoredPosition: {x: 0, y: 180}
+    windowSize: {x: 760, y: 180}
+    requiredAction: 13
+    allowMenuNavigation: 1
+    allowCardSelectionNavigation: 1
+    allowStateNavigation: 0
+    allowCancelInput: 1
+  runPrompt:
+    message: "Run \uD328\uB110\uC744 \uC120\uD0DD\uD558\uACE0 E\uB97C \uB20C\uB7EC
+      \uC804\uD22C\uC5D0\uC11C \uB3C4\uB9DD\uCE58\uC138\uC694."
+    windowAnchoredPosition: {x: 0, y: 180}
+    windowSize: {x: 760, y: 180}
+    requiredAction: 7
+    allowMenuNavigation: 1
+    allowCardSelectionNavigation: 0
+    allowStateNavigation: 0
+    allowCancelInput: 1
 --- !u!1 &2047237470
 GameObject:
   m_ObjectHideFlags: 0
@@ -12786,3 +13920,5 @@ SceneRoots:
   - {fileID: 2097723557}
   - {fileID: 598643973}
   - {fileID: 1911001729}
+  - {fileID: 1754859556}
+  - {fileID: 568051758}

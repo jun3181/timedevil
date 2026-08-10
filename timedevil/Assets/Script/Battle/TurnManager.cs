@@ -176,6 +176,9 @@ public class TurnManager : MonoBehaviour
             }
         }
 
+        if (TryStartBattleTutorialScenario())
+            return;
+
         //  Move_Tutorial이면 인트로 우선 검사 (한 번만)
         if (IsMoveTutorial() && moveTutorialIntro && ShouldPlayIntroNow())
         {
@@ -220,6 +223,9 @@ public class TurnManager : MonoBehaviour
         while (uiSequence != null && uiSequence.IsPlayingSequence)
             yield return null;
 
+        if (TryStartBattleTutorialScenario())
+            yield break;
+
         if (moveTutorialIntro && ShouldPlayIntroNow())
         {
             Debug.Log("[TurnManager] Move_Tutorial intro start (after UiSequencePlayer)");
@@ -227,7 +233,32 @@ public class TurnManager : MonoBehaviour
             yield break;
         }
 
-        DecideFirstTurn();
+        if (!TryStartBattleTutorialScenario())
+            DecideFirstTurn();
+    }
+
+    private bool TryStartBattleTutorialScenario()
+    {
+        var scenario = ResolveBattleTutorialScenario();
+
+        if (scenario == null || !scenario.ShouldControlBattleStart)
+            return false;
+
+        scenario.BeginControlledBattleStart(this);
+        return true;
+    }
+
+    private bool HasBattleTutorialScenarioControl()
+    {
+        var scenario = ResolveBattleTutorialScenario();
+        return scenario != null && scenario.ShouldControlBattleStart;
+    }
+
+    private BattleTutorialScenarioController ResolveBattleTutorialScenario()
+    {
+        return BattleTutorialScenarioController.Instance
+            ? BattleTutorialScenarioController.Instance
+            : FindObjectOfType<BattleTutorialScenarioController>(true);
     }
 
     void ResolvePlayerData()
@@ -361,7 +392,7 @@ public class TurnManager : MonoBehaviour
         Debug.Log(" 적 턴 종료");
 
         //  게이트도 "씬 시작마다 1회" (Start()에서 플래그를 지우기 때문에 항상 실행됨)
-        if (moveTutorialGate && IsMoveTutorial() && ShouldPlayGateNow())
+        if (moveTutorialGate && IsMoveTutorial() && !HasBattleTutorialScenarioControl() && ShouldPlayGateNow())
         {
             if (menu) menu.EnableInput(false);
             yield return StartCoroutine(Co_MoveTutorialGate());
@@ -431,6 +462,7 @@ public class TurnManager : MonoBehaviour
         if (currentTurn != TurnState.PlayerTurn) return;
         Debug.Log("[TurnManager] Player action committed → EnemyTurn");
         BeginEnemyTurn();
+        BattleTutorialGate.Report(BattleTutorialAction.TurnEnd);
     }
 
     private System.Collections.IEnumerator Co_RevealPlayerInitialAfterFrame()
@@ -609,6 +641,10 @@ public class TurnManager : MonoBehaviour
     {
         if (!showTurnBanner) return;
         string message = state == TurnState.PlayerTurn ? playerTurnBannerMessage : enemyTurnBannerMessage;
+        EnsureTurnBanner();
+        if (turnBannerRect)
+            turnBannerRect.SetAsLastSibling();
+
         if (turnBannerRoutine != null)
             StopCoroutine(turnBannerRoutine);
         turnBannerRoutine = StartCoroutine(Co_PlayTurnBanner(message));
@@ -620,6 +656,7 @@ public class TurnManager : MonoBehaviour
         if (!turnBannerRect || turnBannerText == null || turnBannerGroup == null)
             yield break;
 
+        turnBannerRect.SetAsLastSibling();
         turnBannerText.text = message ?? string.Empty;
         turnBannerText.color = turnBannerColor;
         turnBannerText.fontSize = turnBannerFontSize;
