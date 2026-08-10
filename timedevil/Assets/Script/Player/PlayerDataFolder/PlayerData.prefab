@@ -45,13 +45,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   saveOnDisable: 0
-  saveOnQuit: 1
+  saveOnQuit: 0
   Data:
     playerName: Player
-    maxHP: 60
-    currentHP: 60
+    maxHP: 20
+    currentHP: 20
     attack: 10
     defense: 5
-    speed: 10
+    speed: 5
     emotionPositive: 0
     emotionNegative: 0

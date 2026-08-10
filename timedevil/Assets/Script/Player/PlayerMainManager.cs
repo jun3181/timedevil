@@ -74,13 +74,15 @@ public class PlayerMainManager : MonoBehaviour
             // 메뉴 닫기: Q 또는 W
             if (Input.GetKeyDown(keyMenu) || Input.GetKeyDown(keyBackOrReserved))
             {
-                if (debugLog) Debug.Log("[PlayerMainManager] MENU CLOSE by Q/W");
-                menu.Close();
+                if (debugLog) Debug.Log("[PlayerMainManager] MENU BACK/CLOSE by Q/W");
+                menu.BackOrClose();
                 return;
             }
 
-            if (Input.GetKeyDown(KeyCode.UpArrow)) menu.Navigate(-1);
-            if (Input.GetKeyDown(KeyCode.DownArrow)) menu.Navigate(+1);
+            if (Input.GetKeyDown(KeyCode.UpArrow)) menu.NavigateVertical(-1);
+            if (Input.GetKeyDown(KeyCode.DownArrow)) menu.NavigateVertical(+1);
+            if (Input.GetKeyDown(KeyCode.LeftArrow)) menu.NavigateHorizontal(-1);
+            if (Input.GetKeyDown(KeyCode.RightArrow)) menu.NavigateHorizontal(+1);
 
             if (Input.GetKeyDown(keyInteractOrSubmit)) menu.SubmitCurrent();
             return;

@@ -34,8 +34,12 @@ public class SceneCameraBootstrap : MonoBehaviour
             if (pm) followTarget = pm.transform;
         }
 
+        float effectiveOrthoSize = orthoSize;
+        if (SceneStartCameraContext.TryConsume(gameObject.scene.name, out float overrideOrthoSize))
+            effectiveOrthoSize = overrideOrthoSize;
+
         // orthoSize가 0 이하이면 CameraManager 기본값을 사용한다.
-        float? size = (orthoSize > 0f) ? orthoSize : (float?)null;
+        float? size = (effectiveOrthoSize > 0f) ? effectiveOrthoSize : (float?)null;
 
         switch (startMode)
         {
