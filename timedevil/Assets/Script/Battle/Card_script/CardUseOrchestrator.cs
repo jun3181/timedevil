@@ -12,6 +12,7 @@ public class CardUseOrchestrator : MonoBehaviour
     [SerializeField] private CostController costController;
 
     [Header("Preview")]
+    [SerializeField] private bool showCardPreviewEnabled = false;
     [SerializeField] private ShowCardController showCard;
     [SerializeField] private float totalSeconds = 3f;   // 페이드 포함 총 시간
 
@@ -44,17 +45,53 @@ public class CardUseOrchestrator : MonoBehaviour
         if (!PanelController) PanelController = FindObjectOfType<PanelController>(true);
         if (!showCard) showCard = FindObjectOfType<ShowCardController>(true);
         if (!desc) desc = FindObjectOfType<DescriptionPanelController>(true);
+        if (!attackController) attackController = FindObjectOfType<AttackController>(true);
 
         if (logDebug && !desc)
             Debug.LogWarning("[Orchestrator] DescriptionPanelController not found. Explanation won't show.");
     }
 
+    void OnDisable()
+    {
+        ClearSelectedAttackWarning();
+    }
+
     public void UseCurrentSelected()
     {
+        if (!BattleTutorialGate.Allows(BattleTutorialAction.CardUse)) return;
         if (busy || hand == null || !hand.IsInSelectMode) return;
         int idx = hand.CurrentSelectIndex;
         if (idx < 0 || idx >= hand.CardCount) return;
+        ClearSelectedAttackWarning();
         StartCoroutine(Co_UseWithExactTiming(idx));
+    }
+
+    public void RefreshSelectedAttackWarning()
+    {
+        if (hand == null || !hand.IsInSelectMode || attackController == null)
+        {
+            ClearSelectedAttackWarning();
+            return;
+        }
+
+        int idx = hand.CurrentSelectIndex;
+        if (idx < 0 || idx >= hand.CardCount)
+        {
+            ClearSelectedAttackWarning();
+            return;
+        }
+
+        string id = hand.GetVisibleIdAt(idx);
+        var so = database ? database.GetById(id) : null;
+        if (so is AttackCardSO attackCard)
+            attackController.ShowPreviewWarning(attackCard, Faction.Enemy);
+        else
+            ClearSelectedAttackWarning();
+    }
+
+    public void ClearSelectedAttackWarning()
+    {
+        attackController?.ClearPreviewWarning();
     }
 
     /// <summary>
@@ -90,14 +127,18 @@ public class CardUseOrchestrator : MonoBehaviour
         if (costController && (costController.Current < need || !costController.TryPay(need)))
         { busy = false; yield break; }
 
-        // D. 카드 즉시 제거(덱 아래)
+        // D. 카드 사용 직전 선택 레이아웃을 즉시 정리해, 제거 후 남은 손패 y가 튀지 않게 한다.
+        hand.ExitSelectMode(true);
+        hand.HideCards();
+
+        // E. 카드 즉시 제거(덱 아래)
         var bdr = BattleDeckRuntime.Instance;
         if (bdr != null) bdr.UseCardToBottom(handIndex);
         yield return null;               // 데이터 반영
         hand.RebuildFromHand();
+        BattleTutorialGate.Report(BattleTutorialAction.CardUse);
 
-        // E. 관전 모드: 선택 해제 + 입력 OFF + 설명 고정
-        hand.ExitSelectMode();
+        // F. 관전 모드: 입력 OFF + 설명 고정
         if (menu) menu.EnableInput(false);
         if (desc)
         {
@@ -118,7 +159,7 @@ public class CardUseOrchestrator : MonoBehaviour
 
             // 동시에 시작
             StartCoroutine(CoRunPreview(aso.id, totalSeconds, () => previewDone = true));
-            StartCoroutine(CoRunAttack(aso, () => attackDone = true));
+            StartCoroutine(CoRunAttack(aso, true, () => attackDone = true));
 
             // 둘 중 누가 먼저 끝나든, 둘 다 true 될 때까지 대기
             while (!(previewDone && attackDone))
@@ -148,15 +189,19 @@ public class CardUseOrchestrator : MonoBehaviour
         }
         else if (moveController != null && so is MoveCardSO mso)
         {
-            // Move도 실행 코루틴을 흘려보내고, 프리뷰만 기다림
-            StartCoroutine(moveController.Execute(mso, Faction.Player, Faction.Enemy));
-            if (showCard != null) yield return showCard.PreviewById(so.id, totalSeconds);
-            else yield return null;
+            bool previewDone = false;
+            bool moveDone = false;
+
+            StartCoroutine(CoRunPreview(mso.id, totalSeconds, () => previewDone = true));
+            StartCoroutine(CoRunMove(mso, () => moveDone = true));
+
+            while (!(previewDone && moveDone))
+                yield return null;
         }
         else
         {
             // 기타 카드: 프리뷰만
-            if (showCard != null) yield return showCard.PreviewById(so.id, totalSeconds);
+            if (CanShowCardPreview()) yield return showCard.PreviewById(so.id, totalSeconds);
             else yield return null;
         }
         // ====  분기 끝 ====
@@ -175,7 +220,8 @@ public class CardUseOrchestrator : MonoBehaviour
         else
         {
             if (menu) menu.EnableInput(true);
-            if (PanelController) PanelController.SetGameplayViewDelayed(false, postResolvePanelDelay);
+            if (PanelController && PanelController.IsGameplayView)
+                PanelController.SetGameplayViewDelayed(false, postResolvePanelDelay);
         }
 
         busy = false;
@@ -183,15 +229,20 @@ public class CardUseOrchestrator : MonoBehaviour
     // attack + showCard 동시 실행을 위한 내부 코루틴 래퍼
     private IEnumerator CoRunPreview(string id, float seconds, System.Action onDone)
     {
-        if (showCard != null)
+        if (CanShowCardPreview())
             yield return showCard.PreviewById(id, seconds);
         // showCard가 없으면 즉시 완료 처리
         onDone?.Invoke();
     }
 
-    private IEnumerator CoRunAttack(AttackCardSO aso, System.Action onDone)
+    private bool CanShowCardPreview()
     {
-        yield return attackController.Execute(aso, Faction.Player, Faction.Enemy);
+        return showCardPreviewEnabled && showCard != null;
+    }
+
+    private IEnumerator CoRunAttack(AttackCardSO aso, bool skipWarningTimeline, System.Action onDone)
+    {
+        yield return attackController.Execute(aso, Faction.Player, Faction.Enemy, skipWarningTimeline);
         onDone?.Invoke();
     }
 
@@ -204,6 +255,12 @@ public class CardUseOrchestrator : MonoBehaviour
     private IEnumerator CoRunDraw(DrawCardSO dso, System.Action onDone)
     {
         yield return drawController.Execute(dso, Faction.Player);
+        onDone?.Invoke();
+    }
+
+    private IEnumerator CoRunMove(MoveCardSO mso, System.Action onDone)
+    {
+        yield return moveController.Execute(mso, Faction.Player, Faction.Enemy);
         onDone?.Invoke();
     }
 

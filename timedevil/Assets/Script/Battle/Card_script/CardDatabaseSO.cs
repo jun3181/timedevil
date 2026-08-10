@@ -11,11 +11,6 @@ public class CardDatabaseSO : ScriptableObject
 
     void OnEnable()
     {
-        RebuildMap();
-    }
-
-    private void RebuildMap()
-    {
         map = new Dictionary<string, BaseCardSO>();
         foreach (var c in cards)
         {
@@ -27,9 +22,7 @@ public class CardDatabaseSO : ScriptableObject
 
     public BaseCardSO GetById(string id)
     {
-        if (map == null) RebuildMap();
-        if (string.IsNullOrEmpty(id)) return null;
-
+        if (string.IsNullOrEmpty(id) || map == null) return null;
         map.TryGetValue(id, out var so);
         return so;
     }

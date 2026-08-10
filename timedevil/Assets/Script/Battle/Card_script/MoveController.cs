@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class MoveController : MonoBehaviour
@@ -69,8 +70,23 @@ public class MoveController : MonoBehaviour
     [Header("UI Lock")]
     [SerializeField] private BattleMenuController menu;
     [SerializeField] private DescriptionPanelController desc;
+
+    [Header("Turn Grid Highlight")]
+    [SerializeField] private bool highlightCurrentTurnGrid = true;
+    [SerializeField] private Color turnGridHighlightColor = new Color(0.7f, 1f, 0.7f, 0.025f);
+    [SerializeField, Range(0.1f, 1f)] private float turnGridHighlightScale = 0.92f;
+    [SerializeField] private string turnGridHighlightSortingLayer = "Default";
+    [SerializeField] private int turnGridHighlightSortingOrder = 1;
+    [SerializeField] private float turnGridHighlightZ = -1f;
+
     private bool _ownsTempMessage;
     private bool _initialGridAligned;
+    private TurnManager turnHighlightTurnManager;
+    private Transform turnGridHighlightRoot;
+    private Sprite turnGridHighlightSprite;
+    private readonly List<SpriteRenderer> playerTurnGridHighlights = new List<SpriteRenderer>(16);
+    private readonly List<SpriteRenderer> enemyTurnGridHighlights = new List<SpriteRenderer>(16);
+    private readonly Vector3[] turnHighlightCenters = new Vector3[16];
 
     void Reset()
     {
@@ -80,19 +96,41 @@ public class MoveController : MonoBehaviour
 
     void Awake()
     {
-        AlignInitialPawnsToGrid();
+        ForceAlignInitialPawnsToGrid();
+    }
+
+    void OnEnable()
+    {
+        BindTurnHighlightManager();
+    }
+
+    void OnDisable()
+    {
+        if (turnHighlightTurnManager != null)
+            turnHighlightTurnManager.OnTurnChanged -= HandleTurnHighlightChanged;
+        turnHighlightTurnManager = null;
+        SetTurnGridHighlightsVisible(playerTurnGridHighlights, false);
+        SetTurnGridHighlightsVisible(enemyTurnGridHighlights, false);
     }
 
     void Start()
     {
-        AlignInitialPawnsToGrid();
+        ForceAlignInitialPawnsToGrid();
+        StartCoroutine(Co_AlignInitialPawnsAfterFirstFrame());
+        BindTurnHighlightManager();
+        RefreshTurnGridHighlight();
     }
 
     void LateUpdate()
     {
-        if (!keepSortingOrder) return;
-        ApplySorting(playerPawn, playerSortingOrder);
-        ApplySorting(enemyPawn, enemySortingOrder);
+        if (keepSortingOrder)
+        {
+            ApplySorting(playerPawn, playerSortingOrder);
+            ApplySorting(enemyPawn, enemySortingOrder);
+        }
+
+        if (highlightCurrentTurnGrid)
+            RefreshTurnGridHighlightPositions();
     }
 
     public void SetGrid(Faction who, int r, int c, bool snap = true)
@@ -170,9 +208,21 @@ public class MoveController : MonoBehaviour
     {
         if (_initialGridAligned) return;
 
+        ForceAlignInitialPawnsToGrid();
+    }
+
+    public void ForceAlignInitialPawnsToGrid()
+    {
         bool playerAligned = SyncInitialPawnWithGrid(Faction.Player);
         bool enemyAligned = SyncInitialPawnWithGrid(Faction.Enemy);
         _initialGridAligned = playerAligned && enemyAligned;
+    }
+
+    private IEnumerator Co_AlignInitialPawnsAfterFirstFrame()
+    {
+        yield return null;
+        ForceAlignInitialPawnsToGrid();
+        RefreshTurnGridHighlightPositions();
     }
 
     public IEnumerator Execute(MoveCardSO so, Faction self, Faction foe)
@@ -268,21 +318,142 @@ public class MoveController : MonoBehaviour
         Transform pawn = GetPawn(who);
         if (!pawn || !HasCoordinateSource(who)) return false;
 
-        if (alignPawnsToStartGridOnStart)
-        {
-            Vector2Int startRC = GetStartGrid(who);
-            SetGrid(who, startRC.x, startRC.y, snap: true);
-            return true;
-        }
-
         Vector2Int rc = GetGrid(who);
         if (syncGridFromPawnPositionsOnStart)
+        {
             rc = WorldToGrid(who, pawn.position);
+        }
+        else if (alignPawnsToStartGridOnStart)
+        {
+            rc = GetStartGrid(who);
+        }
 
-        if (syncGridFromPawnPositionsOnStart || snapPawnsToGridOnStart)
+        if (syncGridFromPawnPositionsOnStart || alignPawnsToStartGridOnStart || snapPawnsToGridOnStart)
             SetGrid(who, rc.x, rc.y, snapPawnsToGridOnStart);
 
         return true;
+    }
+
+    private void BindTurnHighlightManager()
+    {
+        var manager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
+        if (manager == turnHighlightTurnManager) return;
+
+        if (turnHighlightTurnManager != null)
+            turnHighlightTurnManager.OnTurnChanged -= HandleTurnHighlightChanged;
+
+        turnHighlightTurnManager = manager;
+        if (turnHighlightTurnManager != null)
+            turnHighlightTurnManager.OnTurnChanged += HandleTurnHighlightChanged;
+    }
+
+    private void HandleTurnHighlightChanged(TurnState _)
+    {
+        RefreshTurnGridHighlight();
+    }
+
+    private void RefreshTurnGridHighlight()
+    {
+        BindTurnHighlightManager();
+
+        bool canShow = highlightCurrentTurnGrid
+            && turnHighlightTurnManager != null
+            && turnHighlightTurnManager.HasFirstTurnDecided;
+
+        if (!canShow)
+        {
+            SetTurnGridHighlightsVisible(playerTurnGridHighlights, false);
+            SetTurnGridHighlightsVisible(enemyTurnGridHighlights, false);
+            return;
+        }
+
+        EnsureTurnGridHighlights();
+        bool playerTurn = turnHighlightTurnManager.currentTurn == TurnState.PlayerTurn;
+        SetTurnGridHighlightsVisible(playerTurnGridHighlights, playerTurn);
+        SetTurnGridHighlightsVisible(enemyTurnGridHighlights, !playerTurn);
+        RefreshTurnGridHighlightPositions();
+    }
+
+    private void RefreshTurnGridHighlightPositions()
+    {
+        if (!highlightCurrentTurnGrid || turnHighlightTurnManager == null || !turnHighlightTurnManager.HasFirstTurnDecided)
+            return;
+
+        EnsureTurnGridHighlights();
+        bool playerTurn = turnHighlightTurnManager.currentTurn == TurnState.PlayerTurn;
+        UpdateTurnGridHighlightSide(Faction.Player, playerTurnGridHighlights, playerTurn);
+        UpdateTurnGridHighlightSide(Faction.Enemy, enemyTurnGridHighlights, !playerTurn);
+    }
+
+    private void EnsureTurnGridHighlights()
+    {
+        if (!turnGridHighlightSprite)
+        {
+            turnGridHighlightSprite = Sprite.Create(
+                Texture2D.whiteTexture,
+                new Rect(0f, 0f, 1f, 1f),
+                new Vector2(0.5f, 0.5f),
+                1f);
+        }
+
+        if (!turnGridHighlightRoot)
+        {
+            var go = new GameObject("TurnGridHighlights");
+            turnGridHighlightRoot = go.transform;
+            turnGridHighlightRoot.SetParent(transform, worldPositionStays: true);
+        }
+
+        EnsureTurnGridHighlightSide(Faction.Player, playerTurnGridHighlights);
+        EnsureTurnGridHighlightSide(Faction.Enemy, enemyTurnGridHighlights);
+    }
+
+    private void EnsureTurnGridHighlightSide(Faction side, List<SpriteRenderer> renderers)
+    {
+        int need = Mathf.Max(1, rows) * Mathf.Max(1, cols);
+        while (renderers.Count < need)
+        {
+            var go = new GameObject($"{side}TurnGridHighlight_{renderers.Count:D2}");
+            go.transform.SetParent(turnGridHighlightRoot, worldPositionStays: true);
+
+            var sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = turnGridHighlightSprite;
+            sr.sortingLayerName = turnGridHighlightSortingLayer;
+            sr.sortingOrder = turnGridHighlightSortingOrder;
+            sr.color = turnGridHighlightColor;
+            go.SetActive(false);
+            renderers.Add(sr);
+        }
+    }
+
+    private void UpdateTurnGridHighlightSide(Faction side, List<SpriteRenderer> renderers, bool visible)
+    {
+        if (!visible || !TryBuildPatternCenters(side, turnHighlightCenters, turnGridHighlightZ))
+        {
+            SetTurnGridHighlightsVisible(renderers, false);
+            return;
+        }
+
+        Vector2 size = GetCellSize(side);
+        int n = Mathf.Min(renderers.Count, Mathf.Max(1, rows) * Mathf.Max(1, cols));
+        for (int i = 0; i < n; i++)
+        {
+            var sr = renderers[i];
+            if (!sr) continue;
+
+            sr.transform.position = turnHighlightCenters[i];
+            float scale = Mathf.Clamp(turnGridHighlightScale, 0.1f, 1f);
+            sr.transform.localScale = new Vector3(size.x * scale, size.y * scale, 1f);
+            sr.sortingLayerName = turnGridHighlightSortingLayer;
+            sr.sortingOrder = turnGridHighlightSortingOrder;
+            sr.color = turnGridHighlightColor;
+            sr.gameObject.SetActive(true);
+        }
+    }
+
+    private void SetTurnGridHighlightsVisible(List<SpriteRenderer> renderers, bool visible)
+    {
+        for (int i = 0; i < renderers.Count; i++)
+            if (renderers[i]) renderers[i].gameObject.SetActive(visible);
     }
 
     private Transform GetGridOrigin(Faction who)
