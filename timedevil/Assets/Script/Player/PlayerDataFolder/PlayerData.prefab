@@ -45,7 +45,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   saveOnDisable: 0
-  saveOnQuit: 1
+  saveOnQuit: 0
   Data:
     playerName: Player
     maxHP: 20

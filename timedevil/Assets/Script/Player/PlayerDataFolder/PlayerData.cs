@@ -4,15 +4,21 @@ using UnityEngine;
 [System.Serializable]
 public class PlayerData
 {
+    public const string DefaultPlayerName = "Player";
+    public const int DefaultMaxHP = 20;
+    public const int DefaultAttack = 10;
+    public const int DefaultDefense = 5;
+    public const int DefaultSpeed = 5;
+
     [Header("Identity")]
-    public string playerName = "Player";
+    public string playerName = DefaultPlayerName;
 
     [Header("Stats")]
-    public int maxHP = 20;
-    public int currentHP = 20;
-    public int attack = 10;
-    public int defense = 5;
-    public int speed = 5;     // 선턴 결정 등에 사용
+    public int maxHP = DefaultMaxHP;
+    public int currentHP = DefaultMaxHP;
+    public int attack = DefaultAttack;
+    public int defense = DefaultDefense;
+    public int speed = DefaultSpeed;     // 선턴 결정 등에 사용
 
     [Header("Emotion Counter")]
     public int emotionPositive = 0;   // 긍정
@@ -22,9 +28,13 @@ public class PlayerData
 
     /// <summary>초기값 세팅(편의용)</summary>
     public void InitDefaults(
-        string name = "Player", int hp = 100, int atk = 10, int def = 5, int spd = 5)
+        string name = DefaultPlayerName,
+        int hp = DefaultMaxHP,
+        int atk = DefaultAttack,
+        int def = DefaultDefense,
+        int spd = DefaultSpeed)
     {
-        playerName = string.IsNullOrEmpty(name) ? "Player" : name;
+        playerName = string.IsNullOrEmpty(name) ? DefaultPlayerName : name;
         maxHP = Mathf.Max(1, hp);
         currentHP = maxHP;
         attack = Mathf.Max(0, atk);

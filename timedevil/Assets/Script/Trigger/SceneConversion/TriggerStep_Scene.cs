@@ -17,6 +17,11 @@ public class TriggerStep_Scene : TriggerStepBase
     [Header("Lock (optional)")]
     [SerializeField] private bool lockPlayerInput = true;
 
+    [Header("Myroom -> Chapter HP Restore")]
+    [SerializeField] private bool restorePlayerHpOnMyroomChapterEntry = true;
+    [SerializeField] private string chapterEntrySourceSceneName = "Myroom";
+    [SerializeField] private string chapterSceneNamePrefix = "chapter";
+
     [Header("Debug")]
     [SerializeField] private bool debugLog = true;
 
@@ -39,6 +44,13 @@ public class TriggerStep_Scene : TriggerStepBase
 
     [Tooltip("overrideCutsceneStartKey가 켜져 있을 때 다음 씬 CutsceneRouter에 전달할 Start Key")]
     [SerializeField] private string cutsceneStartKey = "CutScene1";
+
+    [Header("Scene Start Camera (optional)")]
+    [Tooltip("켜면 다음 씬 SceneCameraBootstrap의 시작 Ortho Size를 덮어씁니다. 0이면 CameraManager 기본값을 사용합니다.")]
+    [SerializeField] private bool overrideSceneStartOrthoSize = false;
+
+    [Tooltip("다음 씬 시작 카메라 Ortho Size. 0이면 텔레포트 afterOrthoSize=0처럼 기본값을 사용합니다.")]
+    [SerializeField] private float sceneStartOrthoSize = 0f;
 
     // =========================
     // Battle return context (existing)
@@ -128,6 +140,21 @@ public class TriggerStep_Scene : TriggerStepBase
             CutsceneStartContext.Clear();
         }
 
+        if (overrideSceneStartOrthoSize)
+        {
+            SceneStartCameraContext.SetNext(targetScene, sceneStartOrthoSize);
+
+            if (debugLog)
+            {
+                string sizeText = sceneStartOrthoSize > 0f ? sceneStartOrthoSize.ToString("F2") : "default";
+                Debug.Log($"[TriggerStep_Scene] Queue Scene Start Ortho '{sizeText}' for scene '{targetScene}'");
+            }
+        }
+        else
+        {
+            SceneStartCameraContext.Clear();
+        }
+
         // -------------------------
         // 2) SleepLoad 플래그(원샷) 세팅
         // -------------------------
@@ -155,7 +182,12 @@ public class TriggerStep_Scene : TriggerStepBase
             Debug.Log($"[TriggerStep_Scene] Request Load '{targetScene}' mode={loadMode} useRunner={useSceneVisitEffectRunner}");
 
         // -------------------------
-        // 4) (기존) 배틀 진입이라면 복귀 정보 저장
+        // 4) Myroom -> chapterN 진입이면 Player HP를 최대치로 회복
+        // -------------------------
+        RestorePlayerHpForChapterEntryIfNeeded(targetScene);
+
+        // -------------------------
+        // 5) (기존) 배틀 진입이라면 복귀 정보 저장
         // -------------------------
         if (saveReturnContext)
         {
@@ -230,7 +262,7 @@ public class TriggerStep_Scene : TriggerStepBase
         }
 
         // -------------------------
-        // 5) 씬 로드
+        // 6) 씬 로드
         // -------------------------
         if (useSceneVisitEffectRunner && loadMode == LoadSceneMode.Single)
         {
@@ -244,6 +276,57 @@ public class TriggerStep_Scene : TriggerStepBase
         }
 
         SceneManager.LoadScene(targetScene, loadMode);
+    }
+
+    private void RestorePlayerHpForChapterEntryIfNeeded(string targetScene)
+    {
+        if (!restorePlayerHpOnMyroomChapterEntry) return;
+
+        string currentScene = NormalizeSceneName(SceneManager.GetActiveScene().name);
+        string sourceScene = NormalizeSceneName(chapterEntrySourceSceneName);
+        if (!string.Equals(currentScene, sourceScene, System.StringComparison.OrdinalIgnoreCase)) return;
+
+        string targetSceneName = NormalizeSceneName(targetScene);
+        if (!IsChapterSceneName(targetSceneName)) return;
+
+        var runtime = PlayerDataRuntime.Instance ?? Object.FindObjectOfType<PlayerDataRuntime>(true);
+        var data = runtime != null ? runtime.Data : null;
+        if (data == null)
+        {
+            Debug.LogWarning("[TriggerStep_Scene] Myroom -> chapter entry HP restore skipped: PlayerDataRuntime/Data not found.");
+            return;
+        }
+
+        int before = data.currentHP;
+        data.currentHP = Mathf.Max(0, data.maxHP);
+
+        if (debugLog)
+            Debug.Log($"[TriggerStep_Scene] Myroom -> '{targetSceneName}' Player HP restored: {before} -> {data.currentHP}/{data.maxHP}");
+    }
+
+    private bool IsChapterSceneName(string scene)
+    {
+        if (string.IsNullOrWhiteSpace(scene)) return false;
+        string prefix = NormalizeSceneName(chapterSceneNamePrefix);
+        if (string.IsNullOrWhiteSpace(prefix)) return false;
+
+        return scene.StartsWith(prefix, System.StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string NormalizeSceneName(string scene)
+    {
+        if (string.IsNullOrWhiteSpace(scene)) return string.Empty;
+
+        string normalized = scene.Trim().Replace('\\', '/');
+        int slashIndex = normalized.LastIndexOf('/');
+        if (slashIndex >= 0 && slashIndex + 1 < normalized.Length)
+            normalized = normalized.Substring(slashIndex + 1);
+
+        const string unityExtension = ".unity";
+        if (normalized.EndsWith(unityExtension, System.StringComparison.OrdinalIgnoreCase))
+            normalized = normalized.Substring(0, normalized.Length - unityExtension.Length);
+
+        return normalized;
     }
 
     private void OnDisable()

@@ -21,6 +21,18 @@ public class BattleMenuController : MonoBehaviour
     public int CurrentIndex => index;
     public int EntryCount => entries != null ? entries.Length : 0;
 
+    public GameObject GetEntryObject(int entryIndex)
+    {
+        if (entries == null || entryIndex < 0 || entryIndex >= entries.Length) return null;
+        return entries[entryIndex];
+    }
+
+    public RectTransform GetEntryRectTransform(int entryIndex)
+    {
+        var entry = GetEntryObject(entryIndex);
+        return entry ? entry.GetComponent<RectTransform>() : null;
+    }
+
     void Awake()
     {
         // 하이라이트만 먼저 적용(리스너가 없을 수도 있는 초기 프레임)
@@ -44,13 +56,26 @@ public class BattleMenuController : MonoBehaviour
     {
         if (!inputEnabled || entries == null || entries.Length == 0) return;
 
-        if (Input.GetKeyDown(KeyCode.RightArrow)) MoveHoriz(+1);
-        if (Input.GetKeyDown(KeyCode.LeftArrow)) MoveHoriz(-1);
+        if (Input.GetKeyDown(KeyCode.RightArrow))
+        {
+            if (!BattleTutorialGate.Allows(BattleTutorialAction.MenuNavigate)) return;
+            MoveHoriz(+1);
+            BattleTutorialGate.Report(BattleTutorialAction.MenuNavigate);
+        }
+        if (Input.GetKeyDown(KeyCode.LeftArrow))
+        {
+            if (!BattleTutorialGate.Allows(BattleTutorialAction.MenuNavigate)) return;
+            MoveHoriz(-1);
+            BattleTutorialGate.Report(BattleTutorialAction.MenuNavigate);
+        }
         //if (Input.GetKeyDown(KeyCode.DownArrow)) MoveVert(+1);
         //if (Input.GetKeyDown(KeyCode.UpArrow)) MoveVert(-1);
 
         if (Input.GetKeyDown(KeyCode.E))
         {
+            BattleTutorialAction submitAction = GetSubmitAction(index);
+            if (!BattleTutorialGate.Allows(submitAction)) return;
+
             string name = GetEntryName(index);
             Debug.Log($"[BattleMenu] E pressed → {name} selected (index={index})");
             onSubmit?.Invoke(index);
@@ -121,5 +146,31 @@ public class BattleMenuController : MonoBehaviour
             return entryIndex switch { 0 => "Card", 1 => "Item", 2 => "State", 3 => "End", 4 => "Run", _ => $"Idx{entryIndex}" };
 
         return entryIndex switch { 0 => "Card", 1 => "Item", 2 => "End", 3 => "Run", _ => $"Idx{entryIndex}" };
+    }
+
+    private BattleTutorialAction GetSubmitAction(int entryIndex)
+    {
+        bool hasStatePanel = EntryCount >= 5;
+        if (hasStatePanel)
+        {
+            return entryIndex switch
+            {
+                0 => BattleTutorialAction.CardPanelInteract,
+                1 => BattleTutorialAction.ItemPanelInteract,
+                2 => BattleTutorialAction.StatePanelInteract,
+                3 => BattleTutorialAction.EndPanelInteract,
+                4 => BattleTutorialAction.RunPanelInteract,
+                _ => BattleTutorialAction.None
+            };
+        }
+
+        return entryIndex switch
+        {
+            0 => BattleTutorialAction.CardPanelInteract,
+            1 => BattleTutorialAction.ItemPanelInteract,
+            2 => BattleTutorialAction.EndPanelInteract,
+            3 => BattleTutorialAction.RunPanelInteract,
+            _ => BattleTutorialAction.None
+        };
     }
 }

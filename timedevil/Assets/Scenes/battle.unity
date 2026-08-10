@@ -160,11 +160,11 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 708448341}
+  m_Father: {fileID: 2025730667}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 283.1594, y: -170}
+  m_AnchoredPosition: {x: 280, y: -158.875}
   m_SizeDelta: {x: 1288.641, y: 402.25}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &133108823
@@ -236,7 +236,41 @@ MonoBehaviour:
   leftPadding: 5
   rightPadding: 5
   cardWidth: 150
-  cardSpacing: 300
+  cardHeightPerWidth: 1.5
+  cardSpacing: 180
+  cardBottomYOffset: 0
+  rightAlignCards: 1
+  revealFromRight: 1
+  emphasizeSelectedCard: 1
+  selectedCardScale: 1.75
+  selectedCardScaleAnimationStart: 1.6
+  nonSelectedCardScaleAnimationStart: 1.15
+  animateSelectedCardLayout: 1
+  selectedCardLayoutDuration: 0.18
+  selectedCardLayoutEase:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
   revealFaces: 1
   cardBackSprite: {fileID: 0}
 --- !u!1 &169161168
@@ -337,6 +371,8 @@ RectTransform:
   - {fileID: 2123949534}
   - {fileID: 1613126918}
   - {fileID: 1352731690}
+  - {fileID: 2025730667}
+  - {fileID: 519244439}
   - {fileID: 708448341}
   - {fileID: 643248678}
   m_Father: {fileID: 0}
@@ -373,7 +409,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 708448341}
+    m_TransformParent: {fileID: 2025730667}
     m_Modifications:
     - target: {fileID: 3496468367479007433, guid: 347e09cf7ca584c488a11bb343186cf8,
         type: 3}
@@ -474,7 +510,7 @@ PrefabInstance:
     - target: {fileID: 5623988259087644966, guid: 347e09cf7ca584c488a11bb343186cf8,
         type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -170
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 5623988259087644966, guid: 347e09cf7ca584c488a11bb343186cf8,
         type: 3}
@@ -701,11 +737,11 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 499891428}
-  m_Father: {fileID: 708448341}
+  m_Father: {fileID: 2025730667}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 283.1594, y: -170}
+  m_AnchoredPosition: {x: 283.1594, y: 10}
   m_SizeDelta: {x: 1288.641, y: 402.25}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &334961076
@@ -721,6 +757,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   menu: {fileID: 1069897049}
+  itemHandRect: {fileID: 0}
+  forceFrontCanvas: 1
+  frontSortingOrder: 80
 --- !u!225 &334961077
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -997,6 +1036,12 @@ MonoBehaviour:
   enemyData: {fileID: 0}
   playerPawn: {fileID: 1345401700}
   enemyPawn: {fileID: 1064948988}
+  loadMyroomOnPlayerZeroHp: 1
+  myroomSceneName: Myroom
+  playerDefeatMessage: HP reached 0. Press E to return to your room.
+  playerDefeatContinueKey: 101
+  returnToPreviousSceneOnEnemyZeroHp: 1
+  enemyDefeatReturnGraceSeconds: 1
 --- !u!1 &443751346
 GameObject:
   m_ObjectHideFlags: 0
@@ -1090,7 +1135,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: end
+  m_text: End
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -1345,15 +1390,15 @@ RectTransform:
   m_GameObject: {fileID: 519244438}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 0.88, y: 0.88, z: 0.88}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 1367395973}
-  m_Father: {fileID: 708448341}
+  m_Father: {fileID: 169161172}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 9, y: -189.63098}
+  m_AnchoredPosition: {x: 9, y: -300}
   m_SizeDelta: {x: 1800, y: 360}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &519244440
@@ -1394,6 +1439,144 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 519244438}
   m_CullTransparentMesh: 1
+--- !u!1 &568051756
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 568051758}
+  - component: {fileID: 568051757}
+  - component: {fileID: 568051759}
+  m_Layer: 0
+  m_Name: tutorial
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!212 &568051757
+SpriteRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 568051756}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6,
+    type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 1, y: 1}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 1
+  m_MaskInteraction: 0
+  m_SpriteSortPoint: 0
+--- !u!4 &568051758
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 568051756}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.15, y: -3.3, z: 0}
+  m_LocalScale: {x: 1.4212905, y: 1.4052904, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &568051759
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 568051756}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e64379afad5408fbeba8ab390bfb9e9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  autoStart: 1
+  playOnlyOnce: 0
+  playerPrefsKey: BattleTutorial_Default_Seen
+  steps:
+  - message: 123123
+    windowAnchoredPosition: {x: 0, y: 0}
+    windowSize: {x: 23.24, y: 38.31}
+    advanceMode: 0
+    requiredAction: 0
+    allowMenuNavigation: 0
+    allowCardSelectionNavigation: 0
+    allowStateNavigation: 0
+    allowCancelInput: 0
+    endTutorialAfterStep: 0
+    nextStepIndex: 0
+  - message: 333
+    windowAnchoredPosition: {x: 21.44, y: 0}
+    windowSize: {x: 23.24, y: 38.31}
+    advanceMode: 1
+    requiredAction: 3
+    allowMenuNavigation: 1
+    allowCardSelectionNavigation: 0
+    allowStateNavigation: 0
+    allowCancelInput: 0
+    endTutorialAfterStep: 0
+    nextStepIndex: 0
+  continueKey: 101
+  targetCanvas: {fileID: 0}
+  root: {fileID: 0}
+  rootGroup: {fileID: 0}
+  blocker: {fileID: 0}
+  window: {fileID: 0}
+  messageText: {fileID: 0}
+  createUiIfMissing: 1
+  forceDedicatedRuntimeUi: 1
+  blockerColor: {r: 0, g: 0, b: 0, a: 0.22}
+  windowColor: {r: 0.06, g: 0.07, b: 0.08, a: 0.94}
+  textColor: {r: 1, g: 1, b: 1, a: 1}
+  fontSize: 28
+  textPadding: {x: 28, y: 20, z: 28, w: 20}
 --- !u!1 &577577515
 GameObject:
   m_ObjectHideFlags: 0
@@ -1502,6 +1685,7 @@ MonoBehaviour:
   menu: {fileID: 1069897049}
   database: {fileID: 11400000, guid: c0cc44962aa33464ca629e77b4d09b2b, type: 2}
   costController: {fileID: 1352731693}
+  showCardPreviewEnabled: 0
   showCard: {fileID: 643248677}
   totalSeconds: 1
   desc: {fileID: 0}
@@ -1771,12 +1955,28 @@ MonoBehaviour:
   cost: {fileID: 1352731693}
   showCard: {fileID: 643248677}
   desc: {fileID: 1069897052}
+  enemyHandUI: {fileID: 133108826}
+  enemyHandRect: {fileID: 133108822}
+  enemyRuntime: {fileID: 0}
+  stateEnemyRenderer: {fileID: 0}
+  gameplayEnemyRenderer: {fileID: 0}
   drawController: {fileID: 1201525411}
   moveController: {fileID: 1201525410}
   attackController: {fileID: 0}
   supportController: {fileID: 0}
+  showCardPreviewEnabled: 0
   previewSeconds: 1.5
+  firstPlayDelaySeconds: 0.65
+  effectSettleSeconds: 0.65
   playInterval: 0.3
+  revealHandBeforeFirstPlay: 1
+  enemyHandActiveAnchoredPosition: {x: 280, y: -385}
+  convertEnemyHandPositionFromSeparatedRoot: 1
+  separatedHandRootName: hand01
+  handRiseYOffset: 260
+  handRiseDuration: 0.22
+  handRiseStagger: 0.055
+  handRiseFade: 1
 --- !u!1 &643248676
 GameObject:
   m_ObjectHideFlags: 0
@@ -1865,13 +2065,6 @@ RectTransform:
   - {fileID: 1437903592}
   - {fileID: 614825694}
   - {fileID: 492703978}
-  - {fileID: 519244439}
-  - {fileID: 860620048}
-  - {fileID: 334961075}
-  - {fileID: 133108822}
-  - {fileID: 176631157}
-  - {fileID: 1448559823}
-  - {fileID: 2047237471}
   m_Father: {fileID: 169161172}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -2292,11 +2485,11 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 708448341}
+  m_Father: {fileID: 2025730667}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 283.1594, y: -170.99998}
+  m_AnchoredPosition: {x: -315.6795, y: -158.875}
   m_SizeDelta: {x: 1288.641, y: 402.25}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &860620049
@@ -2368,10 +2561,43 @@ MonoBehaviour:
   leftPadding: 8
   rightPadding: 8
   cardWidth: 150
+  cardHeightPerWidth: 1.5
   cardSpacing: 180
+  emphasizeSelectedCard: 1
+  selectedCardScale: 1.75
+  selectedCardScaleAnimationStart: 1.6
+  nonSelectedCardScaleAnimationStart: 1.15
+  cardBottomYOffset: 0
+  animateSelectedCardScale: 1
+  animateSelectedCardLayout: 1
+  selectedCardLayoutDuration: 0.18
+  selectedCardLayoutEase:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
   select: {fileID: 2047237471}
   useFixedSelectSize: 1
-  fixedSelectSize: {x: 130, y: 200}
+  fixedSelectSize: {x: 160, y: 240}
 --- !u!1 &883982510
 GameObject:
   m_ObjectHideFlags: 0
@@ -5644,6 +5870,7 @@ GameObject:
   - component: {fileID: 1069897052}
   - component: {fileID: 1069897054}
   - component: {fileID: 1069897056}
+  - component: {fileID: 1069897057}
   m_Layer: 0
   m_Name: BattleManager_UI
   m_TagString: Untagged
@@ -5732,11 +5959,58 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   descriptionText: {fileID: 1367395971}
+  descriptionPanelRoot: {fileID: 519244438}
+  autoResolveDescriptionPanelRoot: 1
+  hideDescriptionPanelRootWhenItemViewExits: 1
+  animateDescriptionPanelRoot: 1
+  descriptionPanelShownAnchoredPosition: {x: 9, y: -330}
+  descriptionPanelHiddenY: -680
+  descriptionPanelRiseDuration: 0.28
+  descriptionPanelRiseEase:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
   menu: {fileID: 1069897049}
   hand: {fileID: 860620052}
   database: {fileID: 11400000, guid: c0cc44962aa33464ca629e77b4d09b2b, type: 2}
   enemyHand: {fileID: 133108826}
   enemyHandCanvasGroup: {fileID: 133108823}
+  itemHand: {fileID: 0}
+  itemHandRect: {fileID: 0}
+  alignItemHandToDescriptionPanelCenterY: 1
+  animateItemHandWithDescriptionPanel: 1
+  playerHandRect: {fileID: 860620048}
+  enemyHandRect: {fileID: 133108822}
+  convertHandPositionsFromSeparatedRoot: 1
+  separatedHandRootName: hand01
+  panelControllerOwnsPlayerActivePosition: 1
+  enemyTurnControllerOwnsEnemyTurnHand: 1
+  showPlayerHandPreviewOnCardFocus: 0
+  showEnemyHandPreviewOnEndFocus: 0
+  playerPreviewAnchoredPosition: {x: -280, y: -250}
+  enemyPreviewAnchoredPosition: {x: 280, y: -250}
+  playerActiveAnchoredPosition: {x: -280, y: -385}
+  enemyActiveAnchoredPosition: {x: 280, y: -385}
   msgCard: "Card\uB97C \uC120\uD0DD\uD569\uB2C8\uB2E4."
   msgItem: "Item\uC744 \uC120\uD0DD\uD569\uB2C8\uB2E4."
   msgState: "\uC0C1\uD0DC\uB97C \uD655\uC778\uD569\uB2C8\uB2E4."
@@ -5781,13 +6055,17 @@ MonoBehaviour:
   handUI: {fileID: 0}
   turnManager: {fileID: 0}
   orchestrator: {fileID: 0}
+  descriptionPanel: {fileID: 1069897052}
   usePanelSubmit: 1
   panelSubmitIndex: 2
   useCardSubmit: 1
   cardSubmitIndex: 0
+  useItemSubmit: 1
+  itemSubmitIndex: 1
   useEndSubmit: 1
   endSubmitIndex: 3
   returnOnCardCancelKey: 1
+  returnOnItemCancelKey: 1
   returnOnPlayerTurnStart: 1
   submitViewDelay: 0.02
   turnTransitionDelay: 0.16
@@ -5797,6 +6075,9 @@ MonoBehaviour:
   - {fileID: 2126204888}
   - {fileID: 1345401700}
   - {fileID: 1064948988}
+  keepGameplayTargetsVisible: 1
+  raiseEnemyTargetsOnGameplayView: 1
+  enemyRaisedOffset: {x: 0, y: 80, z: 0}
   useLocalPosition: 1
   lockZDepth: 1
   enemyHiddenOffset: {x: 0, y: -50, z: 0}
@@ -5852,7 +6133,12 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   battleMenuPanelTargets:
-  - {fileID: 708448341}
+  - {fileID: 327880352}
+  - {fileID: 424294692}
+  - {fileID: 1437903592}
+  - {fileID: 614825694}
+  - {fileID: 492703978}
+  excludeHandObjectsFromPanelMotion: 1
   battleMenuHiddenOffset: {x: 0, y: -150, z: 0}
   battleMenuDuration: 0.5
   battleMenuEase:
@@ -5879,6 +6165,45 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  animateHandObjectOnPanelControl: 1
+  handObject: {fileID: 0}
+  autoResolveHandObject: 1
+  convertHandPositionFromSeparatedRoot: 1
+  separatedHandRootName: hand01
+  handHiddenAnchoredPosition: {x: -280, y: -820}
+  handShownAnchoredPosition: {x: -280, y: -385}
+  compensateHandParentPanelOffset: 1
+  startHandBelowScreen: 1
+  handRiseDuration: 0.3
+  handRiseEase:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  staggerCardsOnHandRise: 1
+  handCardRiseYOffset: 460
+  handCardRiseDuration: 0.22
+  handCardRiseStagger: 0.055
+  handCardRiseFade: 1
   startInGameplayView: 0
   syncInitialViewWithTurnState: 1
   recacheShownBaseBeforeViewChange: 1
@@ -5899,6 +6224,9 @@ MonoBehaviour:
   descriptionPanel: {fileID: 1069897052}
   playerRuntime: {fileID: 0}
   enemyRuntime: {fileID: 0}
+  playerHand: {fileID: 860620052}
+  enemyHand: {fileID: 133108826}
+  cardDatabase: {fileID: 11400000, guid: c0cc44962aa33464ca629e77b4d09b2b, type: 2}
   stateIndex: 2
   wrap: 1
   targets:
@@ -5912,6 +6240,136 @@ MonoBehaviour:
     highlightGraphic: {fileID: 0}
     highlightSprite: {fileID: 1809357713}
     selectedColor: {r: 0.7, g: 1, b: 0.7, a: 1}
+  animateEnemyHandOnEnter: 1
+  enemyHandRiseYOffset: 260
+  enemyHandRiseDuration: 0.22
+  enemyHandRiseStagger: 0.055
+  enemyHandRiseFade: 1
+  allowHandInspect: 1
+  hideSpeechBubbleDuringHandInspect: 1
+  playerHandInspectMessage: "\uB0B4 \uC190\uD328\uB97C \uD655\uC778\uD569\uB2C8\uB2E4."
+  enemyHandInspectMessage: "\uC0C1\uB300 \uC190\uD328\uB97C \uD655\uC778\uD569\uB2C8\uB2E4."
+  useSpeechBubbles: 1
+  playerTarget: {fileID: 2084521561}
+  enemyTarget: {fileID: 1809357712}
+  speechBubble: {fileID: 1911001729}
+  speechBubbleSize: {x: 4.79, y: 3.26}
+  applySpeechBubbleSize: 1
+  worldCamera: {fileID: 0}
+  bubbleGap: {x: 0.55, y: 0.45}
+  screenPaddingWorld: {x: 0.55, y: 0.55}
+  avoidSpeechBubbleUi: 1
+  speechBubbleAvoidUiRects:
+  - {fileID: 2123949534}
+  - {fileID: 1613126918}
+  - {fileID: 1352731690}
+  speechBubbleAvoidUiPadding: 0.25
+  bottomUiSafeWorldY: -2.65
+  speechBubbleZ: -1
+  connectorColor: {r: 1, g: 1, b: 1, a: 0.75}
+  connectorWidth: 0.035
+  connectorDashLength: 0.16
+  connectorGapLength: 0.1
+  connectorSortingOrder: 20
+--- !u!114 &1069897057
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1069897048}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d18a34b71d3f4bdf8b5c8af06fdfb443, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  menu: {fileID: 1069897049}
+  legacyPanelController: {fileID: 1069897055}
+  handUI: {fileID: 860620052}
+  turnManager: {fileID: 2043066779}
+  orchestrator: {fileID: 593885361}
+  disableLegacyPanelControllerOnAwake: 1
+  restoreLegacyPanelControllerOnDisable: 1
+  autoPopulateFromMenuEntries: 1
+  panels: []
+  restorePanelControllerLayoutOnDisable: 1
+  defaultSelectedIndex: 0
+  forceDefaultSelectionOnStart: 1
+  useDefaultPanelPositionAsSelected: 1
+  selectedAnchoredPosition: {x: -736.0194, y: -429.4}
+  peekingAnchoredY: -577.9
+  autoMeasureSpacing: 1
+  panelSpacing: 420.9
+  controlPanelScale: 1
+  panelScaleMultiplier: 1.12
+  selectedPanelScaleMultiplier: 1
+  peekingPanelScaleMultiplier: 1
+  scaleSpacingWithPanelScale: 1
+  animationDuration: 0.2
+  carouselEase:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  animateWrapContinuity: 1
+  useWrapGhost: 1
+  animateHandObjectOnCarouselControl: 1
+  handObject: {fileID: 860620048}
+  autoResolveHandObject: 1
+  convertHandPositionFromSeparatedRoot: 1
+  separatedHandRootName: hand01
+  handHiddenAnchoredPosition: {x: -315.6795, y: -820}
+  handShownAnchoredPosition: {x: -315.6795, y: -338.875}
+  startHandBelowScreen: 1
+  handRiseDuration: 0.14
+  handRiseEase:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  staggerCardsOnHandRise: 1
+  handCardRiseYOffset: 460
+  handCardRiseDuration: 0.22
+  handCardRiseStagger: 0.055
+  handCardRiseFade: 1
 --- !u!1 &1172301446
 GameObject:
   m_ObjectHideFlags: 0
@@ -6190,6 +6648,12 @@ MonoBehaviour:
   chapter1RightWalkStateName: Player_Right_Walk
   menu: {fileID: 1069897049}
   desc: {fileID: 1069897052}
+  highlightCurrentTurnGrid: 1
+  turnGridHighlightColor: {r: 0.35645962, g: 0.4339623, b: 0.26065028, a: 0.28}
+  turnGridHighlightScale: 1
+  turnGridHighlightSortingLayer: Default
+  turnGridHighlightSortingOrder: 1
+  turnGridHighlightZ: -1
 --- !u!114 &1201525411
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6553,7 +7017,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1250692066
 Transform:
   m_ObjectHideFlags: 0
@@ -10597,7 +11061,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 708448341}
+    m_TransformParent: {fileID: 2025730667}
     m_Modifications:
     - target: {fileID: 3496468367479007433, guid: 347e09cf7ca584c488a11bb343186cf8,
         type: 3}
@@ -10698,7 +11162,7 @@ PrefabInstance:
     - target: {fileID: 5623988259087644966, guid: 347e09cf7ca584c488a11bb343186cf8,
         type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -170
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 5623988259087644966, guid: 347e09cf7ca584c488a11bb343186cf8,
         type: 3}
@@ -10853,6 +11317,7 @@ MonoBehaviour:
   peakAlpha: 0.75
   minWindow: 0.06
   useUnscaledTime: 0
+  previewBlinkSeconds: 0.55
 --- !u!1 &1613126917
 GameObject:
   m_ObjectHideFlags: 0
@@ -11091,7 +11556,7 @@ GameObject:
   - component: {fileID: 1727393881}
   - component: {fileID: 1727393882}
   m_Layer: 0
-  m_Name: Enemy
+  m_Name: Enemy(tem)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -11164,6 +11629,158 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!1 &1754859549
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1754859556}
+  - component: {fileID: 1754859555}
+  - component: {fileID: 1754859554}
+  - component: {fileID: 1754859553}
+  - component: {fileID: 1754859552}
+  - component: {fileID: 1754859551}
+  - component: {fileID: 1754859550}
+  m_Layer: 5
+  m_Name: FadePanel
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1754859550
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1754859549}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1fe8240424604ab49a1150498e7464c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  canvasGroup: {fileID: 1754859553}
+  defaultDuration: 0.25
+  useUnscaledTime: 1
+--- !u!114 &1754859551
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1754859549}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 0, g: 0, b: 0, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &1754859552
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1754859549}
+  m_CullTransparentMesh: 1
+--- !u!225 &1754859553
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1754859549}
+  m_Enabled: 1
+  m_Alpha: 0
+  m_Interactable: 1
+  m_BlocksRaycasts: 0
+  m_IgnoreParentGroups: 0
+--- !u!114 &1754859554
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1754859549}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_UiScaleMode: 0
+  m_ReferencePixelsPerUnit: 100
+  m_ScaleFactor: 1
+  m_ReferenceResolution: {x: 800, y: 600}
+  m_ScreenMatchMode: 0
+  m_MatchWidthOrHeight: 0
+  m_PhysicalUnit: 3
+  m_FallbackScreenDPI: 96
+  m_DefaultSpriteDPI: 96
+  m_DynamicPixelsPerUnit: 1
+  m_PresetInfoIsWorld: 0
+--- !u!223 &1754859555
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1754859549}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 0
+  m_Camera: {fileID: 0}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 0
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_VertexColorAlwaysGammaSpace: 0
+  m_AdditionalShaderChannelsFlag: 0
+  m_UpdateRectTransformForStandalone: 0
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+  m_TargetDisplay: 0
+--- !u!224 &1754859556
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1754859549}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0, y: 0, z: 0}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0, y: 0}
 --- !u!1 &1767689042
 GameObject:
   m_ObjectHideFlags: 0
@@ -11222,8 +11839,8 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: -0.01, y: 0.55, z: 0}
-  m_LocalScale: {x: 1.7676, y: 1.7676, z: 1.7676}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 1.08, y: 1.08, z: 1.08}
+  m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 1064948988}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -11315,6 +11932,91 @@ RectTransform:
   m_AnchoredPosition: {x: -4.9999695, y: 0}
   m_SizeDelta: {x: -20, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &1911001727
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1911001729}
+  - component: {fileID: 1911001728}
+  m_Layer: 0
+  m_Name: Square22
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!212 &1911001728
+SpriteRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1911001727}
+  m_Enabled: 0
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6,
+    type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 1, y: 1}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 1
+  m_MaskInteraction: 0
+  m_SpriteSortPoint: 0
+--- !u!4 &1911001729
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1911001727}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1, y: 1.3222919, z: 0}
+  m_LocalScale: {x: 4.79, y: 3.26, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1937422803
 GameObject:
   m_ObjectHideFlags: 0
@@ -11359,6 +12061,47 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2025730666
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2025730667}
+  m_Layer: 5
+  m_Name: hand01
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &2025730667
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2025730666}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 860620048}
+  - {fileID: 334961075}
+  - {fileID: 133108822}
+  - {fileID: 176631157}
+  - {fileID: 1448559823}
+  - {fileID: 2047237471}
+  m_Father: {fileID: 169161172}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: -180}
+  m_SizeDelta: {x: 1920, y: 720}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &2043066778
 GameObject:
   m_ObjectHideFlags: 0
@@ -11371,6 +12114,8 @@ GameObject:
   - component: {fileID: 2043066779}
   - component: {fileID: 2043066781}
   - component: {fileID: 2043066782}
+  - component: {fileID: 2043066783}
+  - component: {fileID: 2043066784}
   m_Layer: 0
   m_Name: TurnManager
   m_TagString: Untagged
@@ -11417,6 +12162,16 @@ MonoBehaviour:
   gateSfx2: {fileID: 0}
   gateSfx2Volume: 1
   menu: {fileID: 1069897049}
+  showTurnBanner: 1
+  playerTurnBannerMessage: "\uC544\uAD70\uD134\uC785\uB2C8\uB2E4!"
+  enemyTurnBannerMessage: "\uC0C1\uB300\uD134\uC785\uB2C8\uB2E4!"
+  turnBannerCenter: {x: 0, y: 110}
+  turnBannerSize: {x: 760, y: 110}
+  turnBannerInSeconds: 0.35
+  turnBannerHoldSeconds: 0.45
+  turnBannerOutSeconds: 0.35
+  turnBannerColor: {r: 1, g: 1, b: 1, a: 1}
+  turnBannerFontSize: 54
   enemyTurnController: {fileID: 630219717}
   handUI: {fileID: 860620052}
   cost: {fileID: 1352731693}
@@ -11427,6 +12182,7 @@ MonoBehaviour:
   enemyHandUI: {fileID: 133108826}
   enemyDeck: {fileID: 1424331453}
   itemHand: {fileID: 334961076}
+  enemyTurnControllerOwnsHandReveal: 1
   enemyDiscardRevealDelay: 2
   cardAnime: {fileID: 1201525414}
 --- !u!4 &2043066780
@@ -11474,6 +12230,993 @@ MonoBehaviour:
   runIndex: 4
   graceSeconds: 1
   worldVcamName: CM vcam1
+--- !u!114 &2043066783
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2043066778}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a24413ad9c94af3a7d73b17439f851a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playOnStart: 0
+  startDialogue:
+    defaultSpeakerName: 
+    defaultLeftPortrait: {fileID: 0}
+    defaultRightPortrait: {fileID: 0}
+    lines: []
+  advanceKey: 101
+  lockBattleInputWhileActive: 1
+  createTutorialControllerIfMissing: 1
+  targetCanvas: {fileID: 169161171}
+  root: {fileID: 0}
+  rootGroup: {fileID: 0}
+  window: {fileID: 0}
+  nameText: {fileID: 0}
+  dialogueText: {fileID: 0}
+  leftPortraitImage: {fileID: 0}
+  rightPortraitImage: {fileID: 0}
+  createUiIfMissing: 1
+  windowAnchoredPosition: {x: 0, y: 58}
+  windowSize: {x: 1180, y: 220}
+  windowColor: {r: 0.04, g: 0.045, b: 0.055, a: 0.95}
+  nameTextColor: {r: 0.95, g: 0.9, b: 0.72, a: 1}
+  dialogueTextColor: {r: 1, g: 1, b: 1, a: 1}
+  nameFontSize: 30
+  dialogueFontSize: 28
+  dimInactivePortrait: 1
+  activePortraitAlpha: 1
+  inactivePortraitAlpha: 0.35
+  useTypewriter: 1
+  charactersPerSecond: 38
+  punctuationExtraDelay: 0.08
+  lineAdvanceLockSeconds: 0.08
+--- !u!114 &2043066784
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2043066778}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: acbf799a45874eab84f67332e75d286d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  autoStart: 1
+  playOnlyOnce: 0
+  playerPrefsKey: BattleTutorialScenario_Seen
+  controlBattleStart: 1
+  turnManager: {fileID: 0}
+  dialogueController: {fileID: 0}
+  tutorialController: {fileID: 0}
+  menu: {fileID: 0}
+  cardUseOrchestrator: {fileID: 0}
+  scenarioSteps:
+  - label: Lock input for intro
+    type: 2
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 0
+  - label: Intro dialogue
+    type: 0
+    dialogue:
+      defaultSpeakerName: lucy
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines:
+      - text: "\uC800\uAC8C... \uBB50\uC57C?"
+        speakerName: 
+        leftPortrait: {fileID: 0}
+        rightPortrait: {fileID: 0}
+        focus: 0
+        lineTutorial:
+          enabled: 0
+          message: 
+          windowAnchoredPosition: {x: 0, y: 120}
+          windowSize: {x: 720, y: 220}
+        advanceTutorial:
+          enabled: 0
+          message: 
+          windowAnchoredPosition: {x: 0, y: 120}
+          windowSize: {x: 720, y: 220}
+      - text: "\uC774\uCABD\uC73C\uB85C \uC624\uACE0 \uC788\uC5B4...!"
+        speakerName: 
+        leftPortrait: {fileID: 0}
+        rightPortrait: {fileID: 0}
+        focus: 0
+        lineTutorial:
+          enabled: 0
+          message: 
+          windowAnchoredPosition: {x: 0, y: 120}
+          windowSize: {x: 720, y: 220}
+        advanceTutorial:
+          enabled: 0
+          message: 
+          windowAnchoredPosition: {x: 0, y: 120}
+          windowSize: {x: 720, y: 220}
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Start enemy turn
+    type: 3
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Wait for first player turn
+    type: 5
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Lock input before first explanation
+    type: 2
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 0
+  - label: After first enemy turn dialogue
+    type: 0
+    dialogue:
+      defaultSpeakerName: ???
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines:
+      - text: test
+        speakerName: ???
+        leftPortrait: {fileID: 0}
+        rightPortrait: {fileID: 0}
+        focus: 0
+        lineTutorial:
+          enabled: 0
+          message: 
+          windowAnchoredPosition: {x: 0, y: 120}
+          windowSize: {x: 720, y: 220}
+        advanceTutorial:
+          enabled: 0
+          message: 
+          windowAnchoredPosition: {x: 0, y: 120}
+          windowSize: {x: 720, y: 220}
+      - text: test
+        speakerName: ???
+        leftPortrait: {fileID: 0}
+        rightPortrait: {fileID: 0}
+        focus: 0
+        lineTutorial:
+          enabled: 0
+          message: 
+          windowAnchoredPosition: {x: 0, y: 120}
+          windowSize: {x: 720, y: 220}
+        advanceTutorial:
+          enabled: 0
+          message: 
+          windowAnchoredPosition: {x: 0, y: 120}
+          windowSize: {x: 720, y: 220}
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Enable state panel input
+    type: 2
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: State panel prompt
+    type: 1
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: "\uC88C\uC6B0 \uBC29\uD5A5\uD0A4\uB85C State \uD328\uB110\uC744 \uC120\uD0DD\uD558\uACE0
+        E\uB85C \uC0C1\uD0DC\uCC3D\uC744 \uC5EC\uC138\uC694."
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 5
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 0
+      allowStateNavigation: 0
+      allowCancelInput: 0
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: State hand inspect prompt
+    type: 1
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: "\uC0C1\uD0DC\uCC3D\uC5D0\uC11C\uB294 \uC801\uACFC \uC544\uAD70\uC744
+        \uD655\uC778\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4. E\uB97C \uB20C\uB7EC
+        \uC120\uD0DD\uD55C \uB300\uC0C1\uC758 \uC190\uD328\uB97C \uD06C\uAC8C \uD655\uC778\uD558\uC138\uC694."
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 15
+      allowMenuNavigation: 0
+      allowCardSelectionNavigation: 0
+      allowStateNavigation: 1
+      allowCancelInput: 0
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Close state hand prompt
+    type: 1
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: "\uC190\uD328 \uD655\uC778\uC744 \uB9C8\uCCE4\uB2E4\uBA74 Q\uB85C
+        \uD655\uB300\uB41C \uC190\uD328\uB97C \uB2EB\uC73C\uC138\uC694."
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 17
+      allowMenuNavigation: 0
+      allowCardSelectionNavigation: 0
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Close state panel prompt
+    type: 1
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: "\uD55C \uBC88 \uB354 Q\uB97C \uB20C\uB7EC State \uD328\uB110\uC744
+        \uB2EB\uACE0 \uC804\uD22C \uBA54\uB274\uB85C \uB3CC\uC544\uAC00\uC138\uC694."
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 17
+      allowMenuNavigation: 0
+      allowCardSelectionNavigation: 0
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Lock input before card dialogue
+    type: 2
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 0
+  - label: Before card use dialogue
+    type: 0
+    dialogue:
+      defaultSpeakerName: ???
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines:
+      - text: test
+        speakerName: 
+        leftPortrait: {fileID: 0}
+        rightPortrait: {fileID: 0}
+        focus: 0
+        lineTutorial:
+          enabled: 0
+          message: 
+          windowAnchoredPosition: {x: 0, y: 120}
+          windowSize: {x: 720, y: 220}
+        advanceTutorial:
+          enabled: 0
+          message: 
+          windowAnchoredPosition: {x: 0, y: 120}
+          windowSize: {x: 720, y: 220}
+      - text: test
+        speakerName: 
+        leftPortrait: {fileID: 0}
+        rightPortrait: {fileID: 0}
+        focus: 0
+        lineTutorial:
+          enabled: 0
+          message: 
+          windowAnchoredPosition: {x: 0, y: 120}
+          windowSize: {x: 720, y: 220}
+        advanceTutorial:
+          enabled: 0
+          message: 
+          windowAnchoredPosition: {x: 0, y: 120}
+          windowSize: {x: 720, y: 220}
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Enable card panel input
+    type: 2
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Card panel interaction prompt
+    type: 1
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: "Card \uD328\uB110\uC744 \uC120\uD0DD\uD558\uACE0 E\uB97C \uB20C\uB7EC
+        \uC190\uD328\uB97C \uD3BC\uCE58\uC138\uC694."
+      windowAnchoredPosition: {x: -360, y: 210}
+      windowSize: {x: 760, y: 170}
+      requiredAction: 3
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 0
+      allowStateNavigation: 0
+      allowCancelInput: 0
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Card selection prompt
+    type: 1
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: "\uC190\uD328\uAC00 \uBCF4\uC774\uBA74 E\uB97C \uD55C \uBC88 \uB354
+        \uB20C\uB7EC \uCE74\uB4DC \uC120\uD0DD \uC0C1\uD0DC\uB85C \uB4E4\uC5B4\uAC00\uC138\uC694."
+      windowAnchoredPosition: {x: -360, y: 300}
+      windowSize: {x: 760, y: 170}
+      requiredAction: 8
+      allowMenuNavigation: 0
+      allowCardSelectionNavigation: 0
+      allowStateNavigation: 0
+      allowCancelInput: 0
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Card use prompt
+    type: 1
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: "Card \uD328\uB110\uC744 \uC120\uD0DD\uD574 E\uB97C \uB204\uB978 \uB4A4,
+        \uC190\uD328\uC5D0\uC11C \uC0AC\uC6A9\uD560 \uCE74\uB4DC\uB97C \uACE8\uB77C
+        E\uB85C \uC0AC\uC6A9\uD558\uC138\uC694."
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 10
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 0
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Wait for card use to settle
+    type: 6
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Lock input before end turn dialogue
+    type: 2
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 0
+  - label: Before end turn dialogue
+    type: 0
+    dialogue:
+      defaultSpeakerName: ???
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines:
+      - text: "\uC774\uC81C \uB354 \uC774\uC0C1 \uD560 \uAC8C \uC5C6\uB294\uB370..."
+        speakerName: 
+        leftPortrait: {fileID: 0}
+        rightPortrait: {fileID: 0}
+        focus: 0
+        lineTutorial:
+          enabled: 0
+          message: 
+          windowAnchoredPosition: {x: 0, y: 120}
+          windowSize: {x: 720, y: 220}
+        advanceTutorial:
+          enabled: 0
+          message: 
+          windowAnchoredPosition: {x: 0, y: 120}
+          windowSize: {x: 720, y: 220}
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Enable end turn input
+    type: 2
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: End turn prompt
+    type: 1
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: "\uC190\uD328 \uC120\uD0DD \uC911\uC774\uB77C\uBA74 Q\uB85C \uB2EB\uACE0,
+        End \uD328\uB110\uC744 \uC120\uD0DD\uD55C \uB4A4 E\uB85C \uD134\uC744 \uC885\uB8CC\uD558\uC138\uC694."
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 13
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 0
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Wait for second enemy turn
+    type: 5
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 1
+    menuInputEnabled: 1
+  - label: Wait for second player turn
+    type: 5
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Lock input before run dialogue
+    type: 2
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 0
+  - label: Before run dialogue
+    type: 0
+    dialogue:
+      defaultSpeakerName: ???
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines:
+      - text: "\uC5EC\uAE34 \uB108\uBB34 \uC704\uD5D8\uD574...."
+        speakerName: 
+        leftPortrait: {fileID: 0}
+        rightPortrait: {fileID: 0}
+        focus: 0
+        lineTutorial:
+          enabled: 0
+          message: 
+          windowAnchoredPosition: {x: 0, y: 120}
+          windowSize: {x: 720, y: 220}
+        advanceTutorial:
+          enabled: 0
+          message: 
+          windowAnchoredPosition: {x: 0, y: 120}
+          windowSize: {x: 720, y: 220}
+      - text: "\uC9C0\uAE08\uC740 \uB3C4\uB9DD\uCCD0\uC57C\uACA0\uC5B4."
+        speakerName: 
+        leftPortrait: {fileID: 0}
+        rightPortrait: {fileID: 0}
+        focus: 0
+        lineTutorial:
+          enabled: 0
+          message: 
+          windowAnchoredPosition: {x: 0, y: 120}
+          windowSize: {x: 720, y: 220}
+        advanceTutorial:
+          enabled: 0
+          message: 
+          windowAnchoredPosition: {x: 0, y: 120}
+          windowSize: {x: 720, y: 220}
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Enable run input
+    type: 2
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Run prompt
+    type: 1
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: "Run \uD328\uB110\uC744 \uC120\uD0DD\uD558\uACE0 E\uB97C \uB20C\uB7EC
+        \uC804\uD22C\uC5D0\uC11C \uB3C4\uB9DD\uCE58\uC138\uC694."
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 7
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 0
+      allowStateNavigation: 0
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Mark tutorial seen
+    type: 7
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: 
+      windowAnchoredPosition: {x: 0, y: 180}
+      windowSize: {x: 760, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 1
+      allowCardSelectionNavigation: 1
+      allowStateNavigation: 1
+      allowCancelInput: 1
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  scenarioStepsInitialized: 1
+  introDialogue:
+    defaultSpeakerName: ???
+    defaultLeftPortrait: {fileID: 0}
+    defaultRightPortrait: {fileID: 0}
+    lines:
+    - text: "\uC800\uAC8C... \uBB50\uC57C?"
+      speakerName: 
+      leftPortrait: {fileID: 0}
+      rightPortrait: {fileID: 0}
+      focus: 0
+      lineTutorial:
+        enabled: 0
+        message: 
+        windowAnchoredPosition: {x: 0, y: 120}
+        windowSize: {x: 720, y: 220}
+      advanceTutorial:
+        enabled: 0
+        message: 
+        windowAnchoredPosition: {x: 0, y: 120}
+        windowSize: {x: 720, y: 220}
+    - text: "\uC774\uCABD\uC73C\uB85C \uC624\uACE0 \uC788\uC5B4...!"
+      speakerName: 
+      leftPortrait: {fileID: 0}
+      rightPortrait: {fileID: 0}
+      focus: 0
+      lineTutorial:
+        enabled: 0
+        message: 
+        windowAnchoredPosition: {x: 0, y: 120}
+        windowSize: {x: 720, y: 220}
+      advanceTutorial:
+        enabled: 0
+        message: 
+        windowAnchoredPosition: {x: 0, y: 120}
+        windowSize: {x: 720, y: 220}
+  afterFirstEnemyTurnDialogue:
+    defaultSpeakerName: ???
+    defaultLeftPortrait: {fileID: 0}
+    defaultRightPortrait: {fileID: 0}
+    lines:
+    - text: test
+      speakerName: ???
+      leftPortrait: {fileID: 0}
+      rightPortrait: {fileID: 0}
+      focus: 0
+      lineTutorial:
+        enabled: 0
+        message: 
+        windowAnchoredPosition: {x: 0, y: 120}
+        windowSize: {x: 720, y: 220}
+      advanceTutorial:
+        enabled: 0
+        message: 
+        windowAnchoredPosition: {x: 0, y: 120}
+        windowSize: {x: 720, y: 220}
+    - text: test
+      speakerName: ???
+      leftPortrait: {fileID: 0}
+      rightPortrait: {fileID: 0}
+      focus: 0
+      lineTutorial:
+        enabled: 0
+        message: 
+        windowAnchoredPosition: {x: 0, y: 120}
+        windowSize: {x: 720, y: 220}
+      advanceTutorial:
+        enabled: 0
+        message: 
+        windowAnchoredPosition: {x: 0, y: 120}
+        windowSize: {x: 720, y: 220}
+  beforeCardUseDialogue:
+    defaultSpeakerName: ???
+    defaultLeftPortrait: {fileID: 0}
+    defaultRightPortrait: {fileID: 0}
+    lines:
+    - text: test
+      speakerName: 
+      leftPortrait: {fileID: 0}
+      rightPortrait: {fileID: 0}
+      focus: 0
+      lineTutorial:
+        enabled: 0
+        message: 
+        windowAnchoredPosition: {x: 0, y: 120}
+        windowSize: {x: 720, y: 220}
+      advanceTutorial:
+        enabled: 0
+        message: 
+        windowAnchoredPosition: {x: 0, y: 120}
+        windowSize: {x: 720, y: 220}
+    - text: test
+      speakerName: 
+      leftPortrait: {fileID: 0}
+      rightPortrait: {fileID: 0}
+      focus: 0
+      lineTutorial:
+        enabled: 0
+        message: 
+        windowAnchoredPosition: {x: 0, y: 120}
+        windowSize: {x: 720, y: 220}
+      advanceTutorial:
+        enabled: 0
+        message: 
+        windowAnchoredPosition: {x: 0, y: 120}
+        windowSize: {x: 720, y: 220}
+  beforeEndTurnDialogue:
+    defaultSpeakerName: ???
+    defaultLeftPortrait: {fileID: 0}
+    defaultRightPortrait: {fileID: 0}
+    lines:
+    - text: "\uC774\uC81C \uB354 \uC774\uC0C1 \uD560 \uAC8C \uC5C6\uB294\uB370..."
+      speakerName: 
+      leftPortrait: {fileID: 0}
+      rightPortrait: {fileID: 0}
+      focus: 0
+      lineTutorial:
+        enabled: 0
+        message: 
+        windowAnchoredPosition: {x: 0, y: 120}
+        windowSize: {x: 720, y: 220}
+      advanceTutorial:
+        enabled: 0
+        message: 
+        windowAnchoredPosition: {x: 0, y: 120}
+        windowSize: {x: 720, y: 220}
+  beforeRunDialogue:
+    defaultSpeakerName: ???
+    defaultLeftPortrait: {fileID: 0}
+    defaultRightPortrait: {fileID: 0}
+    lines:
+    - text: "\uC5EC\uAE34 \uB108\uBB34 \uC704\uD5D8\uD574...."
+      speakerName: 
+      leftPortrait: {fileID: 0}
+      rightPortrait: {fileID: 0}
+      focus: 0
+      lineTutorial:
+        enabled: 0
+        message: 
+        windowAnchoredPosition: {x: 0, y: 120}
+        windowSize: {x: 720, y: 220}
+      advanceTutorial:
+        enabled: 0
+        message: 
+        windowAnchoredPosition: {x: 0, y: 120}
+        windowSize: {x: 720, y: 220}
+    - text: "\uC9C0\uAE08\uC740 \uB3C4\uB9DD\uCCD0\uC57C\uACA0\uC5B4."
+      speakerName: 
+      leftPortrait: {fileID: 0}
+      rightPortrait: {fileID: 0}
+      focus: 0
+      lineTutorial:
+        enabled: 0
+        message: 
+        windowAnchoredPosition: {x: 0, y: 120}
+        windowSize: {x: 720, y: 220}
+      advanceTutorial:
+        enabled: 0
+        message: 
+        windowAnchoredPosition: {x: 0, y: 120}
+        windowSize: {x: 720, y: 220}
+  statePanelPrompt:
+    message: "\uC88C\uC6B0 \uBC29\uD5A5\uD0A4\uB85C State \uD328\uB110\uC744 \uC120\uD0DD\uD558\uACE0
+      E\uB85C \uC0C1\uD0DC\uCC3D\uC744 \uC5EC\uC138\uC694."
+    windowAnchoredPosition: {x: 0, y: 180}
+    windowSize: {x: 760, y: 180}
+    requiredAction: 5
+    allowMenuNavigation: 1
+    allowCardSelectionNavigation: 0
+    allowStateNavigation: 0
+    allowCancelInput: 0
+  stateHandInspectPrompt:
+    message: "\uC0C1\uD0DC\uCC3D\uC5D0\uC11C\uB294 \uC801\uACFC \uC544\uAD70\uC744
+      \uD655\uC778\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4. E\uB97C \uB20C\uB7EC \uC120\uD0DD\uD55C
+      \uB300\uC0C1\uC758 \uC190\uD328\uB97C \uD06C\uAC8C \uD655\uC778\uD558\uC138\uC694."
+    windowAnchoredPosition: {x: 0, y: 180}
+    windowSize: {x: 760, y: 180}
+    requiredAction: 15
+    allowMenuNavigation: 0
+    allowCardSelectionNavigation: 0
+    allowStateNavigation: 1
+    allowCancelInput: 0
+  closeStateHandPrompt:
+    message: "\uC190\uD328 \uD655\uC778\uC744 \uB9C8\uCCE4\uB2E4\uBA74 Q\uB85C \uD655\uB300\uB41C
+      \uC190\uD328\uB97C \uB2EB\uC73C\uC138\uC694."
+    windowAnchoredPosition: {x: 0, y: 180}
+    windowSize: {x: 760, y: 180}
+    requiredAction: 17
+    allowMenuNavigation: 0
+    allowCardSelectionNavigation: 0
+    allowStateNavigation: 1
+    allowCancelInput: 1
+  closeStatePanelPrompt:
+    message: "\uD55C \uBC88 \uB354 Q\uB97C \uB20C\uB7EC State \uD328\uB110\uC744
+      \uB2EB\uACE0 \uC804\uD22C \uBA54\uB274\uB85C \uB3CC\uC544\uAC00\uC138\uC694."
+    windowAnchoredPosition: {x: 0, y: 180}
+    windowSize: {x: 760, y: 180}
+    requiredAction: 17
+    allowMenuNavigation: 0
+    allowCardSelectionNavigation: 0
+    allowStateNavigation: 1
+    allowCancelInput: 1
+  cardPanelPrompt:
+    message: "Card \uD328\uB110\uC744 \uC120\uD0DD\uD558\uACE0 E\uB97C \uB20C\uB7EC
+      \uC190\uD328\uB97C \uD3BC\uCE58\uC138\uC694."
+    windowAnchoredPosition: {x: -360, y: 210}
+    windowSize: {x: 760, y: 170}
+    requiredAction: 3
+    allowMenuNavigation: 1
+    allowCardSelectionNavigation: 0
+    allowStateNavigation: 0
+    allowCancelInput: 0
+  cardSelectPrompt:
+    message: "\uC190\uD328\uAC00 \uBCF4\uC774\uBA74 E\uB97C \uD55C \uBC88 \uB354
+      \uB20C\uB7EC \uCE74\uB4DC \uC120\uD0DD \uC0C1\uD0DC\uB85C \uB4E4\uC5B4\uAC00\uC138\uC694."
+    windowAnchoredPosition: {x: -360, y: 300}
+    windowSize: {x: 760, y: 170}
+    requiredAction: 8
+    allowMenuNavigation: 0
+    allowCardSelectionNavigation: 0
+    allowStateNavigation: 0
+    allowCancelInput: 0
+  cardUsePrompt:
+    message: "Card \uD328\uB110\uC744 \uC120\uD0DD\uD574 E\uB97C \uB204\uB978 \uB4A4,
+      \uC190\uD328\uC5D0\uC11C \uC0AC\uC6A9\uD560 \uCE74\uB4DC\uB97C \uACE8\uB77C
+      E\uB85C \uC0AC\uC6A9\uD558\uC138\uC694."
+    windowAnchoredPosition: {x: 0, y: 180}
+    windowSize: {x: 760, y: 180}
+    requiredAction: 10
+    allowMenuNavigation: 1
+    allowCardSelectionNavigation: 1
+    allowStateNavigation: 0
+    allowCancelInput: 1
+  endTurnPrompt:
+    message: "\uC190\uD328 \uC120\uD0DD \uC911\uC774\uB77C\uBA74 Q\uB85C \uB2EB\uACE0,
+      End \uD328\uB110\uC744 \uC120\uD0DD\uD55C \uB4A4 E\uB85C \uD134\uC744 \uC885\uB8CC\uD558\uC138\uC694."
+    windowAnchoredPosition: {x: 0, y: 180}
+    windowSize: {x: 760, y: 180}
+    requiredAction: 13
+    allowMenuNavigation: 1
+    allowCardSelectionNavigation: 1
+    allowStateNavigation: 0
+    allowCancelInput: 1
+  runPrompt:
+    message: "Run \uD328\uB110\uC744 \uC120\uD0DD\uD558\uACE0 E\uB97C \uB20C\uB7EC
+      \uC804\uD22C\uC5D0\uC11C \uB3C4\uB9DD\uCE58\uC138\uC694."
+    windowAnchoredPosition: {x: 0, y: 180}
+    windowSize: {x: 760, y: 180}
+    requiredAction: 7
+    allowMenuNavigation: 1
+    allowCardSelectionNavigation: 0
+    allowStateNavigation: 0
+    allowCancelInput: 1
 --- !u!1 &2047237470
 GameObject:
   m_ObjectHideFlags: 0
@@ -11491,7 +13234,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2047237471
 RectTransform:
   m_ObjectHideFlags: 0
@@ -11504,11 +13247,11 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 708448341}
+  m_Father: {fileID: 2025730667}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -248, y: -103.28088}
+  m_AnchoredPosition: {x: -248, y: 76.71912}
   m_SizeDelta: {x: 113.2803, y: 145.4208}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2047237472
@@ -11518,7 +13261,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2047237470}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
@@ -12176,3 +13919,6 @@ SceneRoots:
   - {fileID: 1937422805}
   - {fileID: 2097723557}
   - {fileID: 598643973}
+  - {fileID: 1911001729}
+  - {fileID: 1754859556}
+  - {fileID: 568051758}

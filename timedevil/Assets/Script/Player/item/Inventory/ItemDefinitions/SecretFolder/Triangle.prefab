@@ -147,11 +147,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   db: {fileID: 11400000, guid: b55809aa78d1121429cb9c310d2aef27, type: 2}
-  itemInfos:
-  - itemSO: {fileID: 11400000, guid: e390458e198ca5c4faecf8eac3a3f7ac, type: 2}
-    quantity: 1
-  - itemSO: {fileID: 11400000, guid: a23e811d77db4ea4482209b94ae61c95, type: 2}
-    quantity: 3
+  itemInfos: []
   beforeDialogue:
   - text: "\uC774..\uC774\uAC8C \uBB50\uC9C0...?"
     speakerName: "\uB8E8\uC2DC"

@@ -1,20 +1,31 @@
 ﻿using UnityEngine;
 using System.Linq;
 using System.IO;
+using System.Collections.Generic;
+
 public class CardStateRuntime : MonoBehaviour
 {
     public static CardStateRuntime Instance { get; private set; }
 
     //  덱 최대 장수
-    public const int MAX_DECK = 30;
-    private static readonly string[] DefaultCardIds =
+    public const int MAX_DECK = 13;
+    private static readonly string[] DefaultOwnedCardIds =
+        Enumerable.Range(1, 4).Select(i => $"AttackCard{i}")
+            .Concat(Enumerable.Range(1, 5).Select(i => $"DrawCard{i}"))
+            .Concat(Enumerable.Range(1, 4).Select(i => $"MoveCard{i}"))
+            .ToArray();
+
+    private static readonly string[] ManagedDefaultCardIds =
+        Enumerable.Range(1, 10).Select(i => $"AttackCard{i}")
+            .Concat(Enumerable.Range(1, 10).Select(i => $"DrawCard{i}"))
+            .Concat(Enumerable.Range(1, 10).Select(i => $"MoveCard{i}"))
+            .ToArray();
+
+    private static readonly string[] LegacyDefaultDeckIds =
     {
-        "AttackCard1", "AttackCard2", "AttackCard3", "AttackCard4", "AttackCard5",
-        "AttackCard6", "AttackCard7", "AttackCard8", "AttackCard9", "AttackCard10",
-        "DrawCard1", "DrawCard2", "DrawCard3", "DrawCard4", "DrawCard5",
-        "DrawCard6", "DrawCard7", "DrawCard8", "DrawCard9", "DrawCard10",
-        "MoveCard1", "MoveCard2", "MoveCard3", "MoveCard4", "MoveCard5",
-        "MoveCard6", "MoveCard7", "MoveCard8", "MoveCard9", "MoveCard10"
+        "AttackCard1", "AttackCard2", "AttackCard3", "AttackCard4",
+        "DrawCard1", "DrawCard2", "DrawCard3", "DrawCard4",
+        "MoveCard1", "MoveCard2", "MoveCard3", "MoveCard4", "MoveCard5"
     };
 
     [Header("자동 저장 옵션 (기본 꺼짐)")]
@@ -28,19 +39,24 @@ public class CardStateRuntime : MonoBehaviour
         // 싱글톤 + 씬 유지
         if (Instance != null && Instance != this)
         {
-            Destroy(gameObject);
+            Destroy(this);
             return;
         }
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        // 파일이 없으면 비어있는 상태로 시작
         Data = CardSaveStore.Load();
-        UseDefaultBattleCards();
+        EnsureDefaultBattleCardsSaved();
 
 #if UNITY_EDITOR
         Debug.Log($"[CardStateRuntime] Loaded. owned={Data.owned?.Count ?? 0}, deck={Data.deck?.Count ?? 0}");
 #endif
+    }
+
+    void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
     }
 
     void OnDisable()
@@ -63,6 +79,14 @@ public class CardStateRuntime : MonoBehaviour
 #if UNITY_EDITOR
         Debug.Log("[CardStateRuntime] SaveNow → " + CardSaveStore.GetPath());
 #endif
+    }
+
+    public void EnsureDefaultBattleCardsSaved()
+    {
+        bool changed = EnsureDefaultPlayerCards();
+        if (!changed) return;
+
+        CardSaveStore.Save(Data);
     }
 
     // ----- Owned 관리 -----
@@ -118,18 +142,84 @@ public class CardStateRuntime : MonoBehaviour
     }
 
     // --- Helpers ---
-    private void UseDefaultBattleCards()
+    private bool EnsureDefaultPlayerCards()
     {
         if (Data == null) Data = new CardSaveData();
 
-        var defaults = DefaultCardIds.ToList();
-        Data.owned = defaults.ToList();
-        Data.deck = defaults.ToList();
+        bool changed = false;
+        if (Data.owned == null)
+        {
+            Data.owned = new List<string>();
+            changed = true;
+        }
+
+        if (Data.deck == null)
+        {
+            Data.deck = new List<string>();
+            changed = true;
+        }
+
+        if (ContainsOnlyManagedDefaultCards(Data.owned))
+        {
+            var defaults = DefaultOwnedCardIds.ToList();
+            if (!Data.owned.SequenceEqual(defaults))
+            {
+                Data.owned = defaults;
+                changed = true;
+            }
+        }
+        else
+        {
+            foreach (var id in DefaultOwnedCardIds)
+            {
+                if (Data.owned.Contains(id)) continue;
+                Data.owned.Add(id);
+                changed = true;
+            }
+        }
+
+        if (IsLegacyDefaultDeck(Data.deck))
+        {
+            Data.deck = DefaultOwnedCardIds.ToList();
+            changed = true;
+        }
+
+        var normalizedDeck = Data.deck
+            .Where(id => !string.IsNullOrEmpty(id) && Data.owned.Contains(id))
+            .Distinct()
+            .Take(MAX_DECK)
+            .ToList();
+
+        if (normalizedDeck.Count == 0)
+        {
+            normalizedDeck = DefaultOwnedCardIds.ToList();
+        }
+
+        if (!Data.deck.SequenceEqual(normalizedDeck))
+        {
+            Data.deck = normalizedDeck;
+            changed = true;
+        }
+
+        return changed;
     }
 
     private bool ShouldSkipEmptyInitialSave()
     {
         return IsEmpty(Data) && !File.Exists(CardSaveStore.GetPath());
+    }
+
+    private static bool IsLegacyDefaultDeck(List<string> deck)
+    {
+        if (deck == null || deck.Count != LegacyDefaultDeckIds.Length) return false;
+
+        return deck.Distinct().Count() == LegacyDefaultDeckIds.Length
+            && LegacyDefaultDeckIds.All(deck.Contains);
+    }
+
+    private static bool ContainsOnlyManagedDefaultCards(List<string> owned)
+    {
+        return owned == null || owned.All(id => ManagedDefaultCardIds.Contains(id));
     }
 
     private static bool IsEmpty(CardSaveData d)

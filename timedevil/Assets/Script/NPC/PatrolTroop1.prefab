@@ -51,7 +51,7 @@ MonoBehaviour:
     leftPortrait: {fileID: 0}
     rightPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
     lines:
-    - text: "\u3141\u3134\u3147\u3139"
+    - text: "\uC7A0\uAE50, \uB108 \uAC70\uAE30 \uC11C!"
       speakerName: "\uC21C\uCC30\uBCD1"
       leftPortrait: {fileID: 0}
       rightPortrait: {fileID: 0}
@@ -124,6 +124,7 @@ GameObject:
   - component: {fileID: 8819219721249517834}
   - component: {fileID: 652208893936946435}
   - component: {fileID: 1513544824036781935}
+  - component: {fileID: 8024554409083870018}
   m_Layer: 0
   m_Name: PatrolTroop1
   m_TagString: Untagged
@@ -285,3 +286,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   speed: 5
   ignoringCollision: 1
+--- !u!95 &8024554409083870018
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7522993159658721311}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 76e7af5cf5cbf0647b557ea01f80ba9b, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0

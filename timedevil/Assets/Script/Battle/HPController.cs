@@ -11,9 +11,22 @@ public class HPController : MonoBehaviour
     [SerializeField] private Transform playerPawn;
     [SerializeField] private Transform enemyPawn;
 
+    [Header("Player Defeat")]
+    [SerializeField] private bool loadMyroomOnPlayerZeroHp = true;
+    [SerializeField] private string myroomSceneName = "Myroom";
+    [SerializeField, TextArea] private string playerDefeatMessage = "HP reached 0. Press E to return to your room.";
+    [SerializeField] private KeyCode playerDefeatContinueKey = KeyCode.E;
+
+    [Header("Enemy Defeat")]
+    [SerializeField] private bool returnToPreviousSceneOnEnemyZeroHp = true;
+    [SerializeField, Min(0f)] private float enemyDefeatReturnGraceSeconds = 1f;
+
     public Faction CurrentDamageTarget { get; private set; } = Faction.Enemy;
 
     private HPUIBinder _hpUI;
+    private DescriptionPanelController _descriptionPanel;
+    private bool playerDefeatLoadStarted;
+    private bool enemyDefeatReturnStarted;
     public void InjectRefs(PlayerDataRuntime pdr, EnemyRuntime er, HPUIBinder binder = null)
     {
         if (pdr != null) playerData = pdr;
@@ -29,6 +42,7 @@ public class HPController : MonoBehaviour
         if (!playerData) playerData = FindObjectOfType<PlayerDataRuntime>(true);
         if (!enemyData) enemyData = EnemyRuntime.Instance ?? FindObjectOfType<EnemyRuntime>(true);
         _hpUI = FindObjectOfType<HPUIBinder>(true);
+        _descriptionPanel = FindObjectOfType<DescriptionPanelController>(true);
 
         if (!playerPawn)
         {
@@ -91,6 +105,8 @@ public class HPController : MonoBehaviour
                 WriteIntFieldOrProp(pd, "currentHP", cur);
                 Debug.Log($"[HP] Player -{amount} → {cur}");
                 _hpUI?.Refresh();
+                if (cur <= 0)
+                    HandlePlayerDefeat();
             }
             else
             {
@@ -105,6 +121,8 @@ public class HPController : MonoBehaviour
                 int raw = amount + Mathf.Max(0, enemyData.defense);
                 enemyData.TakeDamage(raw);   // 내부에서 OnChanged 호출 → HPUI 자동 갱신
                 Debug.Log($"[HP] Enemy -{amount} → {enemyData.currentHP}");
+                if (enemyData.IsDead)
+                    HandleEnemyDefeat();
             }
             else
             {
@@ -160,12 +178,73 @@ public class HPController : MonoBehaviour
         return Vector3.positiveInfinity;
     }
 
+    private void HandlePlayerDefeat()
+    {
+        if (!loadMyroomOnPlayerZeroHp || playerDefeatLoadStarted) return;
+        playerDefeatLoadStarted = true;
+
+        if (string.IsNullOrWhiteSpace(myroomSceneName))
+        {
+            Debug.LogWarning("[HPController] Player defeat scene name is empty.");
+            return;
+        }
+
+        var menu = FindObjectOfType<BattleMenuController>(true);
+        if (menu != null) menu.EnableInput(false);
+
+        var turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
+        if (turnManager != null) turnManager.StopAllCoroutines();
+
+        var enemyTurn = FindObjectOfType<EnemyTurnController>(true);
+        if (enemyTurn != null) enemyTurn.StopAllCoroutines();
+
+        StartCoroutine(Co_PlayerDefeatSequence());
+    }
+
+    private System.Collections.IEnumerator Co_PlayerDefeatSequence()
+    {
+        if (_descriptionPanel == null)
+            _descriptionPanel = FindObjectOfType<DescriptionPanelController>(true);
+
+        if (_descriptionPanel != null)
+            _descriptionPanel.ShowTemporaryExplanation(playerDefeatMessage);
+
+        yield return null;
+        while (Input.GetKey(playerDefeatContinueKey))
+            yield return null;
+
+        while (!Input.GetKeyDown(playerDefeatContinueKey))
+            yield return null;
+
+        PlayerReturnContext.ClearReturnCore();
+        MyroomEntryContext.SetRoom3();
+
+        Debug.Log($"[HPController] Player HP reached 0. Loading '{myroomSceneName}' at Room3.");
+
+        var fader = FindObjectOfType<SceneFader>(true);
+        if (fader != null)
+        {
+            fader.LoadSceneWithFadeOut(myroomSceneName);
+            yield break;
+        }
+
+        SceneLoader.Load(myroomSceneName, useFaderIfExists: false);
+    }
+
     public void BeginCardHitTest(Faction target)
     {
         CurrentDamageTarget = target;
     }
 
-    // ---------- 리플렉션 보조 ----------
+    private void HandleEnemyDefeat()
+    {
+        if (!returnToPreviousSceneOnEnemyZeroHp || enemyDefeatReturnStarted)
+            return;
+
+        enemyDefeatReturnStarted = true;
+        SceneLoader.GoBackToReturnScene(enemyDefeatReturnGraceSeconds);
+    }
+
     private int ReadIntFrom(object obj, params string[] names)
     {
         if (obj == null || names == null) return 0;

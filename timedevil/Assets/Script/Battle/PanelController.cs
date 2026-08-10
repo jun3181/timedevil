@@ -16,6 +16,7 @@ public class PanelController : MonoBehaviour
     [SerializeField] private HandUI handUI;
     [SerializeField] private TurnManager turnManager;
     [SerializeField] private CardUseOrchestrator orchestrator;
+    [SerializeField] private DescriptionPanelController descriptionPanel;
 
     [Header("Menu Submit Index Rules")]
     [Tooltip("켜면 panel 인덱스 제출 시 게임플레이 뷰로 전환")]
@@ -25,6 +26,8 @@ public class PanelController : MonoBehaviour
     [Tooltip("켜면 card 인덱스 제출 시 게임플레이 뷰로 전환")]
     [SerializeField] private bool useCardSubmit = true;
     [SerializeField] private int cardSubmitIndex = 0;
+    [SerializeField] private bool useItemSubmit = true;
+    [SerializeField] private int itemSubmitIndex = 1;
 
     [Tooltip("켜면 end 인덱스 제출 시 게임플레이 뷰로 전환")]
     [SerializeField] private bool useEndSubmit = true;
@@ -33,6 +36,7 @@ public class PanelController : MonoBehaviour
     [Header("Return Rules")]
     [Tooltip("카드 선택모드에서 Q 취소 입력 시에만 원상태로 복귀")]
     [SerializeField] private bool returnOnCardCancelKey = true;
+    [SerializeField] private bool returnOnItemCancelKey = true;
 
     [Tooltip("EnemyTurn -> PlayerTurn 전환 시 원상태로 복귀")]
     [SerializeField] private bool returnOnPlayerTurnStart = true;
@@ -45,6 +49,11 @@ public class PanelController : MonoBehaviour
 
     [Tooltip("그리드/캐릭터/전투 오브젝트 등 게임플레이 대상들. 기본은 아래 대기, 전환 시 올라옴")]
     [SerializeField] private List<Transform> gameplayTargets = new List<Transform>();
+
+    [Header("Gameplay Default View")]
+    [SerializeField] private bool keepGameplayTargetsVisible = true;
+    [SerializeField] private bool raiseEnemyTargetsOnGameplayView = true;
+    [SerializeField] private Vector3 enemyRaisedOffset = new Vector3(0f, 80f, 0f);
 
     [SerializeField] private bool useLocalPosition = true;
     [SerializeField] private bool lockZDepth = true;
@@ -68,12 +77,31 @@ public class PanelController : MonoBehaviour
     [Header("Battle Menu Panel Auto-Hide")]
     [Tooltip("상대 턴이거나 카드 선택 중일 때 화면 아래로 내릴 UI 패널들(Card/Item/End/Run)")]
     [SerializeField] private List<Transform> battleMenuPanelTargets = new List<Transform>();
+    [SerializeField] private bool excludeHandObjectsFromPanelMotion = true;
 
     [Tooltip("자동 숨김 시 적용할 패널 오프셋(화면 밖으로 내려가도록 충분히 큰 음수 Y 권장)")]
     [SerializeField] private Vector3 battleMenuHiddenOffset = new Vector3(0f, -900f, 0f);
 
     [SerializeField, Min(0.01f)] private float battleMenuDuration = 0.3f;
     [SerializeField] private AnimationCurve battleMenuEase = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+
+    [Header("Hand Object Rise")]
+    [SerializeField] private bool animateHandObjectOnPanelControl = true;
+    [SerializeField] private RectTransform handObject;
+    [SerializeField] private bool autoResolveHandObject = true;
+    [SerializeField] private bool convertHandPositionFromSeparatedRoot = true;
+    [SerializeField] private string separatedHandRootName = "hand01";
+    [SerializeField] private Vector2 handHiddenAnchoredPosition = new Vector2(-315.6795f, -820f);
+    [SerializeField] private Vector2 handShownAnchoredPosition = new Vector2(-315.6795f, -380f);
+    [SerializeField] private bool compensateHandParentPanelOffset = true;
+    [SerializeField] private bool startHandBelowScreen = true;
+    [SerializeField, Min(0.01f)] private float handRiseDuration = 0.3f;
+    [SerializeField] private AnimationCurve handRiseEase = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+    [SerializeField] private bool staggerCardsOnHandRise = true;
+    [SerializeField] private float handCardRiseYOffset = 460f;
+    [SerializeField, Min(0.01f)] private float handCardRiseDuration = 0.22f;
+    [SerializeField] private float handCardRiseStagger = 0.055f;
+    [SerializeField] private bool handCardRiseFade = true;
 
     [Header("Initial State")]
     [Tooltip("체크 시 시작부터 gameplayTargets가 보이는 상태")]
@@ -91,10 +119,15 @@ public class PanelController : MonoBehaviour
     private bool pendingReturnByEnd;
     private Coroutine running;
     private Coroutine menuPanelRunning;
+    private Coroutine handObjectRunning;
     private Coroutine delayedViewRoutine;
     private bool menuPanelsHidden;
+    private bool handObjectShown;
+    private bool itemInteractionActive;
     private int externalMenuHideRequestCount;
+    private int externalHandShowRequestCount;
     private bool initialSyncRequested;
+    private bool turnEventSubscribed;
 
     private TurnState lastTurnState = TurnState.PlayerTurn;
     private bool lastHandSelectMode;
@@ -103,22 +136,27 @@ public class PanelController : MonoBehaviour
     {
         if (!menu) menu = FindObjectOfType<BattleMenuController>(true);
         if (!handUI) handUI = FindObjectOfType<HandUI>(true);
+        ResolveHandObject();
         if (!turnManager) turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
         if (!orchestrator) orchestrator = FindObjectOfType<CardUseOrchestrator>(true);
+        if (!descriptionPanel) descriptionPanel = FindObjectOfType<DescriptionPanelController>(true);
     }
 
     void Awake()
     {
         if (!menu) menu = FindObjectOfType<BattleMenuController>(true);
         if (!handUI) handUI = FindObjectOfType<HandUI>(true);
+        ResolveHandObject();
         if (!turnManager) turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
         if (!orchestrator) orchestrator = FindObjectOfType<CardUseOrchestrator>(true);
+        if (!descriptionPanel) descriptionPanel = FindObjectOfType<DescriptionPanelController>(true);
 
         CacheShownBasePositions();
 
         isGameplayView = startInGameplayView;
         ApplyImmediate(isGameplayView);
         ApplyBattleMenuImmediate(false);
+        SetHandObjectShown(startHandBelowScreen ? false : ShouldShowHandObject(false, false, false, false), true);
 
         if (turnManager) lastTurnState = turnManager.currentTurn;
         if (handUI) lastHandSelectMode = handUI.IsInSelectMode;
@@ -127,7 +165,8 @@ public class PanelController : MonoBehaviour
     void OnEnable()
     {
         if (menu) menu.onSubmit.AddListener(OnMenuSubmit);
-        if (!turnManager) turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
+        SubscribeTurnManagerEvents();
+
         if (syncInitialViewWithTurnState && !initialSyncRequested)
         {
             initialSyncRequested = true;
@@ -139,18 +178,39 @@ public class PanelController : MonoBehaviour
     {
         if (menu) menu.onSubmit.RemoveListener(OnMenuSubmit);
         if (turnManager) turnManager.OnTurnChanged -= HandleTurnChanged;
+        turnEventSubscribed = false;
+
+        if (itemInteractionActive)
+        {
+            itemInteractionActive = false;
+            descriptionPanel?.ExitItemInteractionView();
+            if (menu) menu.EnableInput(true);
+        }
     }
 
     void Update()
     {
+        if (!turnEventSubscribed)
+            SubscribeTurnManagerEvents();
+
         bool qDown = Input.GetKeyDown(KeyCode.Q);
         bool handSelecting = handUI && handUI.IsInSelectMode;
 
-        bool enemyTurn = turnManager && turnManager.currentTurn == TurnState.EnemyTurn;
-        bool cardResolving = orchestrator && orchestrator.GetIsBusy();
-        bool shouldHideMenuPanels = enemyTurn || handSelecting || cardResolving || externalMenuHideRequestCount > 0;
-        if (shouldHideMenuPanels != menuPanelsHidden)
-            SetBattleMenuPanelsHidden(shouldHideMenuPanels);
+        RefreshTurnDrivenPanelState(false);
+
+        if (returnOnItemCancelKey && qDown && itemInteractionActive)
+        {
+            if (!BattleTutorialGate.Allows(BattleTutorialAction.ItemCancel))
+            {
+                lastHandSelectMode = handSelecting;
+                return;
+            }
+
+            ExitItemInteractionMode();
+            BattleTutorialGate.Report(BattleTutorialAction.ItemCancel);
+            lastHandSelectMode = handSelecting;
+            return;
+        }
 
         if (returnOnCardCancelKey && qDown)
         {
@@ -165,7 +225,7 @@ public class PanelController : MonoBehaviour
 
         if (!returnOnPlayerTurnStart) return;
 
-        if (!turnManager) turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
+        ResolveTurnManager();
         if (!orchestrator) orchestrator = FindObjectOfType<CardUseOrchestrator>(true);
         if (!turnManager) return;
 
@@ -186,21 +246,41 @@ public class PanelController : MonoBehaviour
     {
         if (usePanelSubmit && index == panelSubmitIndex)
         {
-            SetGameplayViewDelayed(true, submitViewDelay);
-            return;
-        }
-
-        if (useCardSubmit && index == cardSubmitIndex)
-        {
-            if (handUI != null && handUI.CardCount <= 0)
+            if (!BattleTutorialGate.Allows(BattleTutorialAction.StatePanelInteract))
                 return;
 
             SetGameplayViewDelayed(true, submitViewDelay);
             return;
         }
 
+        if (useCardSubmit && index == cardSubmitIndex)
+        {
+            if (!BattleTutorialGate.Allows(BattleTutorialAction.CardPanelInteract))
+                return;
+
+            if (handUI != null && handUI.CardCount <= 0)
+                return;
+
+            SetGameplayViewDelayed(true, submitViewDelay);
+            BattleTutorialGate.Report(BattleTutorialAction.CardPanelInteract);
+            return;
+        }
+
+        if (useItemSubmit && index == itemSubmitIndex)
+        {
+            if (!BattleTutorialGate.Allows(BattleTutorialAction.ItemPanelInteract))
+                return;
+
+            EnterItemInteractionMode();
+            BattleTutorialGate.Report(BattleTutorialAction.ItemPanelInteract);
+            return;
+        }
+
         if (useEndSubmit && index == endSubmitIndex)
         {
+            if (!BattleTutorialGate.Allows(BattleTutorialAction.EndPanelInteract))
+                return;
+
             SetGameplayViewDelayed(true, submitViewDelay);
             pendingReturnByEnd = true;
         }
@@ -222,6 +302,9 @@ public class PanelController : MonoBehaviour
             StopCoroutine(delayedViewRoutine);
             delayedViewRoutine = null;
         }
+
+        if (on == isGameplayView)
+            return;
 
         // An interrupted animation is between the shown/hidden endpoints, so its
         // current position cannot be used as a new shown base. Re-caching it here
@@ -262,7 +345,7 @@ public class PanelController : MonoBehaviour
 
     private IEnumerator Co_SyncInitialViewWithTurnState()
     {
-        if (!turnManager) turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
+        ResolveTurnManager();
         if (!turnManager) yield break;
 
         // 첫 턴이 실제로 확정될 때까지 기다렸다가 즉시 반영 (프레임 타임아웃 없음)
@@ -287,18 +370,69 @@ public class PanelController : MonoBehaviour
         bool immediateViewApply = !enemyTurn && !shouldAnimateAfterIntro;
         SetGameplayView(enemyTurn, immediateViewApply);
 
-        bool handSelecting = handUI && handUI.IsInSelectMode;
-        bool cardResolving = orchestrator && orchestrator.GetIsBusy();
-        bool shouldHideMenuPanels = enemyTurn || handSelecting || cardResolving || externalMenuHideRequestCount > 0;
-        SetBattleMenuPanelsHidden(shouldHideMenuPanels, true);
+        RefreshTurnDrivenPanelState(true);
 
         if (turnManager) lastTurnState = turnManager.currentTurn;
     }
 
     // 일부 브랜치/프리팹 상태에서 OnTurnChanged 구독 코드가 남아 있을 수 있어
     // 컴파일 오류(CS0103) 방지를 위해 안전한 핸들러를 유지한다.
-    private void HandleTurnChanged(TurnState _)
+    private void ResolveTurnManager()
     {
+        var resolved = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
+        if (resolved == turnManager)
+            return;
+
+        if (turnManager && turnEventSubscribed)
+            turnManager.OnTurnChanged -= HandleTurnChanged;
+
+        turnManager = resolved;
+        turnEventSubscribed = false;
+    }
+
+    private void SubscribeTurnManagerEvents()
+    {
+        ResolveTurnManager();
+        if (!turnManager)
+            return;
+
+        turnManager.OnTurnChanged -= HandleTurnChanged;
+        turnManager.OnTurnChanged += HandleTurnChanged;
+        turnEventSubscribed = true;
+        lastTurnState = turnManager.currentTurn;
+    }
+
+    private void HandleTurnChanged(TurnState state)
+    {
+        bool enemyToPlayer = lastTurnState == TurnState.EnemyTurn && state == TurnState.PlayerTurn;
+
+        RefreshTurnDrivenPanelState(false);
+
+        if (returnOnPlayerTurnStart && enemyToPlayer && (pendingReturnByEnd || isGameplayView))
+        {
+            SetGameplayViewDelayed(false, turnTransitionDelay);
+            pendingReturnByEnd = false;
+        }
+
+        lastTurnState = state;
+    }
+
+    private void RefreshTurnDrivenPanelState(bool immediate)
+    {
+        if (!turnManager) turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
+        if (!orchestrator) orchestrator = FindObjectOfType<CardUseOrchestrator>(true);
+
+        bool handSelecting = handUI && handUI.IsInSelectMode;
+        bool enemyTurn = turnManager && turnManager.currentTurn == TurnState.EnemyTurn;
+        bool playerDiscard = turnManager && turnManager.IsPlayerDiscardPhase;
+        bool cardResolving = orchestrator && orchestrator.GetIsBusy();
+        bool shouldHideMenuPanels = enemyTurn || playerDiscard || handSelecting || cardResolving || itemInteractionActive || externalMenuHideRequestCount > 0;
+        if (shouldHideMenuPanels != menuPanelsHidden || immediate)
+            SetBattleMenuPanelsHidden(shouldHideMenuPanels, immediate);
+
+        bool shouldShowHandObject = ShouldShowHandObject(handSelecting, cardResolving, enemyTurn, playerDiscard);
+        if (shouldShowHandObject != handObjectShown || immediate)
+            SetHandObjectShown(shouldShowHandObject, immediate);
     }
 
     [ContextMenu("Re-cache Shown Base From Current")]
@@ -326,13 +460,13 @@ public class PanelController : MonoBehaviour
         for (int i = 0; i < enemyTargets.Count; i++)
         {
             Vector3 current = GetPos(enemyTargets[i]);
-            enemyShownBase.Add(isGameplayView ? current - enemyHiddenOffset : current);
+            enemyShownBase.Add(isGameplayView ? current - GetEnemyGameplayOffset() : current);
         }
 
         for (int i = 0; i < gameplayTargets.Count; i++)
         {
             Vector3 current = GetPos(gameplayTargets[i]);
-            gameplayShownBase.Add(isGameplayView ? current : current - gameplayHiddenOffset);
+            gameplayShownBase.Add(keepGameplayTargetsVisible ? current : (isGameplayView ? current : current - gameplayHiddenOffset));
         }
     }
 
@@ -360,13 +494,15 @@ public class PanelController : MonoBehaviour
             float gameplayK = EvaluateCurve(gameplayEase, gameplayT);
 
             ApplyLerp(enemyTargets, enemyFrom, enemyTo, enemyK);
-            ApplyLerp(gameplayTargets, gameplayFrom, gameplayTo, gameplayK);
+            if (!keepGameplayTargetsVisible)
+                ApplyLerp(gameplayTargets, gameplayFrom, gameplayTo, gameplayK);
 
             yield return null;
         }
 
         ApplyAbsolute(enemyTargets, enemyTo);
-        ApplyAbsolute(gameplayTargets, gameplayTo);
+        if (!keepGameplayTargetsVisible)
+            ApplyAbsolute(gameplayTargets, gameplayTo);
 
         running = null;
         isAnimating = false;
@@ -375,7 +511,8 @@ public class PanelController : MonoBehaviour
     private void ApplyImmediate(bool gameplayView)
     {
         ApplyAbsolute(enemyTargets, BuildEnemyTargetPositions(gameplayView));
-        ApplyAbsolute(gameplayTargets, BuildGameplayTargetPositions(gameplayView));
+        if (!keepGameplayTargetsVisible)
+            ApplyAbsolute(gameplayTargets, BuildGameplayTargetPositions(gameplayView));
     }
 
     private List<Vector3> BuildEnemyTargetPositions(bool gameplayView)
@@ -384,7 +521,7 @@ public class PanelController : MonoBehaviour
         for (int i = 0; i < enemyTargets.Count; i++)
         {
             Vector3 shown = i < enemyShownBase.Count ? enemyShownBase[i] : GetPos(enemyTargets[i]);
-            list.Add(gameplayView ? shown + enemyHiddenOffset : shown);
+            list.Add(gameplayView ? shown + GetEnemyGameplayOffset() : shown);
         }
         return list;
     }
@@ -400,6 +537,114 @@ public class PanelController : MonoBehaviour
         return list;
     }
 
+    private Vector3 GetEnemyGameplayOffset()
+    {
+        return raiseEnemyTargetsOnGameplayView ? enemyRaisedOffset : enemyHiddenOffset;
+    }
+
+    private void ResolveHandObject()
+    {
+        if (!handUI) handUI = FindObjectOfType<HandUI>(true);
+
+        if (handObject && autoResolveHandObject && handUI
+            && HandPositionUtility.IsNamedRoot(handObject.transform, separatedHandRootName))
+        {
+            RectTransform handRect = handUI.GetComponent<RectTransform>();
+            if (handRect && handRect.transform.IsChildOf(handObject))
+                handObject = handRect;
+        }
+
+        if (handObject || !autoResolveHandObject) return;
+        if (handUI) handObject = handUI.GetComponent<RectTransform>();
+    }
+
+    private bool ShouldShowHandObject(bool handSelecting, bool cardResolving, bool enemyTurn, bool playerDiscard)
+    {
+        return animateHandObjectOnPanelControl
+            && handObject != null
+            && !enemyTurn
+            && (playerDiscard || handSelecting || cardResolving || externalHandShowRequestCount > 0);
+    }
+
+    private void SetHandObjectShown(bool shown, bool immediate = false)
+    {
+        if (!animateHandObjectOnPanelControl) return;
+        ResolveHandObject();
+        if (!handObject) return;
+
+        if (handObjectRunning != null)
+        {
+            StopCoroutine(handObjectRunning);
+            handObjectRunning = null;
+        }
+
+        handObjectShown = shown;
+        PrepareHandCardsForRise(shown, immediate);
+
+        if (immediate) ApplyHandObjectImmediate(shown);
+        else handObjectRunning = StartCoroutine(Co_AnimateHandObject(shown));
+    }
+
+    private void PrepareHandCardsForRise(bool shown, bool immediate)
+    {
+        if (!handUI || !staggerCardsOnHandRise) return;
+
+        if (shown && !immediate)
+            handUI.PlayCardsRiseStaggered(handCardRiseYOffset, handCardRiseDuration, handCardRiseStagger, handCardRiseFade);
+        else if (!shown)
+            handUI.StopCardRiseAnimation(true);
+    }
+
+    private IEnumerator Co_AnimateHandObject(bool shown)
+    {
+        Vector2 from = handObject.anchoredPosition;
+        Vector2 to = GetHandObjectTargetPosition(shown);
+
+        float t = 0f;
+        while (t < handRiseDuration)
+        {
+            t += Time.deltaTime;
+            float k = handRiseDuration <= 0f ? 1f : Mathf.Clamp01(t / handRiseDuration);
+            float eased = EvaluateCurve(handRiseEase, k);
+            handObject.anchoredPosition = Vector2.LerpUnclamped(from, to, eased);
+            yield return null;
+        }
+
+        handObject.anchoredPosition = to;
+        handObjectRunning = null;
+    }
+
+    private void ApplyHandObjectImmediate(bool shown)
+    {
+        if (!handObject) return;
+        handObject.anchoredPosition = GetHandObjectTargetPosition(shown);
+    }
+
+    private Vector2 GetHandObjectTargetPosition(bool shown)
+    {
+        Vector2 target = shown ? handShownAnchoredPosition : handHiddenAnchoredPosition;
+        if (shown && compensateHandParentPanelOffset && menuPanelsHidden && IsHandObjectChildOfBattleMenuPanel())
+            target -= new Vector2(battleMenuHiddenOffset.x, battleMenuHiddenOffset.y);
+
+        return HandPositionUtility.ToSeparatedRootLocal(
+            handObject,
+            target,
+            convertHandPositionFromSeparatedRoot,
+            separatedHandRootName);
+    }
+
+    private bool IsHandObjectChildOfBattleMenuPanel()
+    {
+        if (!handObject) return false;
+        for (int i = 0; i < battleMenuPanelTargets.Count; i++)
+        {
+            Transform panel = battleMenuPanelTargets[i];
+            if (panel && handObject.transform.IsChildOf(panel))
+                return true;
+        }
+
+        return false;
+    }
 
     public void SetBattleMenuPanelsHidden(bool hidden, bool immediate = false)
     {
@@ -427,10 +672,46 @@ public class PanelController : MonoBehaviour
         if (externalMenuHideRequestCount > 0)
             return;
 
-        bool enemyTurn = turnManager && turnManager.currentTurn == TurnState.EnemyTurn;
-        bool handSelecting = handUI && handUI.IsInSelectMode;
-        bool cardResolving = orchestrator && orchestrator.GetIsBusy();
-        SetBattleMenuPanelsHidden(enemyTurn || handSelecting || cardResolving, immediate);
+        RefreshTurnDrivenPanelState(immediate);
+    }
+
+    public void PushHandObjectShowRequest(bool immediate = false)
+    {
+        externalHandShowRequestCount++;
+        RefreshTurnDrivenPanelState(immediate);
+    }
+
+    public void PopHandObjectShowRequest(bool immediate = false)
+    {
+        externalHandShowRequestCount = Mathf.Max(0, externalHandShowRequestCount - 1);
+        RefreshTurnDrivenPanelState(immediate);
+    }
+
+    private void EnterItemInteractionMode()
+    {
+        itemInteractionActive = true;
+
+        if (!descriptionPanel)
+            descriptionPanel = FindObjectOfType<DescriptionPanelController>(true);
+
+        descriptionPanel?.EnterItemInteractionView();
+        if (menu) menu.EnableInput(false);
+
+        RefreshTurnDrivenPanelState(false);
+        SetGameplayViewDelayed(true, submitViewDelay);
+    }
+
+    private void ExitItemInteractionMode(bool immediate = false)
+    {
+        if (!itemInteractionActive)
+            return;
+
+        itemInteractionActive = false;
+        descriptionPanel?.ExitItemInteractionView();
+        if (menu) menu.EnableInput(true);
+
+        SetGameplayView(false, immediate);
+        RefreshTurnDrivenPanelState(immediate);
     }
 
     private IEnumerator Co_AnimateBattleMenuPanels(bool hidden)
@@ -443,7 +724,8 @@ public class PanelController : MonoBehaviour
         {
             t += Time.deltaTime;
             float k = battleMenuDuration <= 0f ? 1f : Mathf.Clamp01(t / battleMenuDuration);
-            ApplyLerp(battleMenuPanelTargets, from, to, EvaluateCurve(battleMenuEase, k));
+            float eased = EvaluateCurve(battleMenuEase, k);
+            ApplyLerp(battleMenuPanelTargets, from, to, eased);
             yield return null;
         }
 
@@ -461,8 +743,9 @@ public class PanelController : MonoBehaviour
         var list = new List<Vector3>(battleMenuPanelTargets.Count);
         for (int i = 0; i < battleMenuPanelTargets.Count; i++)
         {
-            Vector3 shown = i < battleMenuShownBase.Count ? battleMenuShownBase[i] : GetPos(battleMenuPanelTargets[i]);
-            list.Add(hidden ? shown + battleMenuHiddenOffset : shown);
+            Transform target = battleMenuPanelTargets[i];
+            Vector3 shown = i < battleMenuShownBase.Count ? battleMenuShownBase[i] : GetPos(target);
+            list.Add(hidden && !ShouldIgnorePanelMotionTarget(target) ? shown + battleMenuHiddenOffset : shown);
         }
         return list;
     }
@@ -482,6 +765,7 @@ public class PanelController : MonoBehaviour
         {
             var tr = targets[i];
             if (!tr) continue;
+            if (ShouldIgnorePanelMotionTarget(tr)) continue;
             SetPos(tr, Vector3.LerpUnclamped(from[i], to[i], t));
         }
     }
@@ -493,8 +777,30 @@ public class PanelController : MonoBehaviour
         {
             var tr = targets[i];
             if (!tr) continue;
+            if (ShouldIgnorePanelMotionTarget(tr)) continue;
             SetPos(tr, to[i]);
         }
+    }
+
+    private bool ShouldIgnorePanelMotionTarget(Transform target)
+    {
+        if (!excludeHandObjectsFromPanelMotion || !target)
+            return false;
+
+        if (!handUI) handUI = FindObjectOfType<HandUI>(true);
+        ResolveHandObject();
+
+        Transform handTransform = handObject ? handObject.transform : (handUI ? handUI.transform : null);
+        if (handTransform && (target == handTransform || target.IsChildOf(handTransform)))
+            return true;
+
+        RectTransform handRoot = null;
+        if (handTransform)
+            handRoot = HandPositionUtility.FindNamedAncestor(handTransform, separatedHandRootName);
+        if (!handRoot && handUI)
+            handRoot = HandPositionUtility.FindNamedAncestor(handUI.transform, separatedHandRootName);
+
+        return handRoot && (target == handRoot.transform || target.IsChildOf(handRoot));
     }
 
     private Vector3 GetPos(Transform t)

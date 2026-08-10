@@ -9,6 +9,9 @@ public class PlayerDataRuntime : MonoBehaviour
     public bool saveOnDisable = false;
     public bool saveOnQuit = false;
 
+    [Header("Load 옵션")]
+    [SerializeField] private bool loadSavedDataOnAwake = true;
+
     [Header("Data")]
     public PlayerData Data;   // 인스펙터에서 기본값 설정 가능
 
@@ -17,20 +20,58 @@ public class PlayerDataRuntime : MonoBehaviour
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
 
-        DontDestroyOnLoad(gameObject);   // ★ 씬 전환 생존
+        EnsureRootForDontDestroy();
+        DontDestroyOnLoad(gameObject);   // 씬 전환 생존
+
+        LoadInitialData();
+    }
+
+    private void EnsureRootForDontDestroy()
+    {
+        if (transform.parent != null)
+            transform.SetParent(null, true);
+    }
+
+    private void LoadInitialData()
+    {
+        if (loadSavedDataOnAwake)
+        {
+            PlayerData saved = PlayerDataStore.Load();
+            if (saved != null)
+            {
+                Data = saved;
+                return;
+            }
+        }
 
         if (Data == null)
-            Data = PlayerDataStore.Load();
-        if (Data == null)
-        {
-            Data = new PlayerData();
-            Data.InitDefaults("Player", 20, 10, 5, 5);
-        }
+            ResetToDefaults();
+    }
+
+    public void ResetToDefaults()
+    {
+        Data = new PlayerData();
+        Data.InitDefaults();
+    }
+
+    public bool LoadFromDisk()
+    {
+        PlayerData saved = PlayerDataStore.Load();
+        if (saved == null) return false;
+
+        Data = saved;
+        return true;
     }
 
     public void SaveNow()
     {
+        if (Data == null) ResetToDefaults();
         PlayerDataStore.Save(Data);
+    }
+
+    void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
     }
 
     void OnDisable()

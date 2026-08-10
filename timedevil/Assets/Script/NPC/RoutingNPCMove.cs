@@ -93,6 +93,7 @@ public class RoutingNPCMove : MonoBehaviour
         savedTargetNodeIndex = -1;
         savedNodeIndexList = null;
 
+        npcMove.EndHeldWalkAnimation();
         npcMove.Stop();
     }
 
@@ -102,6 +103,7 @@ public class RoutingNPCMove : MonoBehaviour
         StopCoroutine(routingCoroutine);
         routingCoroutine = null;
 
+        npcMove.EndHeldWalkAnimation();
         npcMove.Stop();
     }
 
@@ -155,6 +157,8 @@ public class RoutingNPCMove : MonoBehaviour
 
             savedTargetNodeIndex = i;
             int j = 0;
+            npcMove.BeginHeldWalkAnimation();
+
             while(j < path.Count) {
                 if(npcMove.WasOnMoving()) {
                     path = new();
@@ -178,6 +182,8 @@ public class RoutingNPCMove : MonoBehaviour
 
                 j++;
             }
+
+            npcMove.EndHeldWalkAnimation();
         }
 
         routingCoroutine = null;
