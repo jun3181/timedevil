@@ -14,7 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   id: key
   displayName: key
-  type: 1
-  description: ololo
+  type: 4
+  description: Quest item.
   icon: {fileID: -1858188696, guid: d5622c064a660f24a87b8dca73727bfe, type: 3}
   defaultQuantity: 0
+  effectAmount: 0
+  consumeOnUse: 0
+  itemScript: {fileID: 0}

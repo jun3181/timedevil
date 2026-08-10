@@ -387,21 +387,22 @@ public class CameraManager : MonoBehaviour
         delta.z = 0f;
 
         Vector3 fixedPos = fixedCameraAnchorPoint ? fixedCameraAnchorPoint.position : toPos;
+        float? effectiveAfterOrthoSize = afterOrthoSize ?? vcam.m_Lens.OrthographicSize;
 
         if (debugLog)
-            Debug.Log($"[CameraManager] ApplyAfterTeleport mode={afterMode} from={fromPos} to={toPos} deltaXY={delta} fixedPos={fixedPos} bounds={(afterBounds ? afterBounds.name : "(null)")}");
+            Debug.Log($"[CameraManager] ApplyAfterTeleport mode={afterMode} from={fromPos} to={toPos} deltaXY={delta} fixedPos={fixedPos} bounds={(afterBounds ? afterBounds.name : "(null)")} ortho={(afterOrthoSize.HasValue ? afterOrthoSize.Value.ToString("F2") : "keep")}");
 
         switch (afterMode)
         {
             case CameraModeId.Fixed:
-                SetFixed(lockWorldPos: fixedPos, orthoSize: afterOrthoSize);
+                SetFixed(lockWorldPos: fixedPos, orthoSize: effectiveAfterOrthoSize);
                 if (snapCameraWhenFixed) SnapCameraTo(fixedPos);
                 break;
 
             case CameraModeId.FollowConfined:
                 if (player)
                 {
-                    SetFollowConfined(player, afterBounds, afterOrthoSize);
+                    SetFollowConfined(player, afterBounds, effectiveAfterOrthoSize);
                     if (notifyWarpToCinemachine) NotifyTargetWarp(player, delta);
                 }
                 break;
@@ -409,13 +410,13 @@ public class CameraManager : MonoBehaviour
             case CameraModeId.FollowFree:
                 if (player)
                 {
-                    SetFollowFree(player, afterOrthoSize);
+                    SetFollowFree(player, effectiveAfterOrthoSize);
                     if (notifyWarpToCinemachine) NotifyTargetWarp(player, delta);
                 }
                 break;
 
             case CameraModeId.Cutscene:
-                SetCutscene(fixedPos, afterOrthoSize);
+                SetCutscene(fixedPos, effectiveAfterOrthoSize);
                 if (snapCameraWhenFixed) SnapCameraTo(fixedPos);
                 break;
         }

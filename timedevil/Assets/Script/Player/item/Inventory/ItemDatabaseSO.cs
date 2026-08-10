@@ -10,6 +10,11 @@ public class ItemDatabaseSO : ScriptableObject
 
     void OnEnable()
     {
+        RebuildMap();
+    }
+
+    private void RebuildMap()
+    {
         map = new Dictionary<string, ItemSO>();
 
         foreach (var it in items)
@@ -24,7 +29,9 @@ public class ItemDatabaseSO : ScriptableObject
 
     public ItemSO GetById(string id)
     {
-        if (string.IsNullOrEmpty(id) || map == null) return null;
+        if (map == null) RebuildMap();
+        if (string.IsNullOrEmpty(id)) return null;
+
         map.TryGetValue(id, out var so);
         return so;
     }
