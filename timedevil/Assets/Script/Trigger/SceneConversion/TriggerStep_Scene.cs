@@ -52,6 +52,13 @@ public class TriggerStep_Scene : TriggerStepBase
     [Tooltip("다음 씬 시작 카메라 Ortho Size. 0이면 텔레포트 afterOrthoSize=0처럼 기본값을 사용합니다.")]
     [SerializeField] private float sceneStartOrthoSize = 0f;
 
+    [Header("Target Scene Spawn (optional)")]
+    [Tooltip("켜면 다음 씬의 SceneEntrySpawnPoint 중 같은 Key를 가진 지점으로 플레이어를 보냅니다.")]
+    [SerializeField] private bool overrideTargetSceneSpawn = false;
+
+    [Tooltip("다음 씬에서 찾을 SceneEntrySpawnPoint key")]
+    [SerializeField] private string targetSceneSpawnKey = "";
+
     // =========================
     // Battle return context (existing)
     // =========================
@@ -153,6 +160,26 @@ public class TriggerStep_Scene : TriggerStepBase
         else
         {
             SceneStartCameraContext.Clear();
+        }
+
+        if (overrideTargetSceneSpawn)
+        {
+            if (string.IsNullOrWhiteSpace(targetSceneSpawnKey))
+            {
+                SceneEntrySpawnContext.Clear();
+                Debug.LogWarning("[TriggerStep_Scene] overrideTargetSceneSpawn is on, but targetSceneSpawnKey is empty.");
+            }
+            else
+            {
+                SceneEntrySpawnContext.SetNext(targetScene, targetSceneSpawnKey);
+
+                if (debugLog)
+                    Debug.Log($"[TriggerStep_Scene] Queue target spawn '{targetSceneSpawnKey}' for scene '{targetScene}'");
+            }
+        }
+        else
+        {
+            SceneEntrySpawnContext.Clear();
         }
 
         // -------------------------

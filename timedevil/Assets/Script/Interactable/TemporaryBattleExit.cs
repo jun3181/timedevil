@@ -31,6 +31,7 @@ public class TemporaryBattleExit : MonoBehaviour, IInteractable
     private IEnumerator ExitBattleSequence(string sceneName)
     {
         isTransitioning = true;
+        BattleEncounterState.ClearPending();
 
         // (선택) 입력 잠금
         if (GameManager.Instance != null)

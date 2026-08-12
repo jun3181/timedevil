@@ -216,6 +216,7 @@ public class HPController : MonoBehaviour
         while (!Input.GetKeyDown(playerDefeatContinueKey))
             yield return null;
 
+        BattleEncounterState.ClearPending();
         PlayerReturnContext.ClearReturnCore();
         MyroomEntryContext.SetRoom3();
 
@@ -242,6 +243,7 @@ public class HPController : MonoBehaviour
             return;
 
         enemyDefeatReturnStarted = true;
+        BattleEncounterState.ConsumePendingVictory();
         SceneLoader.GoBackToReturnScene(enemyDefeatReturnGraceSeconds);
     }
 

@@ -8,6 +8,7 @@ public static class SaveSystem
         ItemSaveStore.Delete("items_save.json");
         PlayerDataStore.DeleteSave();
         ProgressSaveStore.DeleteSave();
+        BattleEncounterState.ClearAll();
 
         Debug.Log("[SaveSystem] Cleared all save files for NewGame.");
     }

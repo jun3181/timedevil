@@ -72,6 +72,7 @@ public static class SceneLoader
         PlayerReturnContext.GraceSecondsPending = Mathf.Max(0f, graceSeconds);
         // 로드 직후 한 프레임 내 트리거 재발동 방지용 선제 플래그
         PlayerReturnContext.IsInGracePeriod = PlayerReturnContext.GraceSecondsPending > 0f;
+        BattleEncounterState.ClearPending();
 
         Load(PlayerReturnContext.ReturnSceneName, useFaderIfExists, LoadSceneMode.Single);
     }

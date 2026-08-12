@@ -267,6 +267,20 @@ public class TriggerStep_PivotSequenceMove : TriggerStepBase
             //    AnyState -> Walk 전이를 선호하는 컨트롤러에서도 확실히 상태가 바뀌도록 한다.
             ApplyFinalFacing(anim, mode, moveAnimType, true);
             yield return null;
+
+            if (hold <= 0)
+            {
+                SetIdle(anim);
+                yield break;
+            }
+
+            for (int i = 0; i < hold; i++)
+            {
+                SetIdle(anim);
+                yield return null;
+            }
+
+            yield break;
         }
 
         // 2) 최종적으로는 Idle 고정

@@ -29,13 +29,13 @@ public class MainMenu : MonoBehaviour
         LoadMyRoom();
     }
 
-    // 버튼: 이어하기 (Room3 스폰으로 진입)
+    // 버튼: 이어하기 (Room2 스폰으로 진입)
     public void LoadGame()
     {
         PlayClick();
 
-        // 1회성 진입점 지정 (Load는 Room3 스폰 사용)
-        MyroomEntryContext.SetRoom3();
+        // 1회성 진입점 지정 (Load는 Room2 스폰 사용)
+        MyroomEntryContext.SetRoom2();
 
         // (유지) 기존 컨텍스트도 그대로
         GameStartContext.SetLoadGame();
