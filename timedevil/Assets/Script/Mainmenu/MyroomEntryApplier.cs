@@ -31,15 +31,37 @@ public class MyroomEntryApplier : MonoBehaviour
 
     private void Awake()
     {
-        int handle = SceneManager.GetActiveScene().handle;
-        if (s_appliedSceneHandle == handle) return;
-        s_appliedSceneHandle = handle;
+        Scene activeScene = SceneManager.GetActiveScene();
+
+        if (PlayerReturnContext.HasReturnPosition &&
+            !string.IsNullOrWhiteSpace(PlayerReturnContext.ReturnSceneName) &&
+            PlayerReturnContext.ReturnSceneName == activeScene.name)
+        {
+            MyroomEntryContext.Clear();
+            _entry = MyroomEntryPoint.None;
+
+            if (debugLog)
+                Debug.Log("[MyroomEntryApplier] Return context active -> skip Myroom entry spawn override.", this);
+
+            return;
+        }
 
         MyroomEntryPoint consumed;
         bool hasExplicitEntry = MyroomEntryContext.TryConsume(out consumed);
-        _entry = hasExplicitEntry ? consumed : MyroomEntryPoint.None;
+        if (hasExplicitEntry)
+        {
+            _entry = consumed;
+            s_appliedSceneHandle = activeScene.handle;
+            return;
+        }
 
-        if (!hasExplicitEntry && applyFallbackWhenNoContext)
+        int handle = activeScene.handle;
+        if (s_appliedSceneHandle == handle) return;
+        s_appliedSceneHandle = handle;
+
+        _entry = MyroomEntryPoint.None;
+
+        if (applyFallbackWhenNoContext)
             _entry = fallbackPoint;
     }
 

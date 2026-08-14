@@ -16,12 +16,16 @@ public class PlayerMainManager : MonoBehaviour
 
     [Header("Debug")]
     [SerializeField] private bool debugLog = true;
+    [SerializeField] private bool debugQEInput = true;
     [SerializeField] private bool verboseInputDebug = false;
     [SerializeField] private float verboseInputDebugInterval = 0.5f;
 
     private bool _lastBlocked = false;
     private string _lastBlockReason = "";
     private float _nextVerboseDebugAt = 0f;
+    private bool _wasMenuKeyHeld;
+    private bool _wasInteractKeyHeld;
+    private bool _wasBackKeyHeld;
 
     private void Reset()
     {
@@ -43,8 +47,26 @@ public class PlayerMainManager : MonoBehaviour
         if (!menu) Debug.LogError("[PlayerMainManager] MenuController를 찾지 못했습니다. (씬에 1개만 두고 연결 권장)");
     }
 
+    private void OnEnable()
+    {
+        ResetKeyLatchState();
+    }
+
     private void Update()
     {
+        ResolveRuntimeRefs();
+
+        bool rawMenuDown = keyMenu != KeyCode.None && Input.GetKeyDown(keyMenu);
+        bool rawInteractDown = keyInteractOrSubmit != KeyCode.None && Input.GetKeyDown(keyInteractOrSubmit);
+        bool rawMenuHeld = keyMenu != KeyCode.None && Input.GetKey(keyMenu);
+        bool rawInteractHeld = keyInteractOrSubmit != KeyCode.None && Input.GetKey(keyInteractOrSubmit);
+
+        bool menuPressed = ConsumeKeyPress(keyMenu, ref _wasMenuKeyHeld);
+        bool interactPressed = ConsumeKeyPress(keyInteractOrSubmit, ref _wasInteractKeyHeld);
+        bool backPressed = ConsumeKeyPress(keyBackOrReserved, ref _wasBackKeyHeld);
+
+        DebugLogQEInput(rawMenuDown, rawMenuHeld, menuPressed, rawInteractDown, rawInteractHeld, interactPressed);
+
         // =========================
         // DIALOGUE MODE (E는 대사 넘기기 전용)
         // =========================
@@ -53,7 +75,7 @@ public class PlayerMainManager : MonoBehaviour
             move?.SetMoveInput(0, 0, false, false, false, false);
 
             // 컷씬이면 스킵 금지
-            if (!DialogueManager.instance.blockInput && Input.GetKeyDown(keyInteractOrSubmit))
+            if (!DialogueManager.instance.blockInput && interactPressed)
             {
                 if (debugLog) Debug.Log("[PlayerMainManager] Dialogue Advance by E");
                 DialogueManager.instance.DisplayNextSentence();
@@ -72,7 +94,7 @@ public class PlayerMainManager : MonoBehaviour
             move?.SetMoveInput(0, 0, false, false, false, false);
 
             // 메뉴 닫기: Q 또는 W
-            if (Input.GetKeyDown(keyMenu) || Input.GetKeyDown(keyBackOrReserved))
+            if (menuPressed || backPressed)
             {
                 if (debugLog) Debug.Log("[PlayerMainManager] MENU BACK/CLOSE by Q/W");
                 menu.BackOrClose();
@@ -84,7 +106,7 @@ public class PlayerMainManager : MonoBehaviour
             if (Input.GetKeyDown(KeyCode.LeftArrow)) menu.NavigateHorizontal(-1);
             if (Input.GetKeyDown(KeyCode.RightArrow)) menu.NavigateHorizontal(+1);
 
-            if (Input.GetKeyDown(keyInteractOrSubmit)) menu.SubmitCurrent();
+            if (interactPressed) menu.SubmitCurrent();
             return;
         }
 
@@ -105,7 +127,7 @@ public class PlayerMainManager : MonoBehaviour
         // =========================
 
         // 메뉴 열기: Q
-        if (menu != null && Input.GetKeyDown(keyMenu))
+        if (menu != null && menuPressed)
         {
             if (debugLog) Debug.Log("[PlayerMainManager] MENU OPEN by Q");
             menu.Open();
@@ -139,7 +161,7 @@ public class PlayerMainManager : MonoBehaviour
         move?.SetMoveInput(h, v, hDown, vDown, hUp, vUp);
 
         // 상호작용: E (Action Lock 중에는 무시)
-        if (Input.GetKeyDown(keyInteractOrSubmit))
+        if (interactPressed)
         {
             if (gameManager != null && gameManager.isAction)
             {
@@ -152,10 +174,68 @@ public class PlayerMainManager : MonoBehaviour
         }
 
         // W: 월드에서는 예약키
-        if (Input.GetKeyDown(keyBackOrReserved))
+        if (backPressed)
         {
             if (debugLog) Debug.Log("[PlayerMainManager] W pressed (reserved in world)");
         }
+    }
+
+    private static bool ConsumeKeyPress(KeyCode key, ref bool wasHeld)
+    {
+        if (key == KeyCode.None)
+        {
+            wasHeld = false;
+            return false;
+        }
+
+        bool held = Input.GetKey(key);
+        bool pressed = Input.GetKeyDown(key) || (held && !wasHeld);
+        wasHeld = held;
+        return pressed;
+    }
+
+    private void ResetKeyLatchState()
+    {
+        _wasMenuKeyHeld = keyMenu != KeyCode.None && Input.GetKey(keyMenu);
+        _wasInteractKeyHeld = keyInteractOrSubmit != KeyCode.None && Input.GetKey(keyInteractOrSubmit);
+        _wasBackKeyHeld = keyBackOrReserved != KeyCode.None && Input.GetKey(keyBackOrReserved);
+    }
+
+    private void ResolveRuntimeRefs()
+    {
+        if (!move) move = GetComponent<PlayerMove>();
+        if (!interactor) interactor = GetComponent<PlayerInteractor>();
+        if (!gameManager) gameManager = GameManager.Instance;
+        if (!menu) menu = FindObjectOfType<MenuController>(true);
+    }
+
+    private void DebugLogQEInput(
+        bool rawMenuDown,
+        bool rawMenuHeld,
+        bool menuPressed,
+        bool rawInteractDown,
+        bool rawInteractHeld,
+        bool interactPressed
+    )
+    {
+        if (!debugQEInput) return;
+        if (!rawMenuDown && !rawMenuHeld && !menuPressed && !rawInteractDown && !rawInteractHeld && !interactPressed)
+            return;
+
+        bool menuOpen = menu != null && menu.IsOpen;
+        bool gmAction = gameManager != null && gameManager.isAction;
+        bool dmExists = DialogueManager.instance != null;
+        bool dmActive = dmExists && DialogueManager.instance.isDialogueActive;
+        bool dmBlock = dmExists && DialogueManager.instance.blockInput;
+
+        Debug.Log(
+            "[PlayerMainManager][Q/E] " +
+            $"Q(rawDown={rawMenuDown}, held={rawMenuHeld}, pressed={menuPressed}) " +
+            $"E(rawDown={rawInteractDown}, held={rawInteractHeld}, pressed={interactPressed}) " +
+            $"refs(move={move != null}, interactor={interactor != null}, menu={menu != null}, gm={gameManager != null}) " +
+            $"state(menuOpen={menuOpen}, gm.isAction={gmAction}, dm.active={dmActive}, dm.blockInput={dmBlock})",
+            this
+        );
     }
 
     //  여기서는 "대화 활성"은 빼야 함. (대화는 Update 상단에서 처리)
