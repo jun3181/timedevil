@@ -10,11 +10,37 @@ public class MainMenu : MonoBehaviour
     [Header("Target Scene")]
     public string myRoomSceneName = "Myroom";
 
+    [Header("New Game Intro")]
+    [SerializeField] private MainMenuNewGameIntro newGameIntro;
+
+    private bool _newGameStarting = false;
+
+    private void Awake()
+    {
+        if (newGameIntro == null)
+            newGameIntro = GetComponent<MainMenuNewGameIntro>();
+    }
+
     // 버튼: 새 게임
     public void NewGame()
     {
+        if (_newGameStarting)
+            return;
+
         PlayClick();
 
+        if (newGameIntro != null && newGameIntro.HasPlayableIntro)
+        {
+            _newGameStarting = true;
+            newGameIntro.Play(CompleteNewGame);
+            return;
+        }
+
+        CompleteNewGame();
+    }
+
+    private void CompleteNewGame()
+    {
         // 저장 유무와 무관하게 "완전 새 시작" 보장
         SaveSystem.ClearAllSaves();
         if (PlayerDataRuntime.Instance != null)
@@ -32,6 +58,9 @@ public class MainMenu : MonoBehaviour
     // 버튼: 이어하기 (Room2 스폰으로 진입)
     public void LoadGame()
     {
+        if (_newGameStarting)
+            return;
+
         PlayClick();
 
         // 1회성 진입점 지정 (Load는 Room2 스폰 사용)
