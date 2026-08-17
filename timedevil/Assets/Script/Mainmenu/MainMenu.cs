@@ -46,16 +46,13 @@ public class MainMenu : MonoBehaviour
         if (PlayerDataRuntime.Instance != null)
             PlayerDataRuntime.Instance.ResetToDefaults();
 
-        // 1회성 진입점 지정
-        MyroomEntryContext.SetRoom1();
-
         // (유지) 기존 컨텍스트도 그대로
         GameStartContext.SetNewGame();
 
-        LoadMyRoom();
+        LoadMyRoom(MyroomEntryPoint.Spawn_Room1_NewGame);
     }
 
-    // 버튼: 이어하기 (Room2 스폰으로 진입)
+    // 버튼: 이어하기
     public void LoadGame()
     {
         if (_newGameStarting)
@@ -63,29 +60,17 @@ public class MainMenu : MonoBehaviour
 
         PlayClick();
 
-        // 1회성 진입점 지정 (Load는 Room2 스폰 사용)
-        MyroomEntryContext.SetRoom2();
-
         // (유지) 기존 컨텍스트도 그대로
         GameStartContext.SetLoadGame();
         if (PlayerDataRuntime.Instance != null)
             PlayerDataRuntime.Instance.LoadFromDisk();
 
-        LoadMyRoom();
+        LoadMyRoom(MyroomEntryPoint.Spawn_Room2_LoadGame_PlayerDead);
     }
 
-    private void LoadMyRoom()
+    private void LoadMyRoom(MyroomEntryPoint entryPoint)
     {
-        var fader = FindObjectOfType<SceneFader>(true);
-        if (fader != null)
-        {
-            fader.LoadSceneWithFadeOut(myRoomSceneName);
-        }
-        else
-        {
-            Debug.LogWarning("[MainMenu] SceneFader를 찾지 못했습니다. 즉시 LoadScene 합니다.");
-            SceneManager.LoadScene(myRoomSceneName);
-        }
+        SceneTransitionService.EnterMyroom(entryPoint, myRoomSceneName, useFaderIfExists: true);
     }
 
     private void PlayClick()

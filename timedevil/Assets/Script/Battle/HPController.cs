@@ -218,18 +218,10 @@ public class HPController : MonoBehaviour
 
         BattleEncounterState.ClearPending();
         PlayerReturnContext.ClearReturnCore();
-        MyroomEntryContext.SetRoom3();
 
-        Debug.Log($"[HPController] Player HP reached 0. Loading '{myroomSceneName}' at Room3.");
+        Debug.Log($"[HPController] Player HP reached 0. Loading '{myroomSceneName}' at Spawn_Room2_LoadGame_PlayerDead.");
 
-        var fader = FindObjectOfType<SceneFader>(true);
-        if (fader != null)
-        {
-            fader.LoadSceneWithFadeOut(myroomSceneName);
-            yield break;
-        }
-
-        SceneLoader.Load(myroomSceneName, useFaderIfExists: false);
+        SceneTransitionService.EnterMyroom(MyroomEntryPoint.Spawn_Room2_LoadGame_PlayerDead, myroomSceneName, useFaderIfExists: true);
     }
 
     public void BeginCardHitTest(Faction target)
@@ -244,7 +236,7 @@ public class HPController : MonoBehaviour
 
         enemyDefeatReturnStarted = true;
         BattleEncounterState.ConsumePendingVictory();
-        SceneLoader.GoBackToReturnScene(enemyDefeatReturnGraceSeconds);
+        SceneTransitionService.ReturnFromBattle(enemyDefeatReturnGraceSeconds);
     }
 
     private int ReadIntFrom(object obj, params string[] names)

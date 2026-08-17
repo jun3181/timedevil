@@ -7,7 +7,7 @@ public class GoToMyRoom : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Q))
         {
-            SceneManager.LoadScene("MyRoom");
+            SceneTransitionService.EnterMyroom(MyroomEntryPoint.Spawn_Room2_LoadGame_PlayerDead);
         }
     }
 }

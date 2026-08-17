@@ -6,6 +6,7 @@ public static class PlayerReturnContext
     public static string ReturnSceneName;
     public static bool HasReturnPosition;
     public static Vector2 ReturnPosition;
+    public static string ReturnEntryKey;
 
     // --- Grace (재진입 방지 등) ---
     public static bool IsInGracePeriod = false;
@@ -50,12 +51,14 @@ public static class PlayerReturnContext
         CameraModeId cameraMode = CameraModeId.Fixed,
         float cameraOrthoSize = 0f,
         Vector2 cameraFixedPos = default,
-        string cameraBoundsName = null
+        string cameraBoundsName = null,
+        string returnEntryKey = null
     )
     {
         ReturnSceneName = returnSceneName;
         ReturnPosition = returnPosition;
         HasReturnPosition = true;
+        ReturnEntryKey = string.IsNullOrWhiteSpace(returnEntryKey) ? null : returnEntryKey.Trim();
 
         // Grace
         // 주의: 실제 grace 활성화는 "복귀 씬"에서 PlayerReturnManager가 담당한다.
@@ -86,6 +89,7 @@ public static class PlayerReturnContext
         ReturnSceneName = null;
         HasReturnPosition = false;
         ReturnPosition = Vector2.zero;
+        ReturnEntryKey = null;
 
         IsInGracePeriod = false;
         GraceSecondsPending = 0f;
@@ -103,5 +107,9 @@ public static class PlayerReturnContext
         ReturnCameraOrthoSize = 0f;
         ReturnCameraFixedPos = Vector2.zero;
         ReturnCameraBoundsName = null;
+
+        MonsterReturnPosition = Vector2.zero;
+        MonsterNameInScene = null;
+        MonsterInstanceId = null;
     }
 }

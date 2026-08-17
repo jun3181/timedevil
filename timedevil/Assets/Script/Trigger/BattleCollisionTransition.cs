@@ -6,7 +6,7 @@ using System.Collections;
 public class BattleCollisionTransition : MonoBehaviour
 {
     [Header("Battle")]
-    [SerializeField] private string battleSceneName = "BattleScene";
+    [SerializeField] private string battleSceneName = "battle";
     [SerializeField] private EnemyDatabaseSO enemyDatabase;
     [SerializeField] private EnemySO encounterEnemy;
     [SerializeField] private string enemyId = "Enemy1";

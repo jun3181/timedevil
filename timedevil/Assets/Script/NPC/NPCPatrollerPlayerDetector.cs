@@ -27,6 +27,6 @@ public class NPCPatrollerPlayerDetector : MonoBehaviour
     private void Handler() {
         DialogueManager.OnDialogueEnd -= Handler;
 
-        SceneLoader.Load("Mainmenu");
+        SceneTransitionService.LoadDefault("Mainmenu");
     }
 }

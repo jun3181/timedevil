@@ -34,14 +34,9 @@ public static class BattleSceneLoader
         }
 
         // 2) 복귀 정보 저장
-        SceneLoader.SaveReturnPoint(playerT, enemyT);
-
         BattleSceneLoader.enemyIdToLoad = enemyIdToLoad;
 
-        if (enemyT && WorldNPCStateService.Instance != null)
-            WorldNPCStateService.Instance.SaveSnapshot(enemyT.gameObject);
-
         // 3) 배틀 씬 이동
-        SceneLoader.Load(battleSceneName, useFaderIfExists: true);
+        SceneTransitionService.EnterBattle(battleSceneName, enemyIdToLoad, playerT, enemyT, useFaderIfExists: true);
     }
 }

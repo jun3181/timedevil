@@ -13515,6 +13515,7 @@ GameObject:
   m_Component:
   - component: {fileID: 366523681}
   - component: {fileID: 366523682}
+  - component: {fileID: 366523683}
   m_Layer: 0
   m_Name: MyroomSpawn
   m_TagString: Untagged
@@ -13549,16 +13550,57 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cc8944e9cccf9c241910bd485195d0a6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  room1Spawn: {fileID: 424224157}
-  room2Spawn: {fileID: 1685952716}
-  room3Spawn: {fileID: 1206097170}
-  room4Spawn: {fileID: 0}
+  spawnRoom1NewGame: {fileID: 424224157}
+  spawnRoom2LoadGamePlayerDead: {fileID: 1685952716}
+  spawnRoom4End: {fileID: 0}
   applyFallbackWhenNoContext: 0
   fallbackPoint: 2
   forceClearActionLocksOnStart: 1
   maxFindPlayerFrames: 60
   keepPlayerZ: 1
   debugLog: 1
+--- !u!114 &366523683
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 366523679}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94f669750e2747af862a8e89fb46293b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  useDefaultEntry: 0
+  defaultEntry:
+    key: 
+    spawnPoint: {fileID: 0}
+    keepPlayerZ: 1
+    applyCamera: 0
+    cameraMode: 2
+    orthoSize: 0
+    fixedCameraAnchor: {fileID: 0}
+    confinerBounds: {fileID: 0}
+    preferredVcamName: 
+  entries:
+  - key: TutorialReturn
+    spawnPoint: {fileID: 1206097170}
+    keepPlayerZ: 1
+    applyCamera: 1
+    cameraMode: 0
+    orthoSize: 0
+    fixedCameraAnchor: {fileID: 1441476856}
+    confinerBounds: {fileID: 0}
+    preferredVcamName: CM vcam1
+  - key: Spawn_Room2_LoadGame_PlayerDead
+    spawnPoint: {fileID: 1685952716}
+    keepPlayerZ: 1
+    applyCamera: 1
+    cameraMode: 0
+    orthoSize: 0
+    fixedCameraAnchor: {fileID: 1441476856}
+    confinerBounds: {fileID: 0}
+    preferredVcamName: CM vcam1
 --- !u!1 &373845746
 GameObject:
   m_ObjectHideFlags: 3
@@ -13798,7 +13840,7 @@ GameObject:
   m_Component:
   - component: {fileID: 424224157}
   m_Layer: 0
-  m_Name: room
+  m_Name: Spawn_Room1_NewGame
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -33815,7 +33857,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1206097170}
   m_Layer: 0
-  m_Name: MaininComing
+  m_Name: Room3_TutorialReturnPoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -35089,7 +35131,9 @@ MonoBehaviour:
   overrideTargetSceneSpawn: 0
   targetSceneSpawnKey: 
   saveReturnContext: 1
-  returnPointOverride: {fileID: 1206097170}
+  useReturnSceneEntry: 1
+  returnSceneEntryKey: Spawn_Room2_LoadGame_PlayerDead
+  returnPointOverride: {fileID: 1685952716}
   graceSeconds: 0.5
   requestCameraRebind: 1
   worldVcamName: CM vcam1
@@ -35614,6 +35658,8 @@ MonoBehaviour:
   overrideTargetSceneSpawn: 0
   targetSceneSpawnKey: 
   saveReturnContext: 1
+  useReturnSceneEntry: 0
+  returnSceneEntryKey: 
   returnPointOverride: {fileID: 1685952716}
   graceSeconds: 0.5
   requestCameraRebind: 1
@@ -36092,7 +36138,7 @@ GameObject:
   - component: {fileID: 1685952718}
   - component: {fileID: 1685952717}
   m_Layer: 0
-  m_Name: MaininComingTrigger
+  m_Name: Spawn_Room2_LoadGame_PlayerDead
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

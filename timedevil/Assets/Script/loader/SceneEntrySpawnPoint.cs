@@ -22,6 +22,9 @@ public class SceneEntrySpawnPoint : MonoBehaviour
     private IEnumerator Start()
     {
         string sceneName = SceneManager.GetActiveScene().name;
+        if (SceneArrivalContext.HasPendingForScene(sceneName))
+            yield break;
+
         if (!SceneEntrySpawnContext.Matches(sceneName, spawnKey))
             yield break;
 
@@ -77,5 +80,12 @@ public class SceneEntrySpawnPoint : MonoBehaviour
 
         var go = GameObject.FindGameObjectWithTag("Player");
         return go ? go.transform : null;
+    }
+
+    public bool MatchesEntry(string sceneName, string key)
+    {
+        if (string.IsNullOrWhiteSpace(key)) return false;
+        return SceneEntrySpawnContext.Matches(sceneName, key) ||
+               string.Equals(spawnKey?.Trim(), key.Trim(), System.StringComparison.Ordinal);
     }
 }
