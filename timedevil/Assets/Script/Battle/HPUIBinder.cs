@@ -57,7 +57,7 @@ public class HPUIBinder : MonoBehaviour
             int max = Mathf.Max(1, playerData.maxHP);
 
             if (playerHpText != null)
-                playerHpText.text = $"HP : {cur} / {max}";
+                playerHpText.text = FormatHp(cur, max);
             UpdateBar(playerHpBar, cur, max);
         }
 
@@ -68,7 +68,7 @@ public class HPUIBinder : MonoBehaviour
             int max = Mathf.Max(1, enemyRuntime.maxHP);
 
             if (enemyHpText != null)
-                enemyHpText.text = $"HP : {cur} / {max}";
+                enemyHpText.text = FormatHp(cur, max);
             UpdateBar(enemyHpBar, cur, max);
         }
         else if (enemyComp != null && enemyCurHpField != null && enemyMaxHpField != null)
@@ -77,7 +77,7 @@ public class HPUIBinder : MonoBehaviour
             int max = Mathf.Max(1, (int)enemyMaxHpField.GetValue(enemyComp));
 
             if (enemyHpText != null)
-                enemyHpText.text = $"HP : {cur} / {max}";
+                enemyHpText.text = FormatHp(cur, max);
             UpdateBar(enemyHpBar, cur, max);
         }
     }
@@ -127,5 +127,10 @@ public class HPUIBinder : MonoBehaviour
         bar.minValue = 0f;
         bar.maxValue = Mathf.Max(1, max);
         bar.value = Mathf.Clamp(cur, 0, max);
+    }
+
+    private static string FormatHp(int cur, int max)
+    {
+        return $"{cur}/{max}";
     }
 }

@@ -17,20 +17,18 @@ public class HandSelectController : MonoBehaviour
 
     void Reset()
     {
-        if (!menu) menu = FindObjectOfType<BattleMenuController>(true);
-        if (!hand) hand = FindObjectOfType<HandUI>(true);
-        if (!orchestrator) orchestrator = FindObjectOfType<CardUseOrchestrator>(true);
-        if (!desc) desc = FindObjectOfType<DescriptionPanelController>(true);
-        if (!panelController) panelController = FindObjectOfType<PanelController>(true);
+        ResolveRefs();
     }
 
     void Awake()
     {
+        ResolveRefs();
         if (externalSelector) externalSelector.enabled = false;
     }
 
     void OnEnable()
     {
+        ResolveRefs();
         if (hand != null)
         {
             hand.onSelectModeChanged += OnHandSelectModeChanged;
@@ -49,6 +47,15 @@ public class HandSelectController : MonoBehaviour
         orchestrator?.ClearSelectedAttackWarning();
     }
 
+    private void ResolveRefs()
+    {
+        if (!menu) menu = FindObjectOfType<BattleMenuController>(true);
+        if (!hand) hand = FindObjectOfType<HandUI>(true);
+        if (!orchestrator) orchestrator = FindObjectOfType<CardUseOrchestrator>(true);
+        if (!desc) desc = FindObjectOfType<DescriptionPanelController>(true);
+        if (!panelController) panelController = FindObjectOfType<PanelController>(true);
+    }
+
     void Update()
     {
         if (!menu || !hand) return;
@@ -65,9 +72,10 @@ public class HandSelectController : MonoBehaviour
             if (!BattleTutorialGate.Allows(BattleTutorialAction.CardSelect))
                 return;
 
-            if (hand.CardCount <= 0) return;
+            if (!hand.EnsureCardsReady(BattleTutorialGate.IsActive)) return;
             panelViewBeforeSelect = panelController != null && panelController.IsGameplayView;
             hand.EnterSelectMode();
+            panelController?.ReleaseCardPanelInteractionMode();
             BattleTutorialGate.Report(BattleTutorialAction.CardSelect);
             menu.EnableInput(false);
             return;
@@ -96,6 +104,7 @@ public class HandSelectController : MonoBehaviour
 
             hand.ExitSelectMode();
             menu.EnableInput(true);
+            panelController?.ReleaseCardPanelInteractionMode();
             if (panelController) panelController.SetGameplayView(panelViewBeforeSelect);
             BattleTutorialGate.Report(BattleTutorialAction.CardCancel);
         }

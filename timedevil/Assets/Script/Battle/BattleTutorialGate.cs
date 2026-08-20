@@ -39,6 +39,7 @@ public static class BattleTutorialGate
     public static BattleTutorialAdvanceMode Mode { get; private set; }
     public static BattleTutorialAction RequiredAction { get; private set; }
     public static int LastInputConsumedFrame { get; private set; } = -1;
+    public static BattleTutorialAction LastInputConsumedAction { get; private set; } = BattleTutorialAction.None;
     public static bool WasInputConsumedThisFrame => LastInputConsumedFrame == Time.frameCount;
 
     private static bool allowMenuNavigation;
@@ -84,14 +85,15 @@ public static class BattleTutorialGate
         allowCancel = false;
     }
 
-    public static void MarkInputConsumedThisFrame()
+    public static void MarkInputConsumedThisFrame(BattleTutorialAction action = BattleTutorialAction.None)
     {
         LastInputConsumedFrame = Time.frameCount;
+        LastInputConsumedAction = action;
     }
 
     public static bool Allows(BattleTutorialAction action)
     {
-        if (WasInputConsumedThisFrame)
+        if (WasInputConsumedThisFrame && action != LastInputConsumedAction)
             return false;
 
         if (!IsActive)

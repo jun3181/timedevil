@@ -16,6 +16,7 @@ public class DescriptionPanelController : MonoBehaviour
     [SerializeField] private float descriptionPanelHiddenY = -680f;
     [SerializeField, Min(0.01f)] private float descriptionPanelRiseDuration = 0.28f;
     [SerializeField] private AnimationCurve descriptionPanelRiseEase = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+    [SerializeField] private bool showDescriptionPanelRootInStateView = false;
 
     [Header("Sources")]
     [SerializeField] private BattleMenuController menu;
@@ -265,6 +266,15 @@ public class DescriptionPanelController : MonoBehaviour
         _stateViewShowPlayerHand = showPlayerHand;
         _stateViewShowEnemyHand = showEnemyHand;
         _stateViewMessage = message;
+        if (showDescriptionPanelRootInStateView)
+        {
+            SetDescriptionPanelRootVisible(true, true);
+            BringDescriptionPanelRootToFront();
+        }
+        else
+        {
+            SetDescriptionPanelRootVisible(false);
+        }
         RefreshNow();
     }
 
@@ -325,6 +335,16 @@ public class DescriptionPanelController : MonoBehaviour
 
         if (_stateView)
         {
+            if (showDescriptionPanelRootInStateView)
+            {
+                SetDescriptionPanelRootVisible(true);
+                BringDescriptionPanelRootToFront();
+            }
+            else
+            {
+                SetDescriptionPanelRootVisible(false);
+            }
+
             if (_stateViewShowPlayerHand)
             {
                 SetPlayerActivePositionIfOwnedHere();
@@ -630,6 +650,13 @@ public class DescriptionPanelController : MonoBehaviour
         if (!_descriptionPanelRootRect && descriptionPanelRoot)
             _descriptionPanelRootRect = descriptionPanelRoot.GetComponent<RectTransform>();
         return _descriptionPanelRootRect;
+    }
+
+    private void BringDescriptionPanelRootToFront()
+    {
+        RectTransform rect = GetDescriptionPanelRootRect();
+        if (rect)
+            rect.SetAsLastSibling();
     }
 
     private Vector2 GetDescriptionPanelShownPosition(RectTransform rect)

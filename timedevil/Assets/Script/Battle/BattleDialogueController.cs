@@ -200,7 +200,7 @@ public class BattleDialogueController : MonoBehaviour
         if (Time.unscaledTime < nextAdvanceAllowedUnscaledTime)
             return;
 
-        BattleTutorialGate.MarkInputConsumedThisFrame();
+        BattleTutorialGate.MarkInputConsumedThisFrame(BattleTutorialAction.Continue);
 
         if (isTyping)
         {
@@ -372,7 +372,7 @@ public class BattleDialogueController : MonoBehaviour
         }
 
         if (consumeInputFrame)
-            BattleTutorialGate.MarkInputConsumedThisFrame();
+            BattleTutorialGate.MarkInputConsumedThisFrame(BattleTutorialAction.Continue);
 
         if (ownsInputGate && !IsTutorialPromptBlockingDialogue())
             BattleTutorialGate.Close();
