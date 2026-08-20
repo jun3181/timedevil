@@ -10,6 +10,9 @@ public static class SaveSystem
         ProgressSaveStore.DeleteSave();
         BattleEncounterState.ClearAll();
 
+        if (ItemRuntime.Instance != null)
+            ItemRuntime.Instance.LoadFromDefaultJson();
+
         Debug.Log("[SaveSystem] Cleared all save files for NewGame.");
     }
 

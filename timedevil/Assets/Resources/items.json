@@ -1,24 +1,3 @@
 {
-  "items": [
-    {
-      "id": "potion",
-      "quantity": 3
-    },
-    {
-      "id": "attack_boost",
-      "quantity": 1
-    },
-    {
-      "id": "defense_boost",
-      "quantity": 1
-    },
-    {
-      "id": "speed_boost",
-      "quantity": 1
-    },
-    {
-      "id": "key",
-      "quantity": 0
-    }
-  ]
+  "items": []
 }

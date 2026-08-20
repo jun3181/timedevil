@@ -30,6 +30,13 @@ public class MenuController : MonoBehaviour
         public string label;
     }
 
+    private struct ItemMenuEntry
+    {
+        public string id;
+        public ItemSO item;
+        public string label;
+    }
+
     [Header("UI")]
     public GameObject menuUI;
     public TextMeshProUGUI[] menuItems;
@@ -73,9 +80,9 @@ public class MenuController : MonoBehaviour
     [SerializeField] private Vector2 itemWindowPagePosition = new Vector2(390f, -225f);
     [SerializeField] private Vector2 itemWindowPageSize = new Vector2(120f, 50f);
     [SerializeField] private string itemCloseLabel = "close";
-    [SerializeField] private string emptyItemLabel = "¾øÀ½";
-    [SerializeField] private string[] itemPageOneLabels = { "¾ÆÀÌÅÛ ÀÌ¸§ x 2", "¾ÆÀÌÅÛ ÀÌ¸§ x 3", "¾ÆÀÌÅÛ ÀÌ¸§ x 1", "¾ÆÀÌÅÛ ÀÌ¸§" };
-    [SerializeField] private string[] itemPageTwoLabels = { "¾ÆÀÌÅÛ ÀÌ¸§ x 4", "¾ÆÀÌÅÛ ÀÌ¸§ x 5", "¾ÆÀÌÅÛ ÀÌ¸§ x 6", "¾ÆÀÌÅÛ ÀÌ¸§" };
+    [SerializeField] private string emptyItemLabel = "ï¿½ï¿½ï¿½ï¿½";
+    [SerializeField] private string[] itemPageOneLabels = { "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¸ï¿½ x 2", "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¸ï¿½ x 3", "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¸ï¿½ x 1", "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¸ï¿½" };
+    [SerializeField] private string[] itemPageTwoLabels = { "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¸ï¿½ x 4", "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¸ï¿½ x 5", "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¸ï¿½ x 6", "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¸ï¿½" };
 
     [Header("Card Window View")]
     [SerializeField] private bool autoBuildCardWindow = true;
@@ -95,14 +102,14 @@ public class MenuController : MonoBehaviour
     [SerializeField] private Vector2 cardPreviewOffsetFromTopLeft = new Vector2(1320f, -50f);
     [SerializeField] private Vector2 cardPreviewSize = new Vector2(170f, 240f);
     [SerializeField] private string cardCloseLabel = "close";
-    [SerializeField] private string emptyCardLabel = "¾øÀ½";
+    [SerializeField] private string emptyCardLabel = "ï¿½ï¿½ï¿½ï¿½";
 
     [Header("Deck Window View")]
     [SerializeField] private bool autoBuildDeckWindow = true;
     [SerializeField] private bool previewDeckWindowInEditor = false;
     [SerializeField] private bool preserveManualDeckLayout = true;
     [SerializeField] private string deckCloseLabel = "close";
-    [SerializeField] private string emptyDeckLabel = "¾øÀ½";
+    [SerializeField] private string emptyDeckLabel = "ï¿½ï¿½ï¿½ï¿½";
 
     [Header("Status Window View")]
     [SerializeField] private bool autoBuildStatusWindow = true;
@@ -594,13 +601,6 @@ public class MenuController : MonoBehaviour
     {
         if (itemDatabase != null) return;
 
-        InventoryDisplay inventoryDisplay = FindObjectOfType<InventoryDisplay>(true);
-        if (inventoryDisplay != null && inventoryDisplay.itemDatabase != null)
-        {
-            itemDatabase = inventoryDisplay.itemDatabase;
-            return;
-        }
-
         ItemDatabaseSO resourceDatabase = Resources.Load<ItemDatabaseSO>("ItemDatabaseSO");
         if (resourceDatabase == null)
             resourceDatabase = Resources.Load<ItemDatabaseSO>("ItemDefinitions/ItemDatabaseSO");
@@ -781,7 +781,88 @@ public class MenuController : MonoBehaviour
             return;
         }
 
-        AdvanceItemPage();
+        if (itemFocusArea == MenuPanelFocusArea.Page)
+        {
+            AdvanceItemPage();
+            return;
+        }
+
+        UseSelectedItem();
+    }
+
+    private void UseSelectedItem()
+    {
+        ItemMenuEntry entry = GetSelectedItemEntry();
+        if (string.IsNullOrEmpty(entry.id))
+            return;
+
+        ItemRuntime runtime = EnsureItemRuntimeForMenu();
+        if (runtime == null)
+        {
+            Debug.LogWarning("[MenuController] ItemRuntime is missing. Cannot use item.", this);
+            return;
+        }
+
+        if (runtime.GetQuantity(entry.id) <= 0)
+        {
+            RefreshItemWindow();
+            return;
+        }
+
+        ItemSO item = entry.item;
+        if (item == null)
+        {
+            ResolveItemDatabase();
+            item = itemDatabase != null ? itemDatabase.GetById(entry.id) : null;
+        }
+
+        if (item == null)
+        {
+            Debug.LogWarning($"[MenuController] ItemSO not found for id '{entry.id}'.", this);
+            RefreshItemWindow();
+            return;
+        }
+
+        if (!item.TryUse(out string message))
+        {
+            if (!string.IsNullOrEmpty(message))
+                Debug.LogWarning($"[MenuController] {message}", this);
+
+            RefreshItemWindow();
+            RefreshStatusWindow();
+            return;
+        }
+
+        if (item.consumeOnUse)
+            runtime.AddQuantity(entry.id, -1);
+
+        ShowItemUseDialogue(item, entry.id);
+
+        itemCurrentPage = Mathf.Clamp(itemCurrentPage, 0, GetItemPageCount() - 1);
+        itemCurrentIndex = Mathf.Clamp(itemCurrentIndex, 0, GetCurrentItemLabelCount() - 1);
+
+        if (debugMenu) Debug.Log($"[MenuController] Used item: {entry.id}", this);
+
+        RefreshItemWindow();
+        RefreshStatusWindow();
+    }
+
+    private void ShowItemUseDialogue(ItemSO item, string fallbackId)
+    {
+        DialogueManager dm = DialogueManager.instance;
+        if (dm == null)
+        {
+            Debug.LogWarning("[MenuController] DialogueManager is missing. Cannot show item use dialogue.", this);
+            return;
+        }
+
+        dm.blockInput = false;
+        dm.StartDialogue(new Dialogue
+        {
+            name = "",
+            sentences = new[] { $"\"{GetItemDisplayName(item, fallbackId)}\"ì„ ì‚¬ìš©í–ˆìŠµë‹ˆë‹¤" }
+        });
+        dm.ForceCompleteTyping();
     }
 
     private void AdvanceItemPage()
@@ -889,6 +970,8 @@ public class MenuController : MonoBehaviour
             !preserveManualItemLayout || !pageAlreadyExists
         );
 
+        HideLegacyItemMessageText();
+
         bool cursorAlreadyExists = itemWindowContentRoot.Find("ItemCursor") != null;
         itemWindowCursorText = GetOrCreateText(itemWindowContentRoot, "ItemCursor");
         StyleItemWindowText(
@@ -931,7 +1014,17 @@ public class MenuController : MonoBehaviour
         if (itemWindowPageText != null)
             itemWindowPageText.text = GetItemPageText();
 
+        HideLegacyItemMessageText();
         MoveItemWindowCursor();
+    }
+
+    private void HideLegacyItemMessageText()
+    {
+        if (itemWindowContentRoot == null) return;
+
+        Transform legacy = itemWindowContentRoot.Find("ItemMessage");
+        if (legacy != null)
+            legacy.gameObject.SetActive(false);
     }
 
     private void MoveItemWindowCursor()
@@ -2424,30 +2517,24 @@ public class MenuController : MonoBehaviour
 
     private string GetItemLabel(int index)
     {
-        string[] labels = GetCurrentItemLabels();
-        return index >= 0 && index < labels.Length ? labels[index] : "";
+        List<ItemMenuEntry> entries = GetCurrentItemEntries();
+        return index >= 0 && index < entries.Count ? entries[index].label : "";
     }
 
     private string[] GetCurrentItemLabels()
     {
-        List<string> allLabels = GetAllItemWindowLabels();
-        int pageSize = GetItemWindowEntryCount();
-        int startIndex = Mathf.Clamp(itemCurrentPage, 0, GetItemPageCount() - 1) * pageSize;
-        int count = Mathf.Clamp(allLabels.Count - startIndex, 0, pageSize);
+        List<ItemMenuEntry> entries = GetCurrentItemEntries();
+        string[] labels = new string[entries.Count];
 
-        if (count <= 0)
-            return new[] { GetEmptyItemLabel() };
+        for (int i = 0; i < entries.Count; i++)
+            labels[i] = entries[i].label;
 
-        string[] pageLabels = new string[count];
-        for (int i = 0; i < count; i++)
-            pageLabels[i] = allLabels[startIndex + i];
-
-        return pageLabels;
+        return labels;
     }
 
     private int GetCurrentItemLabelCount()
     {
-        return Mathf.Max(1, GetCurrentItemLabels().Length);
+        return Mathf.Max(1, GetCurrentItemEntries().Count);
     }
 
     private int GetItemWindowEntryCount()
@@ -2457,7 +2544,7 @@ public class MenuController : MonoBehaviour
 
     private int GetItemPageCount()
     {
-        int labelCount = GetAllItemWindowLabels().Count;
+        int labelCount = GetAllItemWindowEntries().Count;
         return Mathf.Max(1, Mathf.CeilToInt(labelCount / (float)GetItemWindowEntryCount()));
     }
 
@@ -2466,28 +2553,52 @@ public class MenuController : MonoBehaviour
         return $"{itemCurrentPage + 1}/{GetItemPageCount()}";
     }
 
-    private List<string> GetAllItemWindowLabels()
+    private List<ItemMenuEntry> GetCurrentItemEntries()
     {
-        List<string> labels = new List<string>();
+        List<ItemMenuEntry> allEntries = GetAllItemWindowEntries();
+        int pageSize = GetItemWindowEntryCount();
+        int startIndex = Mathf.Clamp(itemCurrentPage, 0, GetItemPageCount() - 1) * pageSize;
+        int count = Mathf.Clamp(allEntries.Count - startIndex, 0, pageSize);
+        List<ItemMenuEntry> pageEntries = new List<ItemMenuEntry>(count);
 
-        if (TryAppendInventoryItemLabels(labels))
-        {
-            if (labels.Count == 0)
-                labels.Add(GetEmptyItemLabel());
+        for (int i = 0; i < count; i++)
+            pageEntries.Add(allEntries[startIndex + i]);
 
-            return labels;
-        }
+        if (pageEntries.Count == 0)
+            pageEntries.Add(GetEmptyItemEntry());
 
-        AppendFallbackItemLabels(labels, itemPageOneLabels);
-        AppendFallbackItemLabels(labels, itemPageTwoLabels);
-
-        if (labels.Count == 0)
-            labels.Add(GetEmptyItemLabel());
-
-        return labels;
+        return pageEntries;
     }
 
-    private bool TryAppendInventoryItemLabels(List<string> labels)
+    private ItemMenuEntry GetSelectedItemEntry()
+    {
+        List<ItemMenuEntry> entries = GetCurrentItemEntries();
+        int safeIndex = Mathf.Clamp(itemCurrentIndex, 0, entries.Count - 1);
+        return entries[safeIndex];
+    }
+
+    private List<ItemMenuEntry> GetAllItemWindowEntries()
+    {
+        List<ItemMenuEntry> entries = new List<ItemMenuEntry>();
+
+        if (TryAppendInventoryItemEntries(entries))
+        {
+            if (entries.Count == 0)
+                entries.Add(GetEmptyItemEntry());
+
+            return entries;
+        }
+
+        AppendFallbackItemEntries(entries, itemPageOneLabels);
+        AppendFallbackItemEntries(entries, itemPageTwoLabels);
+
+        if (entries.Count == 0)
+            entries.Add(GetEmptyItemEntry());
+
+        return entries;
+    }
+
+    private bool TryAppendInventoryItemEntries(List<ItemMenuEntry> entries)
     {
         if (!TryGetInventoryData(out InventorySaveData inventoryData))
             return false;
@@ -2500,12 +2611,8 @@ public class MenuController : MonoBehaviour
             if (entry == null || entry.quantity <= 0)
                 continue;
 
-            string itemName = entry.id;
             ItemSO itemDefinition = itemDatabase != null ? itemDatabase.GetById(entry.id) : null;
-            if (itemDefinition != null && !string.IsNullOrEmpty(itemDefinition.displayName))
-                itemName = itemDefinition.displayName;
-
-            labels.Add($"{itemName} x {entry.quantity}");
+            entries.Add(CreateItemEntry(entry.id, itemDefinition, entry.quantity));
         }
 
         return true;
@@ -2517,7 +2624,7 @@ public class MenuController : MonoBehaviour
 
         if (Application.isPlaying)
         {
-            ItemRuntime runtime = ItemRuntime.Instance;
+            ItemRuntime runtime = EnsureItemRuntimeForMenu();
             if (runtime != null && runtime.CurrentData != null && runtime.CurrentData.items != null)
             {
                 inventoryData = runtime.CurrentData;
@@ -2536,14 +2643,64 @@ public class MenuController : MonoBehaviour
         return inventoryData != null && inventoryData.items != null;
     }
 
-    private void AppendFallbackItemLabels(List<string> labels, string[] source)
+    private ItemRuntime EnsureItemRuntimeForMenu()
+    {
+        if (ItemRuntime.Instance != null)
+            return ItemRuntime.Instance;
+
+        if (!Application.isPlaying)
+            return null;
+
+        GameObject runtimeObject = new GameObject("ItemRuntime (Menu Auto)");
+        return runtimeObject.AddComponent<ItemRuntime>();
+    }
+
+    private ItemMenuEntry CreateItemEntry(string id, ItemSO item, int quantity)
+    {
+        string itemName = GetItemDisplayName(item, id);
+
+        return new ItemMenuEntry
+        {
+            id = id,
+            item = item,
+            label = $"{(string.IsNullOrEmpty(itemName) ? GetEmptyItemLabel() : itemName)} x {quantity}"
+        };
+    }
+
+    private string GetItemDisplayName(ItemSO item, string fallbackId)
+    {
+        if (item != null && !string.IsNullOrEmpty(item.displayName))
+            return item.displayName;
+
+        if (!string.IsNullOrEmpty(fallbackId))
+            return fallbackId;
+
+        return GetEmptyItemLabel();
+    }
+
+    private ItemMenuEntry CreateFallbackItemEntry(string label)
+    {
+        return new ItemMenuEntry
+        {
+            id = "",
+            item = null,
+            label = string.IsNullOrEmpty(label) ? GetEmptyItemLabel() : label
+        };
+    }
+
+    private ItemMenuEntry GetEmptyItemEntry()
+    {
+        return CreateFallbackItemEntry(GetEmptyItemLabel());
+    }
+
+    private void AppendFallbackItemEntries(List<ItemMenuEntry> entries, string[] source)
     {
         if (source == null) return;
 
         for (int i = 0; i < source.Length; i++)
         {
             if (!string.IsNullOrEmpty(source[i]))
-                labels.Add(source[i]);
+                entries.Add(CreateFallbackItemEntry(source[i]));
         }
     }
 

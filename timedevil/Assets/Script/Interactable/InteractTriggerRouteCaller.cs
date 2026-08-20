@@ -1,14 +1,24 @@
 // Assets/Script/Interactable/TriggerRouterInteraction.cs
+using System.Collections.Generic;
 using UnityEngine;
 
 [DisallowMultipleComponent]
 public class TriggerRouterInteraction : MonoBehaviour, IInteractable
 {
-    [Header("Router (ºñ¿ì¸é ¾À¿¡¼­ ÀÚµ¿ Å½»ö)")]
+    private static readonly Dictionary<string, int> s_callCountById = new();
+
+    [Header("Router (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Úµï¿½ Å½ï¿½ï¿½)")]
     [SerializeField] private TriggerRouter router;
 
-    [Header("Route Key (ÇÊ¼ö)")]
+    [Header("Route Key (ï¿½Ê¼ï¿½)")]
     [SerializeField] private string routeKey = "Trigger1";
+
+    [Header("Call Limit")]
+    [Tooltip("0ì´ë©´ ë¬´ì œí•œ, 1ì´ë©´ 1íšŒë§Œ, 2ë©´ 2íšŒê¹Œì§€ë§Œ ì‹¤í–‰")]
+    [SerializeField] private int maxCalls = 0;
+
+    [Tooltip("maxCallsì— ë„ë‹¬í•˜ë©´ ì´ ì˜¤ë¸Œì íŠ¸ì˜ Collider2Dë“¤ì„ ë¹„í™œì„±í™”í•©ë‹ˆë‹¤.")]
+    [SerializeField] private bool disableCollidersWhenConsumed = true;
 
     [Header("Policy")]
     [SerializeField] private bool blockIfDialogueActive = true;
@@ -17,16 +27,31 @@ public class TriggerRouterInteraction : MonoBehaviour, IInteractable
     [Header("Debug")]
     [SerializeField] private bool debugLog = true;
 
+    private int _called;
+    private string _runtimeId;
+    private Collider2D[] _colliders;
+
     private void Awake()
     {
         if (!router) router = FindObjectOfType<TriggerRouter>(true);
+
+        _runtimeId = BuildRuntimeId();
+        _colliders = GetComponents<Collider2D>();
+
+        if (!string.IsNullOrEmpty(_runtimeId) && s_callCountById.TryGetValue(_runtimeId, out int persisted))
+            _called = Mathf.Max(0, persisted);
+
+        ApplyConsumedStateIfNeeded();
     }
 
     public void Interact()
     {
+        if (maxCalls > 0 && _called >= maxCalls)
+            return;
+
         if (string.IsNullOrWhiteSpace(routeKey))
         {
-            if (debugLog) Debug.LogWarning("[TriggerRouterInteraction] routeKey°¡ ºñ¾îÀÖ½À´Ï´Ù.", this);
+            if (debugLog) Debug.LogWarning("[TriggerRouterInteraction] routeKeyï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ö½ï¿½ï¿½Ï´ï¿½.", this);
             return;
         }
 
@@ -35,7 +60,7 @@ public class TriggerRouterInteraction : MonoBehaviour, IInteractable
             router = FindObjectOfType<TriggerRouter>(true);
             if (!router)
             {
-                if (debugLog) Debug.LogWarning("[TriggerRouterInteraction] TriggerRouter¸¦ Ã£Áö ¸øÇß½À´Ï´Ù.", this);
+                if (debugLog) Debug.LogWarning("[TriggerRouterInteraction] TriggerRouterï¿½ï¿½ Ã£ï¿½ï¿½ ï¿½ï¿½ï¿½ß½ï¿½ï¿½Ï´ï¿½.", this);
                 return;
             }
         }
@@ -46,20 +71,20 @@ public class TriggerRouterInteraction : MonoBehaviour, IInteractable
         if (blockIfGameActionLocked && GameManager.Instance != null && GameManager.Instance.isAction)
             return;
 
-        // PlayerMove ±â¹İÀ¸·Î TriggerContext ±¸¼º
+        // PlayerMove ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ TriggerContext ï¿½ï¿½ï¿½ï¿½
         var pm = FindObjectOfType<PlayerMove>(true);
         if (!pm)
         {
-            if (debugLog) Debug.LogWarning("[TriggerRouterInteraction] PlayerMove¸¦ Ã£Áö ¸øÇß½À´Ï´Ù.", this);
+            if (debugLog) Debug.LogWarning("[TriggerRouterInteraction] PlayerMoveï¿½ï¿½ Ã£ï¿½ï¿½ ï¿½ï¿½ï¿½ß½ï¿½ï¿½Ï´ï¿½.", this);
             return;
         }
 
-        var col = pm.GetComponent<Collider2D>(); // ¾ø¾îµµ ctx¿¡´Â null·Î µé¾î°¡µµ µÊ
+        var col = pm.GetComponent<Collider2D>(); // ï¿½ï¿½ï¿½îµµ ctxï¿½ï¿½ï¿½ï¿½ nullï¿½ï¿½ ï¿½ï¿½î°¡ï¿½ï¿½ ï¿½ï¿½
 
         var ctx = new TriggerContext(
-            trigger: null,                 // TriggerGet ±â¹İÀÌ ¾Æ´Ï¶ó¼­ null
+            trigger: null,                 // TriggerGet ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Æ´Ï¶ï¿½ null
             router: router,
-            instigator: pm.gameObject,     // »óÈ£ÀÛ¿ë ÁÖÃ¼ = ÇÃ·¹ÀÌ¾î
+            instigator: pm.gameObject,     // ï¿½ï¿½È£ï¿½Û¿ï¿½ ï¿½ï¿½Ã¼ = ï¿½Ã·ï¿½ï¿½Ì¾ï¿½
             instigatorCollider: col,
             playerMove: pm
         );
@@ -67,6 +92,58 @@ public class TriggerRouterInteraction : MonoBehaviour, IInteractable
         if (debugLog)
             Debug.Log($"[TriggerRouterInteraction] RequestRoute key='{routeKey}' by='{pm.name}'", this);
 
+        _called++;
+        PersistCallCount();
+
         router.RequestRoute(routeKey, ctx);
+        ApplyConsumedStateIfNeeded();
+    }
+
+    private void PersistCallCount()
+    {
+        if (string.IsNullOrEmpty(_runtimeId)) return;
+        s_callCountById[_runtimeId] = _called;
+    }
+
+    private void ApplyConsumedStateIfNeeded()
+    {
+        if (maxCalls <= 0) return;
+        if (_called < maxCalls) return;
+
+        enabled = false;
+
+        if (disableCollidersWhenConsumed)
+        {
+            if (_colliders == null || _colliders.Length == 0)
+                _colliders = GetComponents<Collider2D>();
+
+            for (int i = 0; i < _colliders.Length; i++)
+            {
+                if (_colliders[i] != null)
+                    _colliders[i].enabled = false;
+            }
+        }
+
+        if (debugLog)
+            Debug.Log($"[TriggerRouterInteraction] Consumed -> disabled key='{routeKey}' id='{_runtimeId}' calls={_called}/{maxCalls}", this);
+    }
+
+    private string BuildRuntimeId()
+    {
+        string sceneName = gameObject.scene.IsValid() ? gameObject.scene.name : "(no-scene)";
+        return $"{sceneName}::{GetTransformPath(transform)}::{routeKey}";
+    }
+
+    private static string GetTransformPath(Transform t)
+    {
+        if (t == null) return "(null)";
+        var stack = new Stack<string>();
+        var cur = t;
+        while (cur != null)
+        {
+            stack.Push(cur.name);
+            cur = cur.parent;
+        }
+        return string.Join("/", stack.ToArray());
     }
 }
