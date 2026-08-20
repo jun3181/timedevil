@@ -17,6 +17,7 @@ public class PanelController : MonoBehaviour
     [SerializeField] private TurnManager turnManager;
     [SerializeField] private CardUseOrchestrator orchestrator;
     [SerializeField] private DescriptionPanelController descriptionPanel;
+    [SerializeField] private StatePanelController statePanel;
 
     [Header("Menu Submit Index Rules")]
     [Tooltip("켜면 panel 인덱스 제출 시 게임플레이 뷰로 전환")]
@@ -124,6 +125,9 @@ public class PanelController : MonoBehaviour
     private bool menuPanelsHidden;
     private bool handObjectShown;
     private bool itemInteractionActive;
+    private bool cardPanelInteractionActive;
+    private bool cardPanelMenuHideRequested;
+    private bool cardPanelHandShowRequested;
     private int externalMenuHideRequestCount;
     private int externalHandShowRequestCount;
     private bool initialSyncRequested;
@@ -140,6 +144,7 @@ public class PanelController : MonoBehaviour
         if (!turnManager) turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
         if (!orchestrator) orchestrator = FindObjectOfType<CardUseOrchestrator>(true);
         if (!descriptionPanel) descriptionPanel = FindObjectOfType<DescriptionPanelController>(true);
+        if (!statePanel) statePanel = FindObjectOfType<StatePanelController>(true);
     }
 
     void Awake()
@@ -150,6 +155,7 @@ public class PanelController : MonoBehaviour
         if (!turnManager) turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
         if (!orchestrator) orchestrator = FindObjectOfType<CardUseOrchestrator>(true);
         if (!descriptionPanel) descriptionPanel = FindObjectOfType<DescriptionPanelController>(true);
+        if (!statePanel) statePanel = FindObjectOfType<StatePanelController>(true);
 
         CacheShownBasePositions();
 
@@ -250,6 +256,8 @@ public class PanelController : MonoBehaviour
                 return;
 
             SetGameplayViewDelayed(true, submitViewDelay);
+            if (!statePanel) statePanel = FindObjectOfType<StatePanelController>(true);
+            statePanel?.TryEnterStateModeFromMenu();
             return;
         }
 
@@ -258,9 +266,10 @@ public class PanelController : MonoBehaviour
             if (!BattleTutorialGate.Allows(BattleTutorialAction.CardPanelInteract))
                 return;
 
-            if (handUI != null && handUI.CardCount <= 0)
+            if (!EnsurePlayerHandReadyForInteraction())
                 return;
 
+            EnterCardPanelInteractionMode();
             SetGameplayViewDelayed(true, submitViewDelay);
             BattleTutorialGate.Report(BattleTutorialAction.CardPanelInteract);
             return;
@@ -426,7 +435,7 @@ public class PanelController : MonoBehaviour
         bool enemyTurn = turnManager && turnManager.currentTurn == TurnState.EnemyTurn;
         bool playerDiscard = turnManager && turnManager.IsPlayerDiscardPhase;
         bool cardResolving = orchestrator && orchestrator.GetIsBusy();
-        bool shouldHideMenuPanels = enemyTurn || playerDiscard || handSelecting || cardResolving || itemInteractionActive || externalMenuHideRequestCount > 0;
+        bool shouldHideMenuPanels = enemyTurn || playerDiscard || handSelecting || cardResolving || itemInteractionActive || cardPanelInteractionActive || externalMenuHideRequestCount > 0;
         if (shouldHideMenuPanels != menuPanelsHidden || immediate)
             SetBattleMenuPanelsHidden(shouldHideMenuPanels, immediate);
 
@@ -685,6 +694,62 @@ public class PanelController : MonoBehaviour
     {
         externalHandShowRequestCount = Mathf.Max(0, externalHandShowRequestCount - 1);
         RefreshTurnDrivenPanelState(immediate);
+    }
+
+    public void ReleaseCardPanelInteractionMode(bool immediate = false)
+    {
+        if (!cardPanelInteractionActive)
+            return;
+
+        cardPanelInteractionActive = false;
+
+        if (cardPanelMenuHideRequested)
+        {
+            cardPanelMenuHideRequested = false;
+            PopBattleMenuHideRequest(immediate);
+        }
+
+        if (cardPanelHandShowRequested)
+        {
+            cardPanelHandShowRequested = false;
+            PopHandObjectShowRequest(immediate);
+        }
+
+        RefreshTurnDrivenPanelState(immediate);
+    }
+
+    private bool EnsurePlayerHandReadyForInteraction()
+    {
+        if (!handUI)
+            handUI = FindObjectOfType<HandUI>(true);
+
+        if (!handUI)
+            return false;
+
+        return handUI.EnsureCardsReady(BattleTutorialGate.IsActive);
+    }
+
+    private void EnterCardPanelInteractionMode()
+    {
+        if (!handUI)
+            handUI = FindObjectOfType<HandUI>(true);
+
+        handUI?.EnsureCardsReady(BattleTutorialGate.IsActive);
+        handUI?.ShowCards();
+
+        cardPanelInteractionActive = true;
+
+        if (!cardPanelMenuHideRequested)
+        {
+            PushBattleMenuHideRequest();
+            cardPanelMenuHideRequested = true;
+        }
+
+        if (!cardPanelHandShowRequested)
+        {
+            PushHandObjectShowRequest();
+            cardPanelHandShowRequested = true;
+        }
     }
 
     private void EnterItemInteractionMode()

@@ -79,6 +79,7 @@ public class StatePanelController : MonoBehaviour
     private bool handInspectActive;
     private Faction handInspectFaction;
     private int stateInputBlockedFrame = -1;
+    private Coroutine stateHandRefreshRoutine;
 
     void Reset()
     {
@@ -95,6 +96,7 @@ public class StatePanelController : MonoBehaviour
 
     void OnEnable()
     {
+        ResolveRefs();
         if (menu) menu.onSubmit.AddListener(OnMenuSubmit);
     }
 
@@ -143,8 +145,8 @@ public class StatePanelController : MonoBehaviour
                 return;
 
             bool wasInspecting = handInspectActive;
-            EnterHandInspectMode();
-            if (!wasInspecting && handInspectActive)
+            bool handled = TryEnterHandInspectMode();
+            if (!wasInspecting && handled)
                 BattleTutorialGate.Report(BattleTutorialAction.StateHandInspect);
             return;
         }
@@ -171,10 +173,17 @@ public class StatePanelController : MonoBehaviour
 
     private void OnMenuSubmit(int index)
     {
-        if (active || index != ResolveStateIndex()) return;
-        if (!BattleTutorialGate.Allows(BattleTutorialAction.StatePanelInteract)) return;
+        if (index != ResolveStateIndex()) return;
+        TryEnterStateModeFromMenu();
+    }
+
+    public bool TryEnterStateModeFromMenu()
+    {
+        if (active) return false;
+        if (!BattleTutorialGate.Allows(BattleTutorialAction.StatePanelInteract)) return false;
         EnterStateMode();
         BattleTutorialGate.Report(BattleTutorialAction.StatePanelInteract);
+        return true;
     }
 
     private void EnterStateMode()
@@ -199,6 +208,7 @@ public class StatePanelController : MonoBehaviour
         }
 
         RefreshStateView();
+        RefreshStateHandsAfterLayout();
 
         if (animateEnemyHandOnEnter && enemyHand)
             enemyHand.PlayCardsRiseStaggered(enemyHandRiseYOffset, enemyHandRiseDuration, enemyHandRiseStagger, enemyHandRiseFade);
@@ -208,6 +218,7 @@ public class StatePanelController : MonoBehaviour
     {
         if (!active) return;
 
+        StopStateHandRefreshRoutine();
         ExitHandInspectMode(false);
         active = false;
         RestoreHighlights();
@@ -296,10 +307,10 @@ public class StatePanelController : MonoBehaviour
             UpdateSpeechBubble();
     }
 
-    private void EnterHandInspectMode()
+    private bool TryEnterHandInspectMode()
     {
         if (!allowHandInspect || targets.Count == 0)
-            return;
+            return false;
 
         ResolveRefs();
         EnsureStateHandsVisible();
@@ -314,7 +325,15 @@ public class StatePanelController : MonoBehaviour
         if (!canInspect)
         {
             descriptionPanel?.EnterStateView("확인할 카드가 없습니다.", true, true, handInspectFaction);
-            return;
+            if (BattleTutorialGate.IsActive && BattleTutorialGate.RequiredAction == BattleTutorialAction.StateHandInspect)
+            {
+                handInspectActive = true;
+                if (hideSpeechBubbleDuringHandInspect)
+                    HideSpeechBubbles();
+                return true;
+            }
+
+            return false;
         }
 
         handInspectActive = true;
@@ -342,12 +361,65 @@ public class StatePanelController : MonoBehaviour
             UpdateSpeechBubble();
 
         RefreshHandInspectText();
+        return true;
     }
 
     private void EnsureStateHandsVisible()
     {
+        EnsureTutorialHandsAvailable();
         playerHand?.ShowCards();
         enemyHand?.ShowAll();
+    }
+
+    private void EnsureTutorialHandsAvailable()
+    {
+        if (!BattleTutorialGate.IsActive)
+            return;
+
+        if (playerHand && playerHand.CardCount <= 0)
+        {
+            playerHand.EnsureCardsReady(true);
+        }
+
+        if (enemyHand && enemyHand.CardCount <= 0)
+        {
+            var enemyDeck = EnemyDeckRuntime.Instance;
+            if (enemyDeck != null && enemyDeck.GetHandIds().Count <= 0)
+                enemyDeck.DrawOneIfNeeded();
+
+            enemyHand.RebuildFromHand();
+        }
+    }
+
+    private void RefreshStateHandsAfterLayout()
+    {
+        StopStateHandRefreshRoutine();
+        if (!isActiveAndEnabled)
+            return;
+
+        stateHandRefreshRoutine = StartCoroutine(CoRefreshStateHandsAfterLayout());
+    }
+
+    private void StopStateHandRefreshRoutine()
+    {
+        if (stateHandRefreshRoutine == null)
+            return;
+
+        StopCoroutine(stateHandRefreshRoutine);
+        stateHandRefreshRoutine = null;
+    }
+
+    private System.Collections.IEnumerator CoRefreshStateHandsAfterLayout()
+    {
+        yield return null;
+        if (active)
+            RefreshStateView();
+
+        yield return new WaitForSeconds(0.04f);
+        if (active)
+            RefreshStateView();
+
+        stateHandRefreshRoutine = null;
     }
 
     private void ExitHandInspectMode(bool refreshStateView)

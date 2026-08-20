@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.SceneManagement;
 using TMPro;
+using UnityEngine.UI;
 
 public enum TurnState { PlayerTurn, EnemyTurn }
 
@@ -62,7 +63,7 @@ public class TurnManager : MonoBehaviour
 
     [Header("Turn Banner")]
     [SerializeField] private bool showTurnBanner = true;
-    [SerializeField] private string playerTurnBannerMessage = "아군턴입니다!";
+    [SerializeField] private string playerTurnBannerMessage = "플레이어턴입니다!";
     [SerializeField] private string enemyTurnBannerMessage = "상대턴입니다!";
     [SerializeField] private Vector2 turnBannerCenter = new Vector2(0f, 110f);
     [SerializeField] private Vector2 turnBannerSize = new Vector2(760f, 110f);
@@ -71,6 +72,8 @@ public class TurnManager : MonoBehaviour
     [SerializeField, Min(0.01f)] private float turnBannerOutSeconds = 0.35f;
     [SerializeField] private Color turnBannerColor = Color.white;
     [SerializeField, Min(1f)] private float turnBannerFontSize = 54f;
+    [SerializeField] private Color turnBannerBackdropColor = new Color(0f, 0f, 0f, 0.35f);
+    [SerializeField] private int turnBannerSortingOrder = 30000;
 
     [Header("Refs")]
     [SerializeField] private EnemyTurnController enemyTurnController;
@@ -92,6 +95,7 @@ public class TurnManager : MonoBehaviour
     private RectTransform turnBannerRect;
     private TMP_Text turnBannerText;
     private CanvasGroup turnBannerGroup;
+    private Canvas turnBannerCanvas;
     private Coroutine turnBannerRoutine;
 
     private bool playerInitialRevealDone = false;
@@ -703,7 +707,7 @@ public class TurnManager : MonoBehaviour
         if (turnBannerRect && turnBannerText != null && turnBannerGroup != null)
             return;
 
-        Canvas canvas = FindObjectOfType<Canvas>(true);
+        Canvas canvas = EnsureTurnBannerCanvas();
         if (!canvas) return;
 
         var root = new GameObject("TurnBanner", typeof(RectTransform), typeof(CanvasGroup));
@@ -720,6 +724,21 @@ public class TurnManager : MonoBehaviour
         turnBannerGroup.interactable = false;
         turnBannerGroup.blocksRaycasts = false;
 
+        var rootCanvas = root.AddComponent<Canvas>();
+        rootCanvas.overrideSorting = true;
+        rootCanvas.sortingOrder = turnBannerSortingOrder;
+
+        var backdropObject = new GameObject("Backdrop", typeof(RectTransform), typeof(Image));
+        backdropObject.transform.SetParent(root.transform, false);
+        var backdropRect = backdropObject.GetComponent<RectTransform>();
+        backdropRect.anchorMin = Vector2.zero;
+        backdropRect.anchorMax = Vector2.one;
+        backdropRect.offsetMin = Vector2.zero;
+        backdropRect.offsetMax = Vector2.zero;
+        var backdrop = backdropObject.GetComponent<Image>();
+        backdrop.color = turnBannerBackdropColor;
+        backdrop.raycastTarget = false;
+
         var textObject = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
         textObject.transform.SetParent(root.transform, false);
         var textRect = textObject.GetComponent<RectTransform>();
@@ -735,9 +754,73 @@ public class TurnManager : MonoBehaviour
         text.fontStyle = FontStyles.Bold;
         text.fontSize = turnBannerFontSize;
         text.color = turnBannerColor;
+        TMP_FontAsset font = ResolveTurnBannerFont();
+        if (font) text.font = font;
         turnBannerText = text;
 
         root.SetActive(false);
+    }
+
+    private Canvas EnsureTurnBannerCanvas()
+    {
+        if (turnBannerCanvas && turnBannerCanvas.gameObject.activeInHierarchy)
+            return turnBannerCanvas;
+
+        Canvas[] canvases = FindObjectsOfType<Canvas>(true);
+        for (int i = 0; i < canvases.Length; i++)
+        {
+            Canvas existing = canvases[i];
+            if (existing && existing.name == "TurnBannerCanvas")
+            {
+                turnBannerCanvas = existing;
+                ConfigureTurnBannerCanvas(turnBannerCanvas);
+                return turnBannerCanvas;
+            }
+        }
+
+        var canvasObject = new GameObject("TurnBannerCanvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+        turnBannerCanvas = canvasObject.GetComponent<Canvas>();
+        ConfigureTurnBannerCanvas(turnBannerCanvas);
+
+        var scaler = canvasObject.GetComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920f, 1080f);
+        scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+        scaler.matchWidthOrHeight = 0.5f;
+
+        var raycaster = canvasObject.GetComponent<GraphicRaycaster>();
+        if (raycaster) raycaster.enabled = false;
+
+        return turnBannerCanvas;
+    }
+
+    private void ConfigureTurnBannerCanvas(Canvas canvas)
+    {
+        if (!canvas) return;
+
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.overrideSorting = true;
+        canvas.sortingOrder = turnBannerSortingOrder;
+        canvas.gameObject.SetActive(true);
+    }
+
+    private TMP_FontAsset ResolveTurnBannerFont()
+    {
+        string sample = string.Concat(playerTurnBannerMessage, enemyTurnBannerMessage);
+        TMP_FontAsset defaultFont = TMP_Settings.defaultFontAsset;
+        if (defaultFont && (string.IsNullOrEmpty(sample) || defaultFont.HasCharacters(sample)))
+            return defaultFont;
+
+        TMP_Text[] texts = FindObjectsOfType<TMP_Text>(true);
+        for (int i = 0; i < texts.Length; i++)
+        {
+            TMP_Text text = texts[i];
+            TMP_FontAsset font = text ? text.font : null;
+            if (font && (string.IsNullOrEmpty(sample) || font.HasCharacters(sample)))
+                return font;
+        }
+
+        return defaultFont;
     }
 
     // ─────────────────────────────────────────

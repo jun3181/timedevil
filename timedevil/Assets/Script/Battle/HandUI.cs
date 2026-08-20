@@ -31,6 +31,7 @@ public class HandUI : MonoBehaviour
 
     [Header("Select Overlay")]
     [SerializeField] private RectTransform select;
+    [SerializeField] private bool showSelectOverlay = false;
 
     //  Select 고정 크기
     [Header("Select Overlay Fixed Size")]
@@ -102,7 +103,7 @@ public class HandUI : MonoBehaviour
         if (!row) row = (RectTransform)transform;
         EnsureCardDatabase();
         HideCards();
-        if (select) select.gameObject.SetActive(false);
+        SetSelectOverlayVisible(false);
     }
 
     void OnEnable()
@@ -183,7 +184,7 @@ public class HandUI : MonoBehaviour
             selecting = true;
             readOnlySelectMode = restoreReadOnlySelectMode;
             readOnlySelectEmphasisEnabled = restoreReadOnlySelectEmphasis;
-            if (select) select.gameObject.SetActive(true);
+            SetSelectOverlayVisible(true);
             selectIndex = -1;
             SetSelectIndexPublic(Mathf.Clamp(restoreSelectIndex, 0, n - 1));
         }
@@ -212,7 +213,7 @@ public class HandUI : MonoBehaviour
     {
         cardsVisible = true;
         gameObject.SetActive(true);
-        RebuildFromRuntimeIfCardsMissing();
+        RebuildFromRuntimeIfCardsMissing(false);
         for (int i = 0; i < spawned.Count; i++)
             if (spawned[i]) spawned[i].SetActive(true);
     }
@@ -222,7 +223,7 @@ public class HandUI : MonoBehaviour
         cardsVisible = false;
         for (int i = 0; i < spawned.Count; i++)
             if (spawned[i]) spawned[i].SetActive(false);
-        if (select) select.gameObject.SetActive(false);
+        SetSelectOverlayVisible(false);
         selecting = false;
         readOnlySelectMode = false;
         readOnlySelectEmphasisEnabled = true;
@@ -244,7 +245,7 @@ public class HandUI : MonoBehaviour
 
     private void EnterSelectMode(bool readOnly, int startIndex, bool emphasizeReadOnlySelection)
     {
-        RebuildFromRuntimeIfCardsMissing();
+        RebuildFromRuntimeIfCardsMissing(false);
         if (CardCount == 0) return;
 
         StopCardRiseAnimation(true);
@@ -252,23 +253,32 @@ public class HandUI : MonoBehaviour
         selecting = true;
         readOnlySelectMode = readOnly;
         readOnlySelectEmphasisEnabled = !readOnly || emphasizeReadOnlySelection;
-        if (select) select.gameObject.SetActive(true);
+        SetSelectOverlayVisible(true);
         onSelectModeChanged?.Invoke(true);
 
         SetSelectIndexPublic(Mathf.Clamp(startIndex, 0, CardCount - 1)); // 오른쪽 끝부터
     }
 
-    private void RebuildFromRuntimeIfCardsMissing()
+    public bool EnsureCardsReady(bool drawIfNeeded = false)
     {
-        if (spawned.Count > 0 && handIdsSnapshot.Count > 0)
-            return;
+        RebuildFromRuntimeIfCardsMissing(drawIfNeeded);
+        return CardCount > 0;
+    }
 
+    private void RebuildFromRuntimeIfCardsMissing(bool drawIfNeeded)
+    {
         var rt = BattleDeckRuntime.Instance;
         if (rt == null)
             return;
 
+        if (drawIfNeeded && rt.HandCount <= 0)
+            rt.DrawOneIfNeeded();
+
         var ids = rt.GetHandIds();
         if (ids == null || ids.Count == 0)
+            return;
+
+        if (spawned.Count > 0 && handIdsSnapshot.Count == ids.Count)
             return;
 
         RebuildFromHand();
@@ -289,7 +299,7 @@ public class HandUI : MonoBehaviour
         readOnlySelectEmphasisEnabled = true;
         onSelectModeChanged?.Invoke(false);
         selectIndex = -1;
-        if (select) select.gameObject.SetActive(false);
+        SetSelectOverlayVisible(false);
         nonSelectedScaleAnimationIndex = !immediateLayout && wasSelectEmphasisActive ? previousSelection : -1;
         ApplyHandCardLayout(immediateLayout);
         nonSelectedScaleAnimationIndex = -1;
@@ -665,6 +675,12 @@ public class HandUI : MonoBehaviour
 
     private void RefreshSelectOverlayPosition()
     {
+        if (!showSelectOverlay)
+        {
+            SetSelectOverlayVisible(false);
+            return;
+        }
+
         if (select && selectIndex >= 0 && selectIndex < spawned.Count)
         {
             var target = (RectTransform)spawned[selectIndex].transform;
@@ -697,6 +713,14 @@ public class HandUI : MonoBehaviour
             select.localScale = Vector3.one;        // 스케일 흔적 제거
             select.SetAsLastSibling();              // 항상 맨 위로
         }
+    }
+
+    private void SetSelectOverlayVisible(bool visible)
+    {
+        if (!select)
+            return;
+
+        select.gameObject.SetActive(showSelectOverlay && visible);
     }
 
     public void PlayCardsRiseStaggered(float startYOffset, float perCardDuration, float perCardStagger, bool fadeAlpha)

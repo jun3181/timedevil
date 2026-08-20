@@ -122,7 +122,7 @@ public class BattleTutorialController : MonoBehaviour
 
         if (Input.GetKeyDown(continueKey))
         {
-            BattleTutorialGate.MarkInputConsumedThisFrame();
+            BattleTutorialGate.MarkInputConsumedThisFrame(BattleTutorialAction.Continue);
             CompleteCurrentStep(BattleTutorialAction.Continue);
         }
     }
@@ -260,7 +260,7 @@ public class BattleTutorialController : MonoBehaviour
 
         if (continueKey != KeyCode.None && Input.GetKeyDown(continueKey))
         {
-            BattleTutorialGate.MarkInputConsumedThisFrame();
+            BattleTutorialGate.MarkInputConsumedThisFrame(BattleTutorialAction.Continue);
             ClearExternalPrompt(true);
         }
     }
@@ -359,7 +359,7 @@ public class BattleTutorialController : MonoBehaviour
         {
             if (action == externalPromptRequiredAction)
             {
-                BattleTutorialGate.MarkInputConsumedThisFrame();
+                BattleTutorialGate.MarkInputConsumedThisFrame(action);
                 ClearExternalPrompt(true);
             }
             return;
@@ -377,7 +377,7 @@ public class BattleTutorialController : MonoBehaviour
 
         if (action == step.requiredAction)
         {
-            BattleTutorialGate.MarkInputConsumedThisFrame();
+            BattleTutorialGate.MarkInputConsumedThisFrame(action);
             CompleteCurrentStep(action);
         }
     }
