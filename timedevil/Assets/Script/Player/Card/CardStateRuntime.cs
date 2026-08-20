@@ -9,16 +9,10 @@ public class CardStateRuntime : MonoBehaviour
 
     //  덱 최대 장수
     public const int MAX_DECK = 13;
-    private static readonly string[] DefaultOwnedCardIds =
+    private static readonly string[] LegacyAutoOwnedCardIds =
         Enumerable.Range(1, 4).Select(i => $"AttackCard{i}")
             .Concat(Enumerable.Range(1, 5).Select(i => $"DrawCard{i}"))
             .Concat(Enumerable.Range(1, 4).Select(i => $"MoveCard{i}"))
-            .ToArray();
-
-    private static readonly string[] ManagedDefaultCardIds =
-        Enumerable.Range(1, 10).Select(i => $"AttackCard{i}")
-            .Concat(Enumerable.Range(1, 10).Select(i => $"DrawCard{i}"))
-            .Concat(Enumerable.Range(1, 10).Select(i => $"MoveCard{i}"))
             .ToArray();
 
     private static readonly string[] LegacyDefaultDeckIds =
@@ -83,7 +77,7 @@ public class CardStateRuntime : MonoBehaviour
 
     public void EnsureDefaultBattleCardsSaved()
     {
-        bool changed = EnsureDefaultPlayerCards();
+        bool changed = EnsureCardDataInitialized();
         if (!changed) return;
 
         CardSaveStore.Save(Data);
@@ -142,7 +136,7 @@ public class CardStateRuntime : MonoBehaviour
     }
 
     // --- Helpers ---
-    private bool EnsureDefaultPlayerCards()
+    private bool EnsureCardDataInitialized()
     {
         if (Data == null) Data = new CardSaveData();
 
@@ -159,28 +153,22 @@ public class CardStateRuntime : MonoBehaviour
             changed = true;
         }
 
-        if (ContainsOnlyManagedDefaultCards(Data.owned))
+        if (HasOnlyLegacyAutoDefaults(Data))
         {
-            var defaults = DefaultOwnedCardIds.ToList();
-            if (!Data.owned.SequenceEqual(defaults))
-            {
-                Data.owned = defaults;
-                changed = true;
-            }
-        }
-        else
-        {
-            foreach (var id in DefaultOwnedCardIds)
-            {
-                if (Data.owned.Contains(id)) continue;
-                Data.owned.Add(id);
-                changed = true;
-            }
+            Data.owned.Clear();
+            Data.deck.Clear();
+            changed = true;
+            return changed;
         }
 
-        if (IsLegacyDefaultDeck(Data.deck))
+        var normalizedOwned = Data.owned
+            .Where(id => !string.IsNullOrEmpty(id))
+            .Distinct()
+            .ToList();
+
+        if (!Data.owned.SequenceEqual(normalizedOwned))
         {
-            Data.deck = DefaultOwnedCardIds.ToList();
+            Data.owned = normalizedOwned;
             changed = true;
         }
 
@@ -189,11 +177,6 @@ public class CardStateRuntime : MonoBehaviour
             .Distinct()
             .Take(MAX_DECK)
             .ToList();
-
-        if (normalizedDeck.Count == 0)
-        {
-            normalizedDeck = DefaultOwnedCardIds.ToList();
-        }
 
         if (!Data.deck.SequenceEqual(normalizedDeck))
         {
@@ -209,17 +192,32 @@ public class CardStateRuntime : MonoBehaviour
         return IsEmpty(Data) && !File.Exists(CardSaveStore.GetPath());
     }
 
-    private static bool IsLegacyDefaultDeck(List<string> deck)
+    private static bool HasOnlyLegacyAutoDefaults(CardSaveData data)
     {
-        if (deck == null || deck.Count != LegacyDefaultDeckIds.Length) return false;
+        if (data == null || data.owned == null || data.deck == null)
+            return false;
 
-        return deck.Distinct().Count() == LegacyDefaultDeckIds.Length
-            && LegacyDefaultDeckIds.All(deck.Contains);
+        return HasSameCards(data.owned, LegacyAutoOwnedCardIds)
+            && (HasSameCards(data.deck, LegacyAutoOwnedCardIds) || HasSameCards(data.deck, LegacyDefaultDeckIds));
     }
 
-    private static bool ContainsOnlyManagedDefaultCards(List<string> owned)
+    private static bool HasSameCards(List<string> cards, string[] expected)
     {
-        return owned == null || owned.All(id => ManagedDefaultCardIds.Contains(id));
+        if (cards == null || expected == null) return false;
+
+        var normalizedCards = cards
+            .Where(id => !string.IsNullOrEmpty(id))
+            .Distinct()
+            .OrderBy(id => id)
+            .ToList();
+
+        var normalizedExpected = expected
+            .Where(id => !string.IsNullOrEmpty(id))
+            .Distinct()
+            .OrderBy(id => id)
+            .ToList();
+
+        return normalizedCards.SequenceEqual(normalizedExpected);
     }
 
     private static bool IsEmpty(CardSaveData d)
