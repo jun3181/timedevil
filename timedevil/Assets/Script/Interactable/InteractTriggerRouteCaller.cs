@@ -5,19 +5,37 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class TriggerRouterInteraction : MonoBehaviour, IInteractable
 {
-    private static readonly Dictionary<string, int> s_callCountById = new();
+    private struct RouteStageProgress
+    {
+        public readonly int stageIndex;
+        public readonly int callCount;
 
-    [Header("Router (���� ������ �ڵ� Ž��)")]
+        public RouteStageProgress(int stageIndex, int callCount)
+        {
+            this.stageIndex = stageIndex;
+            this.callCount = callCount;
+        }
+    }
+
+    private static readonly Dictionary<string, int> s_callCountById = new();
+    private static readonly Dictionary<string, RouteStageProgress> s_stageProgressById = new();
+
+    [Header("Router (auto-find if empty)")]
     [SerializeField] private TriggerRouter router;
 
-    [Header("Route Key (�ʼ�)")]
+    [Header("Route Stages (Optional)")]
+    [Tooltip("If entries exist, stages run in order and the fallback Route Key/Call Limit fields are ignored.")]
+    [SerializeField] private List<TriggerRouteStage> routeStages = new();
+
+    [Header("Fallback Route Key")]
     [SerializeField] private string routeKey = "Trigger1";
 
-    [Header("Call Limit")]
-    [Tooltip("0이면 무제한, 1이면 1회만, 2면 2회까지만 실행")]
+    [Header("Fallback Call Limit")]
+    [Tooltip("0 means unlimited. 1 means one call. 2 means two calls.")]
+    [Min(0)]
     [SerializeField] private int maxCalls = 0;
 
-    [Tooltip("maxCalls에 도달하면 이 오브젝트의 Collider2D들을 비활성화합니다.")]
+    [Tooltip("When fully consumed, disable this object's Collider2D components.")]
     [SerializeField] private bool disableCollidersWhenConsumed = true;
 
     [Header("Policy")]
@@ -28,8 +46,12 @@ public class TriggerRouterInteraction : MonoBehaviour, IInteractable
     [SerializeField] private bool debugLog = true;
 
     private int _called;
+    private int _stageIndex;
+    private int _stageCalled;
     private string _runtimeId;
     private Collider2D[] _colliders;
+
+    private bool HasRouteStages => routeStages != null && routeStages.Count > 0;
 
     private void Awake()
     {
@@ -38,20 +60,21 @@ public class TriggerRouterInteraction : MonoBehaviour, IInteractable
         _runtimeId = BuildRuntimeId();
         _colliders = GetComponents<Collider2D>();
 
-        if (!string.IsNullOrEmpty(_runtimeId) && s_callCountById.TryGetValue(_runtimeId, out int persisted))
-            _called = Mathf.Max(0, persisted);
-
+        RestoreProgress();
         ApplyConsumedStateIfNeeded();
     }
 
     public void Interact()
     {
-        if (maxCalls > 0 && _called >= maxCalls)
-            return;
-
-        if (string.IsNullOrWhiteSpace(routeKey))
+        if (!TryGetActiveRoute(out string currentRouteKey, out int currentCallCount, out int currentMaxCalls, out int currentStageIndex))
         {
-            if (debugLog) Debug.LogWarning("[TriggerRouterInteraction] routeKey�� ����ֽ��ϴ�.", this);
+            ApplyConsumedStateIfNeeded();
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(currentRouteKey))
+        {
+            if (debugLog) Debug.LogWarning("[TriggerRouterInteraction] routeKey is empty.", this);
             return;
         }
 
@@ -60,7 +83,7 @@ public class TriggerRouterInteraction : MonoBehaviour, IInteractable
             router = FindObjectOfType<TriggerRouter>(true);
             if (!router)
             {
-                if (debugLog) Debug.LogWarning("[TriggerRouterInteraction] TriggerRouter�� ã�� ���߽��ϴ�.", this);
+                if (debugLog) Debug.LogWarning("[TriggerRouterInteraction] TriggerRouter was not found.", this);
                 return;
             }
         }
@@ -71,32 +94,70 @@ public class TriggerRouterInteraction : MonoBehaviour, IInteractable
         if (blockIfGameActionLocked && GameManager.Instance != null && GameManager.Instance.isAction)
             return;
 
-        // PlayerMove ������� TriggerContext ����
         var pm = FindObjectOfType<PlayerMove>(true);
         if (!pm)
         {
-            if (debugLog) Debug.LogWarning("[TriggerRouterInteraction] PlayerMove�� ã�� ���߽��ϴ�.", this);
+            if (debugLog) Debug.LogWarning("[TriggerRouterInteraction] PlayerMove was not found.", this);
             return;
         }
 
-        var col = pm.GetComponent<Collider2D>(); // ��� ctx���� null�� ���� ��
+        var col = pm.GetComponent<Collider2D>();
 
         var ctx = new TriggerContext(
-            trigger: null,                 // TriggerGet ����� �ƴ϶� null
+            trigger: null,
             router: router,
-            instigator: pm.gameObject,     // ��ȣ�ۿ� ��ü = �÷��̾�
+            instigator: pm.gameObject,
             instigatorCollider: col,
             playerMove: pm
         );
 
+        RegisterRouteCall();
+        currentCallCount++;
+
         if (debugLog)
-            Debug.Log($"[TriggerRouterInteraction] RequestRoute key='{routeKey}' by='{pm.name}'", this);
+        {
+            string stageSuffix = currentStageIndex >= 0 ? $" stage={currentStageIndex + 1}/{routeStages.Count}" : "";
+            Debug.Log($"[TriggerRouterInteraction] RequestRoute key='{currentRouteKey}' call={FormatCallCount(currentCallCount, currentMaxCalls)}{stageSuffix} by='{pm.name}'", this);
+        }
+
+        router.RequestRoute(currentRouteKey, ctx);
+        ApplyConsumedStateIfNeeded();
+    }
+
+    private void RestoreProgress()
+    {
+        _called = 0;
+        _stageIndex = 0;
+        _stageCalled = 0;
+
+        if (string.IsNullOrEmpty(_runtimeId)) return;
+
+        if (HasRouteStages)
+        {
+            if (s_stageProgressById.TryGetValue(_runtimeId, out var persisted))
+            {
+                _stageIndex = Mathf.Clamp(persisted.stageIndex, 0, routeStages.Count);
+                _stageCalled = Mathf.Max(0, persisted.callCount);
+            }
+
+            return;
+        }
+
+        if (s_callCountById.TryGetValue(_runtimeId, out int legacyPersisted))
+            _called = Mathf.Max(0, legacyPersisted);
+    }
+
+    private void RegisterRouteCall()
+    {
+        if (HasRouteStages)
+        {
+            _stageCalled++;
+            PersistRouteStageProgress();
+            return;
+        }
 
         _called++;
         PersistCallCount();
-
-        router.RequestRoute(routeKey, ctx);
-        ApplyConsumedStateIfNeeded();
     }
 
     private void PersistCallCount()
@@ -105,33 +166,131 @@ public class TriggerRouterInteraction : MonoBehaviour, IInteractable
         s_callCountById[_runtimeId] = _called;
     }
 
+    private void PersistRouteStageProgress()
+    {
+        if (string.IsNullOrEmpty(_runtimeId)) return;
+        s_stageProgressById[_runtimeId] = new RouteStageProgress(_stageIndex, _stageCalled);
+    }
+
+    private bool TryGetActiveRoute(out string currentRouteKey, out int currentCallCount, out int currentMaxCalls, out int currentStageIndex)
+    {
+        currentRouteKey = routeKey;
+        currentCallCount = _called;
+        currentMaxCalls = Mathf.Max(0, maxCalls);
+        currentStageIndex = -1;
+
+        if (!HasRouteStages)
+            return currentMaxCalls <= 0 || currentCallCount < currentMaxCalls;
+
+        AdvanceToNextRouteStageIfNeeded();
+
+        currentRouteKey = null;
+        currentCallCount = 0;
+        currentMaxCalls = 0;
+
+        if (_stageIndex >= routeStages.Count)
+            return false;
+
+        var stage = routeStages[_stageIndex];
+        if (stage == null || string.IsNullOrWhiteSpace(stage.routeKey))
+            return false;
+
+        currentRouteKey = stage.routeKey;
+        currentCallCount = _stageCalled;
+        currentMaxCalls = Mathf.Max(0, stage.maxCalls);
+        currentStageIndex = _stageIndex;
+        return currentMaxCalls <= 0 || currentCallCount < currentMaxCalls;
+    }
+
+    private void AdvanceToNextRouteStageIfNeeded()
+    {
+        if (!HasRouteStages) return;
+
+        bool changed = false;
+
+        while (_stageIndex < routeStages.Count)
+        {
+            var stage = routeStages[_stageIndex];
+            if (stage == null || string.IsNullOrWhiteSpace(stage.routeKey))
+            {
+                if (debugLog)
+                    Debug.LogWarning($"[TriggerRouterInteraction] routeStages[{_stageIndex}] has no routeKey. Skipping.", this);
+
+                _stageIndex++;
+                _stageCalled = 0;
+                changed = true;
+                continue;
+            }
+
+            int limit = Mathf.Max(0, stage.maxCalls);
+            if (limit > 0 && _stageCalled >= limit)
+            {
+                if (debugLog)
+                    Debug.Log($"[TriggerRouterInteraction] Route stage complete key='{stage.routeKey}' calls={_stageCalled}/{limit} -> next", this);
+
+                _stageIndex++;
+                _stageCalled = 0;
+                changed = true;
+                continue;
+            }
+
+            break;
+        }
+
+        if (changed)
+            PersistRouteStageProgress();
+    }
+
     private void ApplyConsumedStateIfNeeded()
     {
+        if (HasRouteStages)
+        {
+            AdvanceToNextRouteStageIfNeeded();
+            if (_stageIndex < routeStages.Count) return;
+
+            DisableAsConsumed();
+
+            if (debugLog)
+                Debug.Log($"[TriggerRouterInteraction] Consumed -> disabled routeStages id='{_runtimeId}'", this);
+            return;
+        }
+
         if (maxCalls <= 0) return;
         if (_called < maxCalls) return;
 
-        enabled = false;
-
-        if (disableCollidersWhenConsumed)
-        {
-            if (_colliders == null || _colliders.Length == 0)
-                _colliders = GetComponents<Collider2D>();
-
-            for (int i = 0; i < _colliders.Length; i++)
-            {
-                if (_colliders[i] != null)
-                    _colliders[i].enabled = false;
-            }
-        }
+        DisableAsConsumed();
 
         if (debugLog)
             Debug.Log($"[TriggerRouterInteraction] Consumed -> disabled key='{routeKey}' id='{_runtimeId}' calls={_called}/{maxCalls}", this);
     }
 
+    private void DisableAsConsumed()
+    {
+        enabled = false;
+
+        if (!disableCollidersWhenConsumed)
+            return;
+
+        if (_colliders == null || _colliders.Length == 0)
+            _colliders = GetComponents<Collider2D>();
+
+        for (int i = 0; i < _colliders.Length; i++)
+        {
+            if (_colliders[i] != null)
+                _colliders[i].enabled = false;
+        }
+    }
+
     private string BuildRuntimeId()
     {
         string sceneName = gameObject.scene.IsValid() ? gameObject.scene.name : "(no-scene)";
-        return $"{sceneName}::{GetTransformPath(transform)}::{routeKey}";
+        string routeId = HasRouteStages ? "routeStages" : routeKey;
+        return $"{sceneName}::{GetTransformPath(transform)}::{routeId}";
+    }
+
+    private static string FormatCallCount(int callCount, int maxCallCount)
+    {
+        return maxCallCount <= 0 ? $"{callCount}/unlimited" : $"{callCount}/{maxCallCount}";
     }
 
     private static string GetTransformPath(Transform t)

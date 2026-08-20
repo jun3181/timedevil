@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -6,9 +7,26 @@ using UnityEngine.UI;
 [DisallowMultipleComponent]
 public class MainMenuNewGameIntro : MonoBehaviour
 {
-    [Header("Intro Images")]
-    [Tooltip("Images shown after New Game. Press E to advance. If empty, New Game loads Myroom immediately.")]
-    [SerializeField] private Sprite[] introImages = new Sprite[2];
+    [Serializable]
+    private class IntroStep
+    {
+        public Sprite image = null;
+
+        [TextArea(2, 6)]
+        public string[] dialogueLines = Array.Empty<string>();
+
+        public bool overrideFade = false;
+        [Min(0f)] public float fadeOutSeconds = 0.25f;
+        [Min(0f)] public float fadeInSeconds = 0.25f;
+    }
+
+    [Header("Intro Steps")]
+    [Tooltip("Each step shows one image and advances through its dialogue lines before the next image.")]
+    [SerializeField] private IntroStep[] introSteps = Array.Empty<IntroStep>();
+
+    [Header("Legacy Intro Data")]
+    [SerializeField, HideInInspector] private Sprite[] introImages = new Sprite[2];
+    [SerializeField, HideInInspector] private string[] dialogueLines = new string[2] { "...", "..." };
 
     [Header("Auto UI")]
     [SerializeField] private Canvas parentCanvas;
@@ -22,18 +40,27 @@ public class MainMenuNewGameIntro : MonoBehaviour
     [SerializeField] private TMP_Text nameText;
     [SerializeField] private TMP_Text dialogueText;
     [SerializeField] private string speakerName = "";
-    [SerializeField] private string[] dialogueLines = new string[2] { "...", "..." };
     [SerializeField] private Color panelColor = new Color(0f, 0f, 0f, 0.78f);
+
+    [Header("Image Fade")]
+    [SerializeField] private bool useImageFade = true;
+    [SerializeField, Min(0f)] private float defaultFadeOutSeconds = 0.25f;
+    [SerializeField, Min(0f)] private float defaultFadeInSeconds = 0.25f;
+    [SerializeField] private bool fadeInFirstStep = true;
+    [SerializeField] private bool fadeOutBeforeFinish = true;
 
     [Header("Input")]
     [SerializeField] private KeyCode advanceKey = KeyCode.E;
 
-    private int _currentIndex = -1;
+    private int _currentStepIndex = -1;
+    private int _currentLineIndex = -1;
     private bool _isPlaying = false;
+    private bool _isTransitioning = false;
     private bool _waitingAdvanceKeyRelease = false;
+    private Coroutine _transitionCo;
     private Action _onFinished;
 
-    public bool HasPlayableIntro => FindNextImageIndex(-1) >= 0;
+    public bool HasPlayableIntro => FindNextStepIndex(-1) >= 0;
 
     private void Awake()
     {
@@ -54,6 +81,9 @@ public class MainMenuNewGameIntro : MonoBehaviour
             _waitingAdvanceKeyRelease = false;
         }
 
+        if (_isTransitioning)
+            return;
+
         if (Input.GetKeyDown(advanceKey))
             Advance();
     }
@@ -71,8 +101,8 @@ public class MainMenuNewGameIntro : MonoBehaviour
 
         _onFinished = onFinished;
 
-        int firstIndex = FindNextImageIndex(-1);
-        if (firstIndex < 0)
+        int firstStepIndex = FindNextStepIndex(-1);
+        if (firstStepIndex < 0)
         {
             Finish();
             return;
@@ -86,7 +116,9 @@ public class MainMenuNewGameIntro : MonoBehaviour
         }
 
         _isPlaying = true;
-        _currentIndex = firstIndex;
+        _currentStepIndex = firstStepIndex;
+        _currentLineIndex = 0;
+        _isTransitioning = false;
         _waitingAdvanceKeyRelease = advanceKey != KeyCode.None && Input.GetKey(advanceKey);
 
         if (introRoot != null)
@@ -95,30 +127,51 @@ public class MainMenuNewGameIntro : MonoBehaviour
             introRoot.transform.SetAsLastSibling();
         }
 
+        SetIntroImageAlpha(ShouldFadeInFirstStep() ? 0f : 1f);
         ShowCurrentStep();
+
+        if (ShouldFadeInFirstStep())
+            StartCurrentStepFadeIn();
     }
 
     private void Advance()
     {
-        int nextIndex = FindNextImageIndex(_currentIndex);
-        if (nextIndex < 0)
+        if (_currentLineIndex + 1 < GetDialogueLineCount(_currentStepIndex))
         {
+            _currentLineIndex++;
+            ShowCurrentDialogueLine();
+            return;
+        }
+
+        int nextStepIndex = FindNextStepIndex(_currentStepIndex);
+        if (nextStepIndex < 0)
+        {
+            if (ShouldFadeOutBeforeFinish())
+            {
+                StartFinishFadeOut();
+                return;
+            }
+
             Finish();
             return;
         }
 
-        _currentIndex = nextIndex;
-        ShowCurrentStep();
+        StartStepTransition(nextStepIndex);
     }
 
     private void ShowCurrentStep()
     {
         if (introImage != null)
         {
-            introImage.sprite = introImages[_currentIndex];
+            introImage.sprite = GetStepImage(_currentStepIndex);
             introImage.enabled = introImage.sprite != null;
         }
 
+        ShowCurrentDialogueLine();
+    }
+
+    private void ShowCurrentDialogueLine()
+    {
         if (!showDialoguePanel)
             return;
 
@@ -132,7 +185,7 @@ public class MainMenuNewGameIntro : MonoBehaviour
         }
 
         if (dialogueText != null)
-            dialogueText.text = ResolveDialogueText(_currentIndex);
+            dialogueText.text = ResolveDialogueText(_currentStepIndex, _currentLineIndex);
     }
 
     private void Finish()
@@ -146,9 +199,19 @@ public class MainMenuNewGameIntro : MonoBehaviour
 
     private void HideIntro()
     {
+        if (_transitionCo != null)
+        {
+            StopCoroutine(_transitionCo);
+            _transitionCo = null;
+        }
+
         _isPlaying = false;
-        _currentIndex = -1;
+        _isTransitioning = false;
+        _currentStepIndex = -1;
+        _currentLineIndex = -1;
         _waitingAdvanceKeyRelease = false;
+
+        SetIntroImageAlpha(1f);
 
         if (dialogueText != null)
             dialogueText.text = "";
@@ -163,23 +226,41 @@ public class MainMenuNewGameIntro : MonoBehaviour
             introRoot.SetActive(false);
     }
 
-    private string ResolveDialogueText(int imageIndex)
+    private string ResolveDialogueText(int stepIndex, int lineIndex)
     {
-        if (dialogueLines != null &&
-            imageIndex >= 0 &&
-            imageIndex < dialogueLines.Length &&
-            !string.IsNullOrEmpty(dialogueLines[imageIndex]))
+        string[] lines = GetStepDialogueLines(stepIndex);
+
+        if (lines != null &&
+            lineIndex >= 0 &&
+            lineIndex < lines.Length &&
+            !string.IsNullOrEmpty(lines[lineIndex]))
         {
-            return dialogueLines[imageIndex];
+            return lines[lineIndex];
         }
 
         return "...";
     }
 
-    private int FindNextImageIndex(int afterIndex)
+    private int GetDialogueLineCount(int stepIndex)
     {
-        if (introImages == null)
+        string[] lines = GetStepDialogueLines(stepIndex);
+        return lines == null || lines.Length == 0 ? 1 : lines.Length;
+    }
+
+    private int FindNextStepIndex(int afterIndex)
+    {
+        if (HasStructuredIntroSteps())
+        {
+            for (int i = afterIndex + 1; i < introSteps.Length; i++)
+            {
+                if (introSteps[i] != null && introSteps[i].image != null)
+                    return i;
+            }
+
             return -1;
+        }
+
+        if (introImages == null) return -1;
 
         for (int i = afterIndex + 1; i < introImages.Length; i++)
         {
@@ -188,6 +269,185 @@ public class MainMenuNewGameIntro : MonoBehaviour
         }
 
         return -1;
+    }
+
+    private Sprite GetStepImage(int stepIndex)
+    {
+        if (HasStructuredIntroSteps())
+        {
+            if (stepIndex < 0 || stepIndex >= introSteps.Length || introSteps[stepIndex] == null)
+                return null;
+
+            return introSteps[stepIndex].image;
+        }
+
+        if (introImages == null || stepIndex < 0 || stepIndex >= introImages.Length)
+            return null;
+
+        return introImages[stepIndex];
+    }
+
+    private string[] GetStepDialogueLines(int stepIndex)
+    {
+        if (HasStructuredIntroSteps())
+        {
+            if (stepIndex < 0 || stepIndex >= introSteps.Length || introSteps[stepIndex] == null)
+                return null;
+
+            return introSteps[stepIndex].dialogueLines;
+        }
+
+        if (dialogueLines == null || stepIndex < 0 || stepIndex >= dialogueLines.Length)
+            return null;
+
+        return new[] { dialogueLines[stepIndex] };
+    }
+
+    private bool HasStructuredIntroSteps()
+    {
+        if (introSteps == null) return false;
+
+        foreach (IntroStep step in introSteps)
+        {
+            if (step != null && step.image != null)
+                return true;
+        }
+
+        return false;
+    }
+
+    private void StartCurrentStepFadeIn()
+    {
+        if (_transitionCo != null)
+            StopCoroutine(_transitionCo);
+
+        _transitionCo = StartCoroutine(CoCurrentStepFadeIn());
+    }
+
+    private IEnumerator CoCurrentStepFadeIn()
+    {
+        _isTransitioning = true;
+        yield return CoFadeIntroImage(0f, 1f, ResolveFadeInSeconds(_currentStepIndex));
+        _isTransitioning = false;
+        _transitionCo = null;
+    }
+
+    private void StartStepTransition(int nextStepIndex)
+    {
+        if (_transitionCo != null)
+            StopCoroutine(_transitionCo);
+
+        _transitionCo = StartCoroutine(CoStepTransition(nextStepIndex));
+    }
+
+    private IEnumerator CoStepTransition(int nextStepIndex)
+    {
+        _isTransitioning = true;
+
+        yield return CoFadeIntroImage(GetIntroImageAlpha(), 0f, ResolveFadeOutSeconds(_currentStepIndex));
+
+        _currentStepIndex = nextStepIndex;
+        _currentLineIndex = 0;
+        ShowCurrentStep();
+
+        yield return CoFadeIntroImage(0f, 1f, ResolveFadeInSeconds(_currentStepIndex));
+
+        _isTransitioning = false;
+        _transitionCo = null;
+    }
+
+    private void StartFinishFadeOut()
+    {
+        if (_transitionCo != null)
+            StopCoroutine(_transitionCo);
+
+        _transitionCo = StartCoroutine(CoFinishFadeOut());
+    }
+
+    private IEnumerator CoFinishFadeOut()
+    {
+        _isTransitioning = true;
+        yield return CoFadeIntroImage(GetIntroImageAlpha(), 0f, ResolveFadeOutSeconds(_currentStepIndex));
+
+        _isTransitioning = false;
+        _transitionCo = null;
+        Finish();
+    }
+
+    private IEnumerator CoFadeIntroImage(float fromAlpha, float toAlpha, float duration)
+    {
+        if (introImage == null)
+            yield break;
+
+        if (!useImageFade || duration <= 0f)
+        {
+            SetIntroImageAlpha(toAlpha);
+            yield break;
+        }
+
+        float elapsed = 0f;
+        fromAlpha = Mathf.Clamp01(fromAlpha);
+        toAlpha = Mathf.Clamp01(toAlpha);
+        SetIntroImageAlpha(fromAlpha);
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            SetIntroImageAlpha(Mathf.Lerp(fromAlpha, toAlpha, Mathf.Clamp01(elapsed / duration)));
+            yield return null;
+        }
+
+        SetIntroImageAlpha(toAlpha);
+    }
+
+    private bool ShouldFadeInFirstStep()
+    {
+        return useImageFade && fadeInFirstStep && ResolveFadeInSeconds(_currentStepIndex) > 0f;
+    }
+
+    private bool ShouldFadeOutBeforeFinish()
+    {
+        return useImageFade && fadeOutBeforeFinish && ResolveFadeOutSeconds(_currentStepIndex) > 0f;
+    }
+
+    private float ResolveFadeOutSeconds(int stepIndex)
+    {
+        IntroStep step = GetStructuredStep(stepIndex);
+        if (step != null && step.overrideFade)
+            return step.fadeOutSeconds;
+
+        return defaultFadeOutSeconds;
+    }
+
+    private float ResolveFadeInSeconds(int stepIndex)
+    {
+        IntroStep step = GetStructuredStep(stepIndex);
+        if (step != null && step.overrideFade)
+            return step.fadeInSeconds;
+
+        return defaultFadeInSeconds;
+    }
+
+    private IntroStep GetStructuredStep(int stepIndex)
+    {
+        if (!HasStructuredIntroSteps()) return null;
+        if (stepIndex < 0 || stepIndex >= introSteps.Length) return null;
+
+        return introSteps[stepIndex];
+    }
+
+    private float GetIntroImageAlpha()
+    {
+        return introImage != null ? introImage.color.a : 1f;
+    }
+
+    private void SetIntroImageAlpha(float alpha)
+    {
+        if (introImage == null) return;
+
+        Color color = introImage.color;
+        color.a = Mathf.Clamp01(alpha);
+        introImage.color = color;
     }
 
     private bool ResolveUi()

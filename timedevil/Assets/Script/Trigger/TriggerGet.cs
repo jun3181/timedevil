@@ -1,40 +1,60 @@
-﻿// Assets/Script/Trigger/TriggerGet.cs
+// Assets/Script/Trigger/TriggerGet.cs
+using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Collider2D))]
 [DisallowMultipleComponent]
 public class TriggerGet : MonoBehaviour
 {
-    // 씬 재로드(배틀 왕복) 시에도 "이미 소모된 TriggerGet" 상태를 유지
-    private static readonly System.Collections.Generic.Dictionary<string, int> s_callCountById = new();
+    private struct RouteStageProgress
+    {
+        public readonly int stageIndex;
+        public readonly int callCount;
+
+        public RouteStageProgress(int stageIndex, int callCount)
+        {
+            this.stageIndex = stageIndex;
+            this.callCount = callCount;
+        }
+    }
+
+    // Keeps consumed trigger state across scene reloads during runtime.
+    private static readonly Dictionary<string, int> s_callCountById = new();
+    private static readonly Dictionary<string, RouteStageProgress> s_stageProgressById = new();
 
     [Header("Router")]
     public TriggerRouter router;
 
-    [Header("Route Key")]
+    [Header("Route Stages (Optional)")]
+    [Tooltip("If entries exist, stages run in order and the fallback Route Key/Call Limit fields are ignored.")]
+    public List<TriggerRouteStage> routeStages = new();
+
+    [Header("Fallback Route Key")]
     public string routeKey = "Trigger1";
 
-    [Header("Call Limit")]
-    [Tooltip("0이면 무제한, 1이면 1회만, 2면 2회까지만 실행")]
+    [Header("Fallback Call Limit")]
+    [Tooltip("0 means unlimited. 1 means one call. 2 means two calls.")]
+    [Min(0)]
     public int maxCalls = 1;
 
     [Header("Detect")]
-    [Tooltip("플레이어 판정: PlayerMove 컴포넌트로 체크")]
+    [Tooltip("Checks the player by PlayerMove component.")]
     public bool usePlayerMoveComponentCheck = true;
 
-    //  (A) 전투만 재진입 방지용 옵션
     [Header("Grace Policy (Return from battle)")]
-    [Tooltip("true면 PlayerReturnContext.IsInGracePeriod 동안 이 트리거는 발동하지 않습니다. (전투 재진입 방지용)")]
+    [Tooltip("If true, this trigger is blocked during PlayerReturnContext grace period.")]
     public bool blockDuringGracePeriod = false;
 
     [Header("Debug")]
     public bool debugLog = true;
 
     [Header("Optional Parallel Step")]
-    [Tooltip("같은 TriggerGet에서 Route 실행과 동시에 카메라 연출을 병행 시작")]
+    [Tooltip("Starts this camera step in parallel with the requested route.")]
     public TriggerStep_CameraMove cameraMoveStep;
 
     private int _called = 0;
+    private int _stageIndex = 0;
+    private int _stageCalled = 0;
     private Collider2D _selfCollider;
 
     private bool _pendingByCutscene = false;
@@ -42,6 +62,8 @@ public class TriggerGet : MonoBehaviour
     private PlayerMove _pendingPlayerMove = null;
     private Coroutine _cameraRestoreCo = null;
     private string _runtimeId;
+
+    private bool HasRouteStages => routeStages != null && routeStages.Count > 0;
 
     private void Reset()
     {
@@ -57,16 +79,13 @@ public class TriggerGet : MonoBehaviour
         if (!_selfCollider.isTrigger)
         {
             _selfCollider.isTrigger = true;
-            if (debugLog) Debug.LogWarning("[TriggerGet] Collider2D.isTrigger가 꺼져있어서 켰습니다.");
+            if (debugLog) Debug.LogWarning("[TriggerGet] Collider2D.isTrigger was off, so it was enabled.");
         }
 
         if (!router) router = FindObjectOfType<TriggerRouter>(true);
         if (!cameraMoveStep) cameraMoveStep = GetComponent<TriggerStep_CameraMove>();
 
-        // 이전 씬 인스턴스에서의 호출 횟수 복원
-        if (!string.IsNullOrEmpty(_runtimeId) && s_callCountById.TryGetValue(_runtimeId, out int persisted))
-            _called = Mathf.Max(0, persisted);
-
+        RestoreProgress();
         ApplyConsumedStateIfNeeded();
     }
 
@@ -75,11 +94,10 @@ public class TriggerGet : MonoBehaviour
         if (!_pendingByCutscene) return;
         if (CutsceneRouter.IsAnyCutsceneRunning) return;
 
-        // 컷씬이 끝났고, 아직 같은 콜라이더가 트리거 내부에 남아 있으면 발동
         if (_selfCollider != null && _pendingInstigatorCollider != null && _selfCollider.IsTouching(_pendingInstigatorCollider))
         {
             if (debugLog)
-                Debug.Log($"[TriggerGet] Resume pending key='{routeKey}' after cutscene end by='{_pendingInstigatorCollider.name}'");
+                Debug.Log($"[TriggerGet] Resume pending key='{GetRouteKeyForLog()}' after cutscene end by='{_pendingInstigatorCollider.name}'");
 
             TryInvokeRoute(_pendingInstigatorCollider, _pendingPlayerMove);
         }
@@ -91,25 +109,24 @@ public class TriggerGet : MonoBehaviour
     {
         if (!router)
         {
-            if (debugLog) Debug.LogWarning("[TriggerGet] router가 연결되지 않았습니다.");
+            if (debugLog) Debug.LogWarning("[TriggerGet] router is not assigned.");
             return;
         }
 
-        // 전투 복귀 직후 재진입 방지:
-        // - IsInGracePeriod: 복귀 후 grace 코루틴이 실제로 도는 동안
-        // - GraceSecondsPending: 복귀 씬 로드 직후 코루틴 시작 전 "틈" 프레임 방어
+        if (!TryGetActiveRoute(out string currentRouteKey, out _, out _, out _))
+        {
+            ApplyConsumedStateIfNeeded();
+            return;
+        }
+
         if (blockDuringGracePeriod &&
             (PlayerReturnContext.IsInGracePeriod || PlayerReturnContext.GraceSecondsPending > 0f))
         {
             if (debugLog)
-                Debug.Log($"[TriggerGet] Suppressed by Grace key='{routeKey}' (by='{other.name}')");
+                Debug.Log($"[TriggerGet] Suppressed by Grace key='{currentRouteKey}' (by='{other.name}')");
             return;
         }
 
-        if (maxCalls > 0 && _called >= maxCalls)
-            return;
-
-        // 플레이어 판정 + PlayerMove 확보
         PlayerMove pm = null;
         if (usePlayerMoveComponentCheck)
         {
@@ -124,7 +141,7 @@ public class TriggerGet : MonoBehaviour
             _pendingPlayerMove = pm;
 
             if (debugLog)
-                Debug.Log($"[TriggerGet] Deferred by cutscene key='{routeKey}' by='{other.name}'");
+                Debug.Log($"[TriggerGet] Deferred by cutscene key='{currentRouteKey}' by='{other.name}'");
             return;
         }
 
@@ -141,14 +158,26 @@ public class TriggerGet : MonoBehaviour
     {
         if (other == null) return;
 
-        if (maxCalls > 0 && _called >= maxCalls)
+        if (!TryGetActiveRoute(out string currentRouteKey, out int currentCallCount, out int currentMaxCalls, out int currentStageIndex))
+        {
+            ApplyConsumedStateIfNeeded();
             return;
+        }
 
-        _called++;
-        PersistCallCount();
+        if (string.IsNullOrWhiteSpace(currentRouteKey))
+        {
+            if (debugLog) Debug.LogWarning("[TriggerGet] routeKey is empty.", this);
+            return;
+        }
+
+        RegisterRouteCall();
+        currentCallCount++;
 
         if (debugLog)
-            Debug.Log($"[TriggerGet] Fired key='{routeKey}' call={_called}/{(maxCalls <= 0 ? "∞" : maxCalls.ToString())} by='{other.name}'");
+        {
+            string stageSuffix = currentStageIndex >= 0 ? $" stage={currentStageIndex + 1}/{routeStages.Count}" : "";
+            Debug.Log($"[TriggerGet] Fired key='{currentRouteKey}' call={FormatCallCount(currentCallCount, currentMaxCalls)}{stageSuffix} by='{other.name}'");
+        }
 
         var ctx = new TriggerContext(
             trigger: this,
@@ -162,19 +191,17 @@ public class TriggerGet : MonoBehaviour
         {
             cameraMoveStep.BeginFromTriggerGet(ctx);
             if (_cameraRestoreCo != null) StopCoroutine(_cameraRestoreCo);
-            _cameraRestoreCo = StartCoroutine(CoRestoreCameraAfterRoute(routeKey));
+            _cameraRestoreCo = StartCoroutine(CoRestoreCameraAfterRoute(currentRouteKey));
         }
 
-        router.RequestRoute(routeKey, ctx);
+        router.RequestRoute(currentRouteKey, ctx);
 
-        // 1회/유한 호출 트리거는 소진 시 즉시 비활성화하여
-        // 배틀씬 왕복 후에도 동일 TriggerGet만 재발동되지 않게 보장
         ApplyConsumedStateIfNeeded();
     }
 
     private System.Collections.IEnumerator CoRestoreCameraAfterRoute(string key)
     {
-        yield return null; // Route 코루틴이 _runningKeys에 등록될 시간 보장
+        yield return null;
         while (router != null && router.IsRouteRunning(key))
             yield return null;
 
@@ -191,14 +218,138 @@ public class TriggerGet : MonoBehaviour
         _pendingPlayerMove = null;
     }
 
+    private void RestoreProgress()
+    {
+        _called = 0;
+        _stageIndex = 0;
+        _stageCalled = 0;
+
+        if (string.IsNullOrEmpty(_runtimeId)) return;
+
+        if (HasRouteStages)
+        {
+            if (s_stageProgressById.TryGetValue(_runtimeId, out var persisted))
+            {
+                _stageIndex = Mathf.Clamp(persisted.stageIndex, 0, routeStages.Count);
+                _stageCalled = Mathf.Max(0, persisted.callCount);
+            }
+
+            return;
+        }
+
+        if (s_callCountById.TryGetValue(_runtimeId, out int legacyPersisted))
+            _called = Mathf.Max(0, legacyPersisted);
+    }
+
+    private void RegisterRouteCall()
+    {
+        if (HasRouteStages)
+        {
+            _stageCalled++;
+            PersistRouteStageProgress();
+            return;
+        }
+
+        _called++;
+        PersistCallCount();
+    }
+
     private void PersistCallCount()
     {
         if (string.IsNullOrEmpty(_runtimeId)) return;
         s_callCountById[_runtimeId] = _called;
     }
 
+    private void PersistRouteStageProgress()
+    {
+        if (string.IsNullOrEmpty(_runtimeId)) return;
+        s_stageProgressById[_runtimeId] = new RouteStageProgress(_stageIndex, _stageCalled);
+    }
+
+    private bool TryGetActiveRoute(out string currentRouteKey, out int currentCallCount, out int currentMaxCalls, out int currentStageIndex)
+    {
+        currentRouteKey = routeKey;
+        currentCallCount = _called;
+        currentMaxCalls = Mathf.Max(0, maxCalls);
+        currentStageIndex = -1;
+
+        if (!HasRouteStages)
+            return currentMaxCalls <= 0 || currentCallCount < currentMaxCalls;
+
+        AdvanceToNextRouteStageIfNeeded();
+
+        currentRouteKey = null;
+        currentCallCount = 0;
+        currentMaxCalls = 0;
+
+        if (_stageIndex >= routeStages.Count)
+            return false;
+
+        var stage = routeStages[_stageIndex];
+        if (stage == null || string.IsNullOrWhiteSpace(stage.routeKey))
+            return false;
+
+        currentRouteKey = stage.routeKey;
+        currentCallCount = _stageCalled;
+        currentMaxCalls = Mathf.Max(0, stage.maxCalls);
+        currentStageIndex = _stageIndex;
+        return currentMaxCalls <= 0 || currentCallCount < currentMaxCalls;
+    }
+
+    private void AdvanceToNextRouteStageIfNeeded()
+    {
+        if (!HasRouteStages) return;
+
+        bool changed = false;
+
+        while (_stageIndex < routeStages.Count)
+        {
+            var stage = routeStages[_stageIndex];
+            if (stage == null || string.IsNullOrWhiteSpace(stage.routeKey))
+            {
+                if (debugLog)
+                    Debug.LogWarning($"[TriggerGet] routeStages[{_stageIndex}] has no routeKey. Skipping.", this);
+
+                _stageIndex++;
+                _stageCalled = 0;
+                changed = true;
+                continue;
+            }
+
+            int limit = Mathf.Max(0, stage.maxCalls);
+            if (limit > 0 && _stageCalled >= limit)
+            {
+                if (debugLog)
+                    Debug.Log($"[TriggerGet] Route stage complete key='{stage.routeKey}' calls={_stageCalled}/{limit} -> next", this);
+
+                _stageIndex++;
+                _stageCalled = 0;
+                changed = true;
+                continue;
+            }
+
+            break;
+        }
+
+        if (changed)
+            PersistRouteStageProgress();
+    }
+
     private void ApplyConsumedStateIfNeeded()
     {
+        if (HasRouteStages)
+        {
+            AdvanceToNextRouteStageIfNeeded();
+            if (_stageIndex < routeStages.Count) return;
+
+            enabled = false;
+            if (_selfCollider != null) _selfCollider.enabled = false;
+
+            if (debugLog)
+                Debug.Log($"[TriggerGet] Consumed -> disabled routeStages id='{_runtimeId}'", this);
+            return;
+        }
+
         if (maxCalls <= 0) return;
         if (_called < maxCalls) return;
 
@@ -209,16 +360,30 @@ public class TriggerGet : MonoBehaviour
             Debug.Log($"[TriggerGet] Consumed -> disabled key='{routeKey}' id='{_runtimeId}' calls={_called}/{maxCalls}", this);
     }
 
+    private string GetRouteKeyForLog()
+    {
+        if (TryGetActiveRoute(out string currentRouteKey, out _, out _, out _))
+            return currentRouteKey;
+
+        return HasRouteStages ? "(consumed)" : routeKey;
+    }
+
     private string BuildRuntimeId()
     {
         string sceneName = gameObject.scene.IsValid() ? gameObject.scene.name : "(no-scene)";
-        return $"{sceneName}::{GetTransformPath(transform)}::{routeKey}";
+        string routeId = HasRouteStages ? "routeStages" : routeKey;
+        return $"{sceneName}::{GetTransformPath(transform)}::{routeId}";
+    }
+
+    private static string FormatCallCount(int callCount, int maxCallCount)
+    {
+        return maxCallCount <= 0 ? $"{callCount}/unlimited" : $"{callCount}/{maxCallCount}";
     }
 
     private static string GetTransformPath(Transform t)
     {
         if (t == null) return "(null)";
-        var stack = new System.Collections.Generic.Stack<string>();
+        var stack = new Stack<string>();
         var cur = t;
         while (cur != null)
         {

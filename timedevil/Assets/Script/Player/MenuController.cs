@@ -79,6 +79,8 @@ public class MenuController : MonoBehaviour
     [SerializeField] private Vector2 itemWindowCloseSize = new Vector2(170f, 50f);
     [SerializeField] private Vector2 itemWindowPagePosition = new Vector2(390f, -225f);
     [SerializeField] private Vector2 itemWindowPageSize = new Vector2(120f, 50f);
+    [SerializeField] private Vector2 itemInfoWindowOffsetFromTopLeft = new Vector2(1320f, -50f);
+    [SerializeField] private Vector2 itemInfoWindowSize = new Vector2(340f, 300f);
     [SerializeField] private string itemCloseLabel = "close";
     [SerializeField] private string emptyItemLabel = "����";
     [SerializeField] private string[] itemPageOneLabels = { "������ �̸� x 2", "������ �̸� x 3", "������ �̸� x 1", "������ �̸�" };
@@ -149,6 +151,9 @@ public class MenuController : MonoBehaviour
     private TextMeshProUGUI itemWindowCloseText;
     private TextMeshProUGUI itemWindowPageText;
     private TextMeshProUGUI itemWindowCursorText;
+    private RectTransform itemInfoWindowFrame;
+    private RectTransform itemInfoWindowContentRoot;
+    private TextMeshProUGUI itemEffectDescriptionText;
     private RectTransform cardWindowFrame;
     private RectTransform cardWindowContentRoot;
     private RectTransform cardPreviewRoot;
@@ -860,9 +865,32 @@ public class MenuController : MonoBehaviour
         dm.StartDialogue(new Dialogue
         {
             name = "",
-            sentences = new[] { $"\"{GetItemDisplayName(item, fallbackId)}\"을 사용했습니다" }
+            lines = BuildItemUseDialogueLines(item, fallbackId)
         });
         dm.ForceCompleteTyping();
+    }
+
+    private DialogueLine[] BuildItemUseDialogueLines(ItemSO item, string fallbackId)
+    {
+        List<DialogueLine> lines = new List<DialogueLine>
+        {
+            new DialogueLine
+            {
+                text = $"\"{GetItemDisplayName(item, fallbackId)}\"을 사용했습니다",
+                focus = PortraitFocus.None
+            }
+        };
+
+        if (item != null && !string.IsNullOrWhiteSpace(item.useText))
+        {
+            lines.Add(new DialogueLine
+            {
+                text = item.useText.Trim(),
+                focus = PortraitFocus.None
+            });
+        }
+
+        return lines.ToArray();
     }
 
     private void AdvanceItemPage()
@@ -922,8 +950,49 @@ public class MenuController : MonoBehaviour
         }
         itemWindowContentRoot.SetAsLastSibling();
 
+        EnsureItemInfoWindowView(menuRoot);
         EnsureItemWindowTexts();
         SetItemWindowVisible(itemWindowOpen || (!Application.isPlaying && previewItemWindowInEditor));
+    }
+
+    private void EnsureItemInfoWindowView(RectTransform menuRoot)
+    {
+        if (menuRoot == null) return;
+
+        bool frameAlreadyExists = menuRoot.Find("ItemInfoWindowFrame") != null;
+        itemInfoWindowFrame = GetOrCreateRect(menuRoot, "ItemInfoWindowFrame");
+        if (!preserveManualItemLayout || !frameAlreadyExists)
+        {
+            itemInfoWindowFrame.anchorMin = new Vector2(0f, 1f);
+            itemInfoWindowFrame.anchorMax = new Vector2(0f, 1f);
+            itemInfoWindowFrame.pivot = new Vector2(0f, 1f);
+            itemInfoWindowFrame.anchoredPosition = itemInfoWindowOffsetFromTopLeft;
+            itemInfoWindowFrame.sizeDelta = itemInfoWindowSize;
+            itemInfoWindowFrame.localScale = Vector3.one;
+        }
+        itemInfoWindowFrame.SetAsLastSibling();
+
+        Image frameImage = itemInfoWindowFrame.GetComponent<Image>();
+        if (frameImage == null) frameImage = itemInfoWindowFrame.gameObject.AddComponent<Image>();
+        frameImage.sprite = LoadMenuFrameSprite();
+        frameImage.type = Image.Type.Sliced;
+        frameImage.color = Color.white;
+        frameImage.raycastTarget = false;
+
+        bool contentAlreadyExists = menuRoot.Find("ItemInfoWindowContent") != null;
+        itemInfoWindowContentRoot = GetOrCreateRect(menuRoot, "ItemInfoWindowContent");
+        if (!preserveManualItemLayout || !contentAlreadyExists)
+        {
+            itemInfoWindowContentRoot.anchorMin = new Vector2(0f, 1f);
+            itemInfoWindowContentRoot.anchorMax = new Vector2(0f, 1f);
+            itemInfoWindowContentRoot.pivot = new Vector2(0f, 1f);
+            itemInfoWindowContentRoot.anchoredPosition = itemInfoWindowOffsetFromTopLeft;
+            itemInfoWindowContentRoot.sizeDelta = itemInfoWindowSize;
+            itemInfoWindowContentRoot.localScale = Vector3.one;
+        }
+        itemInfoWindowContentRoot.SetAsLastSibling();
+
+        EnsureItemInfoWindowTexts();
     }
 
     private void EnsureItemWindowTexts()
@@ -984,6 +1053,39 @@ public class MenuController : MonoBehaviour
         itemWindowCursorText.alignment = TextAlignmentOptions.Center;
     }
 
+    private void EnsureItemInfoWindowTexts()
+    {
+        if (itemInfoWindowContentRoot == null) return;
+
+        float horizontalPadding = 30f;
+        float availableWidth = Mathf.Max(80f, itemInfoWindowSize.x - horizontalPadding * 2f);
+
+        HideItemInfoLegacyTexts();
+
+        bool descriptionAlreadyExists = itemInfoWindowContentRoot.Find("ItemEffectDescription") != null;
+        itemEffectDescriptionText = GetOrCreateText(itemInfoWindowContentRoot, "ItemEffectDescription");
+        StyleItemInfoText(
+            itemEffectDescriptionText,
+            "설명",
+            new Vector2(horizontalPadding, -34f),
+            new Vector2(availableWidth, Mathf.Max(80f, itemInfoWindowSize.y - 68f)),
+            itemFontSize,
+            !preserveManualItemLayout || !descriptionAlreadyExists
+        );
+        itemEffectDescriptionText.alignment = TextAlignmentOptions.TopLeft;
+        itemEffectDescriptionText.enableWordWrapping = true;
+        itemEffectDescriptionText.overflowMode = TextOverflowModes.Ellipsis;
+    }
+
+    private void HideItemInfoLegacyTexts()
+    {
+        if (itemInfoWindowContentRoot == null) return;
+
+        HideChild(itemInfoWindowContentRoot, "ItemInfoName");
+        HideChild(itemInfoWindowContentRoot, "ItemInfoEffect");
+        HideChild(itemInfoWindowContentRoot, "ItemInfoDescription");
+    }
+
     private void RefreshItemWindow()
     {
         if (!autoBuildItemWindow || itemWindowContentRoot == null) return;
@@ -1016,15 +1118,42 @@ public class MenuController : MonoBehaviour
 
         HideLegacyItemMessageText();
         MoveItemWindowCursor();
+        RefreshItemInfoWindow();
+    }
+
+    private void RefreshItemInfoWindow()
+    {
+        if (itemInfoWindowContentRoot == null) return;
+
+        bool shouldShow = itemWindowOpen || (!Application.isPlaying && previewItemWindowInEditor);
+        itemInfoWindowContentRoot.gameObject.SetActive(shouldShow);
+        if (itemInfoWindowFrame != null)
+            itemInfoWindowFrame.gameObject.SetActive(shouldShow);
+        if (!shouldShow) return;
+
+        ItemMenuEntry entry = GetSelectedItemEntry();
+        ItemSO item = ResolveItemDefinition(entry);
+
+        HideItemInfoLegacyTexts();
+
+        if (itemEffectDescriptionText != null)
+            itemEffectDescriptionText.text = GetItemEffectDescriptionText(entry, item);
     }
 
     private void HideLegacyItemMessageText()
     {
         if (itemWindowContentRoot == null) return;
 
-        Transform legacy = itemWindowContentRoot.Find("ItemMessage");
-        if (legacy != null)
-            legacy.gameObject.SetActive(false);
+        HideChild(itemWindowContentRoot, "ItemMessage");
+    }
+
+    private static void HideChild(RectTransform parent, string childName)
+    {
+        if (parent == null) return;
+
+        Transform child = parent.Find(childName);
+        if (child != null)
+            child.gameObject.SetActive(false);
     }
 
     private void MoveItemWindowCursor()
@@ -1123,6 +1252,25 @@ public class MenuController : MonoBehaviour
         rect.localScale = Vector3.one;
     }
 
+    private void StyleItemInfoText(
+        TextMeshProUGUI text,
+        string value,
+        Vector2 anchoredPosition,
+        Vector2 size,
+        float maxFontSize,
+        bool applyDefaultTransform
+    )
+    {
+        if (text == null) return;
+
+        StyleItemWindowText(text, value, anchoredPosition, size, applyDefaultTransform);
+        text.enableAutoSizing = true;
+        text.fontSizeMin = 22f;
+        text.fontSizeMax = Mathf.Max(22f, maxFontSize);
+        text.enableWordWrapping = false;
+        text.overflowMode = TextOverflowModes.Ellipsis;
+    }
+
     private static void CopyRectFromSourceOrDefault(
         RectTransform target,
         RectTransform source,
@@ -1186,6 +1334,12 @@ public class MenuController : MonoBehaviour
 
         if (itemWindowContentRoot != null)
             itemWindowContentRoot.gameObject.SetActive(visible);
+
+        if (itemInfoWindowFrame != null)
+            itemInfoWindowFrame.gameObject.SetActive(visible);
+
+        if (itemInfoWindowContentRoot != null)
+            itemInfoWindowContentRoot.gameObject.SetActive(visible);
     }
 
     private void OpenCardWindow()
@@ -2676,6 +2830,31 @@ public class MenuController : MonoBehaviour
             return fallbackId;
 
         return GetEmptyItemLabel();
+    }
+
+    private ItemSO ResolveItemDefinition(ItemMenuEntry entry)
+    {
+        if (entry.item != null)
+            return entry.item;
+
+        if (string.IsNullOrEmpty(entry.id))
+            return null;
+
+        ResolveItemDatabase();
+        return itemDatabase != null ? itemDatabase.GetById(entry.id) : null;
+    }
+
+    private string GetItemEffectDescriptionText(ItemMenuEntry entry, ItemSO item)
+    {
+        if (item == null && string.IsNullOrEmpty(entry.id))
+            return "설명";
+
+        string description = item != null ? item.description : "";
+
+        if (!string.IsNullOrWhiteSpace(description))
+            return description;
+
+        return "설명";
     }
 
     private ItemMenuEntry CreateFallbackItemEntry(string label)

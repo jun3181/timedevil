@@ -21,6 +21,11 @@ public class DialogueManager : MonoBehaviour
     public Image leftPortraitImage;
     public Image rightPortraitImage;
 
+    [Header("Panel Style")]
+    [SerializeField] private bool useMainMenuPanelStyle = true;
+    [SerializeField] private Image dialoguePanelImage;
+    [SerializeField] private Color dialoguePanelColor = new Color(0f, 0f, 0f, 0.78f);
+
     [Header("Dimming")]
     public bool dimInactive = true;
     [Range(0f, 1f)] public float activeAlpha = 1f;
@@ -76,12 +81,16 @@ public class DialogueManager : MonoBehaviour
         instance = this;
         DontDestroyOnLoad(gameObject);
 
+        ApplyDialoguePanelStyle();
+
         if (uiRoot) uiRoot.SetActive(false);
     }
 
     public void StartDialogue(Dialogue dialogue)
     {
         if (dialogue == null) return;
+
+        ApplyDialoguePanelStyle();
 
         // UI ON
         if (uiRoot) uiRoot.SetActive(true);
@@ -286,6 +295,42 @@ public class DialogueManager : MonoBehaviour
 
         if (leftPortraitImage) SetAlpha(leftPortraitImage, lA);
         if (rightPortraitImage) SetAlpha(rightPortraitImage, rA);
+    }
+
+    private void ApplyDialoguePanelStyle()
+    {
+        if (!useMainMenuPanelStyle) return;
+
+        Image panelImage = ResolveDialoguePanelImage();
+        if (!panelImage) return;
+
+        panelImage.sprite = null;
+        panelImage.overrideSprite = null;
+        panelImage.type = Image.Type.Simple;
+        panelImage.preserveAspect = false;
+        panelImage.color = dialoguePanelColor;
+    }
+
+    private Image ResolveDialoguePanelImage()
+    {
+        if (dialoguePanelImage) return dialoguePanelImage;
+        if (!uiRoot) return null;
+
+        Transform panelTransform = uiRoot.transform.Find("Panel");
+        if (panelTransform && panelTransform.TryGetComponent(out dialoguePanelImage))
+            return dialoguePanelImage;
+
+        foreach (Image image in uiRoot.GetComponentsInChildren<Image>(true))
+        {
+            if (image.gameObject.name != "Panel") continue;
+            dialoguePanelImage = image;
+            return dialoguePanelImage;
+        }
+
+        if (uiRoot.TryGetComponent(out dialoguePanelImage))
+            return dialoguePanelImage;
+
+        return null;
     }
 
     private void SetAlpha(Image img, float a)

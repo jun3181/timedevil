@@ -22,6 +22,9 @@ public class ItemSO : ScriptableObject
     [TextArea] public string description;
     public Sprite icon;
 
+    [Header("Use Dialogue")]
+    [TextArea] public string useText;
+
     [Header("Default Quantity")]
     public int defaultQuantity = 0;
 
