@@ -11376,7 +11376,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'HP : '
+  m_text: ''
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -11839,7 +11839,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: -0.01, y: 0.55, z: 0}
-  m_LocalScale: {x: 1.08, y: 1.08, z: 1.08}
+  m_LocalScale: {x: 1.7600001, y: 1.7600001, z: 1.7600001}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 1064948988}
@@ -12163,7 +12163,7 @@ MonoBehaviour:
   gateSfx2Volume: 1
   menu: {fileID: 1069897049}
   showTurnBanner: 1
-  playerTurnBannerMessage: "\uC544\uAD70\uD134\uC785\uB2C8\uB2E4!"
+  playerTurnBannerMessage: "\uD50C\uB808\uC774\uC5B4\uD134\uC785\uB2C8\uB2E4!"
   enemyTurnBannerMessage: "\uC0C1\uB300\uD134\uC785\uB2C8\uB2E4!"
   turnBannerCenter: {x: 0, y: 110}
   turnBannerSize: {x: 760, y: 110}
@@ -12172,6 +12172,8 @@ MonoBehaviour:
   turnBannerOutSeconds: 0.35
   turnBannerColor: {r: 1, g: 1, b: 1, a: 1}
   turnBannerFontSize: 54
+  turnBannerBackdropColor: {r: 0, g: 0, b: 0, a: 0.35}
+  turnBannerSortingOrder: 30000
   enemyTurnController: {fileID: 630219717}
   handUI: {fileID: 860620052}
   cost: {fileID: 1352731693}
@@ -12237,7 +12239,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2043066778}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2a24413ad9c94af3a7d73b17439f851a, type: 3}
   m_Name: 
@@ -12281,7 +12283,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2043066778}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: acbf799a45874eab84f67332e75d286d, type: 3}
   m_Name: 
@@ -13693,7 +13695,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'HP : '
+  m_text: ''
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}

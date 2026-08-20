@@ -3,6 +3,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum BattleTurnGridEmphasisMode
+{
+    CellFill,
+    BoardOutline
+}
+
 public class MoveController : MonoBehaviour
 {
     public event Action<Faction, Vector2Int> OnGridChanged;
@@ -49,6 +55,12 @@ public class MoveController : MonoBehaviour
     [SerializeField] private int playerSortingOrder = 20;
     [SerializeField] private int enemySortingOrder = 20;
 
+    [Header("Actor Visual Centering")]
+    [SerializeField] private bool centerPlayerVisualBoundsOnCell = false;
+    [SerializeField] private bool centerEnemyVisualBoundsOnCell = false;
+    [SerializeField] private Vector2 playerVisualCenterOffset = Vector2.zero;
+    [SerializeField] private Vector2 enemyVisualCenterOffset = Vector2.zero;
+
     [Header("Runtime State (grid index)")]
     [SerializeField] private Vector2Int playerRC = new Vector2Int(4, 1); // (row, col)
     [SerializeField] private Vector2Int enemyRC  = new Vector2Int(2, 2);
@@ -73,17 +85,25 @@ public class MoveController : MonoBehaviour
 
     [Header("Turn Grid Highlight")]
     [SerializeField] private bool highlightCurrentTurnGrid = true;
+    [SerializeField] private BattleTurnGridEmphasisMode turnGridEmphasisMode = BattleTurnGridEmphasisMode.CellFill;
     [SerializeField] private Color turnGridHighlightColor = new Color(0.7f, 1f, 0.7f, 0.025f);
     [SerializeField, Range(0.1f, 1f)] private float turnGridHighlightScale = 0.92f;
     [SerializeField] private string turnGridHighlightSortingLayer = "Default";
     [SerializeField] private int turnGridHighlightSortingOrder = 1;
     [SerializeField] private float turnGridHighlightZ = -1f;
+    [SerializeField] private Color turnGridOutlineColor = new Color(0.7f, 1f, 0.7f, 0.85f);
+    [SerializeField, Min(0.001f)] private float turnGridOutlineWidth = 0.045f;
+    [SerializeField] private Vector2 turnGridOutlinePadding = new Vector2(0.02f, 0.02f);
+    [SerializeField] private int turnGridOutlineSortingOrder = 2;
 
     private bool _ownsTempMessage;
     private bool _initialGridAligned;
     private TurnManager turnHighlightTurnManager;
     private Transform turnGridHighlightRoot;
     private Sprite turnGridHighlightSprite;
+    private LineRenderer playerTurnGridOutline;
+    private LineRenderer enemyTurnGridOutline;
+    private Material turnGridOutlineMaterial;
     private readonly List<SpriteRenderer> playerTurnGridHighlights = new List<SpriteRenderer>(16);
     private readonly List<SpriteRenderer> enemyTurnGridHighlights = new List<SpriteRenderer>(16);
     private readonly Vector3[] turnHighlightCenters = new Vector3[16];
@@ -111,6 +131,14 @@ public class MoveController : MonoBehaviour
         turnHighlightTurnManager = null;
         SetTurnGridHighlightsVisible(playerTurnGridHighlights, false);
         SetTurnGridHighlightsVisible(enemyTurnGridHighlights, false);
+        SetTurnGridOutlineVisible(playerTurnGridOutline, false);
+        SetTurnGridOutlineVisible(enemyTurnGridOutline, false);
+    }
+
+    void OnDestroy()
+    {
+        if (turnGridOutlineMaterial)
+            Destroy(turnGridOutlineMaterial);
     }
 
     void Start()
@@ -140,14 +168,14 @@ public class MoveController : MonoBehaviour
         {
             playerRC = rc;
             if (snap && playerPawn && HasCoordinateSource(who))
-                playerPawn.position = GridToWorld(who, rc, keepPawnZ ? playerPawnZ : playerPawn.position.z);
+                playerPawn.position = GetPawnPositionForCell(who, rc, keepPawnZ ? playerPawnZ : playerPawn.position.z);
             ApplySorting(playerPawn, playerSortingOrder);
         }
         else
         {
             enemyRC = rc;
             if (snap && enemyPawn && HasCoordinateSource(who))
-                enemyPawn.position = GridToWorld(who, rc, keepPawnZ ? enemyPawnZ : enemyPawn.position.z);
+                enemyPawn.position = GetPawnPositionForCell(who, rc, keepPawnZ ? enemyPawnZ : enemyPawn.position.z);
             ApplySorting(enemyPawn, enemySortingOrder);
         }
 
@@ -278,7 +306,7 @@ public class MoveController : MonoBehaviour
         // Play chapter1's right-walk animation only while this move tween is running.
         BattleMoveAnimatorSnapshot animSnapshot = BeginMoveAnimation(anim);
 
-        Vector3 endPos = GridToWorld(target, endRC, keepPawnZ ? ((target == Faction.Player) ? playerPawnZ : enemyPawnZ) : startPos.z);
+        Vector3 endPos = GetPawnPositionForCell(target, endRC, keepPawnZ ? ((target == Faction.Player) ? playerPawnZ : enemyPawnZ) : startPos.z);
 
         float tweenDuration = perCellSeconds * Mathf.Max(1, cellsDistance);
 
@@ -334,6 +362,83 @@ public class MoveController : MonoBehaviour
         return true;
     }
 
+    private Vector3 GetPawnPositionForCell(Faction who, Vector2Int rc, float z)
+    {
+        Vector3 cellCenter = GridToWorld(who, rc, z);
+        Transform pawn = GetPawn(who);
+        if (!pawn || !ShouldCenterVisualBoundsOnCell(who))
+            return cellCenter;
+
+        Vector3 visualOffset = GetPawnVisualBoundsCenterOffset(pawn);
+        Vector2 manualOffset = who == Faction.Player ? playerVisualCenterOffset : enemyVisualCenterOffset;
+        Vector3 target = cellCenter - new Vector3(visualOffset.x, visualOffset.y, 0f);
+        target += new Vector3(manualOffset.x, manualOffset.y, 0f);
+        target.z = z;
+        return target;
+    }
+
+    private bool ShouldCenterVisualBoundsOnCell(Faction who)
+    {
+        return who == Faction.Player ? centerPlayerVisualBoundsOnCell : centerEnemyVisualBoundsOnCell;
+    }
+
+    private Vector3 GetPawnVisualBoundsCenterOffset(Transform pawn)
+    {
+        if (!TryGetPawnVisualBounds(pawn, out Bounds bounds))
+            return Vector3.zero;
+
+        return bounds.center - pawn.position;
+    }
+
+    private bool TryGetPawnVisualBounds(Transform pawn, out Bounds bounds)
+    {
+        bounds = default;
+        if (!pawn)
+            return false;
+
+        bool hasBounds = false;
+        SpriteRenderer[] sprites = pawn.GetComponentsInChildren<SpriteRenderer>(true);
+        for (int i = 0; i < sprites.Length; i++)
+        {
+            SpriteRenderer sr = sprites[i];
+            if (!sr || !sr.enabled || !sr.gameObject.activeInHierarchy)
+                continue;
+
+            if (!hasBounds)
+            {
+                bounds = sr.bounds;
+                hasBounds = true;
+            }
+            else
+            {
+                bounds.Encapsulate(sr.bounds);
+            }
+        }
+
+        if (hasBounds)
+            return true;
+
+        Renderer[] renderers = pawn.GetComponentsInChildren<Renderer>(true);
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            Renderer renderer = renderers[i];
+            if (!renderer || !renderer.enabled || !renderer.gameObject.activeInHierarchy)
+                continue;
+
+            if (!hasBounds)
+            {
+                bounds = renderer.bounds;
+                hasBounds = true;
+            }
+            else
+            {
+                bounds.Encapsulate(renderer.bounds);
+            }
+        }
+
+        return hasBounds;
+    }
+
     private void BindTurnHighlightManager()
     {
         var manager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
@@ -364,11 +469,25 @@ public class MoveController : MonoBehaviour
         {
             SetTurnGridHighlightsVisible(playerTurnGridHighlights, false);
             SetTurnGridHighlightsVisible(enemyTurnGridHighlights, false);
+            SetTurnGridOutlineVisible(playerTurnGridOutline, false);
+            SetTurnGridOutlineVisible(enemyTurnGridOutline, false);
             return;
         }
 
-        EnsureTurnGridHighlights();
         bool playerTurn = turnHighlightTurnManager.currentTurn == TurnState.PlayerTurn;
+        if (turnGridEmphasisMode == BattleTurnGridEmphasisMode.BoardOutline)
+        {
+            SetTurnGridHighlightsVisible(playerTurnGridHighlights, false);
+            SetTurnGridHighlightsVisible(enemyTurnGridHighlights, false);
+            EnsureTurnGridOutlines();
+            UpdateTurnGridOutline(Faction.Player, playerTurnGridOutline, playerTurn);
+            UpdateTurnGridOutline(Faction.Enemy, enemyTurnGridOutline, !playerTurn);
+            return;
+        }
+
+        SetTurnGridOutlineVisible(playerTurnGridOutline, false);
+        SetTurnGridOutlineVisible(enemyTurnGridOutline, false);
+        EnsureTurnGridHighlights();
         SetTurnGridHighlightsVisible(playerTurnGridHighlights, playerTurn);
         SetTurnGridHighlightsVisible(enemyTurnGridHighlights, !playerTurn);
         RefreshTurnGridHighlightPositions();
@@ -379,8 +498,16 @@ public class MoveController : MonoBehaviour
         if (!highlightCurrentTurnGrid || turnHighlightTurnManager == null || !turnHighlightTurnManager.HasFirstTurnDecided)
             return;
 
-        EnsureTurnGridHighlights();
         bool playerTurn = turnHighlightTurnManager.currentTurn == TurnState.PlayerTurn;
+        if (turnGridEmphasisMode == BattleTurnGridEmphasisMode.BoardOutline)
+        {
+            EnsureTurnGridOutlines();
+            UpdateTurnGridOutline(Faction.Player, playerTurnGridOutline, playerTurn);
+            UpdateTurnGridOutline(Faction.Enemy, enemyTurnGridOutline, !playerTurn);
+            return;
+        }
+
+        EnsureTurnGridHighlights();
         UpdateTurnGridHighlightSide(Faction.Player, playerTurnGridHighlights, playerTurn);
         UpdateTurnGridHighlightSide(Faction.Enemy, enemyTurnGridHighlights, !playerTurn);
     }
@@ -454,6 +581,115 @@ public class MoveController : MonoBehaviour
     {
         for (int i = 0; i < renderers.Count; i++)
             if (renderers[i]) renderers[i].gameObject.SetActive(visible);
+    }
+
+    private void EnsureTurnGridOutlines()
+    {
+        if (!playerTurnGridOutline)
+            playerTurnGridOutline = CreateTurnGridOutline("PlayerTurnGridOutline");
+        if (!enemyTurnGridOutline)
+            enemyTurnGridOutline = CreateTurnGridOutline("EnemyTurnGridOutline");
+    }
+
+    private LineRenderer CreateTurnGridOutline(string name)
+    {
+        var go = new GameObject(name);
+        go.transform.SetParent(transform, worldPositionStays: true);
+
+        var line = go.AddComponent<LineRenderer>();
+        line.useWorldSpace = true;
+        line.positionCount = 5;
+        line.loop = false;
+        line.numCapVertices = 0;
+        line.numCornerVertices = 0;
+        line.sharedMaterial = GetTurnGridOutlineMaterial();
+        line.enabled = false;
+        return line;
+    }
+
+    private void UpdateTurnGridOutline(Faction side, LineRenderer line, bool visible)
+    {
+        if (!line)
+            return;
+
+        if (!visible || !TryGetTurnBoardBounds(side, out Bounds bounds))
+        {
+            SetTurnGridOutlineVisible(line, false);
+            return;
+        }
+
+        float padX = Mathf.Max(0f, turnGridOutlinePadding.x);
+        float padY = Mathf.Max(0f, turnGridOutlinePadding.y);
+        bounds.Expand(new Vector3(padX * 2f, padY * 2f, 0f));
+
+        float z = turnGridHighlightZ;
+        line.positionCount = 5;
+        line.SetPosition(0, new Vector3(bounds.min.x, bounds.min.y, z));
+        line.SetPosition(1, new Vector3(bounds.max.x, bounds.min.y, z));
+        line.SetPosition(2, new Vector3(bounds.max.x, bounds.max.y, z));
+        line.SetPosition(3, new Vector3(bounds.min.x, bounds.max.y, z));
+        line.SetPosition(4, new Vector3(bounds.min.x, bounds.min.y, z));
+        line.startWidth = turnGridOutlineWidth;
+        line.endWidth = turnGridOutlineWidth;
+        line.startColor = turnGridOutlineColor;
+        line.endColor = turnGridOutlineColor;
+        line.sortingLayerName = turnGridHighlightSortingLayer;
+        line.sortingOrder = turnGridOutlineSortingOrder;
+        line.sharedMaterial = GetTurnGridOutlineMaterial();
+        SetTurnGridOutlineVisible(line, true);
+    }
+
+    private bool TryGetTurnBoardBounds(Faction side, out Bounds bounds)
+    {
+        Transform board = GetAutoBoardCenter(side);
+        if (board)
+        {
+            Renderer renderer = board.GetComponent<Renderer>() ?? board.GetComponentInChildren<Renderer>(true);
+            if (renderer)
+            {
+                bounds = renderer.bounds;
+                return true;
+            }
+        }
+
+        if (TryBuildPatternCenters(side, turnHighlightCenters, turnGridHighlightZ))
+        {
+            Vector2 cellSize = GetCellSize(side);
+            Vector3 min = turnHighlightCenters[0];
+            Vector3 max = turnHighlightCenters[0];
+            int n = Mathf.Min(turnHighlightCenters.Length, Mathf.Max(1, rows) * Mathf.Max(1, cols));
+            for (int i = 1; i < n; i++)
+            {
+                min = Vector3.Min(min, turnHighlightCenters[i]);
+                max = Vector3.Max(max, turnHighlightCenters[i]);
+            }
+
+            Vector3 size = max - min + new Vector3(cellSize.x, cellSize.y, 0f);
+            Vector3 center = (min + max) * 0.5f;
+            bounds = new Bounds(center, size);
+            return true;
+        }
+
+        bounds = default;
+        return false;
+    }
+
+    private void SetTurnGridOutlineVisible(LineRenderer line, bool visible)
+    {
+        if (line)
+            line.enabled = visible;
+    }
+
+    private Material GetTurnGridOutlineMaterial()
+    {
+        if (turnGridOutlineMaterial)
+            return turnGridOutlineMaterial;
+
+        Shader shader = Shader.Find("Sprites/Default");
+        if (!shader) shader = Shader.Find("UI/Default");
+        if (shader) turnGridOutlineMaterial = new Material(shader);
+
+        return turnGridOutlineMaterial;
     }
 
     private Transform GetGridOrigin(Faction who)

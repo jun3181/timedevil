@@ -37,6 +37,19 @@ public class CardUseOrchestrator : MonoBehaviour
 
     void Awake()
     {
+        ResolveRefs();
+
+        if (logDebug && !desc)
+            Debug.LogWarning("[Orchestrator] DescriptionPanelController not found. Explanation won't show.");
+    }
+
+    void OnEnable()
+    {
+        ResolveRefs();
+    }
+
+    private void ResolveRefs()
+    {
         //  런타임에서도 안전하게 참조 보강
         if (!hand) hand = FindObjectOfType<HandUI>(true);
         if (!menu) menu = FindObjectOfType<BattleMenuController>(true);
@@ -46,9 +59,19 @@ public class CardUseOrchestrator : MonoBehaviour
         if (!showCard) showCard = FindObjectOfType<ShowCardController>(true);
         if (!desc) desc = FindObjectOfType<DescriptionPanelController>(true);
         if (!attackController) attackController = FindObjectOfType<AttackController>(true);
+    }
 
-        if (logDebug && !desc)
-            Debug.LogWarning("[Orchestrator] DescriptionPanelController not found. Explanation won't show.");
+    private void EnsureActiveForUse()
+    {
+        if (gameObject.activeInHierarchy) return;
+
+        Transform current = transform;
+        while (current != null)
+        {
+            if (!current.gameObject.activeSelf)
+                current.gameObject.SetActive(true);
+            current = current.parent;
+        }
     }
 
     void OnDisable()
@@ -59,6 +82,13 @@ public class CardUseOrchestrator : MonoBehaviour
     public void UseCurrentSelected()
     {
         if (!BattleTutorialGate.Allows(BattleTutorialAction.CardUse)) return;
+        EnsureActiveForUse();
+        ResolveRefs();
+        if (!isActiveAndEnabled)
+        {
+            Debug.LogWarning("[Orchestrator] Card use was requested while the orchestrator is inactive.");
+            return;
+        }
         if (busy || hand == null || !hand.IsInSelectMode) return;
         int idx = hand.CurrentSelectIndex;
         if (idx < 0 || idx >= hand.CardCount) return;
@@ -68,6 +98,7 @@ public class CardUseOrchestrator : MonoBehaviour
 
     public void RefreshSelectedAttackWarning()
     {
+        ResolveRefs();
         if (hand == null || !hand.IsInSelectMode || attackController == null)
         {
             ClearSelectedAttackWarning();
