@@ -13,11 +13,15 @@ MonoBehaviour:
   m_Name: MoveCard10
   m_EditorClassIdentifier: 
   id: MoveCard10
-  displayName: MoveCard10
+  displayName: "[\uACF5\uD3EC]"
   type: 3
   display: "[\uACF5\uD3EC]\n\uC0C1\uB300\uB97C \uC624\uB978\uCABD\uC73C\uB85C \uD55C
     \uCE78 \uC774\uB3D9"
-  explanation: "다가오지 마. 제발, 저쪽으로 가 줘."
+  explanation: "\uB2E4\uAC00\uC624\uC9C0 \uB9C8. \uC81C\uBC1C, \uC800\uCABD\uC73C\uB85C
+    \uAC00 \uC918."
+  mainArtwork: {fileID: 0}
+  arrowArtwork: {fileID: 0}
+  effectTextOverride: 
   cost: 1
   positive: 0
   negative: 0

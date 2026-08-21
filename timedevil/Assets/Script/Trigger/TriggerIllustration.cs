@@ -40,6 +40,14 @@ public class TriggerStep_IllustrationPanel_New : TriggerStepBase
     [Header("Player Input")]
     [SerializeField] private bool lockPlayerInput = true;
 
+    [Header("Dark Overlay")]
+    [SerializeField] private bool useDarkOverlay = false;
+    [Range(0f, 1f)]
+    [SerializeField] private float darkOverlayAlpha = 0.65f;
+    [Min(0f)] [SerializeField] private float darkOverlayInDuration = 0.15f;
+    [SerializeField] private bool restoreDarkOverlayOnClose = true;
+    [Min(0f)] [SerializeField] private float darkOverlayOutDuration = 0.15f;
+
     private bool _isOpen;
     private bool _locked;
     private Coroutine _autoClose;
@@ -48,6 +56,9 @@ public class TriggerStep_IllustrationPanel_New : TriggerStepBase
     private bool _openedDialoguePanelDirectly;
     private bool _ownsDialogueBlockInput;
     private bool _previousDialogueBlockInput;
+    private DarkOverlay _darkOverlay;
+    private bool _storedDarkOverlayAlpha;
+    private float _previousDarkOverlayAlpha;
     private const string AutoImageName = "IllustrationImage";
 
     private void Reset()
@@ -106,6 +117,8 @@ public class TriggerStep_IllustrationPanel_New : TriggerStepBase
             _locked = true;
         }
 
+        ApplyDarkOverlay();
+
         if (illustrationImage != null)
             illustrationImage.sprite = illustrationSprite;
 
@@ -140,6 +153,7 @@ public class TriggerStep_IllustrationPanel_New : TriggerStepBase
         }
 
         CloseDialoguePanel();
+        RestoreDarkOverlay();
 
         if (illustrationRoot != null)
             illustrationRoot.SetActive(false);
@@ -153,6 +167,32 @@ public class TriggerStep_IllustrationPanel_New : TriggerStepBase
             GameManager.Instance.UnlockAction();
             _locked = false;
         }
+    }
+
+    private void ApplyDarkOverlay()
+    {
+        if (!useDarkOverlay)
+            return;
+
+        _darkOverlay = DarkOverlay.Instance;
+        if (_darkOverlay == null)
+            return;
+
+        _previousDarkOverlayAlpha = _darkOverlay.Alpha;
+        _storedDarkOverlayAlpha = true;
+        _darkOverlay.SetAlpha(darkOverlayAlpha, darkOverlayInDuration);
+    }
+
+    private void RestoreDarkOverlay()
+    {
+        if (!_storedDarkOverlayAlpha)
+            return;
+
+        if (restoreDarkOverlayOnClose && _darkOverlay != null)
+            _darkOverlay.SetAlpha(_previousDarkOverlayAlpha, darkOverlayOutDuration);
+
+        _darkOverlay = null;
+        _storedDarkOverlayAlpha = false;
     }
 
     private void ResolveMissingReferences()

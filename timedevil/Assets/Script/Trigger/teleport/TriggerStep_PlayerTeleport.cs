@@ -30,6 +30,12 @@ public class TriggerStep_PlayerTeleport : TriggerStepBase
     [Tooltip("0이면 변경 안 함")]
     [SerializeField] private float afterOrthoSize = 0f;
 
+    [Header("Ambient Dark Overlay (상태 유지용)")]
+    [SerializeField] private bool applyDarkOverlay = false;
+    [Range(0f, 1f)]
+    [SerializeField] private float darkOverlayAlpha = 0.35f;
+    [SerializeField] private float darkOverlayDuration = 0.15f;
+
     [Header("Camera Warp Fix")]
     [SerializeField] private bool notifyWarpToCinemachine = true;
     [SerializeField] private bool snapCameraWhenFixed = true;
@@ -139,6 +145,12 @@ public class TriggerStep_PlayerTeleport : TriggerStepBase
 
             CameraManager.Instance.EndTransition();
             if (debugLog) Debug.Log($"{ContextTag()} CameraManager.EndTransition", this);
+        }
+
+        if (applyDarkOverlay && DarkOverlay.Instance != null)
+        {
+            if (debugLog) Debug.Log($"{ContextTag()} DarkOverlay alpha={darkOverlayAlpha} duration={darkOverlayDuration}", this);
+            DarkOverlay.Instance.SetAlpha(darkOverlayAlpha, darkOverlayDuration);
         }
 
         if (useFade && fadePanel != null)
