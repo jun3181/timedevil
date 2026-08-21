@@ -331,6 +331,7 @@ public class DescriptionPanelController : MonoBehaviour
         int stateIndex = ResolveStateIndex();
         int endIndex = ResolveEndIndex();
         int runIndex = ResolveRunIndex();
+        int itemIndex = ResolveItemIndex();
 
 
         if (_stateView)
@@ -509,8 +510,8 @@ public class DescriptionPanelController : MonoBehaviour
             {
                 0 when hand != null && hand.CardCount <= 0 => "선택가능한 카드가 없습니다.",
                 0 => msgCard,
-                1 => msgItem,
                 _ when index == stateIndex => msgState,
+                _ when index == itemIndex => msgItem,
                 _ when index == endIndex => msgEnd,
                 _ when index == runIndex => msgRun,
                 _ => string.Empty
@@ -521,17 +522,44 @@ public class DescriptionPanelController : MonoBehaviour
 
     private int ResolveStateIndex()
     {
+        int named = FindEntryIndexByName("state");
+        if (named >= 0) return named;
         return menu != null && menu.EntryCount >= 5 ? 2 : -1;
     }
 
     private int ResolveEndIndex()
     {
+        int named = FindEntryIndexByName("end");
+        if (named >= 0) return named;
         return menu != null && menu.EntryCount >= 5 ? 3 : 2;
     }
 
     private int ResolveRunIndex()
     {
+        int named = FindEntryIndexByName("run");
+        if (named >= 0) return named;
         return menu != null && menu.EntryCount >= 5 ? 4 : 3;
+    }
+
+    private int ResolveItemIndex()
+    {
+        int named = FindEntryIndexByName("item");
+        if (named >= 0) return named;
+        return menu != null && menu.EntryCount >= 5 ? 1 : -1;
+    }
+
+    private int FindEntryIndexByName(string token)
+    {
+        if (menu == null || string.IsNullOrEmpty(token)) return -1;
+
+        for (int i = 0; i < menu.EntryCount; i++)
+        {
+            GameObject entry = menu.GetEntryObject(i);
+            if (entry && entry.name.ToLowerInvariant().Contains(token))
+                return i;
+        }
+
+        return -1;
     }
 
     private bool ShouldShowPlayerHandForMenuFocus(int index)

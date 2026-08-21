@@ -6,7 +6,7 @@ public class BattleMenuController : MonoBehaviour
     [System.Serializable] public class IntEvent : UnityEvent<int> { }
 
     //[Header("Order (2x2 grid): 0=Card, 1=Item / 2=End, 3=Run")] UI배치 수정 전
-    [Header("Order: 0=Card, 1=Item, 2=State, 3=End, 4=Run")]
+    [Header("Order: Card / optional Item / optional State / End / Run")]
     [SerializeField] private GameObject[] entries;
 
     [Header("Input")]
@@ -141,6 +141,9 @@ public class BattleMenuController : MonoBehaviour
 
     private string GetEntryName(int entryIndex)
     {
+        if (TryGetEntryKindFromObjectName(entryIndex, out string namedKind))
+            return namedKind;
+
         bool hasStatePanel = EntryCount >= 5;
         if (hasStatePanel)
             return entryIndex switch { 0 => "Card", 1 => "Item", 2 => "State", 3 => "End", 4 => "Run", _ => $"Idx{entryIndex}" };
@@ -150,6 +153,19 @@ public class BattleMenuController : MonoBehaviour
 
     private BattleTutorialAction GetSubmitAction(int entryIndex)
     {
+        if (TryGetEntryKindFromObjectName(entryIndex, out string namedKind))
+        {
+            return namedKind switch
+            {
+                "Card" => BattleTutorialAction.CardPanelInteract,
+                "Item" => BattleTutorialAction.ItemPanelInteract,
+                "State" => BattleTutorialAction.StatePanelInteract,
+                "End" => BattleTutorialAction.EndPanelInteract,
+                "Run" => BattleTutorialAction.RunPanelInteract,
+                _ => BattleTutorialAction.None
+            };
+        }
+
         bool hasStatePanel = EntryCount >= 5;
         if (hasStatePanel)
         {
@@ -172,5 +188,26 @@ public class BattleMenuController : MonoBehaviour
             3 => BattleTutorialAction.RunPanelInteract,
             _ => BattleTutorialAction.None
         };
+    }
+
+    private bool TryGetEntryKindFromObjectName(int entryIndex, out string kind)
+    {
+        kind = null;
+        GameObject entry = GetEntryObject(entryIndex);
+        if (!entry) return false;
+
+        string entryName = entry.name.ToLowerInvariant();
+        if (entryName.Contains("card"))
+            kind = "Card";
+        else if (entryName.Contains("item"))
+            kind = "Item";
+        else if (entryName.Contains("state"))
+            kind = "State";
+        else if (entryName.Contains("end"))
+            kind = "End";
+        else if (entryName.Contains("run"))
+            kind = "Run";
+
+        return kind != null;
     }
 }

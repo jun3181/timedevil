@@ -27,7 +27,15 @@ public enum BattleTutorialScenarioStepType
     StartPlayerTurn,
     WaitForTurn,
     WaitForCardUseToSettle,
-    MarkSeen
+    MarkSeen,
+    InfoPrompt
+}
+
+internal enum BattleTutorialEnemyCardRole
+{
+    Attack,
+    Move,
+    Draw
 }
 
 [System.Serializable]
@@ -49,6 +57,7 @@ public class BattleTutorialScenarioStep
 public class BattleTutorialScenarioController : MonoBehaviour
 {
     public static BattleTutorialScenarioController Instance { get; private set; }
+    private const int CurrentScenarioDefinitionVersion = 2;
 
     [Header("Flow")]
     [SerializeField] private bool autoStart = true;
@@ -62,10 +71,46 @@ public class BattleTutorialScenarioController : MonoBehaviour
     [SerializeField] private BattleTutorialController tutorialController;
     [SerializeField] private BattleMenuController menu;
     [SerializeField] private CardUseOrchestrator cardUseOrchestrator;
+    [SerializeField] private EnemyHandUI enemyHandUI;
+    [SerializeField] private CardDatabaseSO cardDatabase;
+
+    [Header("Enemy Card Role Tutorial")]
+    [SerializeField] private bool explainEnemyCardRolesBeforeFirstEnemyPlay = true;
+    [SerializeField] private BattleTutorialActionPrompt enemyAttackCardPrompt = new BattleTutorialActionPrompt
+    {
+        message = "공격 카드는 상대에게 피해를 주는 카드입니다. 적이 공격 카드를 사용하면 곧바로 공격 효과가 처리됩니다.",
+        windowAnchoredPosition = new Vector2(0f, 245f),
+        windowSize = new Vector2(820f, 180f),
+        allowMenuNavigation = false,
+        allowCardSelectionNavigation = false,
+        allowStateNavigation = false,
+        allowCancelInput = false,
+    };
+    [SerializeField] private BattleTutorialActionPrompt enemyMoveCardPrompt = new BattleTutorialActionPrompt
+    {
+        message = "이동 카드는 사용자의 위치를 바꿉니다. 적이 움직이면 다음 공격 위치도 달라질 수 있습니다.",
+        windowAnchoredPosition = new Vector2(0f, 245f),
+        windowSize = new Vector2(820f, 180f),
+        allowMenuNavigation = false,
+        allowCardSelectionNavigation = false,
+        allowStateNavigation = false,
+        allowCancelInput = false,
+    };
+    [SerializeField] private BattleTutorialActionPrompt enemyDrawCardPrompt = new BattleTutorialActionPrompt
+    {
+        message = "드로우 카드는 손패를 보충합니다. 손패가 늘어나면 이어서 사용할 선택지도 많아집니다.",
+        windowAnchoredPosition = new Vector2(0f, 245f),
+        windowSize = new Vector2(820f, 180f),
+        allowMenuNavigation = false,
+        allowCardSelectionNavigation = false,
+        allowStateNavigation = false,
+        allowCancelInput = false,
+    };
 
     [Header("Scenario Steps")]
     [SerializeField] private List<BattleTutorialScenarioStep> scenarioSteps = new List<BattleTutorialScenarioStep>();
     [SerializeField, HideInInspector] private bool scenarioStepsInitialized;
+    [SerializeField, HideInInspector] private int scenarioDefinitionVersion;
 
     [SerializeField, HideInInspector] private BattleDialogue introDialogue = new BattleDialogue
     {
@@ -82,11 +127,30 @@ public class BattleTutorialScenarioController : MonoBehaviour
         defaultSpeakerName = "Luke",
         lines = new[]
         {
-            new BattleDialogueLine { speakerName = "???", text = "아직 서 있네." },
-            new BattleDialogueLine { speakerName = "Luke", text = "방금 건... 상대의 턴이었어?" },
-            new BattleDialogueLine { speakerName = "???", text = "맞아. 이 전투는 서로 턴을 주고받는 방식이야." },
-            new BattleDialogueLine { speakerName = "Luke", text = "그럼 지금은 내 차례... 먼저 상황을 확인해야겠어." },
+            new BattleDialogueLine { text = "먼저 상황을 파악해야겠어." },
         }
+    };
+
+    [SerializeField, HideInInspector] private BattleTutorialActionPrompt battleFlowPrompt = new BattleTutorialActionPrompt
+    {
+        message = "이 전투는 플레이어 턴부터 시작합니다. 턴마다 행동을 확인하고, 할 일을 마치면 End로 턴을 넘깁니다.",
+        windowAnchoredPosition = new Vector2(0f, 245f),
+        windowSize = new Vector2(820f, 180f),
+        allowMenuNavigation = false,
+        allowCardSelectionNavigation = false,
+        allowStateNavigation = false,
+        allowCancelInput = false,
+    };
+
+    [SerializeField, HideInInspector] private BattleTutorialActionPrompt deckRulePrompt = new BattleTutorialActionPrompt
+    {
+        message = "카드 덱이 비어 있으면 기본 카드 10장이 덱에 들어옵니다. 배틀 중 화면에 들고 있는 손패는 최대 3장까지입니다.",
+        windowAnchoredPosition = new Vector2(0f, 245f),
+        windowSize = new Vector2(820f, 180f),
+        allowMenuNavigation = false,
+        allowCardSelectionNavigation = false,
+        allowStateNavigation = false,
+        allowCancelInput = false,
     };
 
     [SerializeField, HideInInspector] private BattleDialogue beforeCardUseDialogue = new BattleDialogue
@@ -216,6 +280,7 @@ public class BattleTutorialScenarioController : MonoBehaviour
     };
 
     private bool running;
+    private bool enemyCardRolePromptsPlayed;
 
     public bool ShouldControlBattleStart => autoStart && controlBattleStart && isActiveAndEnabled && ShouldPlayNow();
 
@@ -270,6 +335,7 @@ public class BattleTutorialScenarioController : MonoBehaviour
     private IEnumerator CoRunScenario()
     {
         running = true;
+        enemyCardRolePromptsPlayed = false;
         EnsureScenarioStepsInitialized();
         ResolveRefs();
 
@@ -293,6 +359,10 @@ public class BattleTutorialScenarioController : MonoBehaviour
 
             case BattleTutorialScenarioStepType.Prompt:
                 yield return ShowPromptAndWait(step.prompt);
+                break;
+
+            case BattleTutorialScenarioStepType.InfoPrompt:
+                yield return ShowInfoPromptAndWait(step.prompt);
                 break;
 
             case BattleTutorialScenarioStepType.SetMenuInput:
@@ -326,19 +396,50 @@ public class BattleTutorialScenarioController : MonoBehaviour
 
     private void EnsureScenarioStepsInitialized()
     {
+        if (NeedsScenarioDefinitionMigration())
+        {
+            PopulateDefaultScenarioSteps();
+            return;
+        }
+
         if (scenarioStepsInitialized)
             return;
 
         if (NeedsDefaultScenarioSteps())
             PopulateDefaultScenarioSteps();
         else
+        {
             scenarioStepsInitialized = true;
+            scenarioDefinitionVersion = CurrentScenarioDefinitionVersion;
+        }
     }
 
     private void PopulateDefaultScenarioSteps()
     {
         scenarioSteps = CreateDefaultScenarioSteps();
         scenarioStepsInitialized = true;
+        scenarioDefinitionVersion = CurrentScenarioDefinitionVersion;
+    }
+
+    private bool NeedsScenarioDefinitionMigration()
+    {
+        if (scenarioDefinitionVersion >= CurrentScenarioDefinitionVersion)
+            return false;
+
+        if (scenarioSteps == null || scenarioSteps.Count == 0)
+            return true;
+
+        foreach (BattleTutorialScenarioStep step in scenarioSteps)
+        {
+            if (step == null || string.IsNullOrWhiteSpace(step.label))
+                continue;
+
+            if (step.label == "Battle card rules dialogue"
+                || step.label == "After first enemy turn dialogue")
+                return true;
+        }
+
+        return false;
     }
 
     private bool NeedsDefaultScenarioSteps()
@@ -376,22 +477,16 @@ public class BattleTutorialScenarioController : MonoBehaviour
         {
             MenuStep("Lock input for intro", false),
             DialogueStep("Intro dialogue", introDialogue),
-            SimpleStep("Start enemy turn", BattleTutorialScenarioStepType.StartEnemyTurn),
+            SimpleStep("Start player turn", BattleTutorialScenarioStepType.StartPlayerTurn),
             WaitTurnStep("Wait for first player turn", TurnState.PlayerTurn),
             MenuStep("Lock input before first explanation", false),
-            DialogueStep("After first enemy turn dialogue", afterFirstEnemyTurnDialogue),
+            InfoPromptStep("Battle flow prompt", battleFlowPrompt),
+            InfoPromptStep("Deck rule prompt", deckRulePrompt),
             MenuStep("Enable state panel input", true),
             PromptStep("State panel prompt", statePanelPrompt),
             PromptStep("State hand inspect prompt", stateHandInspectPrompt),
             PromptStep("Close state hand prompt", closeStateHandPrompt),
             PromptStep("Close state panel prompt", closeStatePanelPrompt),
-            MenuStep("Lock input before card dialogue", false),
-            DialogueStep("Before card use dialogue", beforeCardUseDialogue),
-            MenuStep("Enable card panel input", true),
-            PromptStep("Card panel interaction prompt", cardPanelPrompt),
-            PromptStep("Card selection prompt", cardSelectPrompt),
-            PromptStep("Card use prompt", cardUsePrompt),
-            SimpleStep("Wait for card use to settle", BattleTutorialScenarioStepType.WaitForCardUseToSettle),
             MenuStep("Lock input before end turn dialogue", false),
             DialogueStep("Before end turn dialogue", beforeEndTurnDialogue),
             MenuStep("Enable end turn input", true),
@@ -422,6 +517,16 @@ public class BattleTutorialScenarioController : MonoBehaviour
         {
             label = label,
             type = BattleTutorialScenarioStepType.Prompt,
+            prompt = ClonePrompt(prompt)
+        };
+    }
+
+    private static BattleTutorialScenarioStep InfoPromptStep(string label, BattleTutorialActionPrompt prompt)
+    {
+        return new BattleTutorialScenarioStep
+        {
+            label = label,
+            type = BattleTutorialScenarioStepType.InfoPrompt,
             prompt = ClonePrompt(prompt)
         };
     }
@@ -496,6 +601,119 @@ public class BattleTutorialScenarioController : MonoBehaviour
             yield return null;
     }
 
+    private IEnumerator ShowInfoPromptAndWait(BattleTutorialActionPrompt prompt)
+    {
+        if (prompt == null || string.IsNullOrWhiteSpace(prompt.message))
+            yield break;
+
+        tutorialController = ResolveActiveTutorialController();
+
+        if (tutorialController == null)
+            yield break;
+
+        bool shown = tutorialController.ShowExternalPrompt(
+            prompt.message,
+            prompt.windowAnchoredPosition,
+            prompt.windowSize,
+            BattleTutorialAdvanceMode.PressE,
+            BattleTutorialAction.Continue,
+            false,
+            false,
+            false,
+            false);
+
+        if (!shown)
+            yield break;
+
+        while (tutorialController != null && tutorialController.IsExternalPromptActive)
+            yield return null;
+    }
+
+    public IEnumerator PlayEnemyCardRolePromptsBeforeFirstPlay(IReadOnlyList<string> currentEnemyHandIds)
+    {
+        if (!running || !explainEnemyCardRolesBeforeFirstEnemyPlay || enemyCardRolePromptsPlayed)
+            yield break;
+
+        enemyCardRolePromptsPlayed = true;
+        ResolveRefs();
+
+        if (enemyHandUI != null)
+        {
+            enemyHandUI.gameObject.SetActive(true);
+            enemyHandUI.RebuildFromHand();
+            yield return null;
+        }
+
+        yield return ShowEnemyCardRolePrompt(BattleTutorialEnemyCardRole.Attack, enemyAttackCardPrompt, currentEnemyHandIds);
+        yield return ShowEnemyCardRolePrompt(BattleTutorialEnemyCardRole.Move, enemyMoveCardPrompt, currentEnemyHandIds);
+        yield return ShowEnemyCardRolePrompt(BattleTutorialEnemyCardRole.Draw, enemyDrawCardPrompt, currentEnemyHandIds);
+
+        if (enemyHandUI != null)
+            enemyHandUI.ExitSelectMode();
+    }
+
+    private IEnumerator ShowEnemyCardRolePrompt(
+        BattleTutorialEnemyCardRole role,
+        BattleTutorialActionPrompt prompt,
+        IReadOnlyList<string> fallbackEnemyHandIds)
+    {
+        if (prompt == null || string.IsNullOrWhiteSpace(prompt.message))
+            yield break;
+
+        int index = FindEnemyCardRoleIndex(role, fallbackEnemyHandIds);
+        if (enemyHandUI != null && index >= 0)
+            enemyHandUI.EnterReadOnlySelectMode(index, true);
+
+        yield return ShowInfoPromptAndWait(prompt);
+    }
+
+    private int FindEnemyCardRoleIndex(BattleTutorialEnemyCardRole role, IReadOnlyList<string> fallbackEnemyHandIds)
+    {
+        if (enemyHandUI != null && enemyHandUI.CardCount > 0)
+        {
+            for (int i = 0; i < enemyHandUI.CardCount; i++)
+            {
+                string id = enemyHandUI.GetVisibleIdAt(i);
+                if (IsEnemyCardRole(id, role))
+                    return i;
+            }
+        }
+
+        if (fallbackEnemyHandIds == null)
+            return -1;
+
+        for (int i = 0; i < fallbackEnemyHandIds.Count; i++)
+        {
+            if (IsEnemyCardRole(fallbackEnemyHandIds[i], role))
+                return i;
+        }
+
+        return -1;
+    }
+
+    private bool IsEnemyCardRole(string id, BattleTutorialEnemyCardRole role)
+    {
+        if (string.IsNullOrEmpty(id))
+            return false;
+
+        EnsureCardDatabase();
+        BaseCardSO card = cardDatabase ? cardDatabase.GetById(id) : null;
+        if (card != null)
+        {
+            if (role == BattleTutorialEnemyCardRole.Attack) return card is AttackCardSO;
+            if (role == BattleTutorialEnemyCardRole.Move) return card is MoveCardSO;
+            if (role == BattleTutorialEnemyCardRole.Draw) return card is DrawCardSO;
+        }
+
+        return role switch
+        {
+            BattleTutorialEnemyCardRole.Attack => id.StartsWith("AttackCard"),
+            BattleTutorialEnemyCardRole.Move => id.StartsWith("MoveCard"),
+            BattleTutorialEnemyCardRole.Draw => id.StartsWith("DrawCard"),
+            _ => false
+        };
+    }
+
     private IEnumerator WaitForTurn(TurnState expectedTurn)
     {
         while (turnManager == null)
@@ -543,6 +761,24 @@ public class BattleTutorialScenarioController : MonoBehaviour
             menu = FindObjectOfType<BattleMenuController>(true);
         if (!cardUseOrchestrator)
             cardUseOrchestrator = FindObjectOfType<CardUseOrchestrator>(true);
+        if (!enemyHandUI)
+            enemyHandUI = FindObjectOfType<EnemyHandUI>(true);
+        EnsureCardDatabase();
+    }
+
+    private void EnsureCardDatabase()
+    {
+        if (cardDatabase)
+            return;
+
+        if (!cardUseOrchestrator)
+            cardUseOrchestrator = FindObjectOfType<CardUseOrchestrator>(true);
+
+        if (cardUseOrchestrator && cardUseOrchestrator.CardDatabase)
+            cardDatabase = cardUseOrchestrator.CardDatabase;
+
+        if (!cardDatabase)
+            cardDatabase = Resources.Load<CardDatabaseSO>("CardDatabase");
     }
 
     private BattleTutorialController ResolveActiveTutorialController()
