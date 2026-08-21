@@ -6,6 +6,8 @@ using System.Collections.Generic;
 public class CinemachineClamp2D : CinemachineExtension
 {
     [SerializeField] private Collider2D boundsShape; // BoxCollider2D 권장
+    [Tooltip("PolygonCollider2D를 테두리/벽처럼 두고, collider가 채우지 않은 빈 공간을 카메라 영역으로 사용합니다.")]
+    [SerializeField] private bool useEmptyPolygonSpace = true;
     [SerializeField] private bool debugDraw = false;
 
     // 추가: CameraManager 스냅샷용
@@ -240,7 +242,8 @@ public class CinemachineClamp2D : CinemachineExtension
             }
 
             float mid = (min + max) * 0.5f;
-            if (!polygon.OverlapPoint(new Vector2(mid, y)))
+            bool overlapsCollider = polygon.OverlapPoint(new Vector2(mid, y));
+            if (useEmptyPolygonSpace ? overlapsCollider : !overlapsCollider)
                 continue;
 
             float centerMin = min + halfExtent;
