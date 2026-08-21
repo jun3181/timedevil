@@ -1,5 +1,6 @@
 ﻿// Assets/Script/Battle/Enemy_script/EnemyTurnController.cs
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class EnemyTurnController : MonoBehaviour
@@ -231,6 +232,7 @@ public class EnemyTurnController : MonoBehaviour
             {
                 waitedBeforeFirstPlay = true;
                 yield return WaitBeforeFirstPlay();
+                yield return PlayTutorialBeforeFirstPlayIfNeeded(hand);
             }
 
             if (!cost.TryPay(playableCost))
@@ -368,6 +370,16 @@ public class EnemyTurnController : MonoBehaviour
     private bool CanShowCardPreview()
     {
         return showCardPreviewEnabled && showCard != null;
+    }
+
+    private IEnumerator PlayTutorialBeforeFirstPlayIfNeeded(IReadOnlyList<string> currentHandIds)
+    {
+        BattleTutorialScenarioController scenario = BattleTutorialScenarioController.Instance;
+        if (scenario == null)
+            scenario = FindObjectOfType<BattleTutorialScenarioController>(true);
+
+        if (scenario != null)
+            yield return scenario.PlayEnemyCardRolePromptsBeforeFirstPlay(currentHandIds);
     }
 
     private IEnumerator WaitBeforeFirstPlay()

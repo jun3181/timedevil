@@ -10,8 +10,8 @@ public class BattleDeckRuntime : MonoBehaviour
     public readonly List<string> hand = new();
 
     [Header("Rules")]
-    [SerializeField] private int initialHandSize = 5;
-    [SerializeField] private int maxHandSize = 5;
+    [SerializeField] private int initialHandSize = 3;
+    [SerializeField] private int maxHandSize = 3;
 
     public int MaxHandSize => maxHandSize;
     public int HandCount => hand.Count;

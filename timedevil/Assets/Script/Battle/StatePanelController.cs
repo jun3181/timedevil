@@ -1087,6 +1087,16 @@ public class StatePanelController : MonoBehaviour
 
     private int ResolveStateIndex()
     {
+        if (menu != null)
+        {
+            for (int i = 0; i < menu.EntryCount; i++)
+            {
+                GameObject entry = menu.GetEntryObject(i);
+                if (entry && entry.name.ToLowerInvariant().Contains("state"))
+                    return i;
+            }
+        }
+
         return menu != null && menu.EntryCount >= 5 ? stateIndex : -1;
     }
 
