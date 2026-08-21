@@ -250,7 +250,7 @@ public class PanelController : MonoBehaviour
 
     private void OnMenuSubmit(int index)
     {
-        if (usePanelSubmit && index == panelSubmitIndex)
+        if (usePanelSubmit && index == ResolvePanelSubmitIndex())
         {
             if (!BattleTutorialGate.Allows(BattleTutorialAction.StatePanelInteract))
                 return;
@@ -261,7 +261,7 @@ public class PanelController : MonoBehaviour
             return;
         }
 
-        if (useCardSubmit && index == cardSubmitIndex)
+        if (useCardSubmit && index == ResolveCardSubmitIndex())
         {
             if (!BattleTutorialGate.Allows(BattleTutorialAction.CardPanelInteract))
                 return;
@@ -275,7 +275,7 @@ public class PanelController : MonoBehaviour
             return;
         }
 
-        if (useItemSubmit && index == itemSubmitIndex)
+        if (useItemSubmit && index == ResolveItemSubmitIndex())
         {
             if (!BattleTutorialGate.Allows(BattleTutorialAction.ItemPanelInteract))
                 return;
@@ -285,7 +285,7 @@ public class PanelController : MonoBehaviour
             return;
         }
 
-        if (useEndSubmit && index == endSubmitIndex)
+        if (useEndSubmit && index == ResolveEndSubmitIndex())
         {
             if (!BattleTutorialGate.Allows(BattleTutorialAction.EndPanelInteract))
                 return;
@@ -293,6 +293,45 @@ public class PanelController : MonoBehaviour
             SetGameplayViewDelayed(true, submitViewDelay);
             pendingReturnByEnd = true;
         }
+    }
+
+    private int ResolveCardSubmitIndex()
+    {
+        int named = FindMenuEntryIndex("card");
+        return named >= 0 ? named : cardSubmitIndex;
+    }
+
+    private int ResolvePanelSubmitIndex()
+    {
+        int named = FindMenuEntryIndex("state");
+        return named >= 0 ? named : panelSubmitIndex;
+    }
+
+    private int ResolveItemSubmitIndex()
+    {
+        int named = FindMenuEntryIndex("item");
+        if (named >= 0) return named;
+        return menu != null && menu.EntryCount >= 5 ? itemSubmitIndex : -1;
+    }
+
+    private int ResolveEndSubmitIndex()
+    {
+        int named = FindMenuEntryIndex("end");
+        return named >= 0 ? named : endSubmitIndex;
+    }
+
+    private int FindMenuEntryIndex(string token)
+    {
+        if (menu == null || string.IsNullOrEmpty(token)) return -1;
+
+        for (int i = 0; i < menu.EntryCount; i++)
+        {
+            GameObject entry = menu.GetEntryObject(i);
+            if (entry && entry.name.ToLowerInvariant().Contains(token))
+                return i;
+        }
+
+        return -1;
     }
 
 

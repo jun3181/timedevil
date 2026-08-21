@@ -69,7 +69,7 @@ public class ItemHandUI : MonoBehaviour
             return;
         }
 
-        if (idx == 1) Show();
+        if (idx == ResolveItemIndex()) Show();
         else Hide();
     }
 
@@ -117,7 +117,7 @@ public class ItemHandUI : MonoBehaviour
         if (!itemHandRect)
             itemHandRect = GetComponent<RectTransform>();
 
-        bool shouldShowByFocus = !enemyTurn && menu && menu.Index == 1;
+        bool shouldShowByFocus = !enemyTurn && menu && menu.Index == ResolveItemIndex();
         if (shouldShowByFocus)
         {
             SetVisible(true);
@@ -146,6 +146,21 @@ public class ItemHandUI : MonoBehaviour
 
         BringToFront();
         SetVisible(true);
+    }
+
+    private int ResolveItemIndex()
+    {
+        if (menu == null)
+            return -1;
+
+        for (int i = 0; i < menu.EntryCount; i++)
+        {
+            GameObject entry = menu.GetEntryObject(i);
+            if (entry && entry.name.ToLowerInvariant().Contains("item"))
+                return i;
+        }
+
+        return menu.EntryCount >= 5 ? 1 : -1;
     }
 
     private void Hide()

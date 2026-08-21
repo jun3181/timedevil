@@ -663,7 +663,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -736.0194, y: -457}
+  m_AnchoredPosition: {x: -690, y: -457}
   m_SizeDelta: {x: 330, y: 110}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &327880353
@@ -902,7 +902,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &424294692
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1247,7 +1247,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 753.0537, y: -456.5}
+  m_AnchoredPosition: {x: 690, y: -457}
   m_SizeDelta: {x: 330, y: 110}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &492703979
@@ -1852,7 +1852,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 387.00006, y: -456.5}
+  m_AnchoredPosition: {x: 230, y: -457}
   m_SizeDelta: {x: 330, y: 110}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &614825695
@@ -5893,7 +5893,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   entries:
   - {fileID: 327880351}
-  - {fileID: 424294691}
   - {fileID: 1437903591}
   - {fileID: 614825693}
   - {fileID: 492703977}
@@ -6060,13 +6059,13 @@ MonoBehaviour:
   descriptionPanel: {fileID: 1069897052}
   statePanel: {fileID: 0}
   usePanelSubmit: 1
-  panelSubmitIndex: 2
+  panelSubmitIndex: 1
   useCardSubmit: 1
   cardSubmitIndex: 0
-  useItemSubmit: 1
-  itemSubmitIndex: 1
+  useItemSubmit: 0
+  itemSubmitIndex: -1
   useEndSubmit: 1
-  endSubmitIndex: 3
+  endSubmitIndex: 2
   returnOnCardCancelKey: 1
   returnOnItemCancelKey: 1
   returnOnPlayerTurnStart: 1
@@ -6137,7 +6136,6 @@ MonoBehaviour:
     m_RotationOrder: 4
   battleMenuPanelTargets:
   - {fileID: 327880352}
-  - {fileID: 424294692}
   - {fileID: 1437903592}
   - {fileID: 614825694}
   - {fileID: 492703978}
@@ -6230,7 +6228,7 @@ MonoBehaviour:
   playerHand: {fileID: 860620052}
   enemyHand: {fileID: 133108826}
   cardDatabase: {fileID: 11400000, guid: c0cc44962aa33464ca629e77b4d09b2b, type: 2}
-  stateIndex: 2
+  stateIndex: 1
   wrap: 1
   targets:
   - label: Player
@@ -10844,7 +10842,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 7, y: -457.21997}
+  m_AnchoredPosition: {x: -230, y: -457}
   m_SizeDelta: {x: 330, y: 110}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1437903593
@@ -12228,7 +12226,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   menu: {fileID: 1069897049}
-  endIndex: 3
+  endIndex: 2
 --- !u!114 &2043066782
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12242,7 +12240,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   menu: {fileID: 1069897049}
-  runIndex: 4
+  runIndex: 3
   graceSeconds: 1
   worldVcamName: CM vcam1
 --- !u!114 &2043066783
