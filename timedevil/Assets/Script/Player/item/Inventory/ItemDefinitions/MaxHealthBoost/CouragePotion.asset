@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1abd44402ecbf5148b3b83ac1b008ac9, type: 3}
+  m_Name: CouragePotion
+  m_EditorClassIdentifier: 
+  id: courage_potion
+  displayName: 용기의 물약
+  type: 5
+  description: Max HP + 10
+  icon: {fileID: 0}
+  useText: 최대 체력이 10 증가했습니다.
+  defaultQuantity: 0
+  effectAmount: 10
+  consumeOnUse: 1
+  itemScript: {fileID: 0}
