@@ -14,6 +14,11 @@ public class BattleTransition : MonoBehaviour, IInteractable
     public Transform returnPoint;
     [Header("복귀 Grace")]
     public float graceSeconds = 0.5f;
+    [SerializeField] private bool useFaderIfExists = true;
+
+    [Header("Victory Route On Return")]
+    [SerializeField] private TriggerRouter victoryRouter;
+    [SerializeField] private string victoryRouteKey = "";
 
     private bool isTransitioning = false;
 
@@ -35,9 +40,8 @@ public class BattleTransition : MonoBehaviour, IInteractable
     {
         isTransitioning = true;
 
-        // (선택) 입력 잠금
         if (GameManager.Instance != null)
-            GameManager.Instance.isAction = true;
+            GameManager.Instance.LockAction();
 
         // --- 복귀 정보 저장(공용 API 사용) ---
         bool restoreCam = false;
@@ -70,8 +74,36 @@ public class BattleTransition : MonoBehaviour, IInteractable
             cameraBoundsName: camBounds
         );
 
-        SceneTransitionService.EnterBattle(battleSceneName, null, null, null, useFaderIfExists: true);
+        ArmVictoryRouteIfNeeded();
+
+        SceneTransitionService.EnterBattle(battleSceneName, null, null, null, useFaderIfExists: useFaderIfExists);
 
         yield return null;
+    }
+
+    private void ArmVictoryRouteIfNeeded()
+    {
+        if (string.IsNullOrWhiteSpace(victoryRouteKey))
+        {
+            BattleVictoryReturnContext.ClearArmed();
+            return;
+        }
+
+        if (victoryRouter == null)
+        {
+            Debug.LogWarning("[BattleTransition] Victory Router is missing.", this);
+            BattleVictoryReturnContext.ClearArmed();
+            return;
+        }
+
+        string routerPath = BattleVictoryReturnContext.GetTransformPath(victoryRouter.transform);
+
+        BattleVictoryReturnContext.Arm(
+            targetSceneName: SceneManager.GetActiveScene().name,
+            routeKey: victoryRouteKey,
+            routerTransformPath: routerPath,
+            enemyId: null,
+            sourceObjectName: name
+        );
     }
 }

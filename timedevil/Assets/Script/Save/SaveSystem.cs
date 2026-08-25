@@ -9,6 +9,7 @@ public static class SaveSystem
         PlayerDataStore.DeleteSave();
         ProgressSaveStore.DeleteSave();
         BattleEncounterState.ClearAll();
+        BattleVictoryReturnContext.ClearAll();
 
         if (ItemRuntime.Instance != null)
             ItemRuntime.Instance.LoadFromDefaultJson();

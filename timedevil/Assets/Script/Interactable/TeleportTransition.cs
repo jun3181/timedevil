@@ -7,6 +7,10 @@ public class TeleportTransition : MonoBehaviour, IInteractable
     [Header("Teleport Target (플레이어 이동 위치)")]
     public Transform targetPoint;
 
+    [Header("After Teleport Facing")]
+    [Tooltip("KeepCurrent이면 텔레포트 전 바라보던 방향을 유지합니다.")]
+    public TeleportArrivalFacing afterFacing = TeleportArrivalFacing.KeepCurrent;
+
     [Header("Fade (in-scene)")]
     [Tooltip("Teleport 연출에 쓸 FadePanelFader (없으면 씬에서 자동 탐색)")]
     public FadePanelFader fadePanel;
@@ -125,7 +129,7 @@ public class TeleportTransition : MonoBehaviour, IInteractable
         }
 
         if (debugLog)
-            Debug.Log($"{ContextTag()} Interact start target={(targetPoint ? targetPoint.name : "<null>")} mode={afterMode} bounds={(afterBounds ? afterBounds.name : "<null>")} fixedAnchor={(fixedCameraAnchorPoint ? fixedCameraAnchorPoint.name : "<null>")}", this);
+            Debug.Log($"{ContextTag()} Interact start target={(targetPoint ? targetPoint.name : "<null>")} mode={afterMode} facing={afterFacing} bounds={(afterBounds ? afterBounds.name : "<null>")} fixedAnchor={(fixedCameraAnchorPoint ? fixedCameraAnchorPoint.name : "<null>")}", this);
 
         if (!targetPoint && !TryAutoResolveTargetPoint())
         {
@@ -196,6 +200,7 @@ public class TeleportTransition : MonoBehaviour, IInteractable
 
         // 1) 플레이어 이동
         playerTr.position = to;
+        TeleportArrivalFacingUtility.Apply(playerTr, afterFacing);
         if (debugLog) Debug.Log($"{ContextTag()} player position applied current={playerTr.position}", this);
 
         // 2) 카메라 적용 (CameraManager가 책임)

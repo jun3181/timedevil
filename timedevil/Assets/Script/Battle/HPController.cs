@@ -14,8 +14,6 @@ public class HPController : MonoBehaviour
     [Header("Player Defeat")]
     [SerializeField] private bool loadMyroomOnPlayerZeroHp = true;
     [SerializeField] private string myroomSceneName = "Myroom";
-    [SerializeField, TextArea] private string playerDefeatMessage = "HP reached 0. Press E to return to your room.";
-    [SerializeField] private KeyCode playerDefeatContinueKey = KeyCode.E;
 
     [Header("Enemy Defeat")]
     [SerializeField] private bool returnToPreviousSceneOnEnemyZeroHp = true;
@@ -24,9 +22,9 @@ public class HPController : MonoBehaviour
     public Faction CurrentDamageTarget { get; private set; } = Faction.Enemy;
 
     private HPUIBinder _hpUI;
-    private DescriptionPanelController _descriptionPanel;
     private bool playerDefeatLoadStarted;
     private bool enemyDefeatReturnStarted;
+    private bool battleResultPipeStarted;
     public void InjectRefs(PlayerDataRuntime pdr, EnemyRuntime er, HPUIBinder binder = null)
     {
         if (pdr != null) playerData = pdr;
@@ -42,7 +40,6 @@ public class HPController : MonoBehaviour
         if (!playerData) playerData = FindObjectOfType<PlayerDataRuntime>(true);
         if (!enemyData) enemyData = EnemyRuntime.Instance ?? FindObjectOfType<EnemyRuntime>(true);
         _hpUI = FindObjectOfType<HPUIBinder>(true);
-        _descriptionPanel = FindObjectOfType<DescriptionPanelController>(true);
 
         if (!playerPawn)
         {
@@ -59,21 +56,41 @@ public class HPController : MonoBehaviour
     // ---- ATK / DEF ----
     public int GetAttack(Faction who)
     {
+        int value;
         if (who == Faction.Player)
         {
             // 플레이어 쪽은 필드명이 프로젝트마다 다를 수 있으므로 폴백으로 탐색
-            return ReadIntFrom(playerData?.Data, "atk", "attack", "ATK");
+            value = ReadIntFrom(playerData?.Data, "atk", "attack", "ATK");
         }
-        return enemyData != null ? enemyData.attack : 0;
+        else
+        {
+            value = enemyData != null ? enemyData.attack : 0;
+        }
+
+        var support = SupportController.Instance ?? FindObjectOfType<SupportController>(true);
+        if (support != null)
+            value += support.GetAttackModifier(who);
+
+        return Mathf.Max(0, value);
     }
 
     public int GetDefense(Faction who)
     {
+        int value;
         if (who == Faction.Player)
         {
-            return ReadIntFrom(playerData?.Data, "def", "defense", "DEF");
+            value = ReadIntFrom(playerData?.Data, "def", "defense", "DEF");
         }
-        return enemyData != null ? enemyData.defense : 0;
+        else
+        {
+            value = enemyData != null ? enemyData.defense : 0;
+        }
+
+        var support = SupportController.Instance ?? FindObjectOfType<SupportController>(true);
+        if (support != null)
+            value += support.GetDefenseModifier(who);
+
+        return Mathf.Max(0, value);
     }
 
     // ---- HP ----
@@ -93,6 +110,14 @@ public class HPController : MonoBehaviour
         if (enemyData == null) enemyData = EnemyRuntime.Instance ?? FindObjectOfType<EnemyRuntime>(true);
         if (playerData == null) playerData = PlayerDataRuntime.Instance ?? FindObjectOfType<PlayerDataRuntime>(true);
         if (_hpUI == null) _hpUI = FindObjectOfType<HPUIBinder>(true);
+
+        var support = SupportController.Instance ?? FindObjectOfType<SupportController>(true);
+        if (amount > 0 && support != null && support.IsInvincible(target))
+        {
+            Debug.Log($"[HP] {target} is invincible. Damage {amount} ignored.");
+            _hpUI?.Refresh();
+            return;
+        }
 
         if (target == Faction.Player)
         {
@@ -129,6 +154,55 @@ public class HPController : MonoBehaviour
                 Debug.LogWarning("[HPController] EnemyRuntime is null");
             }
         }
+    }
+
+    public int PayHP(Faction target, int amount, bool allowDefeat = false)
+    {
+        amount = Mathf.Max(0, amount);
+        if (amount <= 0) return 0;
+
+        if (enemyData == null) enemyData = EnemyRuntime.Instance ?? FindObjectOfType<EnemyRuntime>(true);
+        if (playerData == null) playerData = PlayerDataRuntime.Instance ?? FindObjectOfType<PlayerDataRuntime>(true);
+        if (_hpUI == null) _hpUI = FindObjectOfType<HPUIBinder>(true);
+
+        if (target == Faction.Player)
+        {
+            var pd = playerData?.Data;
+            if (pd == null)
+            {
+                Debug.LogWarning("[HPController] PlayerDataRuntime.Data is null");
+                return 0;
+            }
+
+            int cur = ReadIntFrom(pd, "currentHP");
+            int max = Mathf.Max(1, ReadIntFrom(pd, "maxHP"));
+            int min = allowDefeat ? 0 : 1;
+            int next = Mathf.Clamp(cur - amount, min, max);
+            int paid = Mathf.Max(0, cur - next);
+            WriteIntFieldOrProp(pd, "currentHP", next);
+            Debug.Log($"[HP] Player paid {paid} HP -> {next}");
+            _hpUI?.Refresh();
+            if (next <= 0)
+                HandlePlayerDefeat();
+            return paid;
+        }
+
+        if (enemyData == null)
+        {
+            Debug.LogWarning("[HPController] EnemyRuntime is null");
+            return 0;
+        }
+
+        int enemyCur = enemyData.currentHP;
+        int enemyMin = allowDefeat ? 0 : 1;
+        int enemyNext = Mathf.Clamp(enemyCur - amount, enemyMin, Mathf.Max(1, enemyData.maxHP));
+        int enemyPaid = Mathf.Max(0, enemyCur - enemyNext);
+        enemyData.currentHP = enemyNext;
+        Debug.Log($"[HP] Enemy paid {enemyPaid} HP -> {enemyData.currentHP}");
+        _hpUI?.Refresh();
+        if (enemyData.IsDead)
+            HandleEnemyDefeat();
+        return enemyPaid;
     }
 
     public void Heal(Faction target, int amount)
@@ -193,35 +267,27 @@ public class HPController : MonoBehaviour
         if (menu != null) menu.EnableInput(false);
 
         var turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
-        if (turnManager != null) turnManager.StopAllCoroutines();
-
-        var enemyTurn = FindObjectOfType<EnemyTurnController>(true);
-        if (enemyTurn != null) enemyTurn.StopAllCoroutines();
-
-        StartCoroutine(Co_PlayerDefeatSequence());
+        if (turnManager != null)
+            turnManager.QueueBattleResult(BattleResultKind.Defeat);
+        else
+            ExecuteBattleResultPipe(BattleResultKind.Defeat);
     }
 
-    private System.Collections.IEnumerator Co_PlayerDefeatSequence()
+    public void ExecuteBattleResultPipe(BattleResultKind result)
     {
-        if (_descriptionPanel == null)
-            _descriptionPanel = FindObjectOfType<DescriptionPanelController>(true);
+        if (battleResultPipeStarted)
+            return;
 
-        if (_descriptionPanel != null)
-            _descriptionPanel.ShowTemporaryExplanation(playerDefeatMessage);
+        battleResultPipeStarted = true;
 
-        yield return null;
-        while (Input.GetKey(playerDefeatContinueKey))
-            yield return null;
+        if (result == BattleResultKind.Victory)
+        {
+            ExecuteVictoryPipe();
+            return;
+        }
 
-        while (!Input.GetKeyDown(playerDefeatContinueKey))
-            yield return null;
-
-        BattleEncounterState.ClearPending();
-        PlayerReturnContext.ClearReturnCore();
-
-        Debug.Log($"[HPController] Player HP reached 0. Loading '{myroomSceneName}' at Spawn_Room2_LoadGame_PlayerDead.");
-
-        SceneTransitionService.EnterMyroom(MyroomEntryPoint.Spawn_Room2_LoadGame_PlayerDead, myroomSceneName, useFaderIfExists: true);
+        if (result == BattleResultKind.Defeat)
+            ExecuteDefeatPipe();
     }
 
     public void BeginCardHitTest(Faction target)
@@ -235,8 +301,44 @@ public class HPController : MonoBehaviour
             return;
 
         enemyDefeatReturnStarted = true;
+        var menu = FindObjectOfType<BattleMenuController>(true);
+        if (menu != null) menu.EnableInput(false);
+
+        var turnManager = TurnManager.Instance ?? FindObjectOfType<TurnManager>(true);
+        if (turnManager != null)
+            turnManager.QueueBattleResult(BattleResultKind.Victory);
+        else
+            ExecuteBattleResultPipe(BattleResultKind.Victory);
+    }
+
+    private void ExecuteVictoryPipe()
+    {
+        if (!returnToPreviousSceneOnEnemyZeroHp)
+            return;
+
+        BattleVictoryReturnContext.QueueArmedVictory();
         BattleEncounterState.ConsumePendingVictory();
         SceneTransitionService.ReturnFromBattle(enemyDefeatReturnGraceSeconds);
+    }
+
+    private void ExecuteDefeatPipe()
+    {
+        if (!loadMyroomOnPlayerZeroHp)
+            return;
+
+        if (string.IsNullOrWhiteSpace(myroomSceneName))
+        {
+            Debug.LogWarning("[HPController] Player defeat scene name is empty.");
+            return;
+        }
+
+        BattleEncounterState.ClearPending();
+        BattleVictoryReturnContext.ClearAll();
+        PlayerReturnContext.ClearReturnCore();
+
+        Debug.Log($"[HPController] Player HP reached 0. Loading '{myroomSceneName}' at Spawn_Room2_LoadGame_PlayerDead.");
+
+        SceneTransitionService.EnterMyroom(MyroomEntryPoint.Spawn_Room2_LoadGame_PlayerDead, myroomSceneName, useFaderIfExists: true);
     }
 
     private int ReadIntFrom(object obj, params string[] names)

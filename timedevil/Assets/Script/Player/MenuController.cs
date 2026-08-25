@@ -52,6 +52,7 @@ public class MenuController : MonoBehaviour
     [SerializeField] private bool autoBuildRetroMenu = true;
     [SerializeField] private string menuFrameResourcePath = "my_asset/menu_window_frame";
     [SerializeField] private Vector2 windowOffsetFromTopLeft = new Vector2(80f, -50f);
+    [SerializeField] private Vector2 contentOffsetFromTopLeft = new Vector2(80f, -1f);
     [SerializeField] private Vector2 windowSize = new Vector2(630f, 360f);
     [SerializeField] private Vector2 itemGridOrigin = new Vector2(72f, -90f);
     [SerializeField] private Vector2 itemGridSpacing = new Vector2(265f, 105f);
@@ -61,6 +62,7 @@ public class MenuController : MonoBehaviour
     [SerializeField] private string[] menuLabels = { "item", "card", "deck", "option", "status", "exit" };
     [SerializeField] private bool hidePanelTextInRetroView = true;
     [SerializeField] private bool preserveManualLayout = true;
+    [SerializeField] private bool repairLegacySubWindowLayout = true;
 
     [Header("Item Window View")]
     [SerializeField] private bool autoBuildItemWindow = true;
@@ -177,6 +179,34 @@ public class MenuController : MonoBehaviour
     private TextMeshProUGUI statusWindowCursorText;
     private static Sprite generatedFrameSprite;
     private static readonly string[] DefaultMenuLabels = { "item", "card", "deck", "option", "status", "exit" };
+    private static readonly Vector2 ReferenceItemFramePosition = new Vector2(746f, -50f);
+    private static readonly Vector2 ReferenceItemFrameSize = new Vector2(784.8384f, 360f);
+    private static readonly Vector2 ReferenceItemContentPosition = new Vector2(783f, -74f);
+    private static readonly Vector2 ReferenceItemInfoFramePosition = new Vector2(1544f, -50f);
+    private static readonly Vector2 ReferenceItemInfoFrameSize = new Vector2(340f, 362.2f);
+    private static readonly Vector2 ReferenceItemInfoContentPosition = new Vector2(1541f, -50f);
+    private static readonly Vector2 ReferenceSubWindowFramePosition = new Vector2(749f, -50f);
+    private static readonly Vector2 ReferenceSubWindowFrameSize = new Vector2(681.2395f, 360f);
+    private static readonly Vector2 ReferenceSubWindowContentPosition = new Vector2(749f, -50f);
+    private static readonly Vector2 ReferenceSubWindowContentSize = new Vector2(600f, 300f);
+    private static readonly Vector2 ReferencePreviewRootPosition = new Vector2(1446f, -61f);
+    private static readonly Vector2 ReferencePreviewRootSize = new Vector2(170f, 240f);
+    private static readonly Vector2 ReferencePreviewImagePosition = new Vector2(73.86328f, -50.27759f);
+    private static readonly Vector2 ReferencePreviewImageSize = new Vector2(86.1149f, 121.5739f);
+    private static readonly Vector2[] ReferenceItemEntryPositions =
+    {
+        new Vector2(44f, -17f),
+        new Vector2(44f, -90f),
+        new Vector2(44f, -160f),
+        new Vector2(44f, -232f)
+    };
+    private static readonly Vector2[] ReferenceCardEntryPositions =
+    {
+        new Vector2(44f, -34f),
+        new Vector2(44f, -112f),
+        new Vector2(44f, -196f),
+        new Vector2(44f, -272f)
+    };
 
     public bool IsOpen => isPaused;
 
@@ -527,18 +557,15 @@ public class MenuController : MonoBehaviour
         bool contentAlreadyExists = menuRoot.Find("MenuContent") != null;
         retroContentRoot = GetOrCreateRect(menuRoot, "MenuContent");
         if (!preserveManualLayout || !contentAlreadyExists)
-        {
-            retroContentRoot.anchorMin = new Vector2(0f, 1f);
-            retroContentRoot.anchorMax = new Vector2(0f, 1f);
-            retroContentRoot.pivot = new Vector2(0f, 1f);
-            retroContentRoot.anchoredPosition = windowOffsetFromTopLeft;
-            retroContentRoot.sizeDelta = windowSize;
-            retroContentRoot.localScale = Vector3.one;
-        }
+            ApplyRetroContentLayout();
         retroContentRoot.SetAsLastSibling();
 
         EnsureRetroMenuItems();
-        LayoutMenuItems();
+        bool repairCollapsedLayout = IsRetroMenuLayoutCollapsed();
+        if (repairCollapsedLayout)
+            ApplyRetroContentLayout();
+
+        LayoutMenuItems(repairCollapsedLayout);
         EnsureCursor();
         MoveCursorToCurrentItem();
         EnsureItemWindowView();
@@ -951,6 +978,9 @@ public class MenuController : MonoBehaviour
         itemWindowContentRoot.SetAsLastSibling();
 
         EnsureItemInfoWindowView(menuRoot);
+        if (IsLegacyItemWindowLayout())
+            ApplyReferenceItemWindowLayout();
+
         EnsureItemWindowTexts();
         SetItemWindowVisible(itemWindowOpen || (!Application.isPlaying && previewItemWindowInEditor));
     }
@@ -1299,6 +1329,165 @@ public class MenuController : MonoBehaviour
         target.localScale = Vector3.one;
     }
 
+    private bool IsLegacyItemWindowLayout()
+    {
+        if (!repairLegacySubWindowLayout) return false;
+
+        return IsNear(itemWindowFrame, itemWindowOffsetFromTopLeft, itemWindowSize)
+            || IsNear(itemWindowContentRoot, itemWindowOffsetFromTopLeft, itemWindowSize)
+            || IsNear(itemInfoWindowFrame, itemInfoWindowOffsetFromTopLeft, itemInfoWindowSize)
+            || IsNear(itemInfoWindowContentRoot, itemInfoWindowOffsetFromTopLeft, itemInfoWindowSize);
+    }
+
+    private bool IsLegacySubWindowLayout(
+        RectTransform frame,
+        RectTransform content,
+        RectTransform previewRoot,
+        RectTransform previewImage
+    )
+    {
+        if (!repairLegacySubWindowLayout) return false;
+
+        return IsNear(frame, cardWindowOffsetFromTopLeft, cardWindowSize)
+            || IsNear(frame, statusWindowOffsetFromTopLeft, statusWindowSize)
+            || IsNear(content, cardWindowOffsetFromTopLeft, cardWindowSize)
+            || IsNear(content, statusWindowOffsetFromTopLeft, statusWindowSize)
+            || IsNear(previewRoot, cardPreviewOffsetFromTopLeft, cardPreviewSize)
+            || IsCollapsedPreviewImage(previewImage);
+    }
+
+    private static bool IsNear(RectTransform rect, Vector2 anchoredPosition, Vector2 size)
+    {
+        if (rect == null) return false;
+
+        return (rect.anchoredPosition - anchoredPosition).sqrMagnitude <= 1f
+            && (rect.sizeDelta - size).sqrMagnitude <= 1f;
+    }
+
+    private static bool IsCollapsedPreviewImage(RectTransform rect)
+    {
+        return rect != null && rect.sizeDelta.sqrMagnitude <= 1f;
+    }
+
+    private void ApplyReferenceItemWindowLayout()
+    {
+        ApplyTopLeftRect(itemWindowFrame, ReferenceItemFramePosition, ReferenceItemFrameSize);
+        ApplyTopLeftRect(itemWindowContentRoot, ReferenceItemContentPosition, ReferenceSubWindowContentSize);
+        ApplyTopLeftRect(itemInfoWindowFrame, ReferenceItemInfoFramePosition, ReferenceItemInfoFrameSize);
+        ApplyTopLeftRect(itemInfoWindowContentRoot, ReferenceItemInfoContentPosition, ReferenceSubWindowContentSize);
+
+        for (int i = 0; i < ReferenceItemEntryPositions.Length; i++)
+            ApplyChildTopLeftTextRect(itemWindowContentRoot, $"ItemEntry_{i}", ReferenceItemEntryPositions[i], itemWindowEntrySize);
+
+        ApplyChildTopLeftTextRect(itemWindowContentRoot, "ItemClose", new Vector2(542f, -20f), itemWindowCloseSize);
+        ApplyChildTopLeftTextRect(itemWindowContentRoot, "ItemPage", new Vector2(546f, -233f), itemWindowPageSize);
+        ApplyChildTopLeftTextRect(itemWindowContentRoot, "ItemCursor", new Vector2(44f, -52f), new Vector2(46f, itemWindowEntrySize.y));
+        ApplyChildTopLeftTextRect(itemInfoWindowContentRoot, "ItemEffectDescription", new Vector2(30f, -34f), new Vector2(280f, 232f));
+
+        if (itemWindowFrame != null) itemWindowFrame.SetAsLastSibling();
+        if (itemWindowContentRoot != null) itemWindowContentRoot.SetAsLastSibling();
+        if (itemInfoWindowFrame != null) itemInfoWindowFrame.SetAsLastSibling();
+        if (itemInfoWindowContentRoot != null) itemInfoWindowContentRoot.SetAsLastSibling();
+    }
+
+    private void ApplyReferenceCardWindowLayout()
+    {
+        ApplyReferenceCardLikeWindowLayout(
+            cardWindowFrame,
+            cardWindowContentRoot,
+            cardPreviewRoot,
+            cardPreviewImage != null ? cardPreviewImage.rectTransform : null,
+            "Card"
+        );
+    }
+
+    private void ApplyReferenceDeckWindowLayout()
+    {
+        ApplyReferenceCardLikeWindowLayout(
+            deckWindowFrame,
+            deckWindowContentRoot,
+            deckPreviewRoot,
+            deckPreviewImage != null ? deckPreviewImage.rectTransform : null,
+            "Deck"
+        );
+    }
+
+    private void ApplyReferenceStatusWindowLayout()
+    {
+        ApplyTopLeftRect(statusWindowFrame, ReferenceSubWindowFramePosition, ReferenceSubWindowFrameSize);
+        ApplyTopLeftRect(statusWindowContentRoot, ReferenceSubWindowContentPosition, ReferenceSubWindowContentSize);
+
+        int statusCount = Mathf.Max(5, GetStatusLabels().Length);
+        for (int i = 0; i < statusCount; i++)
+        {
+            Vector2 position = new Vector2(statusWindowListOrigin.x, statusWindowListOrigin.y - i * statusWindowRowSpacing);
+            ApplyChildTopLeftTextRect(statusWindowContentRoot, $"StatusEntry_{i}", position, statusWindowEntrySize);
+        }
+
+        ApplyChildTopLeftTextRect(statusWindowContentRoot, "StatusClose", statusWindowClosePosition, statusWindowCloseSize);
+        ApplyChildTopLeftTextRect(statusWindowContentRoot, "StatusCursor", statusWindowClosePosition, new Vector2(46f, statusWindowCloseSize.y));
+
+        if (statusWindowFrame != null) statusWindowFrame.SetAsLastSibling();
+        if (statusWindowContentRoot != null) statusWindowContentRoot.SetAsLastSibling();
+    }
+
+    private void ApplyReferenceCardLikeWindowLayout(
+        RectTransform frame,
+        RectTransform content,
+        RectTransform previewRoot,
+        RectTransform previewImage,
+        string prefix
+    )
+    {
+        ApplyTopLeftRect(frame, ReferenceSubWindowFramePosition, ReferenceSubWindowFrameSize);
+        ApplyTopLeftRect(content, ReferenceSubWindowContentPosition, ReferenceSubWindowContentSize);
+        ApplyTopLeftRect(previewRoot, ReferencePreviewRootPosition, ReferencePreviewRootSize);
+        ApplyPreviewImageRect(previewImage);
+
+        for (int i = 0; i < ReferenceCardEntryPositions.Length; i++)
+            ApplyChildTopLeftTextRect(content, $"{prefix}Entry_{i}", ReferenceCardEntryPositions[i], cardWindowEntrySize);
+
+        ApplyChildTopLeftTextRect(content, $"{prefix}Close", new Vector2(498f, -34f), cardWindowCloseSize);
+        ApplyChildTopLeftTextRect(content, $"{prefix}Page", new Vector2(498f, -272f), cardWindowPageSize);
+        ApplyChildTopLeftTextRect(content, $"{prefix}Cursor", new Vector2(44f, -52f), new Vector2(46f, cardWindowEntrySize.y));
+
+        if (frame != null) frame.SetAsLastSibling();
+        if (content != null) content.SetAsLastSibling();
+        if (previewRoot != null) previewRoot.SetAsLastSibling();
+    }
+
+    private void ApplyChildTopLeftTextRect(RectTransform parent, string childName, Vector2 anchoredPosition, Vector2 size)
+    {
+        if (parent == null) return;
+
+        TextMeshProUGUI text = GetOrCreateText(parent, childName);
+        ApplyTopLeftRect(text.rectTransform, anchoredPosition, size);
+    }
+
+    private static void ApplyTopLeftRect(RectTransform rect, Vector2 anchoredPosition, Vector2 size)
+    {
+        if (rect == null) return;
+
+        rect.anchorMin = new Vector2(0f, 1f);
+        rect.anchorMax = new Vector2(0f, 1f);
+        rect.pivot = new Vector2(0f, 1f);
+        rect.anchoredPosition = anchoredPosition;
+        rect.sizeDelta = size;
+        rect.localScale = Vector3.one;
+    }
+
+    private static void ApplyPreviewImageRect(RectTransform rect)
+    {
+        if (rect == null) return;
+
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = ReferencePreviewImagePosition;
+        rect.sizeDelta = ReferencePreviewImageSize;
+        rect.localScale = Vector3.one;
+    }
+
     private void CopyTextLayoutFromCard(TextMeshProUGUI target, string cardChildName)
     {
         if (target == null || cardWindowContentRoot == null) return;
@@ -1577,6 +1766,9 @@ public class MenuController : MonoBehaviour
         cardPreviewImage.color = Color.white;
         cardPreviewImage.preserveAspect = true;
         cardPreviewImage.raycastTarget = false;
+
+        if (IsLegacySubWindowLayout(cardWindowFrame, cardWindowContentRoot, cardPreviewRoot, cardPreviewImage.rectTransform))
+            ApplyReferenceCardWindowLayout();
 
         EnsureCardWindowTexts();
         SetCardWindowVisible(cardWindowOpen || (!Application.isPlaying && previewCardWindowInEditor));
@@ -1979,6 +2171,9 @@ public class MenuController : MonoBehaviour
         deckPreviewImage.preserveAspect = true;
         deckPreviewImage.raycastTarget = false;
 
+        if (IsLegacySubWindowLayout(deckWindowFrame, deckWindowContentRoot, deckPreviewRoot, deckPreviewImage.rectTransform))
+            ApplyReferenceDeckWindowLayout();
+
         EnsureDeckWindowTexts();
         SetDeckWindowVisible(deckWindowOpen || (!Application.isPlaying && previewDeckWindowInEditor));
     }
@@ -2234,6 +2429,9 @@ public class MenuController : MonoBehaviour
         if (!preserveManualStatusLayout || !contentAlreadyExists)
             CopyRectFromSourceOrDefault(statusWindowContentRoot, cardWindowContentRoot, statusWindowOffsetFromTopLeft, statusWindowSize);
         statusWindowContentRoot.SetAsLastSibling();
+
+        if (IsLegacySubWindowLayout(statusWindowFrame, statusWindowContentRoot, null, null))
+            ApplyReferenceStatusWindowLayout();
 
         EnsureStatusWindowTexts();
         SetStatusWindowVisible(statusWindowOpen || (!Application.isPlaying && previewStatusWindowInEditor));
@@ -2910,7 +3108,19 @@ public class MenuController : MonoBehaviour
         return rect;
     }
 
-    private void LayoutMenuItems()
+    private void ApplyRetroContentLayout()
+    {
+        if (retroContentRoot == null) return;
+
+        retroContentRoot.anchorMin = new Vector2(0f, 1f);
+        retroContentRoot.anchorMax = new Vector2(0f, 1f);
+        retroContentRoot.pivot = new Vector2(0f, 1f);
+        retroContentRoot.anchoredPosition = contentOffsetFromTopLeft;
+        retroContentRoot.sizeDelta = windowSize;
+        retroContentRoot.localScale = Vector3.one;
+    }
+
+    private void LayoutMenuItems(bool forceDefaultLayout = false)
     {
         if (menuItems == null || retroContentRoot == null) return;
 
@@ -2924,7 +3134,8 @@ public class MenuController : MonoBehaviour
             if (itemRoot.parent != retroContentRoot)
                 itemRoot.SetParent(retroContentRoot, false);
 
-            if (!preserveManualLayout || !itemAlreadyInContent)
+            bool applyDefaultLayout = forceDefaultLayout || !preserveManualLayout || !itemAlreadyInContent;
+            if (applyDefaultLayout)
             {
                 itemRoot.anchorMin = new Vector2(0f, 1f);
                 itemRoot.anchorMax = new Vector2(0f, 1f);
@@ -2940,8 +3151,52 @@ public class MenuController : MonoBehaviour
                 image.raycastTarget = false;
             }
 
-            StyleMenuItemText(itemText, i, itemRoot == itemText.rectTransform, !preserveManualLayout || !itemAlreadyInContent);
+            StyleMenuItemText(itemText, i, itemRoot == itemText.rectTransform, applyDefaultLayout);
         }
+    }
+
+    private bool IsRetroMenuLayoutCollapsed()
+    {
+        if (menuItems == null || menuItems.Length < 3 || retroContentRoot == null)
+            return false;
+
+        int itemCount = 0;
+        int stackedAfterFirst = 0;
+        int centeredZeroItems = 0;
+        Vector2 firstPosition = Vector2.zero;
+        bool hasFirstPosition = false;
+
+        for (int i = 0; i < menuItems.Length; i++)
+        {
+            TextMeshProUGUI itemText = menuItems[i];
+            if (itemText == null) continue;
+
+            RectTransform itemRoot = GetItemRoot(itemText);
+            if (itemRoot == null || itemRoot.parent != retroContentRoot)
+                continue;
+
+            itemCount++;
+
+            if (!hasFirstPosition)
+            {
+                firstPosition = itemRoot.anchoredPosition;
+                hasFirstPosition = true;
+            }
+            else if (Vector2.Distance(firstPosition, itemRoot.anchoredPosition) <= 0.5f)
+            {
+                stackedAfterFirst++;
+            }
+
+            bool centeredAnchor =
+                Vector2.Distance(itemRoot.anchorMin, new Vector2(0.5f, 0.5f)) <= 0.001f &&
+                Vector2.Distance(itemRoot.anchorMax, new Vector2(0.5f, 0.5f)) <= 0.001f &&
+                Vector2.Distance(itemRoot.pivot, new Vector2(0.5f, 0.5f)) <= 0.001f;
+
+            if (centeredAnchor && itemRoot.anchoredPosition.sqrMagnitude <= 1f)
+                centeredZeroItems++;
+        }
+
+        return itemCount >= 3 && (stackedAfterFirst >= itemCount - 1 || centeredZeroItems >= 3);
     }
 
     private RectTransform GetItemRoot(TextMeshProUGUI itemText)

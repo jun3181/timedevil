@@ -61,6 +61,8 @@ public class RunController : MonoBehaviour
         isReturning = true;
         if (menu) menu.EnableInput(false);
 
+        BattleVictoryReturnContext.ClearAll();
+
         //  핵심: 돌아가면 카메라를 Player에 재바인딩하라는 플래그 세팅
         ApplyPreferredReturnVcam();
 

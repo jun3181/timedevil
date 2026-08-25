@@ -19,9 +19,6 @@ public class TriggerStep_ItemReward : TriggerStepBase
     [Header("Rewards")]
     [SerializeField] private List<RewardItem> rewardItems = new();
 
-    [Tooltip("지급 직후 인벤토리를 디스크에 저장합니다.")]
-    [SerializeField] private bool saveAfterReward = false;
-
     [Header("Dialogue")]
     [Tooltip("아이템 획득 안내 대화창을 표시합니다.")]
     [SerializeField] private bool showAcquisitionDialogue = true;
@@ -68,9 +65,6 @@ public class TriggerStep_ItemReward : TriggerStepBase
                 Debug.LogWarning("[TriggerStep_ItemReward] 지급할 아이템이 설정되지 않았습니다.", this);
             yield break;
         }
-
-        if (saveAfterReward)
-            ItemRuntime.Instance.SaveToDisk();
 
         if (debugLog)
             Debug.Log($"[TriggerStep_ItemReward] 아이템 {givenItemKinds}종을 지급했습니다.", this);

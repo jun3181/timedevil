@@ -29,6 +29,20 @@ public class PlayerMove : MonoBehaviour
     private Vector3 facing = Vector3.down;
     public Vector3 Facing => facing;
 
+    public void SetFacing(Vector3 direction, bool updateAnimator = true)
+    {
+        if (!PlayerFacingMath.TryResolveCardinal(direction, out Vector3 resolvedFacing, out int hAxis, out int vAxis, out bool horizontal))
+            return;
+
+        facing = resolvedFacing;
+        isHorizonMove = horizontal;
+        lastHAxisRaw = hAxis;
+        lastVAxisRaw = vAxis;
+
+        if (updateAnimator)
+            ApplyIdleFacingToAnimator(hAxis, vAxis);
+    }
+
     private void Reset()
     {
         rb ??= GetComponent<Rigidbody2D>();
@@ -116,9 +130,49 @@ public class PlayerMove : MonoBehaviour
         );
     }
 
+    private void ApplyIdleFacingToAnimator(int hAxis, int vAxis)
+    {
+        if (!anim) anim = GetComponent<Animator>();
+        if (!anim) return;
+
+        anim.SetInteger("hAxisRaw", hAxis);
+        anim.SetInteger("vAxisRaw", vAxis);
+        anim.SetBool("isChange", false);
+    }
+
     private void FixedUpdate()
     {
         Vector2 input = new Vector2(h, v);
         rb.velocity = input.sqrMagnitude > 0f ? input.normalized * speed : Vector2.zero;
+    }
+}
+
+internal static class PlayerFacingMath
+{
+    public static bool TryResolveCardinal(Vector3 direction, out Vector3 facing, out int hAxis, out int vAxis, out bool horizontal)
+    {
+        facing = Vector3.down;
+        hAxis = 0;
+        vAxis = -1;
+        horizontal = false;
+
+        Vector2 dir = new Vector2(direction.x, direction.y);
+        if (dir.sqrMagnitude <= 0.000001f)
+            return false;
+
+        if (Mathf.Abs(dir.x) >= Mathf.Abs(dir.y))
+        {
+            hAxis = dir.x >= 0f ? 1 : -1;
+            vAxis = 0;
+            horizontal = true;
+            facing = hAxis > 0 ? Vector3.right : Vector3.left;
+            return true;
+        }
+
+        hAxis = 0;
+        vAxis = dir.y >= 0f ? 1 : -1;
+        horizontal = false;
+        facing = vAxis > 0 ? Vector3.up : Vector3.down;
+        return true;
     }
 }

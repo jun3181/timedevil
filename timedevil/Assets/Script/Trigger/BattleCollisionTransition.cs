@@ -19,6 +19,10 @@ public class BattleCollisionTransition : MonoBehaviour
     [SerializeField] private string encounterKey = "";
     [SerializeField] private bool disableWhenEncounterConsumed = true;
 
+    [Header("Victory Route On Return")]
+    [SerializeField] private TriggerRouter victoryRouter;
+    [SerializeField] private string victoryRouteKey = "";
+
     [Header("Return")]
     [SerializeField] private Transform returnPointOverride;
     [SerializeField] private float graceSeconds = 0.5f;
@@ -290,6 +294,10 @@ public class BattleCollisionTransition : MonoBehaviour
             Debug.Log($"[BattleCollisionTransition] enter by '{colliderName}' -> scene='{battleSceneName}', enemyId='{resolvedEnemyId}', returnPos=({returnPos.x:F2},{returnPos.y:F2}), camRestore={restoreCam}, camMode={camMode}");
 
         QueueEncounterConsumptionIfNeeded();
+        ArmVictoryRouteIfNeeded(resolvedEnemyId);
+
+        if (GameManager.Instance != null)
+            GameManager.Instance.LockAction();
 
         BattleSceneLoader.Go(battleSceneName, resolvedEnemyId, player, enemy);
 
@@ -309,6 +317,34 @@ public class BattleCollisionTransition : MonoBehaviour
         }
 
         BattleEncounterState.SetPending(SceneManager.GetActiveScene().name, key);
+    }
+
+    private void ArmVictoryRouteIfNeeded(string resolvedEnemyId)
+    {
+        if (string.IsNullOrWhiteSpace(victoryRouteKey))
+        {
+            BattleVictoryReturnContext.ClearArmed();
+            return;
+        }
+
+        if (victoryRouter == null)
+        {
+            if (debugLog)
+                Debug.LogWarning("[BattleCollisionTransition] Victory Router is missing.", this);
+
+            BattleVictoryReturnContext.ClearArmed();
+            return;
+        }
+
+        string routerPath = BattleVictoryReturnContext.GetTransformPath(victoryRouter.transform);
+
+        BattleVictoryReturnContext.Arm(
+            targetSceneName: SceneManager.GetActiveScene().name,
+            routeKey: victoryRouteKey,
+            routerTransformPath: routerPath,
+            enemyId: resolvedEnemyId,
+            sourceObjectName: name
+        );
     }
 
     private bool ApplyConsumedEncounterIfNeeded()

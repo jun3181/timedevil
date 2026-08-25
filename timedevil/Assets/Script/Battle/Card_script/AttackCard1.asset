@@ -26,6 +26,8 @@ MonoBehaviour:
   negative: 7
   power: 1
   useRawPowerDamage: 0
+  hitMask:
+    cells: 00010000010001000001000000000000
   pattern16: 0100101001000000
   timeline:
   - 0
@@ -48,7 +50,10 @@ MonoBehaviour:
   animationKey: 
   sfx: {fileID: 0}
   waves:
-  - pattern16: 0100101001000000
+  - castType: 0
+    hitMask:
+      cells: 00010000010001000001000000000000
+    pattern16: 0100101001000000
     timeline:
     - 0
     - 1
@@ -73,11 +78,33 @@ MonoBehaviour:
     vfxPrefab: {fileID: 0}
     vfxEveryHit: 0
     vfxLifetime: 0
-    hitDelays: []
+    hitDelays:
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    projectileRoutes:
+    - from:
+        index: 0
+      to:
+        index: 0
+      launchDelay: 0
     projectilePrefab: {fileID: 0}
     projectileSpeed: 0
-    projectileHitWidth: 0
-    projectileHitHeight: 0
+    projectileHitWidth: 0.01
+    projectileHitHeight: 0.01
     destroyOnImpact: 0
     projectileScale: 0
     labelsA: 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000

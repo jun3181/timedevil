@@ -24,6 +24,14 @@ public class TriggerStep_QuestItemDialogue : TriggerStepBase
     [Min(1)]
     [SerializeField] private int requiredQuantity = 3;
 
+    [Tooltip("Consume the required item quantity when the completion dialogue is selected")]
+    [SerializeField] private bool consumeRequiredItemsOnComplete = false;
+
+    [Tooltip("Consume the required items only once from this object")]
+    [SerializeField] private bool consumeRequiredItemsOnlyOnce = true;
+
+    [SerializeField, HideInInspector] private bool hasConsumedRequiredItems = false;
+
     [Header("Quest Dialogues")]
     [Tooltip("Dialogue played when the item condition is not met")]
     [SerializeField] private Dialogue defaultDialogue;
@@ -85,6 +93,8 @@ public class TriggerStep_QuestItemDialogue : TriggerStepBase
             yield break;
         }
 
+        ConsumeRequiredItemsIfNeeded(isComplete);
+
         List<RewardItem> givenRewards = GiveCompletionRewardIfNeeded(isComplete);
         Dialogue dialogueToPlay = givenRewards.Count > 0
             ? BuildRewardDialogue(selected, givenRewards)
@@ -102,6 +112,21 @@ public class TriggerStep_QuestItemDialogue : TriggerStepBase
 
         if (shouldRunCompletionRoute)
             completionRouter.RequestRoute(completionRouteKey, BuildCompletionContext(ctx));
+    }
+
+    private void ConsumeRequiredItemsIfNeeded(bool isComplete)
+    {
+        if (!isComplete || !consumeRequiredItemsOnComplete)
+            return;
+
+        if (consumeRequiredItemsOnlyOnce && hasConsumedRequiredItems)
+            return;
+
+        if (ItemRuntime.Instance == null || string.IsNullOrEmpty(itemId))
+            return;
+
+        ItemRuntime.Instance.AddQuantity(itemId, -Mathf.Max(1, requiredQuantity));
+        hasConsumedRequiredItems = true;
     }
 
     private bool TryReserveCompletionRoute(bool isComplete)

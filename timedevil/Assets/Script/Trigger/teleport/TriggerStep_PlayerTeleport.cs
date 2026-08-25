@@ -9,6 +9,10 @@ public class TriggerStep_PlayerTeleport : TriggerStepBase
     [SerializeField] private Transform targetPoint;
     [SerializeField] private Vector2 offset = Vector2.zero;
 
+    [Header("After Teleport Facing")]
+    [Tooltip("KeepCurrent이면 텔레포트 전 바라보던 방향을 유지합니다.")]
+    [SerializeField] private TeleportArrivalFacing afterFacing = TeleportArrivalFacing.KeepCurrent;
+
     [Header("Fade (in-scene)")]
     [SerializeField] private bool useFade = false;
     [SerializeField] private FadePanelFader fadePanel;
@@ -70,7 +74,7 @@ public class TriggerStep_PlayerTeleport : TriggerStepBase
     public override IEnumerator Execute(TriggerContext ctx)
     {
         if (debugLog)
-            Debug.Log($"{ContextTag()} Execute start target={(targetPoint ? targetPoint.name : "<null>")} offset={offset} mode={afterMode}", this);
+            Debug.Log($"{ContextTag()} Execute start target={(targetPoint ? targetPoint.name : "<null>")} offset={offset} mode={afterMode} facing={afterFacing}", this);
 
         if (!targetPoint)
         {
@@ -97,7 +101,7 @@ public class TriggerStep_PlayerTeleport : TriggerStepBase
         Vector3 to = targetPoint.position + (Vector3)offset;
 
         if (debugLog)
-            Debug.Log($"{ContextTag()} player={playerTr.name} from={from} to={to} targetScene={targetPoint.gameObject.scene.name} mode={afterMode} bounds={(afterBounds ? afterBounds.name : "<null>")} fixedAnchor={(fixedCameraAnchorPoint ? fixedCameraAnchorPoint.name : "<null>")}", this);
+            Debug.Log($"{ContextTag()} player={playerTr.name} from={from} to={to} targetScene={targetPoint.gameObject.scene.name} mode={afterMode} facing={afterFacing} bounds={(afterBounds ? afterBounds.name : "<null>")} fixedAnchor={(fixedCameraAnchorPoint ? fixedCameraAnchorPoint.name : "<null>")}", this);
 
         bool heldInputLock = false;
         if (lockPlayerInput && GameManager.Instance)
@@ -121,6 +125,7 @@ public class TriggerStep_PlayerTeleport : TriggerStepBase
 
         // 이동
         playerTr.position = to;
+        TeleportArrivalFacingUtility.Apply(playerTr, afterFacing);
         if (debugLog) Debug.Log($"{ContextTag()} player position applied current={playerTr.position}", this);
 
         // 카메라 적용은 CameraManager 책임(Indoor 앵커도 넘김)
@@ -167,5 +172,64 @@ public class TriggerStep_PlayerTeleport : TriggerStepBase
         }
 
         if (debugLog) Debug.Log($"{ContextTag()} Execute done", this);
+    }
+}
+
+public enum TeleportArrivalFacing
+{
+    KeepCurrent,
+    Up,
+    Down,
+    Left,
+    Right
+}
+
+internal static class TeleportArrivalFacingUtility
+{
+    public static void Apply(Transform player, TeleportArrivalFacing facing)
+    {
+        if (!player || facing == TeleportArrivalFacing.KeepCurrent)
+            return;
+
+        Vector3 direction = ToVector(facing);
+
+        PlayerMove move = player.GetComponent<PlayerMove>();
+        if (!move) move = player.GetComponentInParent<PlayerMove>();
+        if (!move) move = player.GetComponentInChildren<PlayerMove>(true);
+        if (move) move.SetFacing(direction);
+
+        PlayerAction action = player.GetComponent<PlayerAction>();
+        if (!action) action = player.GetComponentInParent<PlayerAction>();
+        if (!action) action = player.GetComponentInChildren<PlayerAction>(true);
+        if (action) action.SetFacing(direction);
+
+        if (!move && !action)
+            ApplyAnimatorFallback(player, direction);
+    }
+
+    private static Vector3 ToVector(TeleportArrivalFacing facing)
+    {
+        switch (facing)
+        {
+            case TeleportArrivalFacing.Up: return Vector3.up;
+            case TeleportArrivalFacing.Down: return Vector3.down;
+            case TeleportArrivalFacing.Left: return Vector3.left;
+            case TeleportArrivalFacing.Right: return Vector3.right;
+            default: return Vector3.zero;
+        }
+    }
+
+    private static void ApplyAnimatorFallback(Transform player, Vector3 direction)
+    {
+        if (!PlayerFacingMath.TryResolveCardinal(direction, out _, out int hAxis, out int vAxis, out _))
+            return;
+
+        Animator anim = player.GetComponent<Animator>();
+        if (!anim) anim = player.GetComponentInChildren<Animator>(true);
+        if (!anim) return;
+
+        anim.SetInteger("hAxisRaw", hAxis);
+        anim.SetInteger("vAxisRaw", vAxis);
+        anim.SetBool("isChange", false);
     }
 }

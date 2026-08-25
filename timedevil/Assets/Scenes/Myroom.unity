@@ -23146,7 +23146,6 @@ MonoBehaviour:
   rewardItems:
   - itemSO: {fileID: 11400000, guid: f22e70268e2449ed81fc0182141584b1, type: 2}
     quantity: 1
-  saveAfterReward: 0
   showAcquisitionDialogue: 1
   afterDialogue:
     name: 

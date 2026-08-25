@@ -8,6 +8,7 @@ public class TemporaryBattleExit : MonoBehaviour, IInteractable
     [Header("Fallback 설정")]
     [Tooltip("저장된 돌아갈 씬 정보가 없을 경우, 대신 이동할 씬 이름")]
     public string fallbackSceneName = "Mainmenu";
+    [SerializeField] private bool useFaderIfExists = true;
 
     private bool isTransitioning = false;
 
@@ -32,15 +33,16 @@ public class TemporaryBattleExit : MonoBehaviour, IInteractable
     {
         isTransitioning = true;
         BattleEncounterState.ClearPending();
+        BattleVictoryReturnContext.ClearAll();
 
         // (선택) 입력 잠금
         if (GameManager.Instance != null)
             GameManager.Instance.isAction = true;
 
         if (useBattleReturn)
-            SceneTransitionService.ReturnFromBattle(0f, useFaderIfExists: true);
+            SceneTransitionService.ReturnFromBattle(0f, useFaderIfExists: useFaderIfExists);
         else
-            SceneTransitionService.LoadDefault(sceneName, useFaderIfExists: true);
+            SceneTransitionService.LoadDefault(sceneName, useFaderIfExists: useFaderIfExists);
 
         // 씬 로드되면 이 오브젝트는 보통 파괴되므로 여기서 해제는 선택
         yield return null;

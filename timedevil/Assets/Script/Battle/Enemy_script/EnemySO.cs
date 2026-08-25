@@ -1,4 +1,3 @@
-// EnemySO.cs
 using UnityEngine;
 
 [CreateAssetMenu(menuName = "Battle/Enemy", fileName = "EnemySO")]

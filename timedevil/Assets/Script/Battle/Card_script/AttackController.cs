@@ -102,7 +102,7 @@ public class AttackController : MonoBehaviour
         {
             bool[] mask = new bool[16];
             float[] times = new float[16];
-            AttackCardSO.ParsePattern16(so.pattern16, mask);
+            AttackCardSO.FillMask16(so.hitMask, so.pattern16, mask);
             AttackCardSO.FillTimeline16(so.timeline, times);
 
             if (IsAllZero(mask)) yield break;
@@ -129,11 +129,11 @@ public class AttackController : MonoBehaviour
             //                   /      
             bool[] warnMaskBase = new bool[16];
             float[] warnTimes = new float[16];
-            AttackCardSO.ParsePattern16(w.pattern16, warnMaskBase);
+            AttackCardSO.FillMask16(w.hitMask, w.pattern16, warnMaskBase);
             AttackCardSO.FillTimeline16(w.timeline, warnTimes);
 
             // (1)                 : labelsB>0                   OR
-            bool[] warnMask = BuildWarningMaskWithLabelsB(warnMaskBase, w.labelsB);
+            bool[] warnMask = BuildWarningMaskForWave(w, warnMaskBase);
 
             if (IsAllZero(warnMask))
             {
@@ -158,9 +158,9 @@ public class AttackController : MonoBehaviour
             }
 
             // Hook     
-            if (w.projectilePrefab != null)                       // Launcher Hook (                      )
+            if (IsProjectileWave(w))                              // Launcher Hook
             {
-                yield return LaunchProjectilesByLabels(w, self, foe, centersSelf, centersFoe, foeTileSize, so);
+                yield return LaunchProjectiles(w, self, foe, centersSelf, centersFoe, foeTileSize, so);
             }
             else if (w.explosionPrefab != null)                   // Explosion Hook
             {
@@ -346,6 +346,49 @@ public class AttackController : MonoBehaviour
     //  Launcher:                               
     //  (         :                         /         )
     //                                                                                           
+    private IEnumerator LaunchProjectiles(
+        AttackCardSO.Wave w, Faction self, Faction foe,
+        Vector3[] centersA, Vector3[] centersB, Vector2 foeTileSize, AttackCardSO so)
+    {
+        if (w.projectileRoutes != null && w.projectileRoutes.Count > 0 && w.castType == AttackCastType.Projectile)
+        {
+            yield return LaunchProjectilesByRoutes(w, self, foe, centersA, centersB, foeTileSize, so);
+            yield break;
+        }
+
+        yield return LaunchProjectilesByLabels(w, self, foe, centersA, centersB, foeTileSize, so);
+    }
+
+    private IEnumerator LaunchProjectilesByRoutes(
+        AttackCardSO.Wave w, Faction self, Faction foe,
+        Vector3[] centersA, Vector3[] centersB, Vector2 foeTileSize, AttackCardSO so)
+    {
+        Vector2 projectileHitSize = ResolveProjectileHitSize(w, foeTileSize);
+
+        bool damageApplied = false;
+        var running = new List<Coroutine>();
+
+        for (int i = 0; i < w.projectileRoutes.Count; i++)
+        {
+            AttackProjectileRoute route = w.projectileRoutes[i];
+            if (route == null) continue;
+
+            int srcIdx = Mathf.Clamp(route.FromIndex, 0, 15);
+            int dstIdx = Mathf.Clamp(route.ToIndex, 0, 15);
+
+            var startPos = centersA[srcIdx]; startPos.z = ProjectileZ;
+            var endPos = centersB[dstIdx]; endPos.z = ProjectileZ;
+            float launchDelay = Mathf.Max(0f, route.launchDelay);
+
+            running.Add(StartCoroutine(CoLaunchProjectileLine_MoveHit(
+                w, startPos, endPos, launchDelay, projectileHitSize, so, self, foe,
+                () => damageApplied, () => damageApplied = true
+            )));
+        }
+
+        foreach (var co in running) if (co != null) yield return co;
+    }
+
     private IEnumerator LaunchProjectilesByLabels(
         AttackCardSO.Wave w, Faction self, Faction foe,
         Vector3[] centersA, Vector3[] centersB, Vector2 foeTileSize, AttackCardSO so)
@@ -470,7 +513,7 @@ public class AttackController : MonoBehaviour
 
         if (so.waves == null || so.waves.Length == 0)
         {
-            AttackCardSO.ParsePattern16(so.pattern16, outMask);
+            AttackCardSO.FillMask16(so.hitMask, so.pattern16, outMask);
             return !IsAllZero(outMask);
         }
 
@@ -480,8 +523,8 @@ public class AttackController : MonoBehaviour
             var w = so.waves[wi];
             if (w == null) continue;
 
-            AttackCardSO.ParsePattern16(w.pattern16, warnMaskBase);
-            bool[] waveMask = BuildWarningMaskWithLabelsB(warnMaskBase, w.labelsB);
+            AttackCardSO.FillMask16(w.hitMask, w.pattern16, warnMaskBase);
+            bool[] waveMask = BuildWarningMaskForWave(w, warnMaskBase);
             for (int i = 0; i < 16; i++)
                 outMask[i] = outMask[i] || waveMask[i];
         }
@@ -489,17 +532,44 @@ public class AttackController : MonoBehaviour
         return !IsAllZero(outMask);
     }
 
-    private bool[] BuildWarningMaskWithLabelsB(bool[] baseMask, int[] labelsB)
+    private bool[] BuildWarningMaskForWave(AttackCardSO.Wave w, bool[] baseMask)
     {
-        // baseMask OR (labelsB>0)
         var outMask = new bool[16];
         for (int i = 0; i < 16; i++)
         {
             bool fromBase = (baseMask != null && baseMask.Length > i) ? baseMask[i] : false;
-            bool fromLabel = (labelsB != null && labelsB.Length > i) ? (labelsB[i] > 0) : false;
+            bool fromLabel = (w != null && w.labelsB != null && w.labelsB.Length > i) ? (w.labelsB[i] > 0) : false;
             outMask[i] = fromBase || fromLabel;
         }
+
+        if (IsProjectileWave(w) && w.projectileRoutes != null)
+        {
+            for (int i = 0; i < w.projectileRoutes.Count; i++)
+            {
+                AttackProjectileRoute route = w.projectileRoutes[i];
+                if (route == null) continue;
+                outMask[Mathf.Clamp(route.ToIndex, 0, 15)] = true;
+            }
+        }
+
         return outMask;
+    }
+
+    private bool IsProjectileWave(AttackCardSO.Wave w)
+    {
+        if (w == null) return false;
+        if (w.castType == AttackCastType.Projectile) return true;
+        return w.projectilePrefab != null && HasAnyLabel(w.labelsA) && HasAnyLabel(w.labelsB);
+    }
+
+    private bool HasAnyLabel(int[] labels)
+    {
+        if (labels == null) return false;
+        for (int i = 0; i < labels.Length; i++)
+        {
+            if (labels[i] > 0) return true;
+        }
+        return false;
     }
 
     private List<(int idx, float time)> BuildSchedule(bool[] mask, float[] times)

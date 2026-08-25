@@ -21,13 +21,17 @@ public class TriggerGet : MonoBehaviour
     // Keeps consumed trigger state across scene reloads during runtime.
     private static readonly Dictionary<string, int> s_callCountById = new();
     private static readonly Dictionary<string, RouteStageProgress> s_stageProgressById = new();
+    private static readonly HashSet<string> s_completedById = new();
 
     [Header("Router")]
     public TriggerRouter router;
 
     [Header("Route Stages (Optional)")]
-    [Tooltip("If entries exist, stages run in order and the fallback Route Key/Call Limit fields are ignored.")]
+    [Tooltip("If entries exist, stages run in order. Completion Item Condition can override these stages.")]
     public List<TriggerRouteStage> routeStages = new();
+
+    [Header("Completion Item Condition")]
+    public TriggerItemCompletionCondition completionItemCondition = new();
 
     [Header("Fallback Route Key")]
     public string routeKey = "Trigger1";
@@ -55,6 +59,7 @@ public class TriggerGet : MonoBehaviour
     private int _called = 0;
     private int _stageIndex = 0;
     private int _stageCalled = 0;
+    private bool _completed = false;
     private Collider2D _selfCollider;
 
     private bool _pendingByCutscene = false;
@@ -113,7 +118,7 @@ public class TriggerGet : MonoBehaviour
             return;
         }
 
-        if (!TryGetActiveRoute(out string currentRouteKey, out _, out _, out _))
+        if (!TryGetPreviewRouteKey(out string currentRouteKey))
         {
             ApplyConsumedStateIfNeeded();
             return;
@@ -158,7 +163,25 @@ public class TriggerGet : MonoBehaviour
     {
         if (other == null) return;
 
-        if (!TryGetActiveRoute(out string currentRouteKey, out int currentCallCount, out int currentMaxCalls, out int currentStageIndex))
+        if (IsCompletionConsumed())
+        {
+            ApplyConsumedStateIfNeeded();
+            return;
+        }
+
+        bool isCompletionRoute = TryGetCompletionRoute(
+            out string currentRouteKey,
+            out TriggerItemRouteDecision completionDecision);
+
+        int currentCallCount = isCompletionRoute ? 1 : 0;
+        int currentMaxCalls = isCompletionRoute ? 1 : 0;
+        int currentStageIndex = -1;
+
+        if (!isCompletionRoute && !TryGetActiveRoute(
+                out currentRouteKey,
+                out currentCallCount,
+                out currentMaxCalls,
+                out currentStageIndex))
         {
             ApplyConsumedStateIfNeeded();
             return;
@@ -170,13 +193,23 @@ public class TriggerGet : MonoBehaviour
             return;
         }
 
-        RegisterRouteCall();
-        currentCallCount++;
+        if (isCompletionRoute)
+            RegisterCompletion();
+        else
+            RegisterRouteCall();
+
+        if (!isCompletionRoute)
+            currentCallCount++;
+
+        if (isCompletionRoute)
+            completionItemCondition.ConsumeRequiredItemsIfNeeded(completionDecision);
 
         if (debugLog)
         {
             string stageSuffix = currentStageIndex >= 0 ? $" stage={currentStageIndex + 1}/{routeStages.Count}" : "";
-            Debug.Log($"[TriggerGet] Fired key='{currentRouteKey}' call={FormatCallCount(currentCallCount, currentMaxCalls)}{stageSuffix} by='{other.name}'");
+            string completionSuffix = isCompletionRoute ? " completion" : "";
+            string conditionSuffix = isCompletionRoute ? FormatConditionSuffix(completionDecision) : "";
+            Debug.Log($"[TriggerGet] Fired key='{currentRouteKey}' call={FormatCallCount(currentCallCount, currentMaxCalls)}{completionSuffix}{stageSuffix}{conditionSuffix} by='{other.name}'");
         }
 
         var ctx = new TriggerContext(
@@ -223,8 +256,11 @@ public class TriggerGet : MonoBehaviour
         _called = 0;
         _stageIndex = 0;
         _stageCalled = 0;
+        _completed = false;
 
         if (string.IsNullOrEmpty(_runtimeId)) return;
+
+        _completed = s_completedById.Contains(_runtimeId);
 
         if (HasRouteStages)
         {
@@ -266,7 +302,65 @@ public class TriggerGet : MonoBehaviour
         s_stageProgressById[_runtimeId] = new RouteStageProgress(_stageIndex, _stageCalled);
     }
 
-    private bool TryGetActiveRoute(out string currentRouteKey, out int currentCallCount, out int currentMaxCalls, out int currentStageIndex)
+    private bool TryGetCompletionRoute(out string completionRouteKey, out TriggerItemRouteDecision decision)
+    {
+        completionRouteKey = null;
+        decision = TriggerItemRouteDecision.NoCondition();
+
+        if (completionItemCondition == null || !completionItemCondition.IsEnabled)
+            return false;
+
+        decision = completionItemCondition.Evaluate();
+        if (!decision.isMet)
+            return false;
+
+        completionRouteKey = completionItemCondition.CompleteRouteKey;
+        if (!string.IsNullOrWhiteSpace(completionRouteKey))
+            return true;
+
+        if (debugLog)
+            Debug.LogWarning("[TriggerGet] Completion item condition is met, but Complete Route Key is empty.", this);
+
+        return false;
+    }
+
+    private void RegisterCompletion()
+    {
+        _completed = true;
+
+        if (!string.IsNullOrEmpty(_runtimeId))
+            s_completedById.Add(_runtimeId);
+    }
+
+    private bool IsCompletionConfigured()
+    {
+        return completionItemCondition != null && completionItemCondition.IsEnabled;
+    }
+
+    private bool IsCompletionConsumed()
+    {
+        return _completed || (!string.IsNullOrEmpty(_runtimeId) && s_completedById.Contains(_runtimeId));
+    }
+
+    private bool TryGetPreviewRouteKey(out string currentRouteKey)
+    {
+        if (IsCompletionConsumed())
+        {
+            currentRouteKey = null;
+            return false;
+        }
+
+        if (TryGetCompletionRoute(out currentRouteKey, out _))
+            return true;
+
+        return TryGetActiveRoute(out currentRouteKey, out _, out _, out _);
+    }
+
+    private bool TryGetActiveRoute(
+        out string currentRouteKey,
+        out int currentCallCount,
+        out int currentMaxCalls,
+        out int currentStageIndex)
     {
         currentRouteKey = routeKey;
         currentCallCount = _called;
@@ -337,10 +431,22 @@ public class TriggerGet : MonoBehaviour
 
     private void ApplyConsumedStateIfNeeded()
     {
+        if (IsCompletionConsumed())
+        {
+            enabled = false;
+            if (_selfCollider != null) _selfCollider.enabled = false;
+
+            if (debugLog)
+                Debug.Log($"[TriggerGet] Consumed -> disabled completion id='{_runtimeId}'", this);
+
+            return;
+        }
+
         if (HasRouteStages)
         {
             AdvanceToNextRouteStageIfNeeded();
             if (_stageIndex < routeStages.Count) return;
+            if (IsCompletionConfigured()) return;
 
             enabled = false;
             if (_selfCollider != null) _selfCollider.enabled = false;
@@ -352,6 +458,7 @@ public class TriggerGet : MonoBehaviour
 
         if (maxCalls <= 0) return;
         if (_called < maxCalls) return;
+        if (IsCompletionConfigured()) return;
 
         enabled = false;
         if (_selfCollider != null) _selfCollider.enabled = false;
@@ -362,7 +469,7 @@ public class TriggerGet : MonoBehaviour
 
     private string GetRouteKeyForLog()
     {
-        if (TryGetActiveRoute(out string currentRouteKey, out _, out _, out _))
+        if (TryGetPreviewRouteKey(out string currentRouteKey))
             return currentRouteKey;
 
         return HasRouteStages ? "(consumed)" : routeKey;
@@ -378,6 +485,15 @@ public class TriggerGet : MonoBehaviour
     private static string FormatCallCount(int callCount, int maxCallCount)
     {
         return maxCallCount <= 0 ? $"{callCount}/unlimited" : $"{callCount}/{maxCallCount}";
+    }
+
+    private static string FormatConditionSuffix(TriggerItemRouteDecision decision)
+    {
+        if (!decision.usesCondition)
+            return "";
+
+        string state = decision.isMet ? "met" : "not-met";
+        return $" itemCondition={state} item='{decision.itemId}' qty={decision.currentQuantity}/{decision.requiredQuantity}";
     }
 
     private static string GetTransformPath(Transform t)
