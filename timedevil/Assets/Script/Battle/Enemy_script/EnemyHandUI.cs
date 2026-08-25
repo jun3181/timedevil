@@ -149,10 +149,11 @@ public class EnemyHandUI : MonoBehaviour
             Sprite faceSprite = revealFaces ? GetFaceSprite(id) : null;
 
             var templateView = go.GetComponentInChildren<CardTemplateView>(true);
-            if (templateView && revealFaces)
-            {
-                templateView.Bind(card, faceSprite);
-            }
+            if (!templateView)
+                templateView = go.AddComponent<CardTemplateView>();
+
+            if (templateView)
+                templateView.Bind(revealFaces ? card : null, revealFaces ? faceSprite : cardBackSprite);
             else
             {
                 var img = go.GetComponentInChildren<Image>() ?? go.AddComponent<Image>();
@@ -160,6 +161,10 @@ public class EnemyHandUI : MonoBehaviour
                 img.preserveAspect = true;
                 img.raycastTarget = false;
             }
+
+            var rootImage = go.GetComponent<Image>();
+            if (rootImage)
+                rootImage.raycastTarget = false;
 
             var rtItem = (RectTransform)go.transform;
             ConfigureCardRect(rtItem);
