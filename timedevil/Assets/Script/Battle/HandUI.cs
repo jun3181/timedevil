@@ -157,10 +157,11 @@ public class HandUI : MonoBehaviour
             Sprite fallbackSprite = card && card.mainArtwork ? card.mainArtwork : GetFallbackSprite(id);
 
             var templateView = go.GetComponentInChildren<CardTemplateView>(true);
+            if (!templateView)
+                templateView = go.AddComponent<CardTemplateView>();
+
             if (templateView)
-            {
                 templateView.Bind(card, fallbackSprite);
-            }
             else
             {
                 var img = go.GetComponentInChildren<Image>() ?? go.AddComponent<Image>();
@@ -171,7 +172,10 @@ public class HandUI : MonoBehaviour
 
             var rootImage = go.GetComponent<Image>();
             if (rootImage)
+            {
                 rootImage.preserveAspect = true;
+                rootImage.raycastTarget = true;
+            }
 
             var rtItem = (RectTransform)go.transform;
             ConfigureCardRect(rtItem);
