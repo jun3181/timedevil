@@ -52,6 +52,13 @@ public class TriggerStep_Scene : TriggerStepBase
     [Tooltip("다음 씬 시작 카메라 Ortho Size. 0이면 텔레포트 afterOrthoSize=0처럼 기본값을 사용합니다.")]
     [SerializeField] private float sceneStartOrthoSize = 0f;
 
+    [Header("Target Scene Spawn (optional)")]
+    [Tooltip("켜면 다음 씬의 SceneEntryProfile/SceneEntrySpawnPoint 중 같은 Key를 가진 지점으로 플레이어를 보냅니다.")]
+    [SerializeField] private bool overrideTargetSceneSpawn = false;
+
+    [Tooltip("다음 씬에서 찾을 SceneEntryProfile/SceneEntrySpawnPoint key")]
+    [SerializeField] private string targetSceneSpawnKey = "";
+
     // =========================
     // Battle return context (existing)
     // =========================
@@ -59,7 +66,13 @@ public class TriggerStep_Scene : TriggerStepBase
     [Tooltip("켜면 '현재 씬으로 복귀' 정보를 저장하고 다음 씬으로 넘어갑니다.")]
     [SerializeField] private bool saveReturnContext = false;
 
-    [Tooltip("복귀 위치. 비우면 PlayerMainManager 현재 위치 저장.")]
+    [Tooltip("켜면 복귀 위치/카메라를 좌표 스냅샷 대신 복귀 씬의 SceneEntryProfile key로 해석합니다.")]
+    [SerializeField] private bool useReturnSceneEntry = false;
+
+    [Tooltip("복귀 씬 SceneEntryProfile에서 찾을 entry key")]
+    [SerializeField] private string returnSceneEntryKey = "";
+
+    [Tooltip("복귀 위치. useReturnSceneEntry가 꺼져 있으면 이 좌표를 사용합니다. 비우면 PlayerMainManager 현재 위치 저장.")]
     [SerializeField] private Transform returnPointOverride;
 
     [Tooltip("복귀 후 재진입 방지(옵션)")]
@@ -155,6 +168,26 @@ public class TriggerStep_Scene : TriggerStepBase
             SceneStartCameraContext.Clear();
         }
 
+        if (overrideTargetSceneSpawn)
+        {
+            if (string.IsNullOrWhiteSpace(targetSceneSpawnKey))
+            {
+                SceneEntrySpawnContext.Clear();
+                Debug.LogWarning("[TriggerStep_Scene] overrideTargetSceneSpawn is on, but targetSceneSpawnKey is empty.");
+            }
+            else
+            {
+                SceneEntrySpawnContext.SetNext(targetScene, targetSceneSpawnKey);
+
+                if (debugLog)
+                    Debug.Log($"[TriggerStep_Scene] Queue target spawn '{targetSceneSpawnKey}' for scene '{targetScene}'");
+            }
+        }
+        else
+        {
+            SceneEntrySpawnContext.Clear();
+        }
+
         // -------------------------
         // 2) SleepLoad 플래그(원샷) 세팅
         // -------------------------
@@ -192,6 +225,17 @@ public class TriggerStep_Scene : TriggerStepBase
         if (saveReturnContext)
         {
             string curScene = SceneManager.GetActiveScene().name;
+            string returnEntryKey = null;
+
+            if (useReturnSceneEntry)
+            {
+                returnEntryKey = string.IsNullOrWhiteSpace(returnSceneEntryKey)
+                    ? null
+                    : returnSceneEntryKey.Trim();
+
+                if (string.IsNullOrWhiteSpace(returnEntryKey))
+                    Debug.LogWarning("[TriggerStep_Scene] useReturnSceneEntry is on, but returnSceneEntryKey is empty.");
+            }
 
             Vector2 pos;
             if (returnPointOverride != null) pos = returnPointOverride.position;
@@ -248,13 +292,15 @@ public class TriggerStep_Scene : TriggerStepBase
                 cameraMode: camMode,
                 cameraOrthoSize: camOrtho,
                 cameraFixedPos: camFixedPos,
-                cameraBoundsName: camBoundsName
+                cameraBoundsName: camBoundsName,
+                returnEntryKey: returnEntryKey
             );
 
             if (debugLog)
             {
                 Debug.Log(
                     $"[TriggerStep_Scene] Saved Return(A-Policy): scene='{curScene}', pos=({pos.x:F2},{pos.y:F2}) " +
+                    $"entry='{returnEntryKey}' " +
                     $"overlapSupp=OFF " +
                     $"camRestore={restoreCam} camMode={camMode} camOrtho={camOrtho:F2} camBounds='{camBoundsName}' camFixed=({camFixedPos.x:F2},{camFixedPos.y:F2})"
                 );
@@ -264,18 +310,25 @@ public class TriggerStep_Scene : TriggerStepBase
         // -------------------------
         // 6) 씬 로드
         // -------------------------
-        if (useSceneVisitEffectRunner && loadMode == LoadSceneMode.Single)
+        if (saveReturnContext)
         {
-            var runner = ResolveRunner();
-            if (runner != null)
-            {
-                if (debugLog) Debug.Log("[TriggerStep_Scene] Runner -> LoadSceneWithExitEffect()");
-                runner.LoadSceneWithExitEffect(targetScene);
-                yield break;
-            }
+            SceneTransitionService.EnterBattle(targetScene, null, null, null, useSceneVisitEffectRunner);
+            yield break;
         }
 
-        SceneManager.LoadScene(targetScene, loadMode);
+        if (loadSceneFromProgress)
+        {
+            SceneTransitionService.LoadProgressSave(fallbackDreamSceneName, useSceneVisitEffectRunner);
+            yield break;
+        }
+
+        if (overrideTargetSceneSpawn && !string.IsNullOrWhiteSpace(targetSceneSpawnKey))
+        {
+            SceneTransitionService.LoadSpawn(targetScene, targetSceneSpawnKey, useSceneVisitEffectRunner, loadMode);
+            yield break;
+        }
+
+        SceneTransitionService.LoadDefault(targetScene, useSceneVisitEffectRunner, loadMode);
     }
 
     private void RestorePlayerHpForChapterEntryIfNeeded(string targetScene)

@@ -2,21 +2,24 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Serialization;
 
 [DefaultExecutionOrder(-20000)]
 [DisallowMultipleComponent]
 public class MyroomEntryApplier : MonoBehaviour
 {
     [Header("Spawn Points")]
-    [SerializeField] private Transform room1Spawn;
-    [SerializeField] private Transform room2Spawn;
-    [SerializeField] private Transform room3Spawn;
-    [SerializeField] private Transform room4Spawn;
+    [FormerlySerializedAs("room1Spawn")]
+    [SerializeField] private Transform spawnRoom1NewGame;
+    [FormerlySerializedAs("room2Spawn")]
+    [SerializeField] private Transform spawnRoom2LoadGamePlayerDead;
+    [FormerlySerializedAs("room4Spawn")]
+    [SerializeField] private Transform spawnRoom4End;
 
     [Header("Fallback (when no explicit context)")]
     [Tooltip("If enabled, fallbackPoint is applied when MyroomEntryContext is empty. If disabled, no forced reposition occurs.")]
     [SerializeField] private bool applyFallbackWhenNoContext = false;
-    [SerializeField] private MyroomEntryPoint fallbackPoint = MyroomEntryPoint.Room2;
+    [SerializeField] private MyroomEntryPoint fallbackPoint = MyroomEntryPoint.Spawn_Room2_LoadGame_PlayerDead;
 
     [Header("Options")]
     [SerializeField] private bool forceClearActionLocksOnStart = true;
@@ -31,15 +34,43 @@ public class MyroomEntryApplier : MonoBehaviour
 
     private void Awake()
     {
-        int handle = SceneManager.GetActiveScene().handle;
-        if (s_appliedSceneHandle == handle) return;
-        s_appliedSceneHandle = handle;
+        Scene activeScene = SceneManager.GetActiveScene();
+
+        if (SceneArrivalContext.HasPendingForScene(activeScene.name))
+        {
+            _entry = MyroomEntryPoint.None;
+            return;
+        }
+
+        if (PlayerReturnContext.HasReturnPosition &&
+            !string.IsNullOrWhiteSpace(PlayerReturnContext.ReturnSceneName) &&
+            PlayerReturnContext.ReturnSceneName == activeScene.name)
+        {
+            MyroomEntryContext.Clear();
+            _entry = MyroomEntryPoint.None;
+
+            if (debugLog)
+                Debug.Log("[MyroomEntryApplier] Return context active -> skip Myroom entry spawn override.", this);
+
+            return;
+        }
 
         MyroomEntryPoint consumed;
         bool hasExplicitEntry = MyroomEntryContext.TryConsume(out consumed);
-        _entry = hasExplicitEntry ? consumed : MyroomEntryPoint.None;
+        if (hasExplicitEntry)
+        {
+            _entry = consumed;
+            s_appliedSceneHandle = activeScene.handle;
+            return;
+        }
 
-        if (!hasExplicitEntry && applyFallbackWhenNoContext)
+        int handle = activeScene.handle;
+        if (s_appliedSceneHandle == handle) return;
+        s_appliedSceneHandle = handle;
+
+        _entry = MyroomEntryPoint.None;
+
+        if (applyFallbackWhenNoContext)
             _entry = fallbackPoint;
     }
 
@@ -72,7 +103,7 @@ public class MyroomEntryApplier : MonoBehaviour
         Transform target = ResolveTarget(_entry);
         if (target == null)
         {
-            Debug.LogWarning("[MyroomEntryApplier] SpawnPoint missing. (Room1/Room2/Room3)");
+            Debug.LogWarning("[MyroomEntryApplier] SpawnPoint missing.");
             yield break;
         }
 
@@ -89,12 +120,17 @@ public class MyroomEntryApplier : MonoBehaviour
     {
         switch (entry)
         {
-            case MyroomEntryPoint.Room1: return room1Spawn;
-            case MyroomEntryPoint.Room2: return room2Spawn;
-            case MyroomEntryPoint.Room3: return room3Spawn;
-            case MyroomEntryPoint.Room4: return room4Spawn;
+            case MyroomEntryPoint.Spawn_Room1_NewGame: return spawnRoom1NewGame;
+            case MyroomEntryPoint.Spawn_Room2_LoadGame_PlayerDead: return spawnRoom2LoadGamePlayerDead;
+            case MyroomEntryPoint.Spawn_Room4_end: return spawnRoom4End;
             default: return null;
         }
+    }
+
+    public bool TryGetSpawn(MyroomEntryPoint entry, out Transform spawn)
+    {
+        spawn = ResolveTarget(entry);
+        return spawn != null;
     }
 
     private Transform ResolvePlayerTransform()

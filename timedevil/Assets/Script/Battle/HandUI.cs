@@ -95,6 +95,7 @@ public class HandUI : MonoBehaviour
         if (id.StartsWith("AttackCard")) return "AttackCard";
         if (id.StartsWith("DrawCard")) return "DrawCard";
         if (id.StartsWith("MoveCard")) return "MoveCard";
+        if (id.StartsWith("SupportCard")) return "SupportCard";
         return null;
     }
 

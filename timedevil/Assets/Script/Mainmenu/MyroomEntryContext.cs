@@ -1,11 +1,10 @@
 // Assets/Script/Scene/MyroomEntryContext.cs
 public enum MyroomEntryPoint
 {
-    None,
-    Room1,
-    Room2,
-    Room3,
-    Room4
+    None = 0,
+    Spawn_Room1_NewGame = 1,
+    Spawn_Room2_LoadGame_PlayerDead = 2,
+    Spawn_Room4_end = 4
 }
 
 public static class MyroomEntryContext
@@ -20,24 +19,19 @@ public static class MyroomEntryContext
         Current = MyroomEntryPoint.None;
     }
 
-    public static void SetRoom1()
+    public static void SetNewGame()
     {
-        _next = MyroomEntryPoint.Room1;
+        _next = MyroomEntryPoint.Spawn_Room1_NewGame;
     }
 
-    public static void SetRoom2()
+    public static void SetLoadGamePlayerDead()
     {
-        _next = MyroomEntryPoint.Room2;
+        _next = MyroomEntryPoint.Spawn_Room2_LoadGame_PlayerDead;
     }
 
-    public static void SetRoom3()
+    public static void SetEnd()
     {
-        _next = MyroomEntryPoint.Room3;
-    }
-
-    public static void SetRoom4() 
-    {
-        _next = MyroomEntryPoint.Room4;
+        _next = MyroomEntryPoint.Spawn_Room4_end;
     }
 
     // Consume only when an explicit entry exists.

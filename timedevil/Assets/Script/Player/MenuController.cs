@@ -30,6 +30,13 @@ public class MenuController : MonoBehaviour
         public string label;
     }
 
+    private struct ItemMenuEntry
+    {
+        public string id;
+        public ItemSO item;
+        public string label;
+    }
+
     [Header("UI")]
     public GameObject menuUI;
     public TextMeshProUGUI[] menuItems;
@@ -45,6 +52,7 @@ public class MenuController : MonoBehaviour
     [SerializeField] private bool autoBuildRetroMenu = true;
     [SerializeField] private string menuFrameResourcePath = "my_asset/menu_window_frame";
     [SerializeField] private Vector2 windowOffsetFromTopLeft = new Vector2(80f, -50f);
+    [SerializeField] private Vector2 contentOffsetFromTopLeft = new Vector2(80f, -1f);
     [SerializeField] private Vector2 windowSize = new Vector2(630f, 360f);
     [SerializeField] private Vector2 itemGridOrigin = new Vector2(72f, -90f);
     [SerializeField] private Vector2 itemGridSpacing = new Vector2(265f, 105f);
@@ -54,6 +62,7 @@ public class MenuController : MonoBehaviour
     [SerializeField] private string[] menuLabels = { "item", "card", "deck", "option", "status", "exit" };
     [SerializeField] private bool hidePanelTextInRetroView = true;
     [SerializeField] private bool preserveManualLayout = true;
+    [SerializeField] private bool repairLegacySubWindowLayout = true;
 
     [Header("Item Window View")]
     [SerializeField] private bool autoBuildItemWindow = true;
@@ -72,10 +81,12 @@ public class MenuController : MonoBehaviour
     [SerializeField] private Vector2 itemWindowCloseSize = new Vector2(170f, 50f);
     [SerializeField] private Vector2 itemWindowPagePosition = new Vector2(390f, -225f);
     [SerializeField] private Vector2 itemWindowPageSize = new Vector2(120f, 50f);
+    [SerializeField] private Vector2 itemInfoWindowOffsetFromTopLeft = new Vector2(1320f, -50f);
+    [SerializeField] private Vector2 itemInfoWindowSize = new Vector2(340f, 300f);
     [SerializeField] private string itemCloseLabel = "close";
-    [SerializeField] private string emptyItemLabel = "æ¯¿Ω";
-    [SerializeField] private string[] itemPageOneLabels = { "æ∆¿Ã≈€ ¿Ã∏ß x 2", "æ∆¿Ã≈€ ¿Ã∏ß x 3", "æ∆¿Ã≈€ ¿Ã∏ß x 1", "æ∆¿Ã≈€ ¿Ã∏ß" };
-    [SerializeField] private string[] itemPageTwoLabels = { "æ∆¿Ã≈€ ¿Ã∏ß x 4", "æ∆¿Ã≈€ ¿Ã∏ß x 5", "æ∆¿Ã≈€ ¿Ã∏ß x 6", "æ∆¿Ã≈€ ¿Ã∏ß" };
+    [SerializeField] private string emptyItemLabel = "ÔøΩÔøΩÔøΩÔøΩ";
+    [SerializeField] private string[] itemPageOneLabels = { "ÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩ ÔøΩÃ∏ÔøΩ x 2", "ÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩ ÔøΩÃ∏ÔøΩ x 3", "ÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩ ÔøΩÃ∏ÔøΩ x 1", "ÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩ ÔøΩÃ∏ÔøΩ" };
+    [SerializeField] private string[] itemPageTwoLabels = { "ÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩ ÔøΩÃ∏ÔøΩ x 4", "ÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩ ÔøΩÃ∏ÔøΩ x 5", "ÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩ ÔøΩÃ∏ÔøΩ x 6", "ÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩ ÔøΩÃ∏ÔøΩ" };
 
     [Header("Card Window View")]
     [SerializeField] private bool autoBuildCardWindow = true;
@@ -95,14 +106,14 @@ public class MenuController : MonoBehaviour
     [SerializeField] private Vector2 cardPreviewOffsetFromTopLeft = new Vector2(1320f, -50f);
     [SerializeField] private Vector2 cardPreviewSize = new Vector2(170f, 240f);
     [SerializeField] private string cardCloseLabel = "close";
-    [SerializeField] private string emptyCardLabel = "æ¯¿Ω";
+    [SerializeField] private string emptyCardLabel = "ÔøΩÔøΩÔøΩÔøΩ";
 
     [Header("Deck Window View")]
     [SerializeField] private bool autoBuildDeckWindow = true;
     [SerializeField] private bool previewDeckWindowInEditor = false;
     [SerializeField] private bool preserveManualDeckLayout = true;
     [SerializeField] private string deckCloseLabel = "close";
-    [SerializeField] private string emptyDeckLabel = "æ¯¿Ω";
+    [SerializeField] private string emptyDeckLabel = "ÔøΩÔøΩÔøΩÔøΩ";
 
     [Header("Status Window View")]
     [SerializeField] private bool autoBuildStatusWindow = true;
@@ -142,6 +153,9 @@ public class MenuController : MonoBehaviour
     private TextMeshProUGUI itemWindowCloseText;
     private TextMeshProUGUI itemWindowPageText;
     private TextMeshProUGUI itemWindowCursorText;
+    private RectTransform itemInfoWindowFrame;
+    private RectTransform itemInfoWindowContentRoot;
+    private TextMeshProUGUI itemEffectDescriptionText;
     private RectTransform cardWindowFrame;
     private RectTransform cardWindowContentRoot;
     private RectTransform cardPreviewRoot;
@@ -165,6 +179,34 @@ public class MenuController : MonoBehaviour
     private TextMeshProUGUI statusWindowCursorText;
     private static Sprite generatedFrameSprite;
     private static readonly string[] DefaultMenuLabels = { "item", "card", "deck", "option", "status", "exit" };
+    private static readonly Vector2 ReferenceItemFramePosition = new Vector2(746f, -50f);
+    private static readonly Vector2 ReferenceItemFrameSize = new Vector2(784.8384f, 360f);
+    private static readonly Vector2 ReferenceItemContentPosition = new Vector2(783f, -74f);
+    private static readonly Vector2 ReferenceItemInfoFramePosition = new Vector2(1544f, -50f);
+    private static readonly Vector2 ReferenceItemInfoFrameSize = new Vector2(340f, 362.2f);
+    private static readonly Vector2 ReferenceItemInfoContentPosition = new Vector2(1541f, -50f);
+    private static readonly Vector2 ReferenceSubWindowFramePosition = new Vector2(749f, -50f);
+    private static readonly Vector2 ReferenceSubWindowFrameSize = new Vector2(681.2395f, 360f);
+    private static readonly Vector2 ReferenceSubWindowContentPosition = new Vector2(749f, -50f);
+    private static readonly Vector2 ReferenceSubWindowContentSize = new Vector2(600f, 300f);
+    private static readonly Vector2 ReferencePreviewRootPosition = new Vector2(1446f, -61f);
+    private static readonly Vector2 ReferencePreviewRootSize = new Vector2(170f, 240f);
+    private static readonly Vector2 ReferencePreviewImagePosition = new Vector2(73.86328f, -50.27759f);
+    private static readonly Vector2 ReferencePreviewImageSize = new Vector2(86.1149f, 121.5739f);
+    private static readonly Vector2[] ReferenceItemEntryPositions =
+    {
+        new Vector2(44f, -17f),
+        new Vector2(44f, -90f),
+        new Vector2(44f, -160f),
+        new Vector2(44f, -232f)
+    };
+    private static readonly Vector2[] ReferenceCardEntryPositions =
+    {
+        new Vector2(44f, -34f),
+        new Vector2(44f, -112f),
+        new Vector2(44f, -196f),
+        new Vector2(44f, -272f)
+    };
 
     public bool IsOpen => isPaused;
 
@@ -515,18 +557,15 @@ public class MenuController : MonoBehaviour
         bool contentAlreadyExists = menuRoot.Find("MenuContent") != null;
         retroContentRoot = GetOrCreateRect(menuRoot, "MenuContent");
         if (!preserveManualLayout || !contentAlreadyExists)
-        {
-            retroContentRoot.anchorMin = new Vector2(0f, 1f);
-            retroContentRoot.anchorMax = new Vector2(0f, 1f);
-            retroContentRoot.pivot = new Vector2(0f, 1f);
-            retroContentRoot.anchoredPosition = windowOffsetFromTopLeft;
-            retroContentRoot.sizeDelta = windowSize;
-            retroContentRoot.localScale = Vector3.one;
-        }
+            ApplyRetroContentLayout();
         retroContentRoot.SetAsLastSibling();
 
         EnsureRetroMenuItems();
-        LayoutMenuItems();
+        bool repairCollapsedLayout = IsRetroMenuLayoutCollapsed();
+        if (repairCollapsedLayout)
+            ApplyRetroContentLayout();
+
+        LayoutMenuItems(repairCollapsedLayout);
         EnsureCursor();
         MoveCursorToCurrentItem();
         EnsureItemWindowView();
@@ -593,13 +632,6 @@ public class MenuController : MonoBehaviour
     private void ResolveItemDatabase()
     {
         if (itemDatabase != null) return;
-
-        InventoryDisplay inventoryDisplay = FindObjectOfType<InventoryDisplay>(true);
-        if (inventoryDisplay != null && inventoryDisplay.itemDatabase != null)
-        {
-            itemDatabase = inventoryDisplay.itemDatabase;
-            return;
-        }
 
         ItemDatabaseSO resourceDatabase = Resources.Load<ItemDatabaseSO>("ItemDatabaseSO");
         if (resourceDatabase == null)
@@ -781,7 +813,111 @@ public class MenuController : MonoBehaviour
             return;
         }
 
-        AdvanceItemPage();
+        if (itemFocusArea == MenuPanelFocusArea.Page)
+        {
+            AdvanceItemPage();
+            return;
+        }
+
+        UseSelectedItem();
+    }
+
+    private void UseSelectedItem()
+    {
+        ItemMenuEntry entry = GetSelectedItemEntry();
+        if (string.IsNullOrEmpty(entry.id))
+            return;
+
+        ItemRuntime runtime = EnsureItemRuntimeForMenu();
+        if (runtime == null)
+        {
+            Debug.LogWarning("[MenuController] ItemRuntime is missing. Cannot use item.", this);
+            return;
+        }
+
+        if (runtime.GetQuantity(entry.id) <= 0)
+        {
+            RefreshItemWindow();
+            return;
+        }
+
+        ItemSO item = entry.item;
+        if (item == null)
+        {
+            ResolveItemDatabase();
+            item = itemDatabase != null ? itemDatabase.GetById(entry.id) : null;
+        }
+
+        if (item == null)
+        {
+            Debug.LogWarning($"[MenuController] ItemSO not found for id '{entry.id}'.", this);
+            RefreshItemWindow();
+            return;
+        }
+
+        if (!item.TryUse(out string message))
+        {
+            if (!string.IsNullOrEmpty(message))
+                Debug.LogWarning($"[MenuController] {message}", this);
+
+            RefreshItemWindow();
+            RefreshStatusWindow();
+            return;
+        }
+
+        if (item.consumeOnUse)
+            runtime.AddQuantity(entry.id, -1);
+
+        ShowItemUseDialogue(item, entry.id);
+
+        itemCurrentPage = Mathf.Clamp(itemCurrentPage, 0, GetItemPageCount() - 1);
+        itemCurrentIndex = Mathf.Clamp(itemCurrentIndex, 0, GetCurrentItemLabelCount() - 1);
+
+        if (debugMenu) Debug.Log($"[MenuController] Used item: {entry.id}", this);
+
+        RefreshItemWindow();
+        RefreshStatusWindow();
+    }
+
+    private void ShowItemUseDialogue(ItemSO item, string fallbackId)
+    {
+        DialogueManager dm = DialogueManager.instance;
+        if (dm == null)
+        {
+            Debug.LogWarning("[MenuController] DialogueManager is missing. Cannot show item use dialogue.", this);
+            return;
+        }
+
+        dm.blockInput = false;
+        dm.StartDialogue(new Dialogue
+        {
+            name = "",
+            lines = BuildItemUseDialogueLines(item, fallbackId)
+        });
+        dm.ForceCompleteTyping();
+    }
+
+    private DialogueLine[] BuildItemUseDialogueLines(ItemSO item, string fallbackId)
+    {
+        List<DialogueLine> lines = new List<DialogueLine>
+        {
+            new DialogueLine
+            {
+                text = $"\"{GetItemDisplayName(item, fallbackId)}\"ÏùÑ ÏÇ¨Ïö©ÌñàÏäµÎãàÎã§",
+                focus = PortraitFocus.None
+            }
+        };
+
+        if (item != null && !string.IsNullOrWhiteSpace(item.useText))
+        {
+            lines.Add(new DialogueLine
+            {
+                text = item.useText.Trim(),
+                focus = PortraitFocus.None
+            });
+        }
+
+        return lines.ToArray();
     }
 
     private void AdvanceItemPage()
@@ -841,8 +977,52 @@ public class MenuController : MonoBehaviour
         }
         itemWindowContentRoot.SetAsLastSibling();
 
+        EnsureItemInfoWindowView(menuRoot);
+        if (IsLegacyItemWindowLayout())
+            ApplyReferenceItemWindowLayout();
+
         EnsureItemWindowTexts();
         SetItemWindowVisible(itemWindowOpen || (!Application.isPlaying && previewItemWindowInEditor));
+    }
+
+    private void EnsureItemInfoWindowView(RectTransform menuRoot)
+    {
+        if (menuRoot == null) return;
+
+        bool frameAlreadyExists = menuRoot.Find("ItemInfoWindowFrame") != null;
+        itemInfoWindowFrame = GetOrCreateRect(menuRoot, "ItemInfoWindowFrame");
+        if (!preserveManualItemLayout || !frameAlreadyExists)
+        {
+            itemInfoWindowFrame.anchorMin = new Vector2(0f, 1f);
+            itemInfoWindowFrame.anchorMax = new Vector2(0f, 1f);
+            itemInfoWindowFrame.pivot = new Vector2(0f, 1f);
+            itemInfoWindowFrame.anchoredPosition = itemInfoWindowOffsetFromTopLeft;
+            itemInfoWindowFrame.sizeDelta = itemInfoWindowSize;
+            itemInfoWindowFrame.localScale = Vector3.one;
+        }
+        itemInfoWindowFrame.SetAsLastSibling();
+
+        Image frameImage = itemInfoWindowFrame.GetComponent<Image>();
+        if (frameImage == null) frameImage = itemInfoWindowFrame.gameObject.AddComponent<Image>();
+        frameImage.sprite = LoadMenuFrameSprite();
+        frameImage.type = Image.Type.Sliced;
+        frameImage.color = Color.white;
+        frameImage.raycastTarget = false;
+
+        bool contentAlreadyExists = menuRoot.Find("ItemInfoWindowContent") != null;
+        itemInfoWindowContentRoot = GetOrCreateRect(menuRoot, "ItemInfoWindowContent");
+        if (!preserveManualItemLayout || !contentAlreadyExists)
+        {
+            itemInfoWindowContentRoot.anchorMin = new Vector2(0f, 1f);
+            itemInfoWindowContentRoot.anchorMax = new Vector2(0f, 1f);
+            itemInfoWindowContentRoot.pivot = new Vector2(0f, 1f);
+            itemInfoWindowContentRoot.anchoredPosition = itemInfoWindowOffsetFromTopLeft;
+            itemInfoWindowContentRoot.sizeDelta = itemInfoWindowSize;
+            itemInfoWindowContentRoot.localScale = Vector3.one;
+        }
+        itemInfoWindowContentRoot.SetAsLastSibling();
+
+        EnsureItemInfoWindowTexts();
     }
 
     private void EnsureItemWindowTexts()
@@ -889,6 +1069,8 @@ public class MenuController : MonoBehaviour
             !preserveManualItemLayout || !pageAlreadyExists
         );
 
+        HideLegacyItemMessageText();
+
         bool cursorAlreadyExists = itemWindowContentRoot.Find("ItemCursor") != null;
         itemWindowCursorText = GetOrCreateText(itemWindowContentRoot, "ItemCursor");
         StyleItemWindowText(
@@ -899,6 +1081,39 @@ public class MenuController : MonoBehaviour
             !preserveManualItemLayout || !cursorAlreadyExists
         );
         itemWindowCursorText.alignment = TextAlignmentOptions.Center;
+    }
+
+    private void EnsureItemInfoWindowTexts()
+    {
+        if (itemInfoWindowContentRoot == null) return;
+
+        float horizontalPadding = 30f;
+        float availableWidth = Mathf.Max(80f, itemInfoWindowSize.x - horizontalPadding * 2f);
+
+        HideItemInfoLegacyTexts();
+
+        bool descriptionAlreadyExists = itemInfoWindowContentRoot.Find("ItemEffectDescription") != null;
+        itemEffectDescriptionText = GetOrCreateText(itemInfoWindowContentRoot, "ItemEffectDescription");
+        StyleItemInfoText(
+            itemEffectDescriptionText,
+            "ÏÑ§Î™Ö",
+            new Vector2(horizontalPadding, -34f),
+            new Vector2(availableWidth, Mathf.Max(80f, itemInfoWindowSize.y - 68f)),
+            itemFontSize,
+            !preserveManualItemLayout || !descriptionAlreadyExists
+        );
+        itemEffectDescriptionText.alignment = TextAlignmentOptions.TopLeft;
+        itemEffectDescriptionText.enableWordWrapping = true;
+        itemEffectDescriptionText.overflowMode = TextOverflowModes.Ellipsis;
+    }
+
+    private void HideItemInfoLegacyTexts()
+    {
+        if (itemInfoWindowContentRoot == null) return;
+
+        HideChild(itemInfoWindowContentRoot, "ItemInfoName");
+        HideChild(itemInfoWindowContentRoot, "ItemInfoEffect");
+        HideChild(itemInfoWindowContentRoot, "ItemInfoDescription");
     }
 
     private void RefreshItemWindow()
@@ -931,7 +1146,44 @@ public class MenuController : MonoBehaviour
         if (itemWindowPageText != null)
             itemWindowPageText.text = GetItemPageText();
 
+        HideLegacyItemMessageText();
         MoveItemWindowCursor();
+        RefreshItemInfoWindow();
+    }
+
+    private void RefreshItemInfoWindow()
+    {
+        if (itemInfoWindowContentRoot == null) return;
+
+        bool shouldShow = itemWindowOpen || (!Application.isPlaying && previewItemWindowInEditor);
+        itemInfoWindowContentRoot.gameObject.SetActive(shouldShow);
+        if (itemInfoWindowFrame != null)
+            itemInfoWindowFrame.gameObject.SetActive(shouldShow);
+        if (!shouldShow) return;
+
+        ItemMenuEntry entry = GetSelectedItemEntry();
+        ItemSO item = ResolveItemDefinition(entry);
+
+        HideItemInfoLegacyTexts();
+
+        if (itemEffectDescriptionText != null)
+            itemEffectDescriptionText.text = GetItemEffectDescriptionText(entry, item);
+    }
+
+    private void HideLegacyItemMessageText()
+    {
+        if (itemWindowContentRoot == null) return;
+
+        HideChild(itemWindowContentRoot, "ItemMessage");
+    }
+
+    private static void HideChild(RectTransform parent, string childName)
+    {
+        if (parent == null) return;
+
+        Transform child = parent.Find(childName);
+        if (child != null)
+            child.gameObject.SetActive(false);
     }
 
     private void MoveItemWindowCursor()
@@ -1030,6 +1282,25 @@ public class MenuController : MonoBehaviour
         rect.localScale = Vector3.one;
     }
 
+    private void StyleItemInfoText(
+        TextMeshProUGUI text,
+        string value,
+        Vector2 anchoredPosition,
+        Vector2 size,
+        float maxFontSize,
+        bool applyDefaultTransform
+    )
+    {
+        if (text == null) return;
+
+        StyleItemWindowText(text, value, anchoredPosition, size, applyDefaultTransform);
+        text.enableAutoSizing = true;
+        text.fontSizeMin = 22f;
+        text.fontSizeMax = Mathf.Max(22f, maxFontSize);
+        text.enableWordWrapping = false;
+        text.overflowMode = TextOverflowModes.Ellipsis;
+    }
+
     private static void CopyRectFromSourceOrDefault(
         RectTransform target,
         RectTransform source,
@@ -1056,6 +1327,165 @@ public class MenuController : MonoBehaviour
         target.anchoredPosition = anchoredPosition;
         target.sizeDelta = size;
         target.localScale = Vector3.one;
+    }
+
+    private bool IsLegacyItemWindowLayout()
+    {
+        if (!repairLegacySubWindowLayout) return false;
+
+        return IsNear(itemWindowFrame, itemWindowOffsetFromTopLeft, itemWindowSize)
+            || IsNear(itemWindowContentRoot, itemWindowOffsetFromTopLeft, itemWindowSize)
+            || IsNear(itemInfoWindowFrame, itemInfoWindowOffsetFromTopLeft, itemInfoWindowSize)
+            || IsNear(itemInfoWindowContentRoot, itemInfoWindowOffsetFromTopLeft, itemInfoWindowSize);
+    }
+
+    private bool IsLegacySubWindowLayout(
+        RectTransform frame,
+        RectTransform content,
+        RectTransform previewRoot,
+        RectTransform previewImage
+    )
+    {
+        if (!repairLegacySubWindowLayout) return false;
+
+        return IsNear(frame, cardWindowOffsetFromTopLeft, cardWindowSize)
+            || IsNear(frame, statusWindowOffsetFromTopLeft, statusWindowSize)
+            || IsNear(content, cardWindowOffsetFromTopLeft, cardWindowSize)
+            || IsNear(content, statusWindowOffsetFromTopLeft, statusWindowSize)
+            || IsNear(previewRoot, cardPreviewOffsetFromTopLeft, cardPreviewSize)
+            || IsCollapsedPreviewImage(previewImage);
+    }
+
+    private static bool IsNear(RectTransform rect, Vector2 anchoredPosition, Vector2 size)
+    {
+        if (rect == null) return false;
+
+        return (rect.anchoredPosition - anchoredPosition).sqrMagnitude <= 1f
+            && (rect.sizeDelta - size).sqrMagnitude <= 1f;
+    }
+
+    private static bool IsCollapsedPreviewImage(RectTransform rect)
+    {
+        return rect != null && rect.sizeDelta.sqrMagnitude <= 1f;
+    }
+
+    private void ApplyReferenceItemWindowLayout()
+    {
+        ApplyTopLeftRect(itemWindowFrame, ReferenceItemFramePosition, ReferenceItemFrameSize);
+        ApplyTopLeftRect(itemWindowContentRoot, ReferenceItemContentPosition, ReferenceSubWindowContentSize);
+        ApplyTopLeftRect(itemInfoWindowFrame, ReferenceItemInfoFramePosition, ReferenceItemInfoFrameSize);
+        ApplyTopLeftRect(itemInfoWindowContentRoot, ReferenceItemInfoContentPosition, ReferenceSubWindowContentSize);
+
+        for (int i = 0; i < ReferenceItemEntryPositions.Length; i++)
+            ApplyChildTopLeftTextRect(itemWindowContentRoot, $"ItemEntry_{i}", ReferenceItemEntryPositions[i], itemWindowEntrySize);
+
+        ApplyChildTopLeftTextRect(itemWindowContentRoot, "ItemClose", new Vector2(542f, -20f), itemWindowCloseSize);
+        ApplyChildTopLeftTextRect(itemWindowContentRoot, "ItemPage", new Vector2(546f, -233f), itemWindowPageSize);
+        ApplyChildTopLeftTextRect(itemWindowContentRoot, "ItemCursor", new Vector2(44f, -52f), new Vector2(46f, itemWindowEntrySize.y));
+        ApplyChildTopLeftTextRect(itemInfoWindowContentRoot, "ItemEffectDescription", new Vector2(30f, -34f), new Vector2(280f, 232f));
+
+        if (itemWindowFrame != null) itemWindowFrame.SetAsLastSibling();
+        if (itemWindowContentRoot != null) itemWindowContentRoot.SetAsLastSibling();
+        if (itemInfoWindowFrame != null) itemInfoWindowFrame.SetAsLastSibling();
+        if (itemInfoWindowContentRoot != null) itemInfoWindowContentRoot.SetAsLastSibling();
+    }
+
+    private void ApplyReferenceCardWindowLayout()
+    {
+        ApplyReferenceCardLikeWindowLayout(
+            cardWindowFrame,
+            cardWindowContentRoot,
+            cardPreviewRoot,
+            cardPreviewImage != null ? cardPreviewImage.rectTransform : null,
+            "Card"
+        );
+    }
+
+    private void ApplyReferenceDeckWindowLayout()
+    {
+        ApplyReferenceCardLikeWindowLayout(
+            deckWindowFrame,
+            deckWindowContentRoot,
+            deckPreviewRoot,
+            deckPreviewImage != null ? deckPreviewImage.rectTransform : null,
+            "Deck"
+        );
+    }
+
+    private void ApplyReferenceStatusWindowLayout()
+    {
+        ApplyTopLeftRect(statusWindowFrame, ReferenceSubWindowFramePosition, ReferenceSubWindowFrameSize);
+        ApplyTopLeftRect(statusWindowContentRoot, ReferenceSubWindowContentPosition, ReferenceSubWindowContentSize);
+
+        int statusCount = Mathf.Max(5, GetStatusLabels().Length);
+        for (int i = 0; i < statusCount; i++)
+        {
+            Vector2 position = new Vector2(statusWindowListOrigin.x, statusWindowListOrigin.y - i * statusWindowRowSpacing);
+            ApplyChildTopLeftTextRect(statusWindowContentRoot, $"StatusEntry_{i}", position, statusWindowEntrySize);
+        }
+
+        ApplyChildTopLeftTextRect(statusWindowContentRoot, "StatusClose", statusWindowClosePosition, statusWindowCloseSize);
+        ApplyChildTopLeftTextRect(statusWindowContentRoot, "StatusCursor", statusWindowClosePosition, new Vector2(46f, statusWindowCloseSize.y));
+
+        if (statusWindowFrame != null) statusWindowFrame.SetAsLastSibling();
+        if (statusWindowContentRoot != null) statusWindowContentRoot.SetAsLastSibling();
+    }
+
+    private void ApplyReferenceCardLikeWindowLayout(
+        RectTransform frame,
+        RectTransform content,
+        RectTransform previewRoot,
+        RectTransform previewImage,
+        string prefix
+    )
+    {
+        ApplyTopLeftRect(frame, ReferenceSubWindowFramePosition, ReferenceSubWindowFrameSize);
+        ApplyTopLeftRect(content, ReferenceSubWindowContentPosition, ReferenceSubWindowContentSize);
+        ApplyTopLeftRect(previewRoot, ReferencePreviewRootPosition, ReferencePreviewRootSize);
+        ApplyPreviewImageRect(previewImage);
+
+        for (int i = 0; i < ReferenceCardEntryPositions.Length; i++)
+            ApplyChildTopLeftTextRect(content, $"{prefix}Entry_{i}", ReferenceCardEntryPositions[i], cardWindowEntrySize);
+
+        ApplyChildTopLeftTextRect(content, $"{prefix}Close", new Vector2(498f, -34f), cardWindowCloseSize);
+        ApplyChildTopLeftTextRect(content, $"{prefix}Page", new Vector2(498f, -272f), cardWindowPageSize);
+        ApplyChildTopLeftTextRect(content, $"{prefix}Cursor", new Vector2(44f, -52f), new Vector2(46f, cardWindowEntrySize.y));
+
+        if (frame != null) frame.SetAsLastSibling();
+        if (content != null) content.SetAsLastSibling();
+        if (previewRoot != null) previewRoot.SetAsLastSibling();
+    }
+
+    private void ApplyChildTopLeftTextRect(RectTransform parent, string childName, Vector2 anchoredPosition, Vector2 size)
+    {
+        if (parent == null) return;
+
+        TextMeshProUGUI text = GetOrCreateText(parent, childName);
+        ApplyTopLeftRect(text.rectTransform, anchoredPosition, size);
+    }
+
+    private static void ApplyTopLeftRect(RectTransform rect, Vector2 anchoredPosition, Vector2 size)
+    {
+        if (rect == null) return;
+
+        rect.anchorMin = new Vector2(0f, 1f);
+        rect.anchorMax = new Vector2(0f, 1f);
+        rect.pivot = new Vector2(0f, 1f);
+        rect.anchoredPosition = anchoredPosition;
+        rect.sizeDelta = size;
+        rect.localScale = Vector3.one;
+    }
+
+    private static void ApplyPreviewImageRect(RectTransform rect)
+    {
+        if (rect == null) return;
+
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = ReferencePreviewImagePosition;
+        rect.sizeDelta = ReferencePreviewImageSize;
+        rect.localScale = Vector3.one;
     }
 
     private void CopyTextLayoutFromCard(TextMeshProUGUI target, string cardChildName)
@@ -1093,6 +1523,12 @@ public class MenuController : MonoBehaviour
 
         if (itemWindowContentRoot != null)
             itemWindowContentRoot.gameObject.SetActive(visible);
+
+        if (itemInfoWindowFrame != null)
+            itemInfoWindowFrame.gameObject.SetActive(visible);
+
+        if (itemInfoWindowContentRoot != null)
+            itemInfoWindowContentRoot.gameObject.SetActive(visible);
     }
 
     private void OpenCardWindow()
@@ -1330,6 +1766,9 @@ public class MenuController : MonoBehaviour
         cardPreviewImage.color = Color.white;
         cardPreviewImage.preserveAspect = true;
         cardPreviewImage.raycastTarget = false;
+
+        if (IsLegacySubWindowLayout(cardWindowFrame, cardWindowContentRoot, cardPreviewRoot, cardPreviewImage.rectTransform))
+            ApplyReferenceCardWindowLayout();
 
         EnsureCardWindowTexts();
         SetCardWindowVisible(cardWindowOpen || (!Application.isPlaying && previewCardWindowInEditor));
@@ -1732,6 +2171,9 @@ public class MenuController : MonoBehaviour
         deckPreviewImage.preserveAspect = true;
         deckPreviewImage.raycastTarget = false;
 
+        if (IsLegacySubWindowLayout(deckWindowFrame, deckWindowContentRoot, deckPreviewRoot, deckPreviewImage.rectTransform))
+            ApplyReferenceDeckWindowLayout();
+
         EnsureDeckWindowTexts();
         SetDeckWindowVisible(deckWindowOpen || (!Application.isPlaying && previewDeckWindowInEditor));
     }
@@ -1987,6 +2429,9 @@ public class MenuController : MonoBehaviour
         if (!preserveManualStatusLayout || !contentAlreadyExists)
             CopyRectFromSourceOrDefault(statusWindowContentRoot, cardWindowContentRoot, statusWindowOffsetFromTopLeft, statusWindowSize);
         statusWindowContentRoot.SetAsLastSibling();
+
+        if (IsLegacySubWindowLayout(statusWindowFrame, statusWindowContentRoot, null, null))
+            ApplyReferenceStatusWindowLayout();
 
         EnsureStatusWindowTexts();
         SetStatusWindowVisible(statusWindowOpen || (!Application.isPlaying && previewStatusWindowInEditor));
@@ -2424,30 +2869,24 @@ public class MenuController : MonoBehaviour
 
     private string GetItemLabel(int index)
     {
-        string[] labels = GetCurrentItemLabels();
-        return index >= 0 && index < labels.Length ? labels[index] : "";
+        List<ItemMenuEntry> entries = GetCurrentItemEntries();
+        return index >= 0 && index < entries.Count ? entries[index].label : "";
     }
 
     private string[] GetCurrentItemLabels()
     {
-        List<string> allLabels = GetAllItemWindowLabels();
-        int pageSize = GetItemWindowEntryCount();
-        int startIndex = Mathf.Clamp(itemCurrentPage, 0, GetItemPageCount() - 1) * pageSize;
-        int count = Mathf.Clamp(allLabels.Count - startIndex, 0, pageSize);
+        List<ItemMenuEntry> entries = GetCurrentItemEntries();
+        string[] labels = new string[entries.Count];
 
-        if (count <= 0)
-            return new[] { GetEmptyItemLabel() };
+        for (int i = 0; i < entries.Count; i++)
+            labels[i] = entries[i].label;
 
-        string[] pageLabels = new string[count];
-        for (int i = 0; i < count; i++)
-            pageLabels[i] = allLabels[startIndex + i];
-
-        return pageLabels;
+        return labels;
     }
 
     private int GetCurrentItemLabelCount()
     {
-        return Mathf.Max(1, GetCurrentItemLabels().Length);
+        return Mathf.Max(1, GetCurrentItemEntries().Count);
     }
 
     private int GetItemWindowEntryCount()
@@ -2457,7 +2896,7 @@ public class MenuController : MonoBehaviour
 
     private int GetItemPageCount()
     {
-        int labelCount = GetAllItemWindowLabels().Count;
+        int labelCount = GetAllItemWindowEntries().Count;
         return Mathf.Max(1, Mathf.CeilToInt(labelCount / (float)GetItemWindowEntryCount()));
     }
 
@@ -2466,28 +2905,52 @@ public class MenuController : MonoBehaviour
         return $"{itemCurrentPage + 1}/{GetItemPageCount()}";
     }
 
-    private List<string> GetAllItemWindowLabels()
+    private List<ItemMenuEntry> GetCurrentItemEntries()
     {
-        List<string> labels = new List<string>();
+        List<ItemMenuEntry> allEntries = GetAllItemWindowEntries();
+        int pageSize = GetItemWindowEntryCount();
+        int startIndex = Mathf.Clamp(itemCurrentPage, 0, GetItemPageCount() - 1) * pageSize;
+        int count = Mathf.Clamp(allEntries.Count - startIndex, 0, pageSize);
+        List<ItemMenuEntry> pageEntries = new List<ItemMenuEntry>(count);
 
-        if (TryAppendInventoryItemLabels(labels))
-        {
-            if (labels.Count == 0)
-                labels.Add(GetEmptyItemLabel());
+        for (int i = 0; i < count; i++)
+            pageEntries.Add(allEntries[startIndex + i]);
 
-            return labels;
-        }
+        if (pageEntries.Count == 0)
+            pageEntries.Add(GetEmptyItemEntry());
 
-        AppendFallbackItemLabels(labels, itemPageOneLabels);
-        AppendFallbackItemLabels(labels, itemPageTwoLabels);
-
-        if (labels.Count == 0)
-            labels.Add(GetEmptyItemLabel());
-
-        return labels;
+        return pageEntries;
     }
 
-    private bool TryAppendInventoryItemLabels(List<string> labels)
+    private ItemMenuEntry GetSelectedItemEntry()
+    {
+        List<ItemMenuEntry> entries = GetCurrentItemEntries();
+        int safeIndex = Mathf.Clamp(itemCurrentIndex, 0, entries.Count - 1);
+        return entries[safeIndex];
+    }
+
+    private List<ItemMenuEntry> GetAllItemWindowEntries()
+    {
+        List<ItemMenuEntry> entries = new List<ItemMenuEntry>();
+
+        if (TryAppendInventoryItemEntries(entries))
+        {
+            if (entries.Count == 0)
+                entries.Add(GetEmptyItemEntry());
+
+            return entries;
+        }
+
+        AppendFallbackItemEntries(entries, itemPageOneLabels);
+        AppendFallbackItemEntries(entries, itemPageTwoLabels);
+
+        if (entries.Count == 0)
+            entries.Add(GetEmptyItemEntry());
+
+        return entries;
+    }
+
+    private bool TryAppendInventoryItemEntries(List<ItemMenuEntry> entries)
     {
         if (!TryGetInventoryData(out InventorySaveData inventoryData))
             return false;
@@ -2500,12 +2963,8 @@ public class MenuController : MonoBehaviour
             if (entry == null || entry.quantity <= 0)
                 continue;
 
-            string itemName = entry.id;
             ItemSO itemDefinition = itemDatabase != null ? itemDatabase.GetById(entry.id) : null;
-            if (itemDefinition != null && !string.IsNullOrEmpty(itemDefinition.displayName))
-                itemName = itemDefinition.displayName;
-
-            labels.Add($"{itemName} x {entry.quantity}");
+            entries.Add(CreateItemEntry(entry.id, itemDefinition, entry.quantity));
         }
 
         return true;
@@ -2517,7 +2976,7 @@ public class MenuController : MonoBehaviour
 
         if (Application.isPlaying)
         {
-            ItemRuntime runtime = ItemRuntime.Instance;
+            ItemRuntime runtime = EnsureItemRuntimeForMenu();
             if (runtime != null && runtime.CurrentData != null && runtime.CurrentData.items != null)
             {
                 inventoryData = runtime.CurrentData;
@@ -2536,14 +2995,89 @@ public class MenuController : MonoBehaviour
         return inventoryData != null && inventoryData.items != null;
     }
 
-    private void AppendFallbackItemLabels(List<string> labels, string[] source)
+    private ItemRuntime EnsureItemRuntimeForMenu()
+    {
+        if (ItemRuntime.Instance != null)
+            return ItemRuntime.Instance;
+
+        if (!Application.isPlaying)
+            return null;
+
+        GameObject runtimeObject = new GameObject("ItemRuntime (Menu Auto)");
+        return runtimeObject.AddComponent<ItemRuntime>();
+    }
+
+    private ItemMenuEntry CreateItemEntry(string id, ItemSO item, int quantity)
+    {
+        string itemName = GetItemDisplayName(item, id);
+
+        return new ItemMenuEntry
+        {
+            id = id,
+            item = item,
+            label = $"{(string.IsNullOrEmpty(itemName) ? GetEmptyItemLabel() : itemName)} x {quantity}"
+        };
+    }
+
+    private string GetItemDisplayName(ItemSO item, string fallbackId)
+    {
+        if (item != null && !string.IsNullOrEmpty(item.displayName))
+            return item.displayName;
+
+        if (!string.IsNullOrEmpty(fallbackId))
+            return fallbackId;
+
+        return GetEmptyItemLabel();
+    }
+
+    private ItemSO ResolveItemDefinition(ItemMenuEntry entry)
+    {
+        if (entry.item != null)
+            return entry.item;
+
+        if (string.IsNullOrEmpty(entry.id))
+            return null;
+
+        ResolveItemDatabase();
+        return itemDatabase != null ? itemDatabase.GetById(entry.id) : null;
+    }
+
+    private string GetItemEffectDescriptionText(ItemMenuEntry entry, ItemSO item)
+    {
+        if (item == null && string.IsNullOrEmpty(entry.id))
+            return "ÏÑ§Î™Ö";
+
+        string description = item != null ? item.description : "";
+
+        if (!string.IsNullOrWhiteSpace(description))
+            return description;
+
+        return "ÏÑ§Î™Ö";
+    }
+
+    private ItemMenuEntry CreateFallbackItemEntry(string label)
+    {
+        return new ItemMenuEntry
+        {
+            id = "",
+            item = null,
+            label = string.IsNullOrEmpty(label) ? GetEmptyItemLabel() : label
+        };
+    }
+
+    private ItemMenuEntry GetEmptyItemEntry()
+    {
+        return CreateFallbackItemEntry(GetEmptyItemLabel());
+    }
+
+    private void AppendFallbackItemEntries(List<ItemMenuEntry> entries, string[] source)
     {
         if (source == null) return;
 
         for (int i = 0; i < source.Length; i++)
         {
             if (!string.IsNullOrEmpty(source[i]))
-                labels.Add(source[i]);
+                entries.Add(CreateFallbackItemEntry(source[i]));
         }
     }
 
@@ -2574,7 +3108,19 @@ public class MenuController : MonoBehaviour
         return rect;
     }
 
-    private void LayoutMenuItems()
+    private void ApplyRetroContentLayout()
+    {
+        if (retroContentRoot == null) return;
+
+        retroContentRoot.anchorMin = new Vector2(0f, 1f);
+        retroContentRoot.anchorMax = new Vector2(0f, 1f);
+        retroContentRoot.pivot = new Vector2(0f, 1f);
+        retroContentRoot.anchoredPosition = contentOffsetFromTopLeft;
+        retroContentRoot.sizeDelta = windowSize;
+        retroContentRoot.localScale = Vector3.one;
+    }
+
+    private void LayoutMenuItems(bool forceDefaultLayout = false)
     {
         if (menuItems == null || retroContentRoot == null) return;
 
@@ -2588,7 +3134,8 @@ public class MenuController : MonoBehaviour
             if (itemRoot.parent != retroContentRoot)
                 itemRoot.SetParent(retroContentRoot, false);
 
-            if (!preserveManualLayout || !itemAlreadyInContent)
+            bool applyDefaultLayout = forceDefaultLayout || !preserveManualLayout || !itemAlreadyInContent;
+            if (applyDefaultLayout)
             {
                 itemRoot.anchorMin = new Vector2(0f, 1f);
                 itemRoot.anchorMax = new Vector2(0f, 1f);
@@ -2604,8 +3151,52 @@ public class MenuController : MonoBehaviour
                 image.raycastTarget = false;
             }
 
-            StyleMenuItemText(itemText, i, itemRoot == itemText.rectTransform, !preserveManualLayout || !itemAlreadyInContent);
+            StyleMenuItemText(itemText, i, itemRoot == itemText.rectTransform, applyDefaultLayout);
         }
+    }
+
+    private bool IsRetroMenuLayoutCollapsed()
+    {
+        if (menuItems == null || menuItems.Length < 3 || retroContentRoot == null)
+            return false;
+
+        int itemCount = 0;
+        int stackedAfterFirst = 0;
+        int centeredZeroItems = 0;
+        Vector2 firstPosition = Vector2.zero;
+        bool hasFirstPosition = false;
+
+        for (int i = 0; i < menuItems.Length; i++)
+        {
+            TextMeshProUGUI itemText = menuItems[i];
+            if (itemText == null) continue;
+
+            RectTransform itemRoot = GetItemRoot(itemText);
+            if (itemRoot == null || itemRoot.parent != retroContentRoot)
+                continue;
+
+            itemCount++;
+
+            if (!hasFirstPosition)
+            {
+                firstPosition = itemRoot.anchoredPosition;
+                hasFirstPosition = true;
+            }
+            else if (Vector2.Distance(firstPosition, itemRoot.anchoredPosition) <= 0.5f)
+            {
+                stackedAfterFirst++;
+            }
+
+            bool centeredAnchor =
+                Vector2.Distance(itemRoot.anchorMin, new Vector2(0.5f, 0.5f)) <= 0.001f &&
+                Vector2.Distance(itemRoot.anchorMax, new Vector2(0.5f, 0.5f)) <= 0.001f &&
+                Vector2.Distance(itemRoot.pivot, new Vector2(0.5f, 0.5f)) <= 0.001f;
+
+            if (centeredAnchor && itemRoot.anchoredPosition.sqrMagnitude <= 1f)
+                centeredZeroItems++;
+        }
+
+        return itemCount >= 3 && (stackedAfterFirst >= itemCount - 1 || centeredZeroItems >= 3);
     }
 
     private RectTransform GetItemRoot(TextMeshProUGUI itemText)

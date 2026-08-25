@@ -2,11 +2,12 @@ using UnityEngine;
 
 public enum ItemType
 {
-    HealthRecovery,
-    AttackBoost,
-    DefenseBoost,
-    SpeedBoost,
-    Quest
+    HealthRecovery = 0,
+    AttackBoost = 1,
+    DefenseBoost = 2,
+    SpeedBoost = 3,
+    Quest = 4,
+    MaxHealthBoost = 5
 }
 
 [CreateAssetMenu(menuName = "Items/Item", fileName = "NewItem")]
@@ -20,6 +21,9 @@ public class ItemSO : ScriptableObject
     [Header("Description & Visual")]
     [TextArea] public string description;
     public Sprite icon;
+
+    [Header("Use Dialogue")]
+    [TextArea] public string useText;
 
     [Header("Default Quantity")]
     public int defaultQuantity = 0;
@@ -94,6 +98,10 @@ public class ItemSO : ScriptableObject
 
             case ItemType.SpeedBoost:
                 player.speed = Mathf.Max(1, player.speed + effectAmount);
+                return true;
+
+            case ItemType.MaxHealthBoost:
+                player.maxHP = Mathf.Max(1, player.maxHP + effectAmount);
                 return true;
 
             default:

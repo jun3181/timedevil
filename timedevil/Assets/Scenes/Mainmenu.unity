@@ -1278,6 +1278,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1523359872}
   - component: {fileID: 1523359871}
+  - component: {fileID: 1523359873}
   m_Layer: 0
   m_Name: Click
   m_TagString: Untagged
@@ -1300,6 +1301,7 @@ MonoBehaviour:
   sfxPlayer: {fileID: 2063149943}
   clickSound: {fileID: 8300000, guid: 70cbbd69eeefc4841aef5f9432895e57, type: 3}
   myRoomSceneName: Myroom
+  newGameIntro: {fileID: 1523359873}
 --- !u!4 &1523359872
 Transform:
   m_ObjectHideFlags: 0
@@ -1315,6 +1317,59 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1523359873
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1523359870}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7efad2f5a2ad4d04aa47acdc4e34301d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  introSteps:
+  - image: {fileID: 21300000, guid: 00b179d8e308cdc49a204668b12bde8e, type: 3}
+    dialogueLines:
+    - .....
+    overrideFade: 1
+    fadeOutSeconds: 0.25
+    fadeInSeconds: 0.25
+  - image: {fileID: 21300000, guid: 153da1583d4c7ba4dbf40a18d7415f33, type: 3}
+    dialogueLines:
+    - .....!
+    overrideFade: 1
+    fadeOutSeconds: 0.25
+    fadeInSeconds: 0.25
+  - image: {fileID: 21300000, guid: cccb865e0cc63834b92d1688acd40378, type: 3}
+    dialogueLines:
+    - "\uC73C\uC544\uC545..!"
+    overrideFade: 1
+    fadeOutSeconds: 0.25
+    fadeInSeconds: 0.25
+  introImages:
+  - {fileID: 21300000, guid: 922d3844da8e3cc43a6bce9222c7e262, type: 3}
+  - {fileID: 21300000, guid: 3ec22b2622bfb3d4aa0ca823333fd36a, type: 3}
+  dialogueLines:
+  - "\uC77C\uB7EC\uC2A4\uD2B8\uC81C\uC791\uC911"
+  - "\uC77C\uB7EC\uC2A4\uD2B8\uC81C\uC791\uC911"
+  parentCanvas: {fileID: 42269444}
+  introRoot: {fileID: 0}
+  introImage: {fileID: 0}
+  autoCreateUiIfMissing: 1
+  showDialoguePanel: 1
+  dialoguePanel: {fileID: 0}
+  nameText: {fileID: 0}
+  dialogueText: {fileID: 0}
+  speakerName: 
+  panelColor: {r: 0, g: 0, b: 0, a: 0.78}
+  useImageFade: 1
+  defaultFadeOutSeconds: 0.25
+  defaultFadeInSeconds: 0.25
+  fadeInFirstStep: 1
+  fadeOutBeforeFinish: 1
+  advanceKey: 101
 --- !u!1 &1630581775
 GameObject:
   m_ObjectHideFlags: 0

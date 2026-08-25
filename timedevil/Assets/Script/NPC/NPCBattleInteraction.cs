@@ -20,6 +20,10 @@ public class NPCBattleInteraction : MonoBehaviour, IInteractable
     [Header("디버그 메시지 출력 여부")]
     public bool debuged = true;
 
+    [Header("Victory Route On Return")]
+    [SerializeField] private TriggerRouter victoryRouter;
+    [SerializeField] private string victoryRouteKey = "";
+
     private Transform player;
     private Transform enemy;
     private INPCMoveController npcMoveController;
@@ -67,7 +71,32 @@ public class NPCBattleInteraction : MonoBehaviour, IInteractable
     private void StartBattle(Transform enemySnapshotTarget) {
         ResolvePlayer();
         SaveReturnCameraContext();
+        ArmVictoryRouteIfNeeded();
+        if(GameManager.Instance != null) GameManager.Instance.LockAction();
         BattleSceneLoader.Go(BATTLE_SCENE, enemySO.enemyId, player, enemySnapshotTarget);
+    }
+
+    private void ArmVictoryRouteIfNeeded() {
+        if(string.IsNullOrWhiteSpace(victoryRouteKey)) {
+            BattleVictoryReturnContext.ClearArmed();
+            return;
+        }
+
+        if(victoryRouter == null) {
+            if(debuged) Debug.LogWarning($"{gameObject.name}의 Victory Router가 비어 있습니다.", this);
+            BattleVictoryReturnContext.ClearArmed();
+            return;
+        }
+
+        string routerPath = BattleVictoryReturnContext.GetTransformPath(victoryRouter.transform);
+
+        BattleVictoryReturnContext.Arm(
+            targetSceneName: SceneManager.GetActiveScene().name,
+            routeKey: victoryRouteKey,
+            routerTransformPath: routerPath,
+            enemyId: enemySO != null ? enemySO.enemyId : null,
+            sourceObjectName: name
+        );
     }
 
     private void ResolvePlayer() {

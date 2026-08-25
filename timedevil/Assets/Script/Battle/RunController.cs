@@ -52,7 +52,7 @@ public class RunController : MonoBehaviour
         }
         BattleTutorialGate.Report(BattleTutorialAction.RunPanelInteract);
 
-        if (string.IsNullOrWhiteSpace(PlayerReturnContext.ReturnSceneName))
+        if (!HasBattleReturnRequest())
         {
             Debug.LogWarning("[RunController] 돌아갈 씬 정보가 없습니다.");
             return;
@@ -61,10 +61,41 @@ public class RunController : MonoBehaviour
         isReturning = true;
         if (menu) menu.EnableInput(false);
 
-        //  핵심: 돌아가면 카메라를 Player에 재바인딩하라는 플래그 세팅
-        PlayerReturnContext.CameraRebindRequested = true;
-        PlayerReturnContext.TargetVcamName = string.IsNullOrWhiteSpace(worldVcamName) ? null : worldVcamName;
+        BattleVictoryReturnContext.ClearAll();
 
-        SceneLoader.GoBackToReturnScene(graceSeconds, useFaderIfExists: true);
+        //  핵심: 돌아가면 카메라를 Player에 재바인딩하라는 플래그 세팅
+        ApplyPreferredReturnVcam();
+
+        SceneTransitionService.ReturnFromBattle(graceSeconds, useFaderIfExists: true);
+    }
+
+    private bool HasBattleReturnRequest()
+    {
+        bool hasArrivalReturn =
+            SceneArrivalContext.TryPeek(out SceneArrivalRequest request) &&
+            request != null &&
+            request.kind == SceneArrivalKind.BattleReturn &&
+            !string.IsNullOrWhiteSpace(request.targetSceneName);
+
+        return hasArrivalReturn || !string.IsNullOrWhiteSpace(PlayerReturnContext.ReturnSceneName);
+    }
+
+    private void ApplyPreferredReturnVcam()
+    {
+        string preferredVcam = string.IsNullOrWhiteSpace(worldVcamName) ? null : worldVcamName;
+
+        if (SceneArrivalContext.TryPeek(out SceneArrivalRequest request) &&
+            request != null &&
+            request.kind == SceneArrivalKind.BattleReturn)
+        {
+            request.requestCameraRebind = true;
+            request.targetVcamName = preferredVcam;
+            if (request.camera.hasCamera)
+                request.camera.preferredVcamName = preferredVcam;
+            return;
+        }
+
+        PlayerReturnContext.CameraRebindRequested = true;
+        PlayerReturnContext.TargetVcamName = preferredVcam;
     }
 }

@@ -76,7 +76,7 @@ public class CardSceneController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.W))
         {
             // 복귀 대상이 세팅되어 있으면 표준 복귀 루트 사용
-            if (!string.IsNullOrEmpty(PlayerReturnContext.ReturnSceneName))
+            if (HasBattleReturnRequest())
             {
                 // 카메라 재바인딩 요청
                 PlayerReturnContext.CameraRebindRequested = true;
@@ -95,14 +95,15 @@ public class CardSceneController : MonoBehaviour
                 }
 
                 // 페이더 우선 복귀
-                SceneLoader.GoBackToReturnScene(graceSeconds, useFaderIfExists);
+                ApplyPreferredReturnVcam();
+                SceneTransitionService.ReturnFromBattle(graceSeconds, useFaderIfExists);
             }
             else
             {
                 // 폴백: 마지막 씬 기록이 있으면 그리로, 아니면 경고
                 if (!string.IsNullOrEmpty(SceneHistory.LastSceneName))
                 {
-                    SceneLoader.Load(SceneHistory.LastSceneName, useFaderIfExists);
+                    SceneTransitionService.LoadDefault(SceneHistory.LastSceneName, useFaderIfExists);
                 }
                 else
                 {
@@ -148,6 +149,36 @@ public class CardSceneController : MonoBehaviour
             if (!inDeck) MoveCard_toDeck_and_RemoveFromCard();
             else MoveCard_toCard_and_RemoveFromDeck();
         }
+    }
+
+    private bool HasBattleReturnRequest()
+    {
+        bool hasArrivalReturn =
+            SceneArrivalContext.TryPeek(out SceneArrivalRequest request) &&
+            request != null &&
+            request.kind == SceneArrivalKind.BattleReturn &&
+            !string.IsNullOrWhiteSpace(request.targetSceneName);
+
+        return hasArrivalReturn || !string.IsNullOrWhiteSpace(PlayerReturnContext.ReturnSceneName);
+    }
+
+    private void ApplyPreferredReturnVcam()
+    {
+        string preferredVcam = string.IsNullOrWhiteSpace(worldVcamName) ? null : worldVcamName;
+
+        if (SceneArrivalContext.TryPeek(out SceneArrivalRequest request) &&
+            request != null &&
+            request.kind == SceneArrivalKind.BattleReturn)
+        {
+            request.requestCameraRebind = true;
+            request.targetVcamName = preferredVcam;
+            if (request.camera.hasCamera)
+                request.camera.preferredVcamName = preferredVcam;
+            return;
+        }
+
+        PlayerReturnContext.CameraRebindRequested = true;
+        PlayerReturnContext.TargetVcamName = preferredVcam;
     }
 
     void SwitchPanel()

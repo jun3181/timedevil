@@ -814,6 +814,14 @@ MonoBehaviour:
   enemyData: {fileID: 0}
   playerPawn: {fileID: 1345401700}
   enemyPawn: {fileID: 1064948988}
+  loadMyroomOnPlayerZeroHp: 1
+  myroomSceneName: Myroom
+  playerDefeatMessage: HP reached 0. Press E to return to your room.
+  playerDefeatContinueKey: 101
+  returnToPreviousSceneOnEnemyZeroHp: 1
+  enemyDefeatReturnGraceSeconds: 1
+  rollEnemyDropsOnVictory: 1
+  debugLootLog: 1
 --- !u!1 &443751346
 GameObject:
   m_ObjectHideFlags: 0
@@ -6412,8 +6420,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: descrtion_Panel
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: b8f01164443df7848b1a3a84109b1ccf, type: 2}
-  m_sharedMaterial: {fileID: 5708953471223630092, guid: b8f01164443df7848b1a3a84109b1ccf, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 7b87ccad27076da4bb06184eedfb426c, type: 2}
+  m_sharedMaterial: {fileID: -8290483902379073794, guid: 7b87ccad27076da4bb06184eedfb426c, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []

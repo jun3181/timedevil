@@ -59,6 +59,9 @@ public class CardUseOrchestrator : MonoBehaviour
         if (!showCard) showCard = FindObjectOfType<ShowCardController>(true);
         if (!desc) desc = FindObjectOfType<DescriptionPanelController>(true);
         if (!attackController) attackController = FindObjectOfType<AttackController>(true);
+        if (!supportController) supportController = FindObjectOfType<SupportController>(true);
+        if (!drawController) drawController = FindObjectOfType<DrawController>(true);
+        if (!moveController) moveController = FindObjectOfType<MoveController>(true);
     }
 
     private void EnsureActiveForUse()
@@ -153,9 +156,18 @@ public class CardUseOrchestrator : MonoBehaviour
             yield break;
         }
 
+        if (supportController != null && so is SupportCardSO precheckSupport &&
+            !supportController.CanExecute(precheckSupport, Faction.Player, selfCardsAlreadyCommitted: 1, out string supportFailMessage))
+        {
+            desc?.ShowOneShotMessage(supportFailMessage);
+            busy = false;
+            yield break;
+        }
+
         // C. 코스트 즉시 지불
         int need = Mathf.Max(0, so.cost);
-        if (costController && (costController.Current < need || !costController.TryPay(need)))
+        bool freeCost = supportController != null && supportController.TryConsumeNextCardFree(Faction.Player);
+        if (!freeCost && costController && (costController.Current < need || !costController.TryPay(need)))
         { busy = false; yield break; }
 
         // D. 카드 사용 직전 선택 레이아웃을 즉시 정리해, 제거 후 남은 손패 y가 튀지 않게 한다.
@@ -240,6 +252,16 @@ public class CardUseOrchestrator : MonoBehaviour
         // F. 설명 해제 및 선택 모드 복귀
         if (desc) desc.ClearTemporaryMessage();
         if (desc) desc.ExitEffectLock();
+
+        if (TurnManager.Instance != null && TurnManager.Instance.IsBattleResultPendingOrRunning)
+        {
+            if (menu) menu.EnableInput(false);
+            hand.ExitSelectMode(true);
+            hand.HideCards();
+            busy = false;
+            TurnManager.Instance.TryStartPendingBattleResultFlow();
+            yield break;
+        }
 
         if (hand.CardCount > 0)
         {

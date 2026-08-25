@@ -1,4 +1,4 @@
-﻿%YAML 1.1
+%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!114 &11400000
 MonoBehaviour:
@@ -13,13 +13,14 @@ MonoBehaviour:
   m_Name: AttackCard8
   m_EditorClassIdentifier: 
   id: AttackCard8
-  displayName: AttackCard8
+  displayName: "[\uC2E0\uB8B0]"
   type: 0
   display: "[\uC2E0\uB8B0]"
-  explanation: "믿어볼게. 무너져도 이번 한 번은."
+  explanation: "\uBBFF\uC5B4\uBCFC\uAC8C. \uBB34\uB108\uC838\uB3C4 \uC774\uBC88 \uD55C
+    \uBC88\uC740."
   mainArtwork: {fileID: 21300000, guid: fdecb3f4d91220548b314b7a4da90d0c, type: 3}
   arrowArtwork: {fileID: 0}
-  effectTextOverride: "공격칸: 8"
+  effectTextOverride: "\uACF5\uACA9\uCE78: 8"
   cost: 3
   positive: 8
   negative: 0
@@ -81,7 +82,8 @@ MonoBehaviour:
     projectileScale: 0
     labelsA: 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
     labelsB: 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-    explosionPrefab: {fileID: 1957720001998704, guid: 2a06d83ae8c0a7341a64faa85a9a3221, type: 3}
+    explosionPrefab: {fileID: 1957720001998704, guid: 2a06d83ae8c0a7341a64faa85a9a3221,
+      type: 3}
     explosionLifetime: 0.3
     explosionScale: 1
     clipKey: 
