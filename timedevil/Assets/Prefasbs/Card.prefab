@@ -111,35 +111,35 @@ MonoBehaviour:
   costTextRect:
     serializedVersion: 2
     x: 0.065
-    y: 0.86
+    y: 0.85
     width: 0.17
-    height: 0.105
+    height: 0.107
   nameTextRect:
     serializedVersion: 2
-    x: 0.305
-    y: 0.857
+    x: 0.35
+    y: 0.867
     width: 0.6
     height: 0.078
   effectTextRect:
     serializedVersion: 2
     x: 0.56
-    y: 0.065
-    width: 0.36
+    y: 0.055
+    width: 0.35
     height: 0.225
   supportEffectTextRect:
     serializedVersion: 2
     x: 0.14
-    y: 0.065
+    y: 0.055
     width: 0.72
     height: 0.225
   cornerFontSize: 12.5
   effectFontSize: 9.5
   attackPatternRect:
     serializedVersion: 2
-    x: 0.075
-    y: 0.033
+    x: 0.07
+    y: 0.035
     width: 0.405
-    height: 0.282
+    height: 0.255
   typeIconRect:
     serializedVersion: 2
     x: 0.115

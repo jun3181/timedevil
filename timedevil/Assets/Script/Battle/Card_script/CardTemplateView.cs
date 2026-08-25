@@ -39,15 +39,15 @@ public class CardTemplateView : MonoBehaviour
 
     [Header("Text Layout")]
     [SerializeField] private Color textColor = new Color(0.84f, 0.91f, 1f, 1f);
-    [SerializeField] private Rect costTextRect = new Rect(0.065f, 0.86f, 0.17f, 0.105f);
-    [SerializeField] private Rect nameTextRect = new Rect(0.305f, 0.857f, 0.60f, 0.078f);
-    [SerializeField] private Rect effectTextRect = new Rect(0.56f, 0.065f, 0.36f, 0.225f);
-    [SerializeField] private Rect supportEffectTextRect = new Rect(0.14f, 0.065f, 0.72f, 0.225f);
+    [SerializeField] private Rect costTextRect = new Rect(0.065f, 0.85f, 0.17f, 0.107f);
+    [SerializeField] private Rect nameTextRect = new Rect(0.35f, 0.867f, 0.60f, 0.078f);
+    [SerializeField] private Rect effectTextRect = new Rect(0.56f, 0.055f, 0.35f, 0.225f);
+    [SerializeField] private Rect supportEffectTextRect = new Rect(0.14f, 0.055f, 0.72f, 0.225f);
     [SerializeField, Min(1f)] private float cornerFontSize = 12.5f;
     [SerializeField, Min(1f)] private float effectFontSize = 9.5f;
 
     [Header("Pattern/Icon Layout")]
-    [SerializeField] private Rect attackPatternRect = new Rect(0.075f, 0.033f, 0.405f, 0.282f);
+    [SerializeField] private Rect attackPatternRect = new Rect(0.07f, 0.035f, 0.405f, 0.255f);
     [SerializeField] private Rect typeIconRect = new Rect(0.115f, 0.052f, 0.35f, 0.235f);
     [SerializeField] private Color attackGridLineColor = new Color(0f, 0f, 0f, 0f);
     [SerializeField, Min(0.1f)] private float attackGridLineThickness = 1f;
@@ -106,7 +106,7 @@ public class CardTemplateView : MonoBehaviour
         else if (card is MoveCardSO || card.type == CardType.Move)
             ShowMoveIcon(card as MoveCardSO);
         else if (card is DrawCardSO || card.type == CardType.Draw)
-            ShowDrawIcons();
+            ShowDrawIcon(card as DrawCardSO);
 
         RefreshLayerOrder();
     }
@@ -397,7 +397,7 @@ public class CardTemplateView : MonoBehaviour
             if (!icon)
                 continue;
 
-            Rect iconRect = BuildStackedIconRect(i);
+            Rect iconRect = BuildStackedIconRect(i, amount);
             SetNormalizedRect((RectTransform)icon.transform, iconRect);
             icon.sprite = moveIconSprite;
             icon.preserveAspect = true;
@@ -407,7 +407,7 @@ public class CardTemplateView : MonoBehaviour
         }
     }
 
-    private void ShowDrawIcons()
+    private void ShowDrawIcon(DrawCardSO drawCard)
     {
         if (!typeIconRoot)
             return;
@@ -415,34 +415,27 @@ public class CardTemplateView : MonoBehaviour
         typeIconRoot.gameObject.SetActive(true);
         SetNormalizedRect(typeIconRoot, typeIconRect);
 
-        Image first = GetTypeIcon(0);
-        Image second = GetTypeIcon(1);
+        Sprite iconSprite = drawCard != null && drawCard.drawMode == DrawMode.AntiDraw
+            ? drawSecondaryIconSprite
+            : drawIconSprite;
 
-        if (first)
+        Image icon = GetTypeIcon(0);
+        if (icon)
         {
-            SetNormalizedRect((RectTransform)first.transform, new Rect(0.03f, 0.06f, 0.64f, 0.88f));
-            first.sprite = drawIconSprite;
-            first.preserveAspect = true;
-            first.raycastTarget = false;
-            first.transform.localRotation = Quaternion.identity;
-            first.gameObject.SetActive(drawIconSprite != null);
-        }
-
-        if (second)
-        {
-            SetNormalizedRect((RectTransform)second.transform, new Rect(0.36f, 0.06f, 0.64f, 0.88f));
-            second.sprite = drawSecondaryIconSprite;
-            second.preserveAspect = true;
-            second.raycastTarget = false;
-            second.transform.localRotation = Quaternion.identity;
-            second.gameObject.SetActive(drawSecondaryIconSprite != null);
+            SetNormalizedRect((RectTransform)icon.transform, new Rect(0.08f, 0.05f, 0.84f, 0.9f));
+            icon.sprite = iconSprite;
+            icon.preserveAspect = true;
+            icon.raycastTarget = false;
+            icon.transform.localRotation = Quaternion.identity;
+            icon.gameObject.SetActive(iconSprite != null);
         }
     }
 
-    private Rect BuildStackedIconRect(int index)
+    private Rect BuildStackedIconRect(int index, int count)
     {
         Vector2 size = moveIconNormalizedSize;
-        Vector2 center = new Vector2(0.5f, 0.5f) + moveIconStackOffset * index;
+        float middleIndex = (Mathf.Max(1, count) - 1) * 0.5f;
+        Vector2 center = new Vector2(0.5f, 0.5f) + moveIconStackOffset * (index - middleIndex);
         return new Rect(center.x - size.x * 0.5f, center.y - size.y * 0.5f, size.x, size.y);
     }
 
