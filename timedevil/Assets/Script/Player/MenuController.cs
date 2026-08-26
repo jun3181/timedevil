@@ -160,6 +160,7 @@ public class MenuController : MonoBehaviour
     private RectTransform cardWindowContentRoot;
     private RectTransform cardPreviewRoot;
     private Image cardPreviewImage;
+    private CardTemplateView cardPreviewView;
     private TextMeshProUGUI[] cardWindowTexts;
     private TextMeshProUGUI cardWindowCloseText;
     private TextMeshProUGUI cardWindowPageText;
@@ -168,6 +169,7 @@ public class MenuController : MonoBehaviour
     private RectTransform deckWindowContentRoot;
     private RectTransform deckPreviewRoot;
     private Image deckPreviewImage;
+    private CardTemplateView deckPreviewView;
     private TextMeshProUGUI[] deckWindowTexts;
     private TextMeshProUGUI deckWindowCloseText;
     private TextMeshProUGUI deckWindowPageText;
@@ -1766,6 +1768,7 @@ public class MenuController : MonoBehaviour
         cardPreviewImage.color = Color.white;
         cardPreviewImage.preserveAspect = true;
         cardPreviewImage.raycastTarget = false;
+        cardPreviewView = EnsureCardPreviewView(previewImageRect);
 
         if (IsLegacySubWindowLayout(cardWindowFrame, cardWindowContentRoot, cardPreviewRoot, cardPreviewImage.rectTransform))
             ApplyReferenceCardWindowLayout();
@@ -1907,39 +1910,71 @@ public class MenuController : MonoBehaviour
         bool shouldShow = cardWindowOpen || (!Application.isPlaying && previewCardWindowInEditor);
         cardPreviewRoot.gameObject.SetActive(shouldShow);
         cardPreviewImage.gameObject.SetActive(shouldShow);
-        if (!shouldShow) return;
+        if (!shouldShow)
+        {
+            ClearCardPreview(cardPreviewView, cardPreviewImage);
+            return;
+        }
 
         CardMenuEntry entry = GetSelectedCardEntry();
-        Sprite sprite = ResolveCardSprite(entry);
-        cardPreviewImage.sprite = sprite;
-        cardPreviewImage.enabled = sprite != null;
-        cardPreviewImage.preserveAspect = true;
+        BindCardPreview(cardPreviewView, cardPreviewImage, entry);
     }
 
-    private Sprite ResolveCardSprite(CardMenuEntry entry)
+    private CardTemplateView EnsureCardPreviewView(RectTransform previewRect)
     {
-        if (entry.card != null && entry.card.mainArtwork != null)
-            return entry.card.mainArtwork;
-
-        if (string.IsNullOrEmpty(entry.id))
+        if (previewRect == null)
             return null;
 
-        Sprite sprite = Resources.Load<Sprite>($"my_asset/{entry.id}");
-        if (sprite != null) return sprite;
+        CardTemplateView view = previewRect.GetComponent<CardTemplateView>();
+        if (view == null)
+            view = previewRect.gameObject.AddComponent<CardTemplateView>();
 
-        string typeFolder = GetCardTypeFolder(entry.id);
-        return string.IsNullOrEmpty(typeFolder)
-            ? null
-            : Resources.Load<Sprite>($"my_asset/{typeFolder}/{entry.id}");
+        Image image = previewRect.GetComponent<Image>();
+        if (image != null)
+        {
+            image.sprite = null;
+            image.color = new Color(1f, 1f, 1f, 0f);
+            image.raycastTarget = false;
+        }
+
+        return view;
     }
 
-    private static string GetCardTypeFolder(string id)
+    private void BindCardPreview(CardTemplateView previewView, Image previewImage, CardMenuEntry entry)
     {
-        if (string.IsNullOrEmpty(id)) return null;
-        if (id.StartsWith("AttackCard")) return "AttackCard";
-        if (id.StartsWith("DrawCard")) return "DrawCard";
-        if (id.StartsWith("MoveCard")) return "MoveCard";
-        return null;
+        BaseCardSO card = entry.card;
+        if (card == null && !string.IsNullOrEmpty(entry.id) && cardDatabase != null)
+            card = cardDatabase.GetById(entry.id);
+
+        if (card == null)
+        {
+            ClearCardPreview(previewView, previewImage);
+            return;
+        }
+
+        if (previewImage != null)
+        {
+            previewImage.sprite = null;
+            previewImage.color = new Color(1f, 1f, 1f, 0f);
+            previewImage.enabled = true;
+            previewImage.raycastTarget = false;
+        }
+
+        if (previewView != null)
+            previewView.Bind(card);
+    }
+
+    private void ClearCardPreview(CardTemplateView previewView, Image previewImage)
+    {
+        if (previewView != null)
+            previewView.Clear();
+
+        if (previewImage == null)
+            return;
+
+        previewImage.sprite = null;
+        previewImage.color = new Color(1f, 1f, 1f, 0f);
+        previewImage.enabled = false;
     }
 
     private TextMeshProUGUI GetCurrentCardText()
@@ -2170,6 +2205,7 @@ public class MenuController : MonoBehaviour
         deckPreviewImage.color = Color.white;
         deckPreviewImage.preserveAspect = true;
         deckPreviewImage.raycastTarget = false;
+        deckPreviewView = EnsureCardPreviewView(previewImageRect);
 
         if (IsLegacySubWindowLayout(deckWindowFrame, deckWindowContentRoot, deckPreviewRoot, deckPreviewImage.rectTransform))
             ApplyReferenceDeckWindowLayout();
@@ -2323,13 +2359,14 @@ public class MenuController : MonoBehaviour
         bool shouldShow = deckWindowOpen || (!Application.isPlaying && previewDeckWindowInEditor);
         deckPreviewRoot.gameObject.SetActive(shouldShow);
         deckPreviewImage.gameObject.SetActive(shouldShow);
-        if (!shouldShow) return;
+        if (!shouldShow)
+        {
+            ClearCardPreview(deckPreviewView, deckPreviewImage);
+            return;
+        }
 
         CardMenuEntry entry = GetSelectedDeckEntry();
-        Sprite sprite = ResolveCardSprite(entry);
-        deckPreviewImage.sprite = sprite;
-        deckPreviewImage.enabled = sprite != null;
-        deckPreviewImage.preserveAspect = true;
+        BindCardPreview(deckPreviewView, deckPreviewImage, entry);
     }
 
     private TextMeshProUGUI GetCurrentDeckText()

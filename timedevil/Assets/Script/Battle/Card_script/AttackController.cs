@@ -102,7 +102,7 @@ public class AttackController : MonoBehaviour
         {
             bool[] mask = new bool[16];
             float[] times = new float[16];
-            AttackCardSO.FillMask16(so.hitMask, so.pattern16, mask);
+            AttackCardSO.FillMask16(so.hitMask, mask);
             AttackCardSO.FillTimeline16(so.timeline, times);
 
             if (IsAllZero(mask)) yield break;
@@ -129,7 +129,7 @@ public class AttackController : MonoBehaviour
             //                   /      
             bool[] warnMaskBase = new bool[16];
             float[] warnTimes = new float[16];
-            AttackCardSO.FillMask16(w.hitMask, w.pattern16, warnMaskBase);
+            AttackCardSO.FillMask16(w.hitMask, warnMaskBase);
             AttackCardSO.FillTimeline16(w.timeline, warnTimes);
 
             // (1)                 : labelsB>0                   OR
@@ -513,7 +513,7 @@ public class AttackController : MonoBehaviour
 
         if (so.waves == null || so.waves.Length == 0)
         {
-            AttackCardSO.FillMask16(so.hitMask, so.pattern16, outMask);
+            AttackCardSO.FillMask16(so.hitMask, outMask);
             return !IsAllZero(outMask);
         }
 
@@ -523,7 +523,7 @@ public class AttackController : MonoBehaviour
             var w = so.waves[wi];
             if (w == null) continue;
 
-            AttackCardSO.FillMask16(w.hitMask, w.pattern16, warnMaskBase);
+            AttackCardSO.FillMask16(w.hitMask, warnMaskBase);
             bool[] waveMask = BuildWarningMaskForWave(w, warnMaskBase);
             for (int i = 0; i < 16; i++)
                 outMask[i] = outMask[i] || waveMask[i];
@@ -598,12 +598,6 @@ public class AttackController : MonoBehaviour
     private void ApplyDamage(AttackCardSO so, Faction self, Faction foe)
     {
         if (hp == null) return;
-        if (so.useRawPowerDamage)
-        {
-            hp.ApplyDamage(foe, Mathf.Max(1, so.power));
-            return;
-        }
-
         int atk = hp.GetAttack(self);
         int def = hp.GetDefense(foe);
         int dmg = Mathf.Max(1, (so.power + atk) - def);

@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -7,6 +8,16 @@ using UnityEngine.UI;
 [DisallowMultipleComponent]
 public class TriggerStep_IllustrationPanel_New : TriggerStepBase
 {
+    [System.Serializable]
+    private class IllustrationFrame
+    {
+        [SerializeField] private Sprite sprite;
+        [SerializeField] private Dialogue dialogue;
+
+        public Sprite Sprite => sprite;
+        public Dialogue Dialogue => dialogue;
+    }
+
     [Header("Illustration UI")]
     [FormerlySerializedAs("panel")]
     [SerializeField] private GameObject illustrationRoot;
@@ -14,14 +25,16 @@ public class TriggerStep_IllustrationPanel_New : TriggerStepBase
     [SerializeField] private Image illustrationImage;
     [SerializeField] private bool autoCreateImageIfMissing = true;
 
-    [Header("Illustration Content")]
-    [FormerlySerializedAs("sprite")]
-    [SerializeField] private Sprite illustrationSprite;
+    [Header("Illustration Sequence")]
+    [SerializeField] private List<IllustrationFrame> sequence = new();
+
+    [Header("Illustration Fade")]
+    [SerializeField] private bool useFadeTransition = true;
+    [Min(0f)] [SerializeField] private float sequenceFadeOutDuration = 0.15f;
+    [Min(0f)] [SerializeField] private float sequenceFadeInDuration = 0.15f;
 
     [Header("Dialogue UI")]
     [SerializeField] private bool showDialoguePanel = true;
-    [SerializeField] private GameObject dialoguePanel;
-    [SerializeField] private Dialogue dialogue;
     [SerializeField] private bool closeWhenDialogueEnds = true;
     [SerializeField] private bool closeDialogueOnClose = true;
 
@@ -53,12 +66,17 @@ public class TriggerStep_IllustrationPanel_New : TriggerStepBase
     private Coroutine _autoClose;
     private DialogueManager _activeDialogueManager;
     private bool _startedDialogue;
-    private bool _openedDialoguePanelDirectly;
     private bool _ownsDialogueBlockInput;
     private bool _previousDialogueBlockInput;
     private DarkOverlay _darkOverlay;
     private bool _storedDarkOverlayAlpha;
     private float _previousDarkOverlayAlpha;
+    private readonly List<IllustrationFrame> _runtimeSequence = new();
+    private int _sequenceIndex;
+    private bool _currentFrameHadDialogue;
+    private bool _isTransitioning;
+    private float _visibleImageAlpha = 1f;
+    private bool _hasStoredImageAlpha;
     private const string AutoImageName = "IllustrationImage";
 
     private void Reset()
@@ -71,6 +89,7 @@ public class TriggerStep_IllustrationPanel_New : TriggerStepBase
 
     public override IEnumerator Execute(TriggerContext ctx)
     {
+        PrepareRuntimeSequence();
         ResolveMissingReferences();
 
         if (illustrationRoot == null && illustrationImage == null)
@@ -83,6 +102,9 @@ public class TriggerStep_IllustrationPanel_New : TriggerStepBase
             yield break;
 
         Open();
+
+        if (ShouldFadeIllustration())
+            yield return CoInitialFadeIn();
 
         if (!waitUntilClosed)
             yield break;
@@ -98,12 +120,12 @@ public class TriggerStep_IllustrationPanel_New : TriggerStepBase
         {
             if (CanCloseWhenDialogueEnds())
             {
-                CloseImmediate();
+                yield return CoCloseWithOptionalFade();
                 yield break;
             }
 
-            if (closeWithKey && !IsDialogueActive() && Input.GetKeyDown(closeKey))
-                CloseImmediate();
+            if (closeWithKey && !_isTransitioning && Input.GetKeyDown(closeKey))
+                yield return CoHandleAdvanceInput();
 
             yield return null;
         }
@@ -119,8 +141,9 @@ public class TriggerStep_IllustrationPanel_New : TriggerStepBase
 
         ApplyDarkOverlay();
 
-        if (illustrationImage != null)
-            illustrationImage.sprite = illustrationSprite;
+        _sequenceIndex = 0;
+        _currentFrameHadDialogue = false;
+        StoreImageVisibleAlpha();
 
         if (messageText != null)
             messageText.text = message;
@@ -130,8 +153,10 @@ public class TriggerStep_IllustrationPanel_New : TriggerStepBase
         else if (illustrationImage != null)
             illustrationImage.gameObject.SetActive(true);
 
-        OpenDialoguePanel();
+        PrepareDialoguePanel();
         _isOpen = true;
+        EnterCurrentIllustration();
+        SetIllustrationAlpha(ShouldFadeIllustration() ? 0f : _visibleImageAlpha);
 
         if (autoCloseDelay > 0f)
             _autoClose = StartCoroutine(CoAutoClose());
@@ -146,6 +171,8 @@ public class TriggerStep_IllustrationPanel_New : TriggerStepBase
 
     private void CloseImmediate()
     {
+        _isTransitioning = false;
+
         if (_autoClose != null)
         {
             StopCoroutine(_autoClose);
@@ -160,6 +187,7 @@ public class TriggerStep_IllustrationPanel_New : TriggerStepBase
         else if (illustrationImage != null)
             illustrationImage.gameObject.SetActive(false);
 
+        RestoreImageVisibleAlpha();
         _isOpen = false;
 
         if (_locked && GameManager.Instance != null)
@@ -200,11 +228,251 @@ public class TriggerStep_IllustrationPanel_New : TriggerStepBase
         if (illustrationRoot == null && illustrationImage != null)
             illustrationRoot = illustrationImage.gameObject;
 
-        if (illustrationImage == null && autoCreateImageIfMissing && illustrationSprite != null)
+        if (illustrationImage == null && autoCreateImageIfMissing && HasIllustrationContent())
             illustrationImage = ResolveOrCreateIllustrationImage();
 
-        if (showDialoguePanel && dialoguePanel == null && DialogueManager.instance != null)
-            dialoguePanel = DialogueManager.instance.uiRoot;
+        if (showDialoguePanel && _activeDialogueManager == null && DialogueManager.instance != null)
+            _activeDialogueManager = DialogueManager.instance;
+    }
+
+    private void PrepareRuntimeSequence()
+    {
+        _runtimeSequence.Clear();
+
+        if (sequence != null)
+        {
+            for (int i = 0; i < sequence.Count; i++)
+            {
+                IllustrationFrame frame = sequence[i];
+                if (frame != null && frame.Sprite != null)
+                    _runtimeSequence.Add(frame);
+            }
+        }
+    }
+
+    private bool HasIllustrationContent()
+    {
+        if (sequence == null)
+            return false;
+
+        for (int i = 0; i < sequence.Count; i++)
+        {
+            IllustrationFrame frame = sequence[i];
+            if (frame != null && frame.Sprite != null)
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool HasNextIllustration()
+    {
+        return _sequenceIndex + 1 < _runtimeSequence.Count;
+    }
+
+    private IEnumerator CoHandleAdvanceInput()
+    {
+        if (TryAdvanceCurrentDialogue())
+            yield break;
+
+        if (HasNextIllustration())
+            yield return CoAdvanceIllustration();
+        else
+            yield return CoCloseWithOptionalFade();
+    }
+
+    private IEnumerator CoAdvanceIllustration()
+    {
+        _isTransitioning = true;
+
+        if (ShouldFadeIllustration())
+            yield return CoFadeIllustrationAlpha(0f, sequenceFadeOutDuration);
+
+        if (_isOpen && HasNextIllustration())
+        {
+            _sequenceIndex++;
+            EnterCurrentIllustration();
+
+            if (ShouldFadeIllustration())
+                yield return CoFadeIllustrationAlpha(_visibleImageAlpha, sequenceFadeInDuration);
+            else
+                SetIllustrationAlpha(_visibleImageAlpha);
+        }
+
+        _isTransitioning = false;
+    }
+
+    private IEnumerator CoInitialFadeIn()
+    {
+        _isTransitioning = true;
+        yield return CoFadeIllustrationAlpha(_visibleImageAlpha, sequenceFadeInDuration);
+        _isTransitioning = false;
+    }
+
+    private IEnumerator CoCloseWithOptionalFade()
+    {
+        if (ShouldFadeIllustration())
+        {
+            _isTransitioning = true;
+            yield return CoFadeIllustrationAlpha(0f, sequenceFadeOutDuration);
+        }
+
+        CloseImmediate();
+    }
+
+    private bool ShouldFadeIllustration()
+    {
+        return useFadeTransition && illustrationImage != null;
+    }
+
+    private void EnterCurrentIllustration()
+    {
+        _startedDialogue = false;
+        _currentFrameHadDialogue = false;
+        ApplyCurrentIllustration();
+        StartCurrentFrameDialogue();
+    }
+
+    private void ApplyCurrentIllustration()
+    {
+        if (illustrationImage == null)
+            return;
+
+        illustrationImage.sprite = GetCurrentIllustrationSprite();
+    }
+
+    private Sprite GetCurrentIllustrationSprite()
+    {
+        if (_runtimeSequence.Count == 0)
+            return null;
+
+        int safeIndex = Mathf.Clamp(_sequenceIndex, 0, _runtimeSequence.Count - 1);
+        return _runtimeSequence[safeIndex].Sprite;
+    }
+
+    private Dialogue GetCurrentDialogue()
+    {
+        if (_runtimeSequence.Count == 0)
+            return null;
+
+        int safeIndex = Mathf.Clamp(_sequenceIndex, 0, _runtimeSequence.Count - 1);
+        IllustrationFrame frame = _runtimeSequence[safeIndex];
+        return frame != null ? frame.Dialogue : null;
+    }
+
+    private bool TryAdvanceCurrentDialogue()
+    {
+        if (_activeDialogueManager == null || !_activeDialogueManager.isDialogueActive)
+            return false;
+
+        if (_activeDialogueManager.IsTyping)
+            _activeDialogueManager.ForceCompleteTyping();
+        else
+            _activeDialogueManager.DisplayNextSentence(ignoreBlockInput: true);
+
+        return true;
+    }
+
+    private void StartCurrentFrameDialogue()
+    {
+        if (!showDialoguePanel)
+            return;
+
+        Dialogue frameDialogue = GetCurrentDialogue();
+        if (frameDialogue == null)
+            return;
+
+        DialogueManager manager = ResolveDialogueManager();
+        if (manager == null)
+            return;
+
+        OwnDialogueBlockInput(manager);
+
+        manager.blockInput = false;
+        manager.StartDialogue(frameDialogue);
+        manager.blockInput = true;
+        _startedDialogue = true;
+        _currentFrameHadDialogue = manager.isDialogueActive;
+    }
+
+    private DialogueManager ResolveDialogueManager()
+    {
+        if (_activeDialogueManager == null)
+            _activeDialogueManager = DialogueManager.instance;
+
+        return _activeDialogueManager;
+    }
+
+    private void OwnDialogueBlockInput(DialogueManager manager)
+    {
+        if (manager == null)
+            return;
+
+        if (_ownsDialogueBlockInput && _activeDialogueManager == manager)
+            return;
+
+        RestoreDialogueBlockInput();
+
+        _activeDialogueManager = manager;
+        _previousDialogueBlockInput = manager.blockInput;
+        _ownsDialogueBlockInput = true;
+    }
+
+    private IEnumerator CoFadeIllustrationAlpha(float targetAlpha, float duration)
+    {
+        if (illustrationImage == null)
+            yield break;
+
+        if (duration <= 0f)
+        {
+            SetIllustrationAlpha(targetAlpha);
+            yield break;
+        }
+
+        float startAlpha = illustrationImage.color.a;
+        float elapsed = 0f;
+
+        while (_isOpen && elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / duration);
+            SetIllustrationAlpha(Mathf.Lerp(startAlpha, targetAlpha, t));
+            yield return null;
+        }
+
+        if (_isOpen)
+            SetIllustrationAlpha(targetAlpha);
+    }
+
+    private void StoreImageVisibleAlpha()
+    {
+        _visibleImageAlpha = 1f;
+        _hasStoredImageAlpha = false;
+
+        if (illustrationImage == null)
+            return;
+
+        _visibleImageAlpha = illustrationImage.color.a;
+        _hasStoredImageAlpha = true;
+    }
+
+    private void RestoreImageVisibleAlpha()
+    {
+        if (!_hasStoredImageAlpha)
+            return;
+
+        SetIllustrationAlpha(_visibleImageAlpha);
+        _hasStoredImageAlpha = false;
+    }
+
+    private void SetIllustrationAlpha(float alpha)
+    {
+        if (illustrationImage == null)
+            return;
+
+        Color color = illustrationImage.color;
+        color.a = alpha;
+        illustrationImage.color = color;
     }
 
     private Image ResolveOrCreateIllustrationImage()
@@ -294,33 +562,12 @@ public class TriggerStep_IllustrationPanel_New : TriggerStepBase
         return null;
     }
 
-    private void OpenDialoguePanel()
+    private void PrepareDialoguePanel()
     {
-        if (!showDialoguePanel)
-            return;
-
         _activeDialogueManager = DialogueManager.instance;
         _startedDialogue = false;
-        _openedDialoguePanelDirectly = false;
         _ownsDialogueBlockInput = false;
         _previousDialogueBlockInput = false;
-
-        if (_activeDialogueManager != null && dialogue != null)
-        {
-            _previousDialogueBlockInput = _activeDialogueManager.blockInput;
-            _activeDialogueManager.blockInput = false;
-            _ownsDialogueBlockInput = true;
-
-            _activeDialogueManager.StartDialogue(dialogue);
-            _startedDialogue = true;
-            return;
-        }
-
-        if (dialoguePanel != null)
-        {
-            dialoguePanel.SetActive(true);
-            _openedDialoguePanelDirectly = true;
-        }
     }
 
     private void CloseDialoguePanel()
@@ -329,12 +576,9 @@ public class TriggerStep_IllustrationPanel_New : TriggerStepBase
         {
             if (_startedDialogue && _activeDialogueManager != null && _activeDialogueManager.isDialogueActive)
                 _activeDialogueManager.EndDialogueExternal();
-            else if (_openedDialoguePanelDirectly && dialoguePanel != null)
-                dialoguePanel.SetActive(false);
         }
 
         _startedDialogue = false;
-        _openedDialoguePanelDirectly = false;
         RestoreDialogueBlockInput();
         _activeDialogueManager = null;
     }
@@ -350,7 +594,7 @@ public class TriggerStep_IllustrationPanel_New : TriggerStepBase
 
     private bool CanCloseWhenDialogueEnds()
     {
-        return closeWhenDialogueEnds && _startedDialogue && !IsDialogueActive();
+        return closeWhenDialogueEnds && _currentFrameHadDialogue && !IsDialogueActive() && !HasNextIllustration();
     }
 
     private bool IsDialogueActive()

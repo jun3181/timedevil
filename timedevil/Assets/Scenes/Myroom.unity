@@ -215,20 +215,24 @@ MonoBehaviour:
   illustrationRoot: {fileID: 1146908926}
   illustrationImage: {fileID: 0}
   autoCreateImageIfMissing: 1
-  illustrationSprite: {fileID: 21300000, guid: 3ec22b2622bfb3d4aa0ca823333fd36a, type: 3}
-  showDialoguePanel: 1
-  dialoguePanel: {fileID: 1503988285}
-  dialogue:
-    name: 
-    sentences: []
-    leftPortrait: {fileID: 0}
-    rightPortrait: {fileID: 0}
-    lines:
-    - text: "\uBC16\uC740 \uC5ED\uC2DC \uBB34\uC11C\uC6CC...."
-      speakerName: 
+  sequence:
+  - sprite: {fileID: 21300000, guid: 3ec22b2622bfb3d4aa0ca823333fd36a, type: 3}
+    dialogue:
+      name: 
+      sentences: []
       leftPortrait: {fileID: 0}
-      rightPortrait: {fileID: 21300000, guid: c47fa7d7138300b4995672f2ef740502, type: 3}
-      focus: 0
+      rightPortrait: {fileID: 0}
+      lines:
+      - text: "\uBC16\uC740 \uC5ED\uC2DC \uBB34\uC11C\uC6CC...."
+        speakerName: 
+        leftPortrait: {fileID: 0}
+        rightPortrait: {fileID: 21300000, guid: c47fa7d7138300b4995672f2ef740502,
+          type: 3}
+        focus: 0
+  useFadeTransition: 1
+  sequenceFadeOutDuration: 0.15
+  sequenceFadeInDuration: 0.15
+  showDialoguePanel: 1
   closeWhenDialogueEnds: 1
   closeDialogueOnClose: 1
   messageText: {fileID: 0}
@@ -733,6 +737,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetPoint: {fileID: 1287217413}
+  afterFacing: 0
   fadePanel: {fileID: 0}
   fadeOutDuration: 0.25
   fadeInDuration: 0.25
@@ -1274,6 +1279,12 @@ MonoBehaviour:
     maxCalls: 1
   - routeKey: flower_dialogue
     maxCalls: 0
+  completionItemCondition:
+    useItemCondition: 0
+    itemId: 
+    requiredQuantity: 1
+    completeRouteKey: 
+    consumeItemsOnComplete: 0
   routeKey: 
   maxCalls: 1
   disableCollidersWhenConsumed: 1
@@ -1465,6 +1476,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   router: {fileID: 345882304}
   routeStages: []
+  completionItemCondition:
+    useItemCondition: 0
+    itemId: 
+    requiredQuantity: 1
+    completeRouteKey: 
+    consumeItemsOnComplete: 0
   routeKey: Trigger3
   maxCalls: 1
   usePlayerMoveComponentCheck: 1
@@ -1625,6 +1642,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   router: {fileID: 3001000200}
   routeStages: []
+  completionItemCondition:
+    useItemCondition: 0
+    itemId: 
+    requiredQuantity: 1
+    completeRouteKey: 
+    consumeItemsOnComplete: 0
   routeKey: Trigger5
   maxCalls: 0
   disableCollidersWhenConsumed: 1
@@ -9375,7 +9398,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "[\uBD88\uC548]"
+  m_text: "\uBB34\uC11C\uC6C0"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 7b87ccad27076da4bb06184eedfb426c, type: 2}
   m_sharedMaterial: {fileID: -8290483902379073794, guid: 7b87ccad27076da4bb06184eedfb426c,
@@ -14315,6 +14338,7 @@ MonoBehaviour:
   autoBuildRetroMenu: 1
   menuFrameResourcePath: my_asset/menu_window_frame
   windowOffsetFromTopLeft: {x: 80, y: -50}
+  contentOffsetFromTopLeft: {x: 80, y: -1}
   windowSize: {x: 630, y: 360}
   itemGridOrigin: {x: 72, y: -90}
   itemGridSpacing: {x: 265, y: 105}
@@ -14328,6 +14352,7 @@ MonoBehaviour:
   - exit
   hidePanelTextInRetroView: 1
   preserveManualLayout: 1
+  repairLegacySubWindowLayout: 1
   autoBuildItemWindow: 1
   previewItemWindowInEditor: 0
   preserveManualItemLayout: 1
@@ -14766,6 +14791,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   router: {fileID: 3001000200}
   routeStages: []
+  completionItemCondition:
+    useItemCondition: 0
+    itemId: 
+    requiredQuantity: 1
+    completeRouteKey: 
+    consumeItemsOnComplete: 0
   routeKey: Trigger5
   maxCalls: 0
   disableCollidersWhenConsumed: 1
@@ -16255,7 +16286,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   db: {fileID: 11400000, guid: c0cc44962aa33464ca629e77b4d09b2b, type: 2}
   cards:
-  - {fileID: 11400000, guid: b60743a0113e4d27adc77f173c344fe7, type: 2}
+  - {fileID: 11400000, guid: f2cad4e731c14bf7bfac692daa95424a, type: 2}
   showAcquisitionDialogue: 1
   afterDialogue:
     name: 
@@ -17503,20 +17534,24 @@ MonoBehaviour:
   illustrationRoot: {fileID: 1146908926}
   illustrationImage: {fileID: 0}
   autoCreateImageIfMissing: 1
-  illustrationSprite: {fileID: 21300000, guid: 3ec22b2622bfb3d4aa0ca823333fd36a, type: 3}
-  showDialoguePanel: 1
-  dialoguePanel: {fileID: 1503988285}
-  dialogue:
-    name: 
-    sentences: []
-    leftPortrait: {fileID: 0}
-    rightPortrait: {fileID: 0}
-    lines:
-    - text: "\uADF8\uB0E5\uC790\uC790"
-      speakerName: 
+  sequence:
+  - sprite: {fileID: 21300000, guid: 3ec22b2622bfb3d4aa0ca823333fd36a, type: 3}
+    dialogue:
+      name: 
+      sentences: []
       leftPortrait: {fileID: 0}
-      rightPortrait: {fileID: 21300000, guid: c47fa7d7138300b4995672f2ef740502, type: 3}
-      focus: 0
+      rightPortrait: {fileID: 0}
+      lines:
+      - text: "\uADF8\uB0E5\uC790\uC790"
+        speakerName: 
+        leftPortrait: {fileID: 0}
+        rightPortrait: {fileID: 21300000, guid: c47fa7d7138300b4995672f2ef740502,
+          type: 3}
+        focus: 0
+  useFadeTransition: 1
+  sequenceFadeOutDuration: 0.15
+  sequenceFadeInDuration: 0.15
+  showDialoguePanel: 1
   closeWhenDialogueEnds: 1
   closeDialogueOnClose: 1
   messageText: {fileID: 0}
@@ -17578,20 +17613,11 @@ MonoBehaviour:
   illustrationRoot: {fileID: 726261340}
   illustrationImage: {fileID: 0}
   autoCreateImageIfMissing: 1
-  illustrationSprite: {fileID: 0}
+  sequence: []
+  useFadeTransition: 1
+  sequenceFadeOutDuration: 0.15
+  sequenceFadeInDuration: 0.15
   showDialoguePanel: 1
-  dialoguePanel: {fileID: 0}
-  dialogue:
-    name: 
-    sentences: []
-    leftPortrait: {fileID: 0}
-    rightPortrait: {fileID: 0}
-    lines:
-    - text: "\uC73C\uC545!"
-      speakerName: 
-      leftPortrait: {fileID: 0}
-      rightPortrait: {fileID: 0}
-      focus: 0
   closeWhenDialogueEnds: 1
   closeDialogueOnClose: 1
   messageText: {fileID: 0}
@@ -21153,25 +21179,30 @@ MonoBehaviour:
   illustrationRoot: {fileID: 1146908926}
   illustrationImage: {fileID: 0}
   autoCreateImageIfMissing: 1
-  illustrationSprite: {fileID: 21300000, guid: 3ec22b2622bfb3d4aa0ca823333fd36a, type: 3}
+  sequence:
+  - sprite: {fileID: 21300000, guid: 3ec22b2622bfb3d4aa0ca823333fd36a, type: 3}
+    dialogue:
+      name: 
+      sentences: []
+      leftPortrait: {fileID: 0}
+      rightPortrait: {fileID: 0}
+      lines:
+      - text: "\uADF8\uB0E5 \uB6F0\uC5B4 \uB0B4\uB9B4\uAE4C...?"
+        speakerName: 
+        leftPortrait: {fileID: 0}
+        rightPortrait: {fileID: 21300000, guid: c47fa7d7138300b4995672f2ef740502,
+          type: 3}
+        focus: 0
+      - text: "\uC544\uB2C8\uC57C \uADF8\uB0E5 \uC790\uC790"
+        speakerName: 
+        leftPortrait: {fileID: 0}
+        rightPortrait: {fileID: 21300000, guid: c47fa7d7138300b4995672f2ef740502,
+          type: 3}
+        focus: 0
+  useFadeTransition: 1
+  sequenceFadeOutDuration: 0.15
+  sequenceFadeInDuration: 0.15
   showDialoguePanel: 1
-  dialoguePanel: {fileID: 1503988285}
-  dialogue:
-    name: 
-    sentences: []
-    leftPortrait: {fileID: 0}
-    rightPortrait: {fileID: 0}
-    lines:
-    - text: "\uADF8\uB0E5 \uB6F0\uC5B4 \uB0B4\uB9B4\uAE4C...?"
-      speakerName: 
-      leftPortrait: {fileID: 0}
-      rightPortrait: {fileID: 21300000, guid: c47fa7d7138300b4995672f2ef740502, type: 3}
-      focus: 0
-    - text: "\uC544\uB2C8\uC57C \uADF8\uB0E5 \uC790\uC790"
-      speakerName: 
-      leftPortrait: {fileID: 0}
-      rightPortrait: {fileID: 21300000, guid: c47fa7d7138300b4995672f2ef740502, type: 3}
-      focus: 0
   closeWhenDialogueEnds: 1
   closeDialogueOnClose: 1
   messageText: {fileID: 0}
@@ -21363,7 +21394,7 @@ Transform:
   m_GameObject: {fileID: 780439217}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.53, y: 0.83, z: -1}
+  m_LocalPosition: {x: 0.47, y: 0.89, z: -1}
   m_LocalScale: {x: 1.5, y: 1.5, z: 1.5}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -22053,6 +22084,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   router: {fileID: 3001000200}
   routeStages: []
+  completionItemCondition:
+    useItemCondition: 0
+    itemId: 
+    requiredQuantity: 1
+    completeRouteKey: 
+    consumeItemsOnComplete: 0
   routeKey: test2
   maxCalls: 0
   disableCollidersWhenConsumed: 1
@@ -22161,7 +22198,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: AttackCard2
+  m_text: "\uD3EC\uAE30"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 7b87ccad27076da4bb06184eedfb426c, type: 2}
   m_sharedMaterial: {fileID: -8290483902379073794, guid: 7b87ccad27076da4bb06184eedfb426c,
@@ -23035,6 +23072,7 @@ GameObject:
   - component: {fileID: 912735064}
   - component: {fileID: 912735066}
   - component: {fileID: 912735065}
+  - component: {fileID: 912735067}
   m_Layer: 5
   m_Name: DeckPreviewImage
   m_TagString: Untagged
@@ -23074,7 +23112,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -23099,6 +23137,90 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 912735063}
   m_CullTransparentMesh: 1
+--- !u!114 &912735067
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 912735063}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d2acc727ace34e042a0d6f15060e62df, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  attackFrameSprite: {fileID: 0}
+  moveDrawFrameSprite: {fileID: 0}
+  supportFrameSprite: {fileID: 0}
+  attackPatternIconSprite: {fileID: 0}
+  drawIconSprite: {fileID: 0}
+  drawSecondaryIconSprite: {fileID: 0}
+  moveIconSprite: {fileID: 0}
+  testArtworkSprite: {fileID: 0}
+  useCardMainArtwork: 1
+  artworkRect:
+    serializedVersion: 2
+    x: 0.1
+    y: 0.345
+    width: 0.8
+    height: 0.46
+  artworkFillScale: 1.12
+  costText: {fileID: 0}
+  nameText: {fileID: 0}
+  effectText: {fileID: 0}
+  textColor: {r: 0.84, g: 0.91, b: 1, a: 1}
+  costTextRect:
+    serializedVersion: 2
+    x: 0.065
+    y: 0.85
+    width: 0.17
+    height: 0.107
+  nameTextRect:
+    serializedVersion: 2
+    x: 0.35
+    y: 0.867
+    width: 0.6
+    height: 0.078
+  effectTextRect:
+    serializedVersion: 2
+    x: 0.56
+    y: 0.055
+    width: 0.35
+    height: 0.225
+  supportEffectTextRect:
+    serializedVersion: 2
+    x: 0.14
+    y: 0.055
+    width: 0.72
+    height: 0.225
+  cornerFontSize: 12.5
+  effectFontSize: 9.5
+  attackPatternRect:
+    serializedVersion: 2
+    x: 0.07
+    y: 0.035
+    width: 0.405
+    height: 0.255
+  typeIconRect:
+    serializedVersion: 2
+    x: 0.115
+    y: 0.052
+    width: 0.35
+    height: 0.235
+  attackGridLineColor: {r: 0, g: 0, b: 0, a: 0}
+  attackGridLineThickness: 1
+  patternIconInset: 1.5
+  maxStackedMoveIcons: 4
+  moveIconStackOffset: {x: 0.12, y: -0.05}
+  moveIconNormalizedSize: {x: 0.78, y: 0.92}
+  moveIconBaseRotation: 0
+  artworkSlot: {fileID: 0}
+  artworkImage: {fileID: 0}
+  frameImage: {fileID: 0}
+  legacyArrowImage: {fileID: 0}
+  attackPatternRoot: {fileID: 0}
+  typeIconRoot: {fileID: 0}
+  hideEmptyImages: 1
 --- !u!1 &914108825
 GameObject:
   m_ObjectHideFlags: 0
@@ -29451,7 +29573,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   db: {fileID: 11400000, guid: c0cc44962aa33464ca629e77b4d09b2b, type: 2}
   cards:
-  - {fileID: 11400000, guid: a3bba8ae4ba14b2c81a7fa8589193a96, type: 2}
+  - {fileID: 11400000, guid: 9c0bf4d6c8d64160a36c34f5e34dc54e, type: 2}
   showAcquisitionDialogue: 1
   afterDialogue:
     name: 
@@ -33122,6 +33244,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   router: {fileID: 345882304}
   routeStages: []
+  completionItemCondition:
+    useItemCondition: 0
+    itemId: 
+    requiredQuantity: 1
+    completeRouteKey: 
+    consumeItemsOnComplete: 0
   routeKey: Trigger8
   maxCalls: 1
   usePlayerMoveComponentCheck: 1
@@ -35081,7 +35209,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 1/8
+  m_text: 1/2
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 7b87ccad27076da4bb06184eedfb426c, type: 2}
   m_sharedMaterial: {fileID: -8290483902379073794, guid: 7b87ccad27076da4bb06184eedfb426c,
@@ -35257,6 +35385,12 @@ MonoBehaviour:
     maxCalls: 1
   - routeKey: windowill
     maxCalls: 0
+  completionItemCondition:
+    useItemCondition: 0
+    itemId: 
+    requiredQuantity: 1
+    completeRouteKey: 
+    consumeItemsOnComplete: 0
   routeKey: test
   maxCalls: 0
   disableCollidersWhenConsumed: 1
@@ -35951,6 +36085,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   router: {fileID: 345882304}
   routeStages: []
+  completionItemCondition:
+    useItemCondition: 0
+    itemId: 
+    requiredQuantity: 1
+    completeRouteKey: 
+    consumeItemsOnComplete: 0
   routeKey: Trigger2
   maxCalls: 1
   usePlayerMoveComponentCheck: 1
@@ -36882,7 +37022,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   db: {fileID: 11400000, guid: c0cc44962aa33464ca629e77b4d09b2b, type: 2}
   cards:
-  - {fileID: 11400000, guid: cd7776a96fb49564480e4c176c785300, type: 2}
+  - {fileID: 11400000, guid: 8e97affecdd34eba88cd4e38ab679023, type: 2}
   showAcquisitionDialogue: 1
   afterDialogue:
     name: 
@@ -36955,6 +37095,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   router: {fileID: 345882304}
   routeStages: []
+  completionItemCondition:
+    useItemCondition: 0
+    itemId: 
+    requiredQuantity: 1
+    completeRouteKey: 
+    consumeItemsOnComplete: 0
   routeKey: Trigger7
   maxCalls: 1
   usePlayerMoveComponentCheck: 1
@@ -37224,7 +37370,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   db: {fileID: 11400000, guid: c0cc44962aa33464ca629e77b4d09b2b, type: 2}
   cards:
-  - {fileID: 11400000, guid: 63d5b1efcea947efb479bc0f1d2e1c06, type: 2}
+  - {fileID: 11400000, guid: 9a6480bf7f37499f9bfabd0ba3d7b671, type: 2}
   showAcquisitionDialogue: 1
   afterDialogue:
     name: 
@@ -37340,6 +37486,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   router: {fileID: 345882304}
   routeStages: []
+  completionItemCondition:
+    useItemCondition: 0
+    itemId: 
+    requiredQuantity: 1
+    completeRouteKey: 
+    consumeItemsOnComplete: 0
   routeKey: Trigger1
   maxCalls: 1
   usePlayerMoveComponentCheck: 1
@@ -37708,6 +37860,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   router: {fileID: 345882304}
   routeStages: []
+  completionItemCondition:
+    useItemCondition: 0
+    itemId: 
+    requiredQuantity: 1
+    completeRouteKey: 
+    consumeItemsOnComplete: 0
   routeKey: Trigger4
   maxCalls: 1
   usePlayerMoveComponentCheck: 1
@@ -37790,7 +37948,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   db: {fileID: 11400000, guid: c0cc44962aa33464ca629e77b4d09b2b, type: 2}
   cards:
-  - {fileID: 11400000, guid: 1513d05509baf2c468dd0c400c91ee3e, type: 2}
+  - {fileID: 11400000, guid: 4ac9c47788c64d41a6fe0abd92be7caf, type: 2}
   showAcquisitionDialogue: 1
   afterDialogue:
     name: 
@@ -37979,7 +38137,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   db: {fileID: 11400000, guid: c0cc44962aa33464ca629e77b4d09b2b, type: 2}
   cards:
-  - {fileID: 11400000, guid: 00911d7e8a7e8e64d840152eef9a8188, type: 2}
+  - {fileID: 11400000, guid: 9cbec3bdf8fb44aab4ce4ca2d691667b, type: 2}
   showAcquisitionDialogue: 1
   afterDialogue:
     name: 
@@ -38984,7 +39142,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   db: {fileID: 11400000, guid: c0cc44962aa33464ca629e77b4d09b2b, type: 2}
   cards:
-  - {fileID: 11400000, guid: d28c0adb4c3b13c4dbd05de94a86a5b1, type: 2}
+  - {fileID: 11400000, guid: c2626f5b59e94044967a1373bb00611c, type: 2}
   showAcquisitionDialogue: 1
   afterDialogue:
     name: 
@@ -39050,7 +39208,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: AttackCard4
+  m_text: "\uACF5\uD669"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 7b87ccad27076da4bb06184eedfb426c, type: 2}
   m_sharedMaterial: {fileID: -8290483902379073794, guid: 7b87ccad27076da4bb06184eedfb426c,
@@ -40211,6 +40369,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   router: {fileID: 3001000200}
   routeStages: []
+  completionItemCondition:
+    useItemCondition: 0
+    itemId: 
+    requiredQuantity: 1
+    completeRouteKey: 
+    consumeItemsOnComplete: 0
   routeKey: test2
   maxCalls: 0
   disableCollidersWhenConsumed: 1
@@ -40365,6 +40529,7 @@ GameObject:
   - component: {fileID: 1908773358}
   - component: {fileID: 1908773360}
   - component: {fileID: 1908773359}
+  - component: {fileID: 1908773361}
   m_Layer: 5
   m_Name: CardPreviewImage
   m_TagString: Untagged
@@ -40404,7 +40569,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -40429,6 +40594,90 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1908773357}
   m_CullTransparentMesh: 1
+--- !u!114 &1908773361
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1908773357}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d2acc727ace34e042a0d6f15060e62df, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  attackFrameSprite: {fileID: 0}
+  moveDrawFrameSprite: {fileID: 0}
+  supportFrameSprite: {fileID: 0}
+  attackPatternIconSprite: {fileID: 0}
+  drawIconSprite: {fileID: 0}
+  drawSecondaryIconSprite: {fileID: 0}
+  moveIconSprite: {fileID: 0}
+  testArtworkSprite: {fileID: 0}
+  useCardMainArtwork: 1
+  artworkRect:
+    serializedVersion: 2
+    x: 0.1
+    y: 0.345
+    width: 0.8
+    height: 0.46
+  artworkFillScale: 1.12
+  costText: {fileID: 0}
+  nameText: {fileID: 0}
+  effectText: {fileID: 0}
+  textColor: {r: 0.84, g: 0.91, b: 1, a: 1}
+  costTextRect:
+    serializedVersion: 2
+    x: 0.065
+    y: 0.85
+    width: 0.17
+    height: 0.107
+  nameTextRect:
+    serializedVersion: 2
+    x: 0.35
+    y: 0.867
+    width: 0.6
+    height: 0.078
+  effectTextRect:
+    serializedVersion: 2
+    x: 0.56
+    y: 0.055
+    width: 0.35
+    height: 0.225
+  supportEffectTextRect:
+    serializedVersion: 2
+    x: 0.14
+    y: 0.055
+    width: 0.72
+    height: 0.225
+  cornerFontSize: 12.5
+  effectFontSize: 9.5
+  attackPatternRect:
+    serializedVersion: 2
+    x: 0.07
+    y: 0.035
+    width: 0.405
+    height: 0.255
+  typeIconRect:
+    serializedVersion: 2
+    x: 0.115
+    y: 0.052
+    width: 0.35
+    height: 0.235
+  attackGridLineColor: {r: 0, g: 0, b: 0, a: 0}
+  attackGridLineThickness: 1
+  patternIconInset: 1.5
+  maxStackedMoveIcons: 4
+  moveIconStackOffset: {x: 0.12, y: -0.05}
+  moveIconNormalizedSize: {x: 0.78, y: 0.92}
+  moveIconBaseRotation: 0
+  artworkSlot: {fileID: 0}
+  artworkImage: {fileID: 0}
+  frameImage: {fileID: 0}
+  legacyArrowImage: {fileID: 0}
+  attackPatternRoot: {fileID: 0}
+  typeIconRoot: {fileID: 0}
+  hideEmptyImages: 1
 --- !u!1 &1910473519
 GameObject:
   m_ObjectHideFlags: 0
@@ -40486,7 +40735,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: AttackCard3
+  m_text: "\uC6A9\uAE30"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 7b87ccad27076da4bb06184eedfb426c, type: 2}
   m_sharedMaterial: {fileID: -8290483902379073794, guid: 7b87ccad27076da4bb06184eedfb426c,
@@ -41329,6 +41578,12 @@ MonoBehaviour:
   routeStages:
   - routeKey: Myroom_Door_Teleport
     maxCalls: 0
+  completionItemCondition:
+    useItemCondition: 0
+    itemId: 
+    requiredQuantity: 1
+    completeRouteKey: 
+    consumeItemsOnComplete: 0
   routeKey: Myroom_Door_Teleport
   maxCalls: 0
   disableCollidersWhenConsumed: 1
@@ -41382,15 +41637,11 @@ MonoBehaviour:
   illustrationRoot: {fileID: 0}
   illustrationImage: {fileID: 0}
   autoCreateImageIfMissing: 1
-  illustrationSprite: {fileID: 0}
+  sequence: []
+  useFadeTransition: 1
+  sequenceFadeOutDuration: 0.15
+  sequenceFadeInDuration: 0.15
   showDialoguePanel: 1
-  dialoguePanel: {fileID: 0}
-  dialogue:
-    name: 
-    sentences: []
-    leftPortrait: {fileID: 0}
-    rightPortrait: {fileID: 0}
-    lines: []
   closeWhenDialogueEnds: 1
   closeDialogueOnClose: 1
   messageText: {fileID: 0}
@@ -41704,6 +41955,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   boundsShape: {fileID: 0}
+  useEmptyPolygonSpace: 1
   debugDraw: 0
 --- !u!1 &2100332295
 GameObject:
@@ -43026,6 +43278,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   router: {fileID: 3001000200}
   routeStages: []
+  completionItemCondition:
+    useItemCondition: 0
+    itemId: 
+    requiredQuantity: 1
+    completeRouteKey: 
+    consumeItemsOnComplete: 0
   routeKey: Myroom_Book3_Dialogue
   maxCalls: 0
   disableCollidersWhenConsumed: 1
@@ -43050,6 +43308,12 @@ MonoBehaviour:
     maxCalls: 1
   - routeKey: Myroom_Book2_Dialogue2
     maxCalls: 0
+  completionItemCondition:
+    useItemCondition: 0
+    itemId: 
+    requiredQuantity: 1
+    completeRouteKey: 
+    consumeItemsOnComplete: 0
   routeKey: 
   maxCalls: 0
   disableCollidersWhenConsumed: 1
@@ -43070,6 +43334,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   router: {fileID: 3001000200}
   routeStages: []
+  completionItemCondition:
+    useItemCondition: 0
+    itemId: 
+    requiredQuantity: 1
+    completeRouteKey: 
+    consumeItemsOnComplete: 0
   routeKey: Myroom_Book3_Dialogue
   maxCalls: 0
   disableCollidersWhenConsumed: 1
@@ -43090,6 +43360,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   router: {fileID: 3001000200}
   routeStages: []
+  completionItemCondition:
+    useItemCondition: 0
+    itemId: 
+    requiredQuantity: 1
+    completeRouteKey: 
+    consumeItemsOnComplete: 0
   routeKey: Myroom_Bed_Dialogue
   maxCalls: 0
   disableCollidersWhenConsumed: 1
@@ -43168,6 +43444,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   targetPoint: {fileID: 1837644662}
   offset: {x: 0, y: 0}
+  afterFacing: 0
   useFade: 1
   fadePanel: {fileID: 0}
   fadeOutDuration: 0.25

@@ -45,25 +45,6 @@ public class AttackGridMask
 
         cells = resized;
     }
-
-    public void LoadPattern16(string pattern)
-    {
-        EnsureSize();
-        for (int i = 0; i < 16; i++)
-        {
-            char ch = (pattern != null && pattern.Length > i) ? pattern[i] : '0';
-            cells[i] = ch == '1';
-        }
-    }
-
-    public string ToPattern16()
-    {
-        EnsureSize();
-        char[] pattern = new char[16];
-        for (int i = 0; i < pattern.Length; i++)
-            pattern[i] = cells[i] ? '1' : '0';
-        return new string(pattern);
-    }
 }
 
 [Serializable]
@@ -115,11 +96,7 @@ public class AttackCardSO : BaseCardSO
     [Header("Attack")]
     public int power = 1;
 
-    [Tooltip("If true, power is used as final damage without ATK/DEF calculation.")]
-    public bool useRawPowerDamage = false;
-
     [HideInInspector] public AttackGridMask hitMask = new AttackGridMask();
-    [HideInInspector] public string pattern16 = "0000000000000000";
     [HideInInspector] public float[] timeline = new float[16];
 
     [Header("Global FX (optional)")]
@@ -134,7 +111,6 @@ public class AttackCardSO : BaseCardSO
 
         public AttackGridMask hitMask = new AttackGridMask();
 
-        [HideInInspector] public string pattern16 = "0000000000000000";
         public float[] timeline = new float[16];
 
         [Min(0f)] public float delayBefore = 0f;
@@ -184,24 +160,15 @@ public class AttackCardSO : BaseCardSO
 
     public Wave[] waves = { new Wave() };
 
-    public static void FillMask16(AttackGridMask mask, string legacyPattern, bool[] outMask16)
+    public static void FillMask16(AttackGridMask mask, bool[] outMask16)
     {
         if (outMask16 == null || outMask16.Length != 16) return;
+
+        for (int i = 0; i < 16; i++)
+            outMask16[i] = false;
 
         if (mask != null && !mask.IsEmpty())
             mask.CopyTo(outMask16);
-        else
-            ParsePattern16(legacyPattern, outMask16);
-    }
-
-    public static void ParsePattern16(string pattern, bool[] outMask16)
-    {
-        if (outMask16 == null || outMask16.Length != 16) return;
-        for (int i = 0; i < 16; i++)
-        {
-            char ch = (pattern != null && pattern.Length > i) ? pattern[i] : '0';
-            outMask16[i] = ch == '1';
-        }
     }
 
     public static void FillTimeline16(float[] src, float[] outTimes16)
@@ -222,9 +189,6 @@ public class AttackCardSO : BaseCardSO
         if (hitMask == null) hitMask = new AttackGridMask();
         hitMask.EnsureSize();
 
-        if (hitMask.IsEmpty() && !string.IsNullOrEmpty(pattern16) && pattern16 != "0000000000000000")
-            hitMask.LoadPattern16(pattern16);
-
         timeline = EnsureFloatArray16(timeline);
 
         if (waves == null) return;
@@ -234,9 +198,6 @@ public class AttackCardSO : BaseCardSO
 
             if (wave.hitMask == null) wave.hitMask = new AttackGridMask();
             wave.hitMask.EnsureSize();
-
-            if (wave.hitMask.IsEmpty() && !string.IsNullOrEmpty(wave.pattern16) && wave.pattern16 != "0000000000000000")
-                wave.hitMask.LoadPattern16(wave.pattern16);
 
             wave.timeline = EnsureFloatArray16(wave.timeline);
             wave.hitDelays = EnsureFloatArray16(wave.hitDelays);

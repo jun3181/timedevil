@@ -25,7 +25,7 @@ public class CardTemplateView : MonoBehaviour
 
     [Header("Artwork")]
     [SerializeField] private Sprite testArtworkSprite;
-    [SerializeField] private bool useCardMainArtwork = false;
+    [SerializeField] private bool useCardMainArtwork = true;
     [SerializeField] private Rect artworkRect = new Rect(0.10f, 0.345f, 0.80f, 0.46f);
     [SerializeField, Min(0.1f)] private float artworkFillScale = 1.12f;
 
@@ -224,7 +224,7 @@ public class CardTemplateView : MonoBehaviour
 
     private Sprite GetArtworkSprite(BaseCardSO card)
     {
-        if (card != null && useCardMainArtwork && card.mainArtwork)
+        if (card != null && useCardMainArtwork)
             return card.mainArtwork;
 
         return testArtworkSprite != null ? testArtworkSprite : card != null ? card.mainArtwork : null;
@@ -463,30 +463,29 @@ public class CardTemplateView : MonoBehaviour
         if (!attackCard)
             return mask;
 
-        MergePattern(mask, attackCard.pattern16);
+        MergeMask(mask, attackCard.hitMask);
 
         if (attackCard.waves != null)
         {
             for (int i = 0; i < attackCard.waves.Length; i++)
             {
                 if (attackCard.waves[i] != null)
-                    MergePattern(mask, attackCard.waves[i].pattern16);
+                    MergeMask(mask, attackCard.waves[i].hitMask);
             }
         }
 
         return mask;
     }
 
-    private static void MergePattern(bool[] mask, string pattern16)
+    private static void MergeMask(bool[] target, AttackGridMask source)
     {
-        if (mask == null || mask.Length < 16)
+        if (target == null || target.Length < 16 || source == null || source.IsEmpty())
             return;
 
+        bool[] sourceMask = new bool[16];
+        source.CopyTo(sourceMask);
         for (int i = 0; i < 16; i++)
-        {
-            char ch = pattern16 != null && pattern16.Length > i ? pattern16[i] : '0';
-            mask[i] |= ch == '1';
-        }
+            target[i] |= sourceMask[i];
     }
 
     private void EnsureAttackPatternCells()

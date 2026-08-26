@@ -96,7 +96,7 @@ MonoBehaviour:
   drawSecondaryIconSprite: {fileID: 1776939845, guid: 679bc724b9cb7dd4f9a0a8f928552b41, type: 3}
   moveIconSprite: {fileID: 256008298, guid: 679bc724b9cb7dd4f9a0a8f928552b41, type: 3}
   testArtworkSprite: {fileID: 21300000, guid: 3d35684c6283e4e45bc357e8d1528c0b, type: 3}
-  useCardMainArtwork: 0
+  useCardMainArtwork: 1
   artworkRect:
     serializedVersion: 2
     x: 0.1
