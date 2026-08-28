@@ -18,6 +18,8 @@ tracksound/
 RafaleMaots/
 PixelArtRPGMegaPack/
 Pixel Cartoon Effects 2d Pixelate Toon Sprite Sheet Effects/
+/Assets/TextMesh Pro/Fonts/
+/Assets/TextMesh Pro/Fonts.meta
 # By default unity supports Blender asset imports, *.blend1 blender files do not need to be commited to version control.
 *.blend1
 *.blend1.meta

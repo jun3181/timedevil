@@ -33,27 +33,7 @@ public static class SceneLoader
     /// </summary>
     public static void Load(string sceneName, bool useFaderIfExists = true, LoadSceneMode mode = LoadSceneMode.Single)
     {
-        if (string.IsNullOrWhiteSpace(sceneName))
-        {
-            Debug.LogWarning("[SceneLoader] sceneName이 비어있습니다.");
-            return;
-        }
-
-        // Additive는 기본적으로 "현재 씬 나가기 연출" 개념이 애매하니 바로 로드
-        if (mode != LoadSceneMode.Single)
-        {
-            SceneManager.LoadScene(sceneName, mode);
-            return;
-        }
-
-        if (useFaderIfExists && SceneVisitEffectRunner.Current != null)
-        {
-            SceneVisitEffectRunner.Current.LoadSceneWithExitEffect(sceneName);
-            return;
-        }
-
-        // fallback: 효과 없이 즉시 로드
-        SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
+        SceneTransitionService.LoadDefault(sceneName, useFaderIfExists, mode);
     }
 
     /// <summary>
@@ -63,16 +43,6 @@ public static class SceneLoader
     /// </summary>
     public static void GoBackToReturnScene(float graceSeconds = 1.0f, bool useFaderIfExists = true)
     {
-        if (string.IsNullOrWhiteSpace(PlayerReturnContext.ReturnSceneName))
-        {
-            Debug.LogWarning("[SceneLoader] ReturnSceneName이 비어있습니다.");
-            return;
-        }
-
-        PlayerReturnContext.GraceSecondsPending = Mathf.Max(0f, graceSeconds);
-        // 로드 직후 한 프레임 내 트리거 재발동 방지용 선제 플래그
-        PlayerReturnContext.IsInGracePeriod = PlayerReturnContext.GraceSecondsPending > 0f;
-
-        Load(PlayerReturnContext.ReturnSceneName, useFaderIfExists, LoadSceneMode.Single);
+        SceneTransitionService.ReturnFromBattle(graceSeconds, useFaderIfExists);
     }
 }

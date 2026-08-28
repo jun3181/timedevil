@@ -22,7 +22,7 @@ public class CardSceneController : MonoBehaviour
 
     [Header("Prefab & Resources")]
     [SerializeField] private GameObject cardSlotPrefab;              // Image 하나 들어있는 프리팹
-    [SerializeField] private string resourcesFolder = "my_asset";    // Resources/my_asset/<CardId>
+    [SerializeField] private CardDatabaseSO cardDatabase;
 
     [Header("Paging")]
     [SerializeField] private int cardsPerPage = 25;
@@ -39,20 +39,27 @@ public class CardSceneController : MonoBehaviour
     private int cardPageIndex = 0;
     private int deckPageIndex = 0;
     private bool inDeck = false; // false = Card영역, true = Deck영역
+    private CardTemplateView explainTemplateView;
 
     void Start()
     {
+        ResolveCardDatabase();
+
         var runtime = EnsureCardStateRuntime();
         if (runtime != null)
+        {
+            PruneUnknownCards(runtime);
             runtime.EnsureDefaultBattleCardsSaved();
+        }
 
         var data = runtime != null ? runtime.Data : new CardSaveData();
 
-        var owned = data.owned ?? new List<string>();
-        var deck = data.deck ?? new List<string>();
+        var owned = FilterKnownCardIds(data.owned);
+        var deck = FilterKnownCardIds(data.deck);
+        var deckSet = new HashSet<string>(deck);
 
         // Card 패널: owned - deck
-        foreach (var id in owned.Where(id => !deck.Contains(id)))
+        foreach (var id in owned.Where(id => !deckSet.Contains(id)))
             AddSlotToPanel(cardPanel, cardSlots, id);
 
         // Deck 패널: deck 그대로
@@ -76,7 +83,7 @@ public class CardSceneController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.W))
         {
             // 복귀 대상이 세팅되어 있으면 표준 복귀 루트 사용
-            if (!string.IsNullOrEmpty(PlayerReturnContext.ReturnSceneName))
+            if (HasBattleReturnRequest())
             {
                 // 카메라 재바인딩 요청
                 PlayerReturnContext.CameraRebindRequested = true;
@@ -95,14 +102,15 @@ public class CardSceneController : MonoBehaviour
                 }
 
                 // 페이더 우선 복귀
-                SceneLoader.GoBackToReturnScene(graceSeconds, useFaderIfExists);
+                ApplyPreferredReturnVcam();
+                SceneTransitionService.ReturnFromBattle(graceSeconds, useFaderIfExists);
             }
             else
             {
                 // 폴백: 마지막 씬 기록이 있으면 그리로, 아니면 경고
                 if (!string.IsNullOrEmpty(SceneHistory.LastSceneName))
                 {
-                    SceneLoader.Load(SceneHistory.LastSceneName, useFaderIfExists);
+                    SceneTransitionService.LoadDefault(SceneHistory.LastSceneName, useFaderIfExists);
                 }
                 else
                 {
@@ -148,6 +156,36 @@ public class CardSceneController : MonoBehaviour
             if (!inDeck) MoveCard_toDeck_and_RemoveFromCard();
             else MoveCard_toCard_and_RemoveFromDeck();
         }
+    }
+
+    private bool HasBattleReturnRequest()
+    {
+        bool hasArrivalReturn =
+            SceneArrivalContext.TryPeek(out SceneArrivalRequest request) &&
+            request != null &&
+            request.kind == SceneArrivalKind.BattleReturn &&
+            !string.IsNullOrWhiteSpace(request.targetSceneName);
+
+        return hasArrivalReturn || !string.IsNullOrWhiteSpace(PlayerReturnContext.ReturnSceneName);
+    }
+
+    private void ApplyPreferredReturnVcam()
+    {
+        string preferredVcam = string.IsNullOrWhiteSpace(worldVcamName) ? null : worldVcamName;
+
+        if (SceneArrivalContext.TryPeek(out SceneArrivalRequest request) &&
+            request != null &&
+            request.kind == SceneArrivalKind.BattleReturn)
+        {
+            request.requestCameraRebind = true;
+            request.targetVcamName = preferredVcam;
+            if (request.camera.hasCamera)
+                request.camera.preferredVcamName = preferredVcam;
+            return;
+        }
+
+        PlayerReturnContext.CameraRebindRequested = true;
+        PlayerReturnContext.TargetVcamName = preferredVcam;
     }
 
     void SwitchPanel()
@@ -323,10 +361,88 @@ public class CardSceneController : MonoBehaviour
         var slot = go.GetComponent<CardSlot>();
         if (!slot) slot = go.AddComponent<CardSlot>();
 
-        var sprite = LoadCardSprite(cardId);
-        slot.Setup(cardId, sprite);
+        BaseCardSO card = GetCardById(cardId);
+        slot.Setup(cardId, card);
 
         list.Add(slot);
+    }
+
+    private BaseCardSO GetCardById(string cardId)
+    {
+        ResolveCardDatabase();
+
+        BaseCardSO card = cardDatabase ? cardDatabase.GetById(cardId) : null;
+        if (!card)
+            Debug.LogWarning($"[CardScene] Card SO not found in CardDatabase: {cardId}");
+
+        return card;
+    }
+
+    private bool IsKnownCardId(string cardId)
+    {
+        if (string.IsNullOrEmpty(cardId))
+            return false;
+
+        ResolveCardDatabase();
+        return cardDatabase != null && cardDatabase.GetById(cardId) != null;
+    }
+
+    private List<string> FilterKnownCardIds(IEnumerable<string> ids)
+    {
+        var result = new List<string>();
+        if (ids == null) return result;
+
+        ResolveCardDatabase();
+        if (cardDatabase == null)
+        {
+            foreach (string id in ids)
+            {
+                if (string.IsNullOrEmpty(id))
+                    continue;
+                if (!result.Contains(id))
+                    result.Add(id);
+            }
+
+            return result;
+        }
+
+        foreach (string id in ids)
+        {
+            if (!IsKnownCardId(id))
+                continue;
+            if (!result.Contains(id))
+                result.Add(id);
+        }
+
+        return result;
+    }
+
+    private void PruneUnknownCards(CardStateRuntime runtime)
+    {
+        if (runtime == null || runtime.Data == null)
+            return;
+
+        ResolveCardDatabase();
+        if (cardDatabase == null)
+            return;
+
+        List<string> owned = FilterKnownCardIds(runtime.Data.owned);
+        HashSet<string> ownedSet = new HashSet<string>(owned);
+        List<string> deck = FilterKnownCardIds(runtime.Data.deck)
+            .Where(id => ownedSet.Contains(id))
+            .Take(CardStateRuntime.MAX_DECK)
+            .ToList();
+
+        bool changed =
+            runtime.Data.owned == null || !runtime.Data.owned.SequenceEqual(owned) ||
+            runtime.Data.deck == null || !runtime.Data.deck.SequenceEqual(deck);
+
+        if (!changed)
+            return;
+
+        runtime.Data.owned = owned;
+        runtime.Data.deck = deck;
+        Debug.Log("[CardScene] Removed card ids that are not registered in CardDatabase.");
     }
 
     CardStateRuntime EnsureCardStateRuntime()
@@ -340,29 +456,47 @@ public class CardSceneController : MonoBehaviour
         return runtime;
     }
 
-    Sprite LoadCardSprite(string cardId)
+    private void ResolveCardDatabase()
     {
-        if (string.IsNullOrEmpty(cardId)) return null;
+        if (cardDatabase != null) return;
 
-        var sprite = Resources.Load<Sprite>($"{resourcesFolder}/{cardId}");
-        if (sprite) return sprite;
+        var orchestrator = FindObjectOfType<CardUseOrchestrator>(true);
+        if (orchestrator != null && orchestrator.CardDatabase != null)
+        {
+            cardDatabase = orchestrator.CardDatabase;
+            return;
+        }
 
-        string typeFolder = GetCardTypeFolder(cardId);
-        if (!string.IsNullOrEmpty(typeFolder))
-            sprite = Resources.Load<Sprite>($"{resourcesFolder}/{typeFolder}/{cardId}");
+        CardDatabaseSO resourceDatabase = Resources.Load<CardDatabaseSO>("CardDatabase");
+        if (resourceDatabase != null)
+        {
+            cardDatabase = resourceDatabase;
+            return;
+        }
 
-        if (!sprite)
-            Debug.LogWarning($"[CardScene] Card sprite not found: {cardId}");
+#if UNITY_EDITOR
+        string[] guids = UnityEditor.AssetDatabase.FindAssets("t:CardDatabaseSO");
+        if (guids == null || guids.Length == 0) return;
 
-        return sprite;
-    }
+        string selectedPath = null;
+        for (int i = 0; i < guids.Length; i++)
+        {
+            string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guids[i]);
+            if (path.EndsWith("/CardDatabase.asset"))
+            {
+                selectedPath = path;
+                break;
+            }
 
-    static string GetCardTypeFolder(string cardId)
-    {
-        if (cardId.StartsWith("AttackCard")) return "AttackCard";
-        if (cardId.StartsWith("DrawCard")) return "DrawCard";
-        if (cardId.StartsWith("MoveCard")) return "MoveCard";
-        return null;
+            selectedPath ??= path;
+        }
+
+        if (string.IsNullOrEmpty(selectedPath)) return;
+
+        cardDatabase = UnityEditor.AssetDatabase.LoadAssetAtPath<CardDatabaseSO>(selectedPath);
+        if (cardDatabase != null && !Application.isPlaying)
+            UnityEditor.EditorUtility.SetDirty(this);
+#endif
     }
 
     void UpdateSelector()
@@ -390,9 +524,31 @@ public class CardSceneController : MonoBehaviour
         var list = inDeck ? deckSlots : cardSlots;
         if (explainImage == null) return;
 
-        if (list.Count == 0) { explainImage.sprite = null; return; }
+        EnsureExplainTemplate();
+
+        if (list.Count == 0)
+        {
+            if (explainTemplateView) explainTemplateView.Clear();
+            else explainImage.sprite = null;
+            return;
+        }
 
         var slot = list[currentIndex];
-        explainImage.sprite = slot.image ? slot.image.sprite : null;
+        BaseCardSO card = slot != null ? slot.Card : null;
+        if (!card && slot != null)
+            card = GetCardById(slot.cardId);
+
+        if (explainTemplateView) explainTemplateView.Bind(card);
+        else explainImage.sprite = null;
+    }
+
+    private void EnsureExplainTemplate()
+    {
+        if (!explainImage || explainTemplateView)
+            return;
+
+        explainTemplateView = explainImage.GetComponent<CardTemplateView>();
+        if (!explainTemplateView)
+            explainTemplateView = explainImage.gameObject.AddComponent<CardTemplateView>();
     }
 }

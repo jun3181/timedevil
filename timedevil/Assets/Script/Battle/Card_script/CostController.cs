@@ -60,6 +60,17 @@ public class CostController : MonoBehaviour
         return reduced;
     }
 
+    public int GainCurrent(int amount, bool allowOverMax = false)
+    {
+        amount = Mathf.Max(0, amount);
+        if (amount <= 0) return 0;
+
+        int before = Current;
+        Current = allowOverMax ? Current + amount : Mathf.Min(maxPerTurn, Current + amount);
+        RefreshUI();
+        return Current - before;
+    }
+
     public void Refund(int amount)
     {
         if (amount <= 0) return;

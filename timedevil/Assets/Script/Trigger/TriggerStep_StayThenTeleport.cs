@@ -15,6 +15,10 @@ public class TriggerStep_StayThenTeleport : TriggerStepBase
     [SerializeField] private Transform targetPoint;
     [SerializeField] private Vector2 offset = Vector2.zero;
 
+    [Header("After Teleport Facing")]
+    [Tooltip("KeepCurrent이면 텔레포트 전 바라보던 방향을 유지합니다.")]
+    [SerializeField] private TeleportArrivalFacing afterFacing = TeleportArrivalFacing.KeepCurrent;
+
     [Header("Fade")]
     [SerializeField] private bool useFade = false;
     [SerializeField] private FadePanelFader fadePanel;
@@ -130,6 +134,7 @@ public class TriggerStep_StayThenTeleport : TriggerStepBase
             yield return fadePanel.FadeTo(1f, fadeOutDuration);
 
         playerTransform.position = to;
+        TeleportArrivalFacingUtility.Apply(playerTransform, afterFacing);
 
         if (zeroVelocityAfterTeleport)
         {

@@ -21,7 +21,8 @@ public class UiSequencePlayer : MonoBehaviour
         public enum StepType
         {
             Image,
-            Dialogue
+            Dialogue,
+            TriggerRoute
         }
 
         [Tooltip("이 Step의 타입")]
@@ -33,11 +34,20 @@ public class UiSequencePlayer : MonoBehaviour
         [Tooltip("type=Dialogue일 때 실행할 Dialogue")]
         public Dialogue dialogue;
 
+        [Tooltip("type=TriggerRoute일 때 사용할 TriggerRouter. 비워두면 씬에서 자동 탐색")]
+        public TriggerRouter router;
+
+        [Tooltip("type=TriggerRoute일 때 실행할 TriggerRouter.routes의 Key")]
+        public string routeKey = "Trigger1";
+
+        [Tooltip("TriggerRoute 실행이 끝날 때까지 다음 Step으로 넘어가지 않음")]
+        public bool waitUntilRouteFinished = true;
+
         [Tooltip("이 Step을 넘길 때 사용할 키. None이면 기본 nextKey 사용")]
         public KeyCode advanceKey = KeyCode.None;
     }
 
-    [Header("순서대로 보여줄 Step (Image/Dialogue)")]
+    [Header("순서대로 보여줄 Step (Image/Dialogue/TriggerRoute)")]
     [SerializeField] private List<SequenceStep> sequenceSteps = new List<SequenceStep>();
 
     [Header("입력 키")]
@@ -98,6 +108,9 @@ public class UiSequencePlayer : MonoBehaviour
     private DialogueManager _ownedDialogueManager = null;
     private bool _ownedDialogueBlockInputWas = false;
     private bool _ownsDialogueBlockInput = false;
+    private bool _waitingRouteFinished = false;
+    private TriggerRouter _waitingRouteRouter = null;
+    private string _waitingRouteKey = null;
 
     // lock runtime
     private bool _heldActionLock = false;
@@ -191,6 +204,20 @@ public class UiSequencePlayer : MonoBehaviour
             }
         }
 
+        if (IsCurrentStepTriggerRoute())
+        {
+            if (_waitingRouteFinished)
+            {
+                if (_waitingRouteRouter != null && _waitingRouteRouter.IsRouteRunning(_waitingRouteKey))
+                    return;
+
+                ClearRouteWait();
+            }
+
+            Next();
+            return;
+        }
+
         if (ShouldAdvanceByKey(currentAdvanceKey))
             Next();
     }
@@ -279,6 +306,7 @@ public class UiSequencePlayer : MonoBehaviour
         _stepEntered = false;
         _waitingKeyReleaseAfterDialogue = false;
         _waitingAdvanceKeyRelease = false;
+        ClearRouteWait();
         RestoreDialogueInputOwnership();
 
         BeginInputLock();
@@ -327,6 +355,7 @@ public class UiSequencePlayer : MonoBehaviour
                 _stepEntered = false;
                 _waitingKeyReleaseAfterDialogue = false;
                 _waitingAdvanceKeyRelease = false;
+                ClearRouteWait();
                 RestoreDialogueInputOwnership();
                 EnterCurrentStepIfNeeded();
                 return;
@@ -352,6 +381,7 @@ public class UiSequencePlayer : MonoBehaviour
         _stepEntered = false;
         _waitingKeyReleaseAfterDialogue = false;
         _waitingAdvanceKeyRelease = false;
+        ClearRouteWait();
         EnterCurrentStepIfNeeded();
     }
 
@@ -362,6 +392,7 @@ public class UiSequencePlayer : MonoBehaviour
         _stepEntered = false;
         _waitingKeyReleaseAfterDialogue = false;
         _waitingAdvanceKeyRelease = false;
+        ClearRouteWait();
         EndInputLockIfHeld();
         RestoreDialogueInputOwnership();
     }
@@ -515,6 +546,15 @@ public class UiSequencePlayer : MonoBehaviour
         return step != null && step.type == SequenceStep.StepType.Dialogue;
     }
 
+    private bool IsCurrentStepTriggerRoute()
+    {
+        if (sequenceSteps == null) return false;
+        if (index < 0 || index >= sequenceSteps.Count) return false;
+
+        var step = sequenceSteps[index];
+        return step != null && step.type == SequenceStep.StepType.TriggerRoute;
+    }
+
     private void EnterCurrentStepIfNeeded()
     {
         if (_stepEntered) return;
@@ -535,6 +575,13 @@ public class UiSequencePlayer : MonoBehaviour
 
             _stepEntered = true;
             WaitForCurrentAdvanceKeyRelease();
+            return;
+        }
+
+        if (step.type == SequenceStep.StepType.TriggerRoute)
+        {
+            PlayTriggerRouteStep(step);
+            _stepEntered = true;
             return;
         }
 
@@ -561,5 +608,56 @@ public class UiSequencePlayer : MonoBehaviour
         _stepEntered = true;
         _waitingKeyReleaseAfterDialogue = true;
         WaitForCurrentAdvanceKeyRelease();
+    }
+
+    private void PlayTriggerRouteStep(SequenceStep step)
+    {
+        if (step == null) return;
+
+        TriggerRouter router = step.router;
+        if (!router)
+            router = FindObjectOfType<TriggerRouter>(true);
+
+        string routeKey = step.routeKey;
+
+        if (!router)
+        {
+            Debug.LogWarning("[UiSequencePlayer] TriggerRoute step has no TriggerRouter.", this);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(routeKey))
+        {
+            Debug.LogWarning("[UiSequencePlayer] TriggerRoute step routeKey is empty.", this);
+            return;
+        }
+
+        var playerMove = FindObjectOfType<PlayerMove>(true);
+        var playerCollider = playerMove ? playerMove.GetComponent<Collider2D>() : null;
+        var instigator = playerMove ? playerMove.gameObject : gameObject;
+
+        var ctx = new TriggerContext(
+            trigger: null,
+            router: router,
+            instigator: instigator,
+            instigatorCollider: playerCollider,
+            playerMove: playerMove
+        );
+
+        router.RequestRoute(routeKey, ctx);
+
+        if (step.waitUntilRouteFinished)
+        {
+            _waitingRouteFinished = true;
+            _waitingRouteRouter = router;
+            _waitingRouteKey = routeKey;
+        }
+    }
+
+    private void ClearRouteWait()
+    {
+        _waitingRouteFinished = false;
+        _waitingRouteRouter = null;
+        _waitingRouteKey = null;
     }
 }

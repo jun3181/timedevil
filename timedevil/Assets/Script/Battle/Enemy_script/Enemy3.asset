@@ -13,13 +13,13 @@ MonoBehaviour:
   m_Name: Enemy3
   m_EditorClassIdentifier: 
   enemyId: Enemy3
-  displayName: Enemy3
-  stateSprite: {fileID: -1447738478, guid: 92fa455d9cc74c84ea30d676273c3360, type: 3}
-  gameplaySprite: {fileID: -249255737, guid: 92fa455d9cc74c84ea30d676273c3360, type: 3}
-  maxHP: 60
-  baseATK: 5
-  baseDEF: 5
-  baseSPD: 10
+  displayName: "\uBB3C\uACE0\uAE30"
+  stateSprite: {fileID: 2121981050, guid: 2cd0d80e3957fde4f9ae709e20fae0f4, type: 3}
+  gameplaySprite: {fileID: 2121981050, guid: 2cd0d80e3957fde4f9ae709e20fae0f4, type: 3}
+  maxHP: 20
+  baseATK: 1
+  baseDEF: 1
+  baseSPD: 1
   deckIds:
   - DrawCard10
   - DrawCard4
@@ -34,3 +34,15 @@ MonoBehaviour:
   - MoveCard10
   - DrawCard3
   - DrawCard1
+  itemDrops:
+  - item: {fileID: 11400000, guid: 0859f999fc4b46a18ff9f13c346bb3c5, type: 2}
+    chancePercent: 100
+    minQuantity: 1
+    maxQuantity: 1
+  showDropDialogueOnReturn: 1
+  dropAfterDialogue:
+    name: 
+    sentences: []
+    leftPortrait: {fileID: 0}
+    rightPortrait: {fileID: 0}
+    lines: []

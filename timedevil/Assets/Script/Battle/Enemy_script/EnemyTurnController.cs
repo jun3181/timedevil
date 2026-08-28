@@ -46,6 +46,8 @@ public class EnemyTurnController : MonoBehaviour
     [SerializeField] private bool handRiseFade = true;
 
     public static event System.Action<bool> OnEnemyAttackWindowChanged;
+    public bool IsRunningTurn { get; private set; }
+
     private bool subscribedToEnemyRuntime;
     private bool warnedMissingVisualRefs;
     private bool warnedMissingSprites;
@@ -173,6 +175,23 @@ public class EnemyTurnController : MonoBehaviour
 
     public IEnumerator RunTurn()
     {
+        if (IsRunningTurn)
+            yield break;
+
+        IsRunningTurn = true;
+        try
+        {
+            yield return CoRunTurn();
+        }
+        finally
+        {
+            OnEnemyAttackWindowChanged?.Invoke(false);
+            IsRunningTurn = false;
+        }
+    }
+
+    private IEnumerator CoRunTurn()
+    {
         if (enemyDeck == null || cost == null) yield break;
 
         if (enemyDeck.GetHandIds().Count < enemyDeck.MaxHandSize)
@@ -202,11 +221,12 @@ public class EnemyTurnController : MonoBehaviour
             int playableIndex = -1;
             int playableCost = int.MaxValue;
             string playableId = null;
+            bool hasFreeCard = supportController != null && supportController.HasNextCardFree(Faction.Enemy);
 
             for (int i = 0; i < hand.Count; i++)
             {
                 string id = hand[i];
-                int c = GetCardCost(id);
+                int c = hasFreeCard ? 0 : GetCardCost(id);
                 Debug.Log($"[EnemyTurn] probe id={id}, cost={c}");
                 if (c <= cost.Current) { playableIndex = i; playableCost = c; playableId = id; break; }
             }
@@ -228,6 +248,14 @@ public class EnemyTurnController : MonoBehaviour
                 yield break;
             }
 
+            if (so is SupportCardSO precheckSupport && supportController != null &&
+                !supportController.CanExecute(precheckSupport, Faction.Enemy, selfCardsAlreadyCommitted: 1, out string supportFailMessage))
+            {
+                desc?.ShowOneShotMessage(supportFailMessage);
+                Debug.LogWarning($"[EnemyTurn] Support 카드 발동 실패: {supportFailMessage}");
+                yield break;
+            }
+
             if (!waitedBeforeFirstPlay)
             {
                 waitedBeforeFirstPlay = true;
@@ -235,7 +263,8 @@ public class EnemyTurnController : MonoBehaviour
                 yield return PlayTutorialBeforeFirstPlayIfNeeded(hand);
             }
 
-            if (!cost.TryPay(playableCost))
+            bool freeCost = supportController != null && supportController.TryConsumeNextCardFree(Faction.Enemy);
+            if (!freeCost && !cost.TryPay(playableCost))
             {
                 Debug.LogWarning("[EnemyTurn] 코스트 지불 실패 → 턴 종료");
                 yield break;
@@ -293,6 +322,10 @@ public class EnemyTurnController : MonoBehaviour
                 if (CanShowCardPreview()) yield return showCard.PreviewById(playableId, previewSeconds);
                 else yield return null;
 
+                enemyDeck.UseCardToBottom(playableIndex);
+                usedCardMovedToBottom = true;
+                yield return null;
+
                 yield return supportController.Execute(sso, Faction.Enemy, Faction.Player);
             }
             else
@@ -314,6 +347,12 @@ public class EnemyTurnController : MonoBehaviour
             // (선택) 적 손패 UI 새로고침이 필요하면 여기서 호출
             // var ui = FindObjectOfType<EnemyHandUI>(true);
             // if (ui) ui.RebuildFromHand();
+
+            if (TurnManager.Instance != null && TurnManager.Instance.IsBattleResultPendingOrRunning)
+            {
+                TurnManager.Instance.TryStartPendingBattleResultFlow();
+                yield break;
+            }
 
             if (playInterval > 0f)
                 yield return new WaitForSeconds(playInterval);

@@ -4,6 +4,7 @@ using TMPro;
 using UnityEngine.UI;
 
 public enum TurnState { PlayerTurn, EnemyTurn }
+public enum BattleResultKind { None, Victory, Defeat }
 
 public class TurnManager : MonoBehaviour
 {
@@ -75,6 +76,11 @@ public class TurnManager : MonoBehaviour
     [SerializeField] private Color turnBannerBackdropColor = new Color(0f, 0f, 0f, 0.35f);
     [SerializeField] private int turnBannerSortingOrder = 30000;
 
+    [Header("Battle Result")]
+    [SerializeField] private string victoryResultMessage = "승리했습니다!";
+    [SerializeField] private string defeatResultMessage = "패배했습니다!";
+    [SerializeField] private KeyCode resultContinueKey = KeyCode.E;
+
     [Header("Refs")]
     [SerializeField] private EnemyTurnController enemyTurnController;
     [SerializeField] private HandUI handUI;
@@ -82,6 +88,8 @@ public class TurnManager : MonoBehaviour
     [SerializeField] private DescriptionPanelController desc;
     [SerializeField] private BattleDeckRuntime deck;
     [SerializeField] private SupportController supportController;
+    [SerializeField] private CardUseOrchestrator cardUseOrchestrator;
+    [SerializeField] private HPController hpController;
 
     [Header("Delays")]
     [SerializeField] private float enemyThinkDelay = 0.6f;
@@ -97,6 +105,7 @@ public class TurnManager : MonoBehaviour
     private CanvasGroup turnBannerGroup;
     private Canvas turnBannerCanvas;
     private Coroutine turnBannerRoutine;
+    private Coroutine battleResultRoutine;
 
     private bool playerInitialRevealDone = false;
     private bool enemyInitialRevealDone = false;
@@ -104,11 +113,16 @@ public class TurnManager : MonoBehaviour
     public bool IsPlayerDiscardPhase { get; private set; } = false;
     public TurnState currentTurn { get; private set; } = TurnState.PlayerTurn;
     public bool HasFirstTurnDecided { get; private set; } = false;
+    public bool HasPendingBattleResult => pendingBattleResult != BattleResultKind.None;
+    public bool IsBattleResultFlowRunning => battleResultFlowRunning;
+    public bool IsBattleResultPendingOrRunning => HasPendingBattleResult || battleResultFlowRunning;
 
     private PlayerDataRuntime pdr;
     private EnemyRuntime enemyRt;
     private int playerSPD = 0;
     private int enemySPD = 0;
+    private BattleResultKind pendingBattleResult = BattleResultKind.None;
+    private bool battleResultFlowRunning = false;
 
     void Awake()
     {
@@ -122,6 +136,8 @@ public class TurnManager : MonoBehaviour
         if (!desc) desc = FindObjectOfType<DescriptionPanelController>(true);
         if (!deck) deck = BattleDeckRuntime.Instance ?? FindObjectOfType<BattleDeckRuntime>(true);
         if (!supportController) supportController = FindObjectOfType<SupportController>(true);
+        if (!cardUseOrchestrator) cardUseOrchestrator = FindObjectOfType<CardUseOrchestrator>(true);
+        if (!hpController) hpController = FindObjectOfType<HPController>(true);
         if (!enemyHandUI) enemyHandUI = FindObjectOfType<EnemyHandUI>(true);
         if (!enemyDeck) enemyDeck = EnemyDeckRuntime.Instance ?? FindObjectOfType<EnemyDeckRuntime>(true);
         if (!itemHand) itemHand = FindObjectOfType<ItemHandUI>(true);
@@ -277,6 +293,99 @@ public class TurnManager : MonoBehaviour
         else { enemySPD = 0; Debug.LogWarning("[TurnManager] EnemyRuntime 없음 → SPD=0"); }
     }
 
+    public void QueueBattleResult(BattleResultKind result)
+    {
+        if (result == BattleResultKind.None)
+            return;
+
+        if (battleResultFlowRunning || pendingBattleResult != BattleResultKind.None)
+            return;
+
+        pendingBattleResult = result;
+        if (menu) menu.EnableInput(false);
+
+        TryStartPendingBattleResultFlow();
+    }
+
+    public bool TryStartPendingBattleResultFlow()
+    {
+        if (battleResultFlowRunning)
+            return true;
+
+        if (pendingBattleResult == BattleResultKind.None)
+            return false;
+
+        if (battleResultRoutine == null && isActiveAndEnabled)
+            battleResultRoutine = StartCoroutine(Co_RunBattleResultWhenReady());
+
+        return true;
+    }
+
+    private System.Collections.IEnumerator Co_RunBattleResultWhenReady()
+    {
+        while (!CanShowBattleResultNow())
+            yield return null;
+
+        BattleResultKind result = pendingBattleResult;
+        pendingBattleResult = BattleResultKind.None;
+        battleResultFlowRunning = true;
+
+        PrepareBattleResultUi();
+        yield return Co_PlayBattleResultBannerAndWait(GetBattleResultMessage(result));
+
+        HPController hp = hpController != null ? hpController : FindObjectOfType<HPController>(true);
+        if (hp != null)
+            hp.ExecuteBattleResultPipe(result);
+        else
+            Debug.LogWarning($"[TurnManager] HPController not found. Battle result pipe skipped: {result}", this);
+
+        battleResultFlowRunning = false;
+        battleResultRoutine = null;
+    }
+
+    private bool CanShowBattleResultNow()
+    {
+        if (!cardUseOrchestrator) cardUseOrchestrator = FindObjectOfType<CardUseOrchestrator>(true);
+        if (!enemyTurnController) enemyTurnController = FindObjectOfType<EnemyTurnController>(true);
+        if (cardUseOrchestrator != null && cardUseOrchestrator.GetIsBusy())
+            return false;
+
+        if (enemyTurnController != null && enemyTurnController.IsRunningTurn)
+            return false;
+
+        return true;
+    }
+
+    private void PrepareBattleResultUi()
+    {
+        if (menu) menu.EnableInput(false);
+
+        IsPlayerDiscardPhase = false;
+        if (desc)
+        {
+            desc.ClearTemporaryMessage();
+            desc.SetPlayerDiscardMode(false);
+            desc.SetEnemyTurn(false);
+        }
+
+        if (handUI)
+        {
+            handUI.ExitSelectMode(true);
+            handUI.HideCards();
+        }
+
+        if (enemyHandUI)
+            enemyHandUI.HideAll();
+
+        if (itemHand)
+            itemHand.SetEnemyTurn(false);
+    }
+
+    private string GetBattleResultMessage(BattleResultKind result)
+    {
+        return result == BattleResultKind.Victory ? victoryResultMessage : defeatResultMessage;
+    }
+
     void DecideFirstTurn()
     {
         Debug.Log($"[TurnManager] SPD Compare => Player:{playerSPD} vs Enemy:{enemySPD}");
@@ -286,6 +395,12 @@ public class TurnManager : MonoBehaviour
 
     public void BeginPlayerTurn()
     {
+        if (TryStartPendingBattleResultFlow())
+        {
+            if (menu) menu.EnableInput(false);
+            return;
+        }
+
         currentTurn = TurnState.PlayerTurn;
         HasFirstTurnDecided = true;
         OnTurnChanged?.Invoke(currentTurn);
@@ -320,6 +435,12 @@ public class TurnManager : MonoBehaviour
 
     public void BeginEnemyTurn()
     {
+        if (TryStartPendingBattleResultFlow())
+        {
+            if (menu) menu.EnableInput(false);
+            return;
+        }
+
         if (itemHand) itemHand.SetEnemyTurn(true);
 
         currentTurn = TurnState.EnemyTurn;
@@ -360,6 +481,9 @@ public class TurnManager : MonoBehaviour
     {
         if (enemyTurnController)
             yield return enemyTurnController.RunTurn();
+
+        if (IsBattleResultPendingOrRunning || TryStartPendingBattleResultFlow())
+            yield break;
 
         if (IsPlayerDefeated())
             yield break;
@@ -414,6 +538,9 @@ public class TurnManager : MonoBehaviour
 
     public void OnPlayerPressedEnd()
     {
+        if (IsBattleResultPendingOrRunning)
+            return;
+
         if (currentTurn != TurnState.PlayerTurn) return;
 
         if (deck == null || deck.OverCapCount <= 0)
@@ -463,6 +590,9 @@ public class TurnManager : MonoBehaviour
 
     public void OnPlayerActionCommitted()
     {
+        if (IsBattleResultPendingOrRunning)
+            return;
+
         if (currentTurn != TurnState.PlayerTurn) return;
         Debug.Log("[TurnManager] Player action committed → EnemyTurn");
         BeginEnemyTurn();
@@ -684,6 +814,60 @@ public class TurnManager : MonoBehaviour
         turnBannerRoutine = null;
     }
 
+    private System.Collections.IEnumerator Co_PlayBattleResultBannerAndWait(string message)
+    {
+        if (turnBannerRoutine != null)
+        {
+            StopCoroutine(turnBannerRoutine);
+            turnBannerRoutine = null;
+        }
+
+        EnsureTurnBanner();
+        if (!turnBannerRect || turnBannerText == null || turnBannerGroup == null)
+        {
+            yield return WaitForBattleResultContinueKey();
+            yield break;
+        }
+
+        turnBannerRect.SetAsLastSibling();
+        turnBannerText.text = message ?? string.Empty;
+        turnBannerText.color = turnBannerColor;
+        turnBannerText.fontSize = turnBannerFontSize;
+        turnBannerRect.sizeDelta = turnBannerSize;
+        turnBannerRect.gameObject.SetActive(true);
+        turnBannerGroup.alpha = 1f;
+
+        RectTransform parent = turnBannerRect.parent as RectTransform;
+        float parentWidth = parent ? parent.rect.width : Screen.width;
+        float travel = parentWidth * 0.5f + turnBannerSize.x;
+        Vector2 left = turnBannerCenter + Vector2.left * travel;
+        Vector2 right = turnBannerCenter + Vector2.right * travel;
+
+        yield return TweenTurnBanner(left, turnBannerCenter, turnBannerInSeconds, 0f, 1f);
+        yield return WaitForBattleResultContinueKey();
+        yield return TweenTurnBanner(turnBannerCenter, right, turnBannerOutSeconds, 1f, 0f);
+
+        turnBannerGroup.alpha = 0f;
+        turnBannerRect.gameObject.SetActive(false);
+    }
+
+    private System.Collections.IEnumerator WaitForBattleResultContinueKey()
+    {
+        if (resultContinueKey == KeyCode.None)
+            yield break;
+
+        yield return null;
+        while (Input.GetKey(resultContinueKey))
+            yield return null;
+
+        while (!Input.GetKeyDown(resultContinueKey))
+            yield return null;
+
+        yield return null;
+        while (Input.GetKey(resultContinueKey))
+            yield return null;
+    }
+
     private System.Collections.IEnumerator TweenTurnBanner(Vector2 from, Vector2 to, float seconds, float fromAlpha, float toAlpha)
     {
         float duration = Mathf.Max(0.01f, seconds);
@@ -806,7 +990,11 @@ public class TurnManager : MonoBehaviour
 
     private TMP_FontAsset ResolveTurnBannerFont()
     {
-        string sample = string.Concat(playerTurnBannerMessage, enemyTurnBannerMessage);
+        string sample = string.Concat(
+            playerTurnBannerMessage,
+            enemyTurnBannerMessage,
+            victoryResultMessage,
+            defeatResultMessage);
         TMP_FontAsset defaultFont = TMP_Settings.defaultFontAsset;
         if (defaultFont && (string.IsNullOrEmpty(sample) || defaultFont.HasCharacters(sample)))
             return defaultFont;

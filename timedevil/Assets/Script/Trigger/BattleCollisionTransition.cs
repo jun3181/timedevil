@@ -6,13 +6,22 @@ using System.Collections;
 public class BattleCollisionTransition : MonoBehaviour
 {
     [Header("Battle")]
-    [SerializeField] private string battleSceneName = "BattleScene";
+    [SerializeField] private string battleSceneName = "battle";
     [SerializeField] private EnemyDatabaseSO enemyDatabase;
     [SerializeField] private EnemySO encounterEnemy;
     [SerializeField] private string enemyId = "Enemy1";
     [SerializeField] private Transform enemySnapshotTarget;
     [SerializeField] private Transform chasingObject;
     [SerializeField] private bool forceActivateChasingObject = true;
+
+    [Header("Encounter Completion")]
+    [SerializeField] private bool consumeOnEnemyDefeat = false;
+    [SerializeField] private string encounterKey = "";
+    [SerializeField] private bool disableWhenEncounterConsumed = true;
+
+    [Header("Victory Route On Return")]
+    [SerializeField] private TriggerRouter victoryRouter;
+    [SerializeField] private string victoryRouteKey = "";
 
     [Header("Return")]
     [SerializeField] private Transform returnPointOverride;
@@ -76,6 +85,9 @@ public class BattleCollisionTransition : MonoBehaviour
     private void Start()
     {
         SyncEnemyIdFromEncounterEnemy();
+
+        if (ApplyConsumedEncounterIfNeeded())
+            return;
 
         if (playerTransform == null)
         {
@@ -281,10 +293,85 @@ public class BattleCollisionTransition : MonoBehaviour
         if (debugLog)
             Debug.Log($"[BattleCollisionTransition] enter by '{colliderName}' -> scene='{battleSceneName}', enemyId='{resolvedEnemyId}', returnPos=({returnPos.x:F2},{returnPos.y:F2}), camRestore={restoreCam}, camMode={camMode}");
 
+        QueueEncounterConsumptionIfNeeded();
+        ArmVictoryRouteIfNeeded(resolvedEnemyId);
+
+        if (GameManager.Instance != null)
+            GameManager.Instance.LockAction();
+
         BattleSceneLoader.Go(battleSceneName, resolvedEnemyId, player, enemy);
 
         if (disableAfterEnter)
             gameObject.SetActive(false);
+    }
+
+    private void QueueEncounterConsumptionIfNeeded()
+    {
+        if (!consumeOnEnemyDefeat) return;
+
+        string key = ResolveEncounterKey();
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            Debug.LogWarning("[BattleCollisionTransition] consumeOnEnemyDefeat is on, but encounterKey could not be resolved.", this);
+            return;
+        }
+
+        BattleEncounterState.SetPending(SceneManager.GetActiveScene().name, key);
+    }
+
+    private void ArmVictoryRouteIfNeeded(string resolvedEnemyId)
+    {
+        if (string.IsNullOrWhiteSpace(victoryRouteKey))
+        {
+            BattleVictoryReturnContext.ClearArmed();
+            return;
+        }
+
+        if (victoryRouter == null)
+        {
+            if (debugLog)
+                Debug.LogWarning("[BattleCollisionTransition] Victory Router is missing.", this);
+
+            BattleVictoryReturnContext.ClearArmed();
+            return;
+        }
+
+        string routerPath = BattleVictoryReturnContext.GetTransformPath(victoryRouter.transform);
+
+        BattleVictoryReturnContext.Arm(
+            targetSceneName: SceneManager.GetActiveScene().name,
+            routeKey: victoryRouteKey,
+            routerTransformPath: routerPath,
+            enemyId: resolvedEnemyId,
+            sourceObjectName: name
+        );
+    }
+
+    private bool ApplyConsumedEncounterIfNeeded()
+    {
+        if (!consumeOnEnemyDefeat || !disableWhenEncounterConsumed)
+            return false;
+
+        string key = ResolveEncounterKey();
+        if (string.IsNullOrWhiteSpace(key))
+            return false;
+
+        if (!BattleEncounterState.IsConsumed(SceneManager.GetActiveScene().name, key))
+            return false;
+
+        if (debugLog)
+            Debug.Log($"[BattleCollisionTransition] consumed encounter disabled key='{key}'", this);
+
+        gameObject.SetActive(false);
+        return true;
+    }
+
+    private string ResolveEncounterKey()
+    {
+        if (!string.IsNullOrWhiteSpace(encounterKey))
+            return encounterKey.Trim();
+
+        return name;
     }
 
     private string ResolveEnemyId()

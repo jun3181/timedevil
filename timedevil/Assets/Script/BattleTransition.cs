@@ -7,13 +7,18 @@ public class BattleTransition : MonoBehaviour, IInteractable
 {
     [Header("로드할 배틀씬")]
     [Tooltip("빌드 세팅에 등록된 씬 이름")]
-    public string battleSceneName = "BattleScene";
+    public string battleSceneName = "battle";
 
     [Header("복귀 지점")]
     [Tooltip("배틀 종료 후 이 씬으로 돌아왔을 때 플레이어가 나타날 위치")]
     public Transform returnPoint;
     [Header("복귀 Grace")]
     public float graceSeconds = 0.5f;
+    [SerializeField] private bool useFaderIfExists = true;
+
+    [Header("Victory Route On Return")]
+    [SerializeField] private TriggerRouter victoryRouter;
+    [SerializeField] private string victoryRouteKey = "";
 
     private bool isTransitioning = false;
 
@@ -35,9 +40,8 @@ public class BattleTransition : MonoBehaviour, IInteractable
     {
         isTransitioning = true;
 
-        // (선택) 입력 잠금
         if (GameManager.Instance != null)
-            GameManager.Instance.isAction = true;
+            GameManager.Instance.LockAction();
 
         // --- 복귀 정보 저장(공용 API 사용) ---
         bool restoreCam = false;
@@ -70,19 +74,36 @@ public class BattleTransition : MonoBehaviour, IInteractable
             cameraBoundsName: camBounds
         );
 
-        // 현재 씬에 있는 SceneFader 찾기
-        var fader = FindObjectOfType<SceneFader>(true);
-        if (fader != null)
-        {
-            // FadeOut -> Load
-            fader.LoadSceneWithFadeOut(battleSceneName);
-        }
-        else
-        {
-            Debug.LogWarning("[BattleTransition] SceneFader를 찾지 못했습니다. 즉시 LoadScene 합니다.");
-            SceneManager.LoadScene(battleSceneName);
-        }
+        ArmVictoryRouteIfNeeded();
+
+        SceneTransitionService.EnterBattle(battleSceneName, null, null, null, useFaderIfExists: useFaderIfExists);
 
         yield return null;
+    }
+
+    private void ArmVictoryRouteIfNeeded()
+    {
+        if (string.IsNullOrWhiteSpace(victoryRouteKey))
+        {
+            BattleVictoryReturnContext.ClearArmed();
+            return;
+        }
+
+        if (victoryRouter == null)
+        {
+            Debug.LogWarning("[BattleTransition] Victory Router is missing.", this);
+            BattleVictoryReturnContext.ClearArmed();
+            return;
+        }
+
+        string routerPath = BattleVictoryReturnContext.GetTransformPath(victoryRouter.transform);
+
+        BattleVictoryReturnContext.Arm(
+            targetSceneName: SceneManager.GetActiveScene().name,
+            routeKey: victoryRouteKey,
+            routerTransformPath: routerPath,
+            enemyId: null,
+            sourceObjectName: name
+        );
     }
 }

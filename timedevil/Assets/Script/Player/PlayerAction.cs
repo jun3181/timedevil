@@ -29,6 +29,22 @@ public class PlayerAction : MonoBehaviour
     GameObject scanObject;
     bool isInteractionSequenceRunning;
 
+    public Vector3 Facing => dirVec;
+
+    public void SetFacing(Vector3 direction, bool updateAnimator = true)
+    {
+        if (!PlayerFacingMath.TryResolveCardinal(direction, out Vector3 resolvedFacing, out int hAxis, out int vAxis, out bool horizontal))
+            return;
+
+        dirVec = resolvedFacing;
+        isHorizonMove = horizontal;
+        lastHAxisRaw = hAxis;
+        lastVAxisRaw = vAxis;
+
+        if (updateAnimator)
+            ApplyIdleFacingToAnimator(hAxis, vAxis);
+    }
+
     // ===== Unity =====
     void Awake()
     {
@@ -185,6 +201,16 @@ public class PlayerAction : MonoBehaviour
     {
         // 이동 (물리 효과는 FixedUpdate에서 처리)
         rigid.velocity = new Vector2(h, v).normalized * Speed;
+    }
+
+    private void ApplyIdleFacingToAnimator(int hAxis, int vAxis)
+    {
+        if (!anim) anim = GetComponent<Animator>();
+        if (!anim) return;
+
+        anim.SetInteger("hAxisRaw", hAxis);
+        anim.SetInteger("vAxisRaw", vAxis);
+        anim.SetBool("isChange", false);
     }
 
     private IEnumerator InteractSequentially(IInteractable[] interactables)

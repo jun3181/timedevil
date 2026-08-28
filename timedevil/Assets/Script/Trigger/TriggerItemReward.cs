@@ -19,9 +19,6 @@ public class TriggerItemReward : MonoBehaviour
     [Header("Rewards")]
     [SerializeField] private List<RewardItem> rewardItems = new();
 
-    [Tooltip("지급 직후 인벤토리를 디스크에 저장합니다.")]
-    [SerializeField] private bool saveAfterReward = false;
-
     [Header("Dialogue")]
     [Tooltip("획득 안내 뒤에 이어서 재생할 대화입니다. 비워 두면 획득 안내만 표시합니다.")]
     [SerializeField] private Dialogue afterDialogue;
@@ -98,9 +95,6 @@ public class TriggerItemReward : MonoBehaviour
         }
 
         hasGivenReward = true;
-
-        if (saveAfterReward)
-            ItemRuntime.Instance.SaveToDisk();
 
         AppendDialogue(lines, afterDialogue);
         ShowDialogue(lines);

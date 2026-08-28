@@ -411,6 +411,11 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 2025730667}
     m_Modifications:
+    - target: {fileID: 3104670346599119191, guid: 347e09cf7ca584c488a11bb343186cf8,
+        type: 3}
+      propertyPath: costTextRect.y
+      value: 0.85
+      objectReference: {fileID: 0}
     - target: {fileID: 3496468367479007433, guid: 347e09cf7ca584c488a11bb343186cf8,
         type: 3}
       propertyPath: m_Name
@@ -1038,8 +1043,6 @@ MonoBehaviour:
   enemyPawn: {fileID: 1064948988}
   loadMyroomOnPlayerZeroHp: 1
   myroomSceneName: Myroom
-  playerDefeatMessage: HP reached 0. Press E to return to your room.
-  playerDefeatContinueKey: 101
   returnToPreviousSceneOnEnemyZeroHp: 1
   enemyDefeatReturnGraceSeconds: 1
 --- !u!1 &443751346
@@ -2453,6 +2456,140 @@ RectTransform:
   m_AnchoredPosition: {x: -5, y: 0}
   m_SizeDelta: {x: -20, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &853626554
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 853626555}
+  - component: {fileID: 853626557}
+  - component: {fileID: 853626556}
+  m_Layer: 5
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &853626555
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 853626554}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2123949534}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 5.200012, y: 661.5}
+  m_SizeDelta: {x: 200, y: 50}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &853626556
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 853626554}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_text: HP
+  m_isRightToLeft: 0
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontSharedMaterials: []
+  m_fontMaterial: {fileID: 0}
+  m_fontMaterials: []
+  m_fontColor32:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+  m_enableVertexGradient: 0
+  m_colorMode: 3
+  m_fontColorGradient:
+    topLeft: {r: 1, g: 1, b: 1, a: 1}
+    topRight: {r: 1, g: 1, b: 1, a: 1}
+    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
+    bottomRight: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColorGradientPreset: {fileID: 0}
+  m_spriteAsset: {fileID: 0}
+  m_tintAllSprites: 0
+  m_StyleSheet: {fileID: 0}
+  m_TextStyleHashCode: -1183493901
+  m_overrideHtmlColors: 0
+  m_faceColor:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontSize: 42
+  m_fontSizeBase: 42
+  m_fontWeight: 400
+  m_enableAutoSizing: 0
+  m_fontSizeMin: 18
+  m_fontSizeMax: 72
+  m_fontStyle: 1
+  m_HorizontalAlignment: 1
+  m_VerticalAlignment: 256
+  m_textAlignment: 65535
+  m_characterSpacing: 0
+  m_wordSpacing: 0
+  m_lineSpacing: 0
+  m_lineSpacingMax: 0
+  m_paragraphSpacing: 0
+  m_charWidthMaxAdj: 0
+  m_enableWordWrapping: 1
+  m_wordWrappingRatios: 0.4
+  m_overflowMode: 0
+  m_linkedTextComponent: {fileID: 0}
+  parentLinkedComponent: {fileID: 0}
+  m_enableKerning: 1
+  m_enableExtraPadding: 0
+  checkPaddingRequired: 0
+  m_isRichText: 1
+  m_parseCtrlCharacters: 1
+  m_isOrthographic: 1
+  m_isCullingEnabled: 0
+  m_horizontalMapping: 0
+  m_verticalMapping: 0
+  m_uvLineOffset: 0
+  m_geometrySortingOrder: 0
+  m_IsTextObjectScaleStatic: 0
+  m_VertexBufferAutoSizeReduction: 0
+  m_useMaxVisibleDescender: 1
+  m_pageToDisplay: 1
+  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_isUsingLegacyAnimationComponent: 0
+  m_isVolumetricText: 0
+  m_hasFontAssetChanged: 0
+  m_baseMaterial: {fileID: 0}
+  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!222 &853626557
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 853626554}
+  m_CullTransparentMesh: 1
 --- !u!1 &860620047
 GameObject:
   m_ObjectHideFlags: 0
@@ -11029,6 +11166,140 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1464471170}
   m_CullTransparentMesh: 1
+--- !u!1 &1475719670
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1475719671}
+  - component: {fileID: 1475719673}
+  - component: {fileID: 1475719672}
+  m_Layer: 5
+  m_Name: GameObject (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1475719671
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1475719670}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1613126918}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -20.800049, y: 661}
+  m_SizeDelta: {x: 200, y: 50}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1475719672
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1475719670}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_text: HP
+  m_isRightToLeft: 0
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontSharedMaterials: []
+  m_fontMaterial: {fileID: 0}
+  m_fontMaterials: []
+  m_fontColor32:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+  m_enableVertexGradient: 0
+  m_colorMode: 3
+  m_fontColorGradient:
+    topLeft: {r: 1, g: 1, b: 1, a: 1}
+    topRight: {r: 1, g: 1, b: 1, a: 1}
+    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
+    bottomRight: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColorGradientPreset: {fileID: 0}
+  m_spriteAsset: {fileID: 0}
+  m_tintAllSprites: 0
+  m_StyleSheet: {fileID: 0}
+  m_TextStyleHashCode: -1183493901
+  m_overrideHtmlColors: 0
+  m_faceColor:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontSize: 42
+  m_fontSizeBase: 42
+  m_fontWeight: 400
+  m_enableAutoSizing: 0
+  m_fontSizeMin: 18
+  m_fontSizeMax: 72
+  m_fontStyle: 1
+  m_HorizontalAlignment: 1
+  m_VerticalAlignment: 256
+  m_textAlignment: 65535
+  m_characterSpacing: 0
+  m_wordSpacing: 0
+  m_lineSpacing: 0
+  m_lineSpacingMax: 0
+  m_paragraphSpacing: 0
+  m_charWidthMaxAdj: 0
+  m_enableWordWrapping: 1
+  m_wordWrappingRatios: 0.4
+  m_overflowMode: 0
+  m_linkedTextComponent: {fileID: 0}
+  parentLinkedComponent: {fileID: 0}
+  m_enableKerning: 1
+  m_enableExtraPadding: 0
+  checkPaddingRequired: 0
+  m_isRichText: 1
+  m_parseCtrlCharacters: 1
+  m_isOrthographic: 1
+  m_isCullingEnabled: 0
+  m_horizontalMapping: 0
+  m_verticalMapping: 0
+  m_uvLineOffset: 0
+  m_geometrySortingOrder: 0
+  m_IsTextObjectScaleStatic: 0
+  m_VertexBufferAutoSizeReduction: 0
+  m_useMaxVisibleDescender: 1
+  m_pageToDisplay: 1
+  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_isUsingLegacyAnimationComponent: 0
+  m_isVolumetricText: 0
+  m_hasFontAssetChanged: 0
+  m_baseMaterial: {fileID: 0}
+  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!222 &1475719673
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1475719670}
+  m_CullTransparentMesh: 1
 --- !u!1 &1489012500
 GameObject:
   m_ObjectHideFlags: 0
@@ -12185,12 +12456,17 @@ MonoBehaviour:
   turnBannerFontSize: 54
   turnBannerBackdropColor: {r: 0, g: 0, b: 0, a: 0.35}
   turnBannerSortingOrder: 30000
+  victoryResultMessage: "\uC2B9\uB9AC\uD588\uC2B5\uB2C8\uB2E4!"
+  defeatResultMessage: "\uD328\uBC30\uD588\uC2B5\uB2C8\uB2E4!"
+  resultContinueKey: 101
   enemyTurnController: {fileID: 630219717}
   handUI: {fileID: 860620052}
   cost: {fileID: 1352731693}
   desc: {fileID: 1069897052}
   deck: {fileID: 0}
   supportController: {fileID: 0}
+  cardUseOrchestrator: {fileID: 0}
+  hpController: {fileID: 0}
   enemyThinkDelay: 2
   enemyHandUI: {fileID: 133108826}
   enemyDeck: {fileID: 1424331453}
@@ -12308,6 +12584,43 @@ MonoBehaviour:
   tutorialController: {fileID: 0}
   menu: {fileID: 0}
   cardUseOrchestrator: {fileID: 0}
+  enemyHandUI: {fileID: 0}
+  cardDatabase: {fileID: 0}
+  explainEnemyCardRolesBeforeFirstEnemyPlay: 1
+  enemyAttackCardPrompt:
+    message: "\uACF5\uACA9 \uCE74\uB4DC\uB294 \uC0C1\uB300\uC5D0\uAC8C \uD53C\uD574\uB97C
+      \uC8FC\uB294 \uCE74\uB4DC\uC785\uB2C8\uB2E4. \uC801\uC774 \uACF5\uACA9 \uCE74\uB4DC\uB97C
+      \uC0AC\uC6A9\uD558\uBA74 \uACE7\uBC14\uB85C \uACF5\uACA9 \uD6A8\uACFC\uAC00
+      \uCC98\uB9AC\uB429\uB2C8\uB2E4."
+    windowAnchoredPosition: {x: 0, y: 245}
+    windowSize: {x: 820, y: 180}
+    requiredAction: 0
+    allowMenuNavigation: 0
+    allowCardSelectionNavigation: 0
+    allowStateNavigation: 0
+    allowCancelInput: 0
+  enemyMoveCardPrompt:
+    message: "\uC774\uB3D9 \uCE74\uB4DC\uB294 \uC0AC\uC6A9\uC790\uC758 \uC704\uCE58\uB97C
+      \uBC14\uAFC9\uB2C8\uB2E4. \uC801\uC774 \uC6C0\uC9C1\uC774\uBA74 \uB2E4\uC74C
+      \uACF5\uACA9 \uC704\uCE58\uB3C4 \uB2EC\uB77C\uC9C8 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
+    windowAnchoredPosition: {x: 0, y: 245}
+    windowSize: {x: 820, y: 180}
+    requiredAction: 0
+    allowMenuNavigation: 0
+    allowCardSelectionNavigation: 0
+    allowStateNavigation: 0
+    allowCancelInput: 0
+  enemyDrawCardPrompt:
+    message: "\uB4DC\uB85C\uC6B0 \uCE74\uB4DC\uB294 \uC190\uD328\uB97C \uBCF4\uCDA9\uD569\uB2C8\uB2E4.
+      \uC190\uD328\uAC00 \uB298\uC5B4\uB098\uBA74 \uC774\uC5B4\uC11C \uC0AC\uC6A9\uD560
+      \uC120\uD0DD\uC9C0\uB3C4 \uB9CE\uC544\uC9D1\uB2C8\uB2E4."
+    windowAnchoredPosition: {x: 0, y: 245}
+    windowSize: {x: 820, y: 180}
+    requiredAction: 0
+    allowMenuNavigation: 0
+    allowCardSelectionNavigation: 0
+    allowStateNavigation: 0
+    allowCancelInput: 0
   scenarioSteps:
   - label: Lock input for intro
     type: 2
@@ -12330,7 +12643,7 @@ MonoBehaviour:
   - label: Intro dialogue
     type: 0
     dialogue:
-      defaultSpeakerName: lucy
+      defaultSpeakerName: ???
       defaultLeftPortrait: {fileID: 0}
       defaultRightPortrait: {fileID: 0}
       lines:
@@ -12375,8 +12688,8 @@ MonoBehaviour:
       allowCancelInput: 1
     turnToWaitFor: 0
     menuInputEnabled: 1
-  - label: Start enemy turn
-    type: 3
+  - label: Start player turn
+    type: 4
     dialogue:
       defaultSpeakerName: 
       defaultLeftPortrait: {fileID: 0}
@@ -12429,52 +12742,45 @@ MonoBehaviour:
       allowCancelInput: 1
     turnToWaitFor: 0
     menuInputEnabled: 0
-  - label: After first enemy turn dialogue
-    type: 0
+  - label: Battle flow prompt
+    type: 8
     dialogue:
-      defaultSpeakerName: ???
+      defaultSpeakerName: 
       defaultLeftPortrait: {fileID: 0}
       defaultRightPortrait: {fileID: 0}
-      lines:
-      - text: test
-        speakerName: ???
-        leftPortrait: {fileID: 0}
-        rightPortrait: {fileID: 0}
-        focus: 0
-        lineTutorial:
-          enabled: 0
-          message: 
-          windowAnchoredPosition: {x: 0, y: 120}
-          windowSize: {x: 720, y: 220}
-        advanceTutorial:
-          enabled: 0
-          message: 
-          windowAnchoredPosition: {x: 0, y: 120}
-          windowSize: {x: 720, y: 220}
-      - text: test
-        speakerName: ???
-        leftPortrait: {fileID: 0}
-        rightPortrait: {fileID: 0}
-        focus: 0
-        lineTutorial:
-          enabled: 0
-          message: 
-          windowAnchoredPosition: {x: 0, y: 120}
-          windowSize: {x: 720, y: 220}
-        advanceTutorial:
-          enabled: 0
-          message: 
-          windowAnchoredPosition: {x: 0, y: 120}
-          windowSize: {x: 720, y: 220}
+      lines: []
     prompt:
-      message: 
-      windowAnchoredPosition: {x: 0, y: 180}
-      windowSize: {x: 760, y: 180}
+      message: "\uC774 \uC804\uD22C\uB294 \uD50C\uB808\uC774\uC5B4 \uD134\uBD80\uD130
+        \uC2DC\uC791\uD569\uB2C8\uB2E4. \uD134\uB9C8\uB2E4 \uD589\uB3D9\uC744 \uD655\uC778\uD558\uACE0,
+        \uD560 \uC77C\uC744 \uB9C8\uCE58\uBA74 End\uB85C \uD134\uC744 \uB118\uAE41\uB2C8\uB2E4."
+      windowAnchoredPosition: {x: 0, y: 245}
+      windowSize: {x: 820, y: 180}
       requiredAction: 0
-      allowMenuNavigation: 1
-      allowCardSelectionNavigation: 1
-      allowStateNavigation: 1
-      allowCancelInput: 1
+      allowMenuNavigation: 0
+      allowCardSelectionNavigation: 0
+      allowStateNavigation: 0
+      allowCancelInput: 0
+    turnToWaitFor: 0
+    menuInputEnabled: 1
+  - label: Deck rule prompt
+    type: 8
+    dialogue:
+      defaultSpeakerName: 
+      defaultLeftPortrait: {fileID: 0}
+      defaultRightPortrait: {fileID: 0}
+      lines: []
+    prompt:
+      message: "\uCE74\uB4DC \uB371\uC774 \uBE44\uC5B4 \uC788\uC73C\uBA74 \uAE30\uBCF8
+        \uCE74\uB4DC 10\uC7A5\uC774 \uB371\uC5D0 \uB4E4\uC5B4\uC635\uB2C8\uB2E4.
+        \uBC30\uD2C0 \uC911 \uD654\uBA74\uC5D0 \uB4E4\uACE0 \uC788\uB294 \uC190\uD328\uB294
+        \uCD5C\uB300 3\uC7A5\uAE4C\uC9C0\uC785\uB2C8\uB2E4."
+      windowAnchoredPosition: {x: 0, y: 245}
+      windowSize: {x: 820, y: 180}
+      requiredAction: 0
+      allowMenuNavigation: 0
+      allowCardSelectionNavigation: 0
+      allowStateNavigation: 0
+      allowCancelInput: 0
     turnToWaitFor: 0
     menuInputEnabled: 1
   - label: Enable state panel input
@@ -12568,166 +12874,6 @@ MonoBehaviour:
       requiredAction: 17
       allowMenuNavigation: 0
       allowCardSelectionNavigation: 0
-      allowStateNavigation: 1
-      allowCancelInput: 1
-    turnToWaitFor: 0
-    menuInputEnabled: 1
-  - label: Lock input before card dialogue
-    type: 2
-    dialogue:
-      defaultSpeakerName: 
-      defaultLeftPortrait: {fileID: 0}
-      defaultRightPortrait: {fileID: 0}
-      lines: []
-    prompt:
-      message: 
-      windowAnchoredPosition: {x: 0, y: 180}
-      windowSize: {x: 760, y: 180}
-      requiredAction: 0
-      allowMenuNavigation: 1
-      allowCardSelectionNavigation: 1
-      allowStateNavigation: 1
-      allowCancelInput: 1
-    turnToWaitFor: 0
-    menuInputEnabled: 0
-  - label: Before card use dialogue
-    type: 0
-    dialogue:
-      defaultSpeakerName: ???
-      defaultLeftPortrait: {fileID: 0}
-      defaultRightPortrait: {fileID: 0}
-      lines:
-      - text: test
-        speakerName: 
-        leftPortrait: {fileID: 0}
-        rightPortrait: {fileID: 0}
-        focus: 0
-        lineTutorial:
-          enabled: 0
-          message: 
-          windowAnchoredPosition: {x: 0, y: 120}
-          windowSize: {x: 720, y: 220}
-        advanceTutorial:
-          enabled: 0
-          message: 
-          windowAnchoredPosition: {x: 0, y: 120}
-          windowSize: {x: 720, y: 220}
-      - text: test
-        speakerName: 
-        leftPortrait: {fileID: 0}
-        rightPortrait: {fileID: 0}
-        focus: 0
-        lineTutorial:
-          enabled: 0
-          message: 
-          windowAnchoredPosition: {x: 0, y: 120}
-          windowSize: {x: 720, y: 220}
-        advanceTutorial:
-          enabled: 0
-          message: 
-          windowAnchoredPosition: {x: 0, y: 120}
-          windowSize: {x: 720, y: 220}
-    prompt:
-      message: 
-      windowAnchoredPosition: {x: 0, y: 180}
-      windowSize: {x: 760, y: 180}
-      requiredAction: 0
-      allowMenuNavigation: 1
-      allowCardSelectionNavigation: 1
-      allowStateNavigation: 1
-      allowCancelInput: 1
-    turnToWaitFor: 0
-    menuInputEnabled: 1
-  - label: Enable card panel input
-    type: 2
-    dialogue:
-      defaultSpeakerName: 
-      defaultLeftPortrait: {fileID: 0}
-      defaultRightPortrait: {fileID: 0}
-      lines: []
-    prompt:
-      message: 
-      windowAnchoredPosition: {x: 0, y: 180}
-      windowSize: {x: 760, y: 180}
-      requiredAction: 0
-      allowMenuNavigation: 1
-      allowCardSelectionNavigation: 1
-      allowStateNavigation: 1
-      allowCancelInput: 1
-    turnToWaitFor: 0
-    menuInputEnabled: 1
-  - label: Card panel interaction prompt
-    type: 1
-    dialogue:
-      defaultSpeakerName: 
-      defaultLeftPortrait: {fileID: 0}
-      defaultRightPortrait: {fileID: 0}
-      lines: []
-    prompt:
-      message: "Card \uD328\uB110\uC744 \uC120\uD0DD\uD558\uACE0 E\uB97C \uB20C\uB7EC
-        \uC190\uD328\uB97C \uD3BC\uCE58\uC138\uC694."
-      windowAnchoredPosition: {x: -360, y: 210}
-      windowSize: {x: 760, y: 170}
-      requiredAction: 3
-      allowMenuNavigation: 1
-      allowCardSelectionNavigation: 0
-      allowStateNavigation: 0
-      allowCancelInput: 0
-    turnToWaitFor: 0
-    menuInputEnabled: 1
-  - label: Card selection prompt
-    type: 1
-    dialogue:
-      defaultSpeakerName: 
-      defaultLeftPortrait: {fileID: 0}
-      defaultRightPortrait: {fileID: 0}
-      lines: []
-    prompt:
-      message: "\uC190\uD328\uAC00 \uBCF4\uC774\uBA74 E\uB97C \uD55C \uBC88 \uB354
-        \uB20C\uB7EC \uCE74\uB4DC \uC120\uD0DD \uC0C1\uD0DC\uB85C \uB4E4\uC5B4\uAC00\uC138\uC694."
-      windowAnchoredPosition: {x: -360, y: 300}
-      windowSize: {x: 760, y: 170}
-      requiredAction: 8
-      allowMenuNavigation: 0
-      allowCardSelectionNavigation: 0
-      allowStateNavigation: 0
-      allowCancelInput: 0
-    turnToWaitFor: 0
-    menuInputEnabled: 1
-  - label: Card use prompt
-    type: 1
-    dialogue:
-      defaultSpeakerName: 
-      defaultLeftPortrait: {fileID: 0}
-      defaultRightPortrait: {fileID: 0}
-      lines: []
-    prompt:
-      message: "Card \uD328\uB110\uC744 \uC120\uD0DD\uD574 E\uB97C \uB204\uB978 \uB4A4,
-        \uC190\uD328\uC5D0\uC11C \uC0AC\uC6A9\uD560 \uCE74\uB4DC\uB97C \uACE8\uB77C
-        E\uB85C \uC0AC\uC6A9\uD558\uC138\uC694."
-      windowAnchoredPosition: {x: 0, y: 180}
-      windowSize: {x: 760, y: 180}
-      requiredAction: 10
-      allowMenuNavigation: 1
-      allowCardSelectionNavigation: 1
-      allowStateNavigation: 0
-      allowCancelInput: 1
-    turnToWaitFor: 0
-    menuInputEnabled: 1
-  - label: Wait for card use to settle
-    type: 6
-    dialogue:
-      defaultSpeakerName: 
-      defaultLeftPortrait: {fileID: 0}
-      defaultRightPortrait: {fileID: 0}
-      lines: []
-    prompt:
-      message: 
-      windowAnchoredPosition: {x: 0, y: 180}
-      windowSize: {x: 760, y: 180}
-      requiredAction: 0
-      allowMenuNavigation: 1
-      allowCardSelectionNavigation: 1
       allowStateNavigation: 1
       allowCancelInput: 1
     turnToWaitFor: 0
@@ -12978,6 +13124,7 @@ MonoBehaviour:
     turnToWaitFor: 0
     menuInputEnabled: 1
   scenarioStepsInitialized: 1
+  scenarioDefinitionVersion: 2
   introDialogue:
     defaultSpeakerName: ???
     defaultLeftPortrait: {fileID: 0}
@@ -13048,6 +13195,29 @@ MonoBehaviour:
         message: 
         windowAnchoredPosition: {x: 0, y: 120}
         windowSize: {x: 720, y: 220}
+  battleFlowPrompt:
+    message: "\uC774 \uC804\uD22C\uB294 \uD50C\uB808\uC774\uC5B4 \uD134\uBD80\uD130
+      \uC2DC\uC791\uD569\uB2C8\uB2E4. \uD134\uB9C8\uB2E4 \uD589\uB3D9\uC744 \uD655\uC778\uD558\uACE0,
+      \uD560 \uC77C\uC744 \uB9C8\uCE58\uBA74 End\uB85C \uD134\uC744 \uB118\uAE41\uB2C8\uB2E4."
+    windowAnchoredPosition: {x: 0, y: 245}
+    windowSize: {x: 820, y: 180}
+    requiredAction: 0
+    allowMenuNavigation: 0
+    allowCardSelectionNavigation: 0
+    allowStateNavigation: 0
+    allowCancelInput: 0
+  deckRulePrompt:
+    message: "\uCE74\uB4DC \uB371\uC774 \uBE44\uC5B4 \uC788\uC73C\uBA74 \uAE30\uBCF8
+      \uCE74\uB4DC 10\uC7A5\uC774 \uB371\uC5D0 \uB4E4\uC5B4\uC635\uB2C8\uB2E4. \uBC30\uD2C0
+      \uC911 \uD654\uBA74\uC5D0 \uB4E4\uACE0 \uC788\uB294 \uC190\uD328\uB294 \uCD5C\uB300
+      3\uC7A5\uAE4C\uC9C0\uC785\uB2C8\uB2E4."
+    windowAnchoredPosition: {x: 0, y: 245}
+    windowSize: {x: 820, y: 180}
+    requiredAction: 0
+    allowMenuNavigation: 0
+    allowCardSelectionNavigation: 0
+    allowStateNavigation: 0
+    allowCancelInput: 0
   beforeCardUseDialogue:
     defaultSpeakerName: ???
     defaultLeftPortrait: {fileID: 0}
@@ -13906,274 +14076,6 @@ CanvasRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2127218040}
-  m_CullTransparentMesh: 1
---- !u!1 &853626554
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 853626555}
-  - component: {fileID: 853626557}
-  - component: {fileID: 853626556}
-  m_Layer: 5
-  m_Name: GameObject
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &853626555
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 853626554}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2123949534}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 5.200012, y: 661.5}
-  m_SizeDelta: {x: 200, y: 50}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &853626556
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 853626554}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_text: HP
-  m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_fontSharedMaterials: []
-  m_fontMaterial: {fileID: 0}
-  m_fontMaterials: []
-  m_fontColor32:
-    serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
-  m_enableVertexGradient: 0
-  m_colorMode: 3
-  m_fontColorGradient:
-    topLeft: {r: 1, g: 1, b: 1, a: 1}
-    topRight: {r: 1, g: 1, b: 1, a: 1}
-    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
-    bottomRight: {r: 1, g: 1, b: 1, a: 1}
-  m_fontColorGradientPreset: {fileID: 0}
-  m_spriteAsset: {fileID: 0}
-  m_tintAllSprites: 0
-  m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: -1183493901
-  m_overrideHtmlColors: 0
-  m_faceColor:
-    serializedVersion: 2
-    rgba: 4294967295
-  m_fontSize: 42
-  m_fontSizeBase: 42
-  m_fontWeight: 400
-  m_enableAutoSizing: 0
-  m_fontSizeMin: 18
-  m_fontSizeMax: 72
-  m_fontStyle: 1
-  m_HorizontalAlignment: 1
-  m_VerticalAlignment: 256
-  m_textAlignment: 65535
-  m_characterSpacing: 0
-  m_wordSpacing: 0
-  m_lineSpacing: 0
-  m_lineSpacingMax: 0
-  m_paragraphSpacing: 0
-  m_charWidthMaxAdj: 0
-  m_enableWordWrapping: 1
-  m_wordWrappingRatios: 0.4
-  m_overflowMode: 0
-  m_linkedTextComponent: {fileID: 0}
-  parentLinkedComponent: {fileID: 0}
-  m_enableKerning: 1
-  m_enableExtraPadding: 0
-  checkPaddingRequired: 0
-  m_isRichText: 1
-  m_parseCtrlCharacters: 1
-  m_isOrthographic: 1
-  m_isCullingEnabled: 0
-  m_horizontalMapping: 0
-  m_verticalMapping: 0
-  m_uvLineOffset: 0
-  m_geometrySortingOrder: 0
-  m_IsTextObjectScaleStatic: 0
-  m_VertexBufferAutoSizeReduction: 0
-  m_useMaxVisibleDescender: 1
-  m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: 0, w: 0}
-  m_isUsingLegacyAnimationComponent: 0
-  m_isVolumetricText: 0
-  m_hasFontAssetChanged: 0
-  m_baseMaterial: {fileID: 0}
-  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
---- !u!222 &853626557
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 853626554}
-  m_CullTransparentMesh: 1
---- !u!1 &1475719670
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1475719671}
-  - component: {fileID: 1475719673}
-  - component: {fileID: 1475719672}
-  m_Layer: 5
-  m_Name: GameObject (1)
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &1475719671
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1475719670}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1613126918}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -20.800049, y: 661}
-  m_SizeDelta: {x: 200, y: 50}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1475719672
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1475719670}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_text: HP
-  m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_fontSharedMaterials: []
-  m_fontMaterial: {fileID: 0}
-  m_fontMaterials: []
-  m_fontColor32:
-    serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
-  m_enableVertexGradient: 0
-  m_colorMode: 3
-  m_fontColorGradient:
-    topLeft: {r: 1, g: 1, b: 1, a: 1}
-    topRight: {r: 1, g: 1, b: 1, a: 1}
-    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
-    bottomRight: {r: 1, g: 1, b: 1, a: 1}
-  m_fontColorGradientPreset: {fileID: 0}
-  m_spriteAsset: {fileID: 0}
-  m_tintAllSprites: 0
-  m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: -1183493901
-  m_overrideHtmlColors: 0
-  m_faceColor:
-    serializedVersion: 2
-    rgba: 4294967295
-  m_fontSize: 42
-  m_fontSizeBase: 42
-  m_fontWeight: 400
-  m_enableAutoSizing: 0
-  m_fontSizeMin: 18
-  m_fontSizeMax: 72
-  m_fontStyle: 1
-  m_HorizontalAlignment: 1
-  m_VerticalAlignment: 256
-  m_textAlignment: 65535
-  m_characterSpacing: 0
-  m_wordSpacing: 0
-  m_lineSpacing: 0
-  m_lineSpacingMax: 0
-  m_paragraphSpacing: 0
-  m_charWidthMaxAdj: 0
-  m_enableWordWrapping: 1
-  m_wordWrappingRatios: 0.4
-  m_overflowMode: 0
-  m_linkedTextComponent: {fileID: 0}
-  parentLinkedComponent: {fileID: 0}
-  m_enableKerning: 1
-  m_enableExtraPadding: 0
-  checkPaddingRequired: 0
-  m_isRichText: 1
-  m_parseCtrlCharacters: 1
-  m_isOrthographic: 1
-  m_isCullingEnabled: 0
-  m_horizontalMapping: 0
-  m_verticalMapping: 0
-  m_uvLineOffset: 0
-  m_geometrySortingOrder: 0
-  m_IsTextObjectScaleStatic: 0
-  m_VertexBufferAutoSizeReduction: 0
-  m_useMaxVisibleDescender: 1
-  m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: 0, w: 0}
-  m_isUsingLegacyAnimationComponent: 0
-  m_isVolumetricText: 0
-  m_hasFontAssetChanged: 0
-  m_baseMaterial: {fileID: 0}
-  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
---- !u!222 &1475719673
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1475719670}
   m_CullTransparentMesh: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

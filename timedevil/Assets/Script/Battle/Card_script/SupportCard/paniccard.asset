@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4aba08e57345df14899d9494d051ce96, type: 3}
+  m_Name: paniccard
+  m_EditorClassIdentifier:
+  id: panic
+  displayName: "\uacf5\ud669"
+  type: 1
+  display: "\uccb4\ub825\uc744 5\ud134 \ub3d9\uc548 \ub9e4\ud134 2\uc529 \ud53c\ud574\uc785\ub2c8\ub2e4"
+  explanation: "\uc5b4\uc9c0\ub7ec\uc6cc..."
+  mainArtwork: {fileID: 0}
+  arrowArtwork: {fileID: 0}
+  effectTextOverride:
+  cost: 4
+  positive: 0
+  negative: 0
+  effects:
+  - category: 1
+    target: 1
+    costType: 0
+    freeCardCount: 1
+    hpCostPercent: 10
+    costGainAmount: 1
+    discardHandCount: 1
+    allowCostOverMax: 0
+    hpPaymentCanDefeat: 0
+    hpType: 1
+    hpAmount: -2
+    hpTurns: 5
+    statType: 0
+    statAmount: 1
+    statTurns: 1
+    trapPlacements:
+    - panelSide: 1
+      gridMask:
+        cells: 00000000000000000000000000000000
+    trapDamage: 1
+    trapDurationTurns: 1
+    triggerImmediatelyIfOccupied: 1
+    removeAfterTrigger: 1
+    guardTurns: 1

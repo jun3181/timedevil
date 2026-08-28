@@ -27,6 +27,7 @@ public sealed class TriggerStep_NPCAscendFogClear : TriggerStepBase
     [Header("Fog")]
     [SerializeField] private Tilemap fogTilemap;
     [SerializeField] private GameObject fogObject;
+    [SerializeField] private SpriteRenderer fogRenderer;
     [SerializeField] private Tilemap filterTilemap;
     [SerializeField] private GameObject filterObject;
 
@@ -48,6 +49,7 @@ public sealed class TriggerStep_NPCAscendFogClear : TriggerStepBase
 
         Vector3 startPosition = npcTarget.position;
         Color startFogColor = fogTilemap != null ? fogTilemap.color : Color.white;
+        Color startFogRendererColor = fogRenderer != null ? fogRenderer.color : Color.white;
         Color startFilterColor = filterTilemap != null ? filterTilemap.color : Color.white;
         float elapsed = 0f;
 
@@ -60,6 +62,7 @@ public sealed class TriggerStep_NPCAscendFogClear : TriggerStepBase
             ApplySpinSprite(elapsed);
 
             FadeTilemap(fogTilemap, startFogColor, eased);
+            FadeSpriteRenderer(fogRenderer, startFogRendererColor, eased);
             FadeTilemap(filterTilemap, startFilterColor, eased);
 
             elapsed += useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
@@ -69,6 +72,7 @@ public sealed class TriggerStep_NPCAscendFogClear : TriggerStepBase
         npcTarget.position = startPosition + Vector3.up * riseDistance;
 
         FadeTilemap(fogTilemap, startFogColor, 1f);
+        FadeSpriteRenderer(fogRenderer, startFogRendererColor, 1f);
         FadeTilemap(filterTilemap, startFilterColor, 1f);
 
         if (disableFogAtEnd && fogObject != null)
@@ -89,6 +93,16 @@ public sealed class TriggerStep_NPCAscendFogClear : TriggerStepBase
         Color color = startColor;
         color.a = Mathf.Lerp(startColor.a, 0f, ratio);
         tilemap.color = color;
+    }
+
+    private static void FadeSpriteRenderer(SpriteRenderer renderer, Color startColor, float ratio)
+    {
+        if (renderer == null)
+            return;
+
+        Color color = startColor;
+        color.a = Mathf.Lerp(startColor.a, 0f, ratio);
+        renderer.color = color;
     }
 
     private void ApplySpinSprite(float elapsed)
