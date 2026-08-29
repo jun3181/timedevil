@@ -108,6 +108,11 @@ public class MenuController : MonoBehaviour
     [SerializeField] private string cardCloseLabel = "close";
     [SerializeField] private string emptyCardLabel = "����";
 
+    [Header("Card Preview Text")]
+    [SerializeField] private bool overrideCardPreviewTextSize = true;
+    [SerializeField, Min(1f)] private float cardPreviewCornerFontSize = 18f;
+    [SerializeField, Min(1f)] private float cardPreviewEffectFontSize = 13f;
+
     [Header("Deck Window View")]
     [SerializeField] private bool autoBuildDeckWindow = true;
     [SerializeField] private bool previewDeckWindowInEditor = false;
@@ -231,6 +236,8 @@ public class MenuController : MonoBehaviour
     {
         itemEntriesPerPage = Mathf.Max(1, itemEntriesPerPage);
         cardEntriesPerPage = Mathf.Max(1, cardEntriesPerPage);
+        cardPreviewCornerFontSize = Mathf.Max(1f, cardPreviewCornerFontSize);
+        cardPreviewEffectFontSize = Mathf.Max(1f, cardPreviewEffectFontSize);
         NormalizeMenuLabels();
         ResolveItemDatabase();
         ResolveCardDatabase();
@@ -1929,6 +1936,8 @@ public class MenuController : MonoBehaviour
         if (view == null)
             view = previewRect.gameObject.AddComponent<CardTemplateView>();
 
+        ApplyCardPreviewTextOverride(view);
+
         Image image = previewRect.GetComponent<Image>();
         if (image != null)
         {
@@ -1938,6 +1947,14 @@ public class MenuController : MonoBehaviour
         }
 
         return view;
+    }
+
+    private void ApplyCardPreviewTextOverride(CardTemplateView view)
+    {
+        if (view == null || !overrideCardPreviewTextSize)
+            return;
+
+        view.OverrideTextFontSizes(cardPreviewCornerFontSize, cardPreviewEffectFontSize);
     }
 
     private void BindCardPreview(CardTemplateView previewView, Image previewImage, CardMenuEntry entry)
@@ -1961,7 +1978,10 @@ public class MenuController : MonoBehaviour
         }
 
         if (previewView != null)
+        {
+            ApplyCardPreviewTextOverride(previewView);
             previewView.Bind(card);
+        }
     }
 
     private void ClearCardPreview(CardTemplateView previewView, Image previewImage)

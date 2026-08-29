@@ -153,6 +153,16 @@ public class SceneArrivalApplier : MonoBehaviour
             {
                 position = spawn.position;
                 keepPlayerZ = true;
+                request.hasWorldPosition = true;
+                request.worldPosition = position;
+                request.keepPlayerZ = keepPlayerZ;
+
+                if (!string.IsNullOrWhiteSpace(request.spawnKey) &&
+                    TryResolveProfileEntry(request.spawnKey, out SceneEntryDefinition profileEntry))
+                {
+                    ApplyEntryToRequest(request, profileEntry);
+                }
+
                 return true;
             }
         }
@@ -231,6 +241,9 @@ public class SceneArrivalApplier : MonoBehaviour
             request.worldPosition = entry.spawnPoint.position;
             request.keepPlayerZ = entry.keepPlayerZ;
         }
+
+        if (request.preserveCameraOverride && request.camera.hasCamera)
+            return;
 
         if (!entry.applyCamera) return;
 

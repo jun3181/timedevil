@@ -194,8 +194,7 @@ public class EnemyTurnController : MonoBehaviour
     {
         if (enemyDeck == null || cost == null) yield break;
 
-        if (enemyDeck.GetHandIds().Count < enemyDeck.MaxHandSize)
-            enemyDeck.DrawOneIfNeeded();
+        enemyDeck.DrawTurnStart();
 
         if (revealHandBeforeFirstPlay && enemyHandUI != null)
         {

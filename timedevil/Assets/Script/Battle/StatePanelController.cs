@@ -1,10 +1,13 @@
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
+using TMPro;
 using UnityEngine.UI;
 
 public class StatePanelController : MonoBehaviour
 {
+    private const string PlayerStateDisplayName = "Lucy";
+
     [System.Serializable]
     private class StateTarget
     {
@@ -64,6 +67,13 @@ public class StatePanelController : MonoBehaviour
     [SerializeField] private float connectorGapLength = 0.1f;
     [SerializeField] private int connectorSortingOrder = 20;
 
+    [Header("State Info Bubble")]
+    [SerializeField] private Color stateBubbleColor = new Color(0f, 0f, 0f, 0.78f);
+    [SerializeField] private Color stateBubbleTextColor = Color.white;
+    [SerializeField] private Vector2 stateBubbleTextPadding = new Vector2(0.42f, 0.34f);
+    [SerializeField, Min(0.01f)] private float stateBubbleTextFontSize = 0.34f;
+    [SerializeField] private TextAlignmentOptions stateBubbleTextAlignment = TextAlignmentOptions.TopLeft;
+
     private readonly List<Color> originalColors = new List<Color>();
     private readonly List<Color> originalSpriteColors = new List<Color>();
     private readonly List<LineRenderer> connectorSegments = new List<LineRenderer>();
@@ -80,6 +90,9 @@ public class StatePanelController : MonoBehaviour
     private Faction handInspectFaction;
     private int stateInputBlockedFrame = -1;
     private Coroutine stateHandRefreshRoutine;
+    private TextMeshPro stateBubbleText;
+    private Color speechBubbleOriginalColor = Color.white;
+    private bool capturedSpeechBubbleOriginalColor;
 
     void Reset()
     {
@@ -111,6 +124,9 @@ public class StatePanelController : MonoBehaviour
     {
         if (connectorMaterial)
             Destroy(connectorMaterial);
+
+        if (stateBubbleText)
+            Destroy(stateBubbleText.gameObject);
     }
 
     void Update()
@@ -516,14 +532,13 @@ public class StatePanelController : MonoBehaviour
     {
         var data = playerRuntime ? playerRuntime.Data : PlayerDataRuntime.Instance?.Data;
         if (data == null)
-            return $"{label}\n상태 정보를 찾을 수 없습니다.";
+            return BuildMissingStateText(PlayerStateDisplayName);
 
         var sb = new StringBuilder();
-        sb.AppendLine(label);
-        sb.AppendLine($"HP : {Mathf.Max(0, data.currentHP)} / {Mathf.Max(1, data.maxHP)}");
-        sb.AppendLine($"ATK : {data.attack}    DEF : {data.defense}    SPD : {data.speed}");
-        sb.AppendLine($"Emotion : +{data.emotionPositive} / -{data.emotionNegative}");
-        sb.Append("현재 플레이어의 전투 상태입니다.");
+        sb.AppendLine($"이름 : {PlayerStateDisplayName}");
+        sb.AppendLine($"공격력 : {Mathf.Max(0, data.attack)}");
+        sb.AppendLine($"방어력 : {Mathf.Max(0, data.defense)}");
+        sb.Append($"스피드 : {Mathf.Max(0, data.speed)}");
         return sb.ToString();
     }
 
@@ -531,13 +546,24 @@ public class StatePanelController : MonoBehaviour
     {
         var enemy = enemyRuntime ? enemyRuntime : EnemyRuntime.Instance;
         if (enemy == null)
-            return $"{label}\n상태 정보를 찾을 수 없습니다.";
+            return BuildMissingStateText(label);
 
         var sb = new StringBuilder();
-        sb.AppendLine(string.IsNullOrWhiteSpace(enemy.enemyName) ? label : enemy.enemyName);
-        sb.AppendLine($"HP : {Mathf.Max(0, enemy.currentHP)} / {Mathf.Max(1, enemy.maxHP)}");
-        sb.AppendLine($"ATK : {enemy.attack}    DEF : {enemy.defense}    SPD : {enemy.speed}");
-        sb.Append("현재 적의 전투 상태입니다.");
+        string name = string.IsNullOrWhiteSpace(enemy.enemyName) ? label : enemy.enemyName;
+        sb.AppendLine($"이름 : {name}");
+        sb.AppendLine($"공격력 : {Mathf.Max(0, enemy.attack)}");
+        sb.AppendLine($"방어력 : {Mathf.Max(0, enemy.defense)}");
+        sb.Append($"스피드 : {Mathf.Max(0, enemy.speed)}");
+        return sb.ToString();
+    }
+
+    private string BuildMissingStateText(string name)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine($"이름 : {name}");
+        sb.AppendLine("공격력 : -");
+        sb.AppendLine("방어력 : -");
+        sb.Append("스피드 : -");
         return sb.ToString();
     }
 
@@ -578,6 +604,7 @@ public class StatePanelController : MonoBehaviour
         bubble.position = bubblePosition;
 
         Rect bubbleRect = MakeRect(new Vector2(bubblePosition.x, bubblePosition.y), bubbleSize);
+        UpdateStateBubbleText(bubbleRect, bubblePosition.z);
         DrawDottedConnector(targetRect, bubbleRect, bubblePosition.z);
     }
 
@@ -620,6 +647,7 @@ public class StatePanelController : MonoBehaviour
         ResolveSpeechBubbleRefs();
 
         SetBubbleRenderer(bubbleRenderer, false);
+        SetStateBubbleTextVisible(false);
 
         if (speechBubble && capturedSpeechBubbleDefault)
         {
@@ -633,8 +661,68 @@ public class StatePanelController : MonoBehaviour
     private void SetBubbleRenderer(SpriteRenderer renderer, bool visible)
     {
         if (!renderer) return;
+
+        if (!capturedSpeechBubbleOriginalColor)
+        {
+            speechBubbleOriginalColor = renderer.color;
+            capturedSpeechBubbleOriginalColor = true;
+        }
+
+        renderer.color = visible ? stateBubbleColor : speechBubbleOriginalColor;
         renderer.enabled = visible;
         if (visible) renderer.sortingOrder = Mathf.Max(renderer.sortingOrder, connectorSortingOrder + 1);
+    }
+
+    private void UpdateStateBubbleText(Rect bubbleRect, float z)
+    {
+        EnsureStateBubbleText();
+        if (!stateBubbleText)
+            return;
+
+        stateBubbleText.gameObject.SetActive(true);
+        stateBubbleText.text = BuildCurrentStateText();
+        stateBubbleText.color = stateBubbleTextColor;
+        stateBubbleText.fontSize = Mathf.Max(0.01f, stateBubbleTextFontSize);
+        stateBubbleText.alignment = stateBubbleTextAlignment;
+        stateBubbleText.enableWordWrapping = true;
+        stateBubbleText.overflowMode = TextOverflowModes.Overflow;
+
+        RectTransform rect = stateBubbleText.rectTransform;
+        rect.pivot = new Vector2(0f, 1f);
+        rect.sizeDelta = new Vector2(
+            Mathf.Max(0.1f, bubbleRect.width - stateBubbleTextPadding.x * 2f),
+            Mathf.Max(0.1f, bubbleRect.height - stateBubbleTextPadding.y * 2f));
+        rect.position = new Vector3(
+            bubbleRect.xMin + stateBubbleTextPadding.x,
+            bubbleRect.yMax - stateBubbleTextPadding.y,
+            z - 0.01f);
+        rect.rotation = Quaternion.identity;
+        rect.localScale = Vector3.one;
+
+        MeshRenderer textRenderer = stateBubbleText.GetComponent<MeshRenderer>();
+        if (textRenderer)
+        {
+            textRenderer.sortingLayerID = bubbleRenderer ? bubbleRenderer.sortingLayerID : textRenderer.sortingLayerID;
+            textRenderer.sortingOrder = connectorSortingOrder + 3;
+        }
+    }
+
+    private void EnsureStateBubbleText()
+    {
+        if (stateBubbleText)
+            return;
+
+        var textObject = new GameObject("StateBubbleText", typeof(RectTransform), typeof(TextMeshPro));
+        stateBubbleText = textObject.GetComponent<TextMeshPro>();
+        stateBubbleText.raycastTarget = false;
+        stateBubbleText.text = string.Empty;
+        stateBubbleText.gameObject.SetActive(false);
+    }
+
+    private void SetStateBubbleTextVisible(bool visible)
+    {
+        if (stateBubbleText)
+            stateBubbleText.gameObject.SetActive(visible);
     }
 
     private void ApplySpeechBubbleSize()

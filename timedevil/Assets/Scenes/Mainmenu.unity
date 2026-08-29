@@ -1364,6 +1364,14 @@ MonoBehaviour:
   dialogueText: {fileID: 0}
   speakerName: 
   panelColor: {r: 0, g: 0, b: 0, a: 0.78}
+  advancePromptImage: {fileID: 0}
+  advancePromptSprite: {fileID: -1985648346, guid: d37202d2ebe95ae44abeed50747f9a4a, type: 3}
+  advancePromptSize: {x: 52, y: 52}
+  advancePromptScale: 2
+  advancePromptOffset: {x: -26, y: 18}
+  advancePromptMinAlpha: 0.35
+  advancePromptMaxAlpha: 1
+  advancePromptBlinkPeriod: 0.9
   useImageFade: 1
   defaultFadeOutSeconds: 0.25
   defaultFadeInSeconds: 0.25

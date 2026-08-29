@@ -10,6 +10,7 @@ public static class SaveSystem
         ProgressSaveStore.DeleteSave();
         BattleEncounterState.ClearAll();
         BattleVictoryReturnContext.ClearAll();
+        TriggerRuntimeSaveBridge.ClearRuntime();
 
         if (ItemRuntime.Instance != null)
             ItemRuntime.Instance.LoadFromDefaultJson();
@@ -48,6 +49,24 @@ public static class SaveSystem
             PlayerDataRuntime.Instance.SaveNow();  // player.json (PlayerData 런타임)
         else
             Debug.LogWarning("[SaveSystem] PlayerDataRuntime.Instance not found. player data skip.");
+    }
+
+    public static void LoadCheckpointRuntime()
+    {
+        if (CardStateRuntime.Instance != null)
+            CardStateRuntime.Instance.LoadFromDisk();
+        else
+            Debug.LogWarning("[SaveSystem] CardStateRuntime.Instance not found. cards reload skip.");
+
+        if (ItemRuntime.Instance != null)
+            ItemRuntime.Instance.LoadFromDisk();
+        else
+            Debug.LogWarning("[SaveSystem] ItemRuntime.Instance not found. items reload skip.");
+
+        if (PlayerDataRuntime.Instance != null)
+            PlayerDataRuntime.Instance.LoadFromDisk();
+        else
+            Debug.LogWarning("[SaveSystem] PlayerDataRuntime.Instance not found. player data reload skip.");
     }
 
     // -------------------------

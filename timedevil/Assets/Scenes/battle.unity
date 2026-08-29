@@ -413,8 +413,18 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3104670346599119191, guid: 347e09cf7ca584c488a11bb343186cf8,
         type: 3}
+      propertyPath: cornerFontSize
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 3104670346599119191, guid: 347e09cf7ca584c488a11bb343186cf8,
+        type: 3}
       propertyPath: costTextRect.y
       value: 0.85
+      objectReference: {fileID: 0}
+    - target: {fileID: 3104670346599119191, guid: 347e09cf7ca584c488a11bb343186cf8,
+        type: 3}
+      propertyPath: effectFontSize
+      value: 17
       objectReference: {fileID: 0}
     - target: {fileID: 3496468367479007433, guid: 347e09cf7ca584c488a11bb343186cf8,
         type: 3}
@@ -1580,6 +1590,14 @@ MonoBehaviour:
   textColor: {r: 1, g: 1, b: 1, a: 1}
   fontSize: 28
   textPadding: {x: 28, y: 20, z: 28, w: 20}
+  advancePromptImage: {fileID: 0}
+  advancePromptSprite: {fileID: 0}
+  advancePromptSize: {x: 104, y: 104}
+  advancePromptOffset: {x: -18, y: 18}
+  showAdvancePromptForEActions: 1
+  advancePromptMinAlpha: 0.35
+  advancePromptMaxAlpha: 1
+  advancePromptBlinkPeriod: 0.9
 --- !u!1 &577577515
 GameObject:
   m_ObjectHideFlags: 0
@@ -1688,7 +1706,7 @@ MonoBehaviour:
   menu: {fileID: 1069897049}
   database: {fileID: 11400000, guid: c0cc44962aa33464ca629e77b4d09b2b, type: 2}
   costController: {fileID: 1352731693}
-  showCardPreviewEnabled: 0
+  showCardPreviewEnabled: 1
   showCard: {fileID: 643248677}
   totalSeconds: 1
   desc: {fileID: 0}
@@ -1967,7 +1985,7 @@ MonoBehaviour:
   moveController: {fileID: 1201525410}
   attackController: {fileID: 0}
   supportController: {fileID: 0}
-  showCardPreviewEnabled: 0
+  showCardPreviewEnabled: 1
   previewSeconds: 1.5
   firstPlayDelaySeconds: 0.65
   effectSettleSeconds: 0.65
@@ -2010,6 +2028,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   useImage: {fileID: 1522580513}
+  cardTemplate: {fileID: 0}
+  templateSource: {fileID: 0}
   cardDatabase: {fileID: 0}
   resourcesFolder: my_asset
   maxPreviewSize: {x: 130, y: 200}
@@ -2122,6 +2142,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   initialHandSize: 3
   maxHandSize: 3
+  turnStartDrawCount: 2
 --- !u!114 &726002413
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6409,6 +6430,11 @@ MonoBehaviour:
   connectorDashLength: 0.16
   connectorGapLength: 0.1
   connectorSortingOrder: 20
+  stateBubbleColor: {r: 0, g: 0, b: 0, a: 0.78}
+  stateBubbleTextColor: {r: 1, g: 1, b: 1, a: 1}
+  stateBubbleTextPadding: {x: 0.42, y: 0.34}
+  stateBubbleTextFontSize: 5
+  stateBubbleTextAlignment: 257
 --- !u!114 &1069897057
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7806,6 +7832,7 @@ MonoBehaviour:
   enemyDatabase: {fileID: 11400000, guid: 67c08aa19663b4c45937c317f2db9fe7, type: 2}
   initialHandSize: 3
   maxHandSize: 3
+  turnStartDrawCount: 2
 --- !u!4 &1424331454
 Transform:
   m_ObjectHideFlags: 0
@@ -11344,6 +11371,16 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 2025730667}
     m_Modifications:
+    - target: {fileID: 3104670346599119191, guid: 347e09cf7ca584c488a11bb343186cf8,
+        type: 3}
+      propertyPath: cornerFontSize
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 3104670346599119191, guid: 347e09cf7ca584c488a11bb343186cf8,
+        type: 3}
+      propertyPath: effectFontSize
+      value: 17
+      objectReference: {fileID: 0}
     - target: {fileID: 3496468367479007433, guid: 347e09cf7ca584c488a11bb343186cf8,
         type: 3}
       propertyPath: m_Name
@@ -12556,6 +12593,13 @@ MonoBehaviour:
   dialogueTextColor: {r: 1, g: 1, b: 1, a: 1}
   nameFontSize: 30
   dialogueFontSize: 28
+  advancePromptImage: {fileID: 0}
+  advancePromptSprite: {fileID: 0}
+  advancePromptSize: {x: 104, y: 104}
+  advancePromptOffset: {x: -18, y: 18}
+  advancePromptMinAlpha: 0.35
+  advancePromptMaxAlpha: 1
+  advancePromptBlinkPeriod: 0.9
   dimInactivePortrait: 1
   activePortraitAlpha: 1
   inactivePortraitAlpha: 0.35

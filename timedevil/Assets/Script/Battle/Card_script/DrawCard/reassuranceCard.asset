@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae67f8acdd35dd84fb814605a4b67711, type: 3}
+  m_Name: reassuranceCard
+  m_EditorClassIdentifier:
+  id: reassurance
+  displayName: 안도감
+  type: 2
+  display: 상대 카드 1장을 버립니다
+  explanation: 그래도 이정도라서...
+  mainArtwork: {fileID: 21300000, guid: 750e9ec632e64a92a0cda32367ea8a7c, type: 3}
+  arrowArtwork: {fileID: 0}
+  effectTextOverride:
+  cost: 1
+  positive: 1
+  negative: 0
+  drawMode: 1
+  amount: 1
+  refreshDiscardAmount: 1
+  refreshDrawAmount: 2
+  handEffectSequence:
+  - effectType: 1
+    amount: 1

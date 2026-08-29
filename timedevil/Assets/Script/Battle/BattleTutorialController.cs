@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -48,6 +49,16 @@ public class BattleTutorialController : MonoBehaviour
     [SerializeField, Min(1f)] private float fontSize = 28f;
     [SerializeField] private Vector4 textPadding = new Vector4(28f, 20f, 28f, 20f);
 
+    [Header("Advance Prompt")]
+    [SerializeField] private Image advancePromptImage;
+    [SerializeField] private Sprite advancePromptSprite;
+    [SerializeField] private Vector2 advancePromptSize = new Vector2(104f, 104f);
+    [SerializeField] private Vector2 advancePromptOffset = new Vector2(-18f, 18f);
+    [SerializeField] private bool showAdvancePromptForEActions = true;
+    [SerializeField, Range(0f, 1f)] private float advancePromptMinAlpha = 0.35f;
+    [SerializeField, Range(0f, 1f)] private float advancePromptMaxAlpha = 1f;
+    [SerializeField, Min(0.1f)] private float advancePromptBlinkPeriod = 0.9f;
+
     private int currentStepIndex = -1;
     private bool running;
     private bool waitingForContinueKeyRelease;
@@ -60,6 +71,8 @@ public class BattleTutorialController : MonoBehaviour
     private bool externalPromptAllowCardSelectionNavigation;
     private bool externalPromptAllowStateNavigation;
     private bool externalPromptAllowCancelInput;
+    private bool advancePromptShouldBeVisible;
+    private Coroutine advancePromptBlinkRoutine;
 
     public bool IsRunningTutorial => running;
     public bool IsExternalPromptActive => externalPromptActive;
@@ -87,6 +100,7 @@ public class BattleTutorialController : MonoBehaviour
             StopTutorial(false);
         if (externalPromptActive)
             ClearExternalPrompt(false);
+        HideAdvancePrompt();
 
         if (Instance == this)
             Instance = null;
@@ -222,6 +236,8 @@ public class BattleTutorialController : MonoBehaviour
         window.anchoredPosition = windowAnchoredPosition;
         window.sizeDelta = windowSize;
         messageText.text = message ?? string.Empty;
+        advancePromptShouldBeVisible = ShouldShowAdvancePrompt(advanceMode, requiredAction);
+        ApplyMessageTextPadding();
 
         SetUiVisible(true);
         ApplyExternalPromptGate();
@@ -275,6 +291,7 @@ public class BattleTutorialController : MonoBehaviour
         externalPromptAllowCardSelectionNavigation = false;
         externalPromptAllowStateNavigation = false;
         externalPromptAllowCancelInput = false;
+        advancePromptShouldBeVisible = false;
 
         if (restoreTutorialStep && running && currentStepIndex >= 0 && currentStepIndex < steps.Count)
         {
@@ -328,6 +345,8 @@ public class BattleTutorialController : MonoBehaviour
         window.anchoredPosition = step.windowAnchoredPosition;
         window.sizeDelta = step.windowSize;
         messageText.text = step.message ?? string.Empty;
+        advancePromptShouldBeVisible = ShouldShowAdvancePrompt(step.advanceMode, step.requiredAction);
+        ApplyMessageTextPadding();
 
         SetUiVisible(true);
         ApplyGate(step);
@@ -422,6 +441,8 @@ public class BattleTutorialController : MonoBehaviour
         if (root && !blocker) blocker = root.Find("Blocker")?.GetComponent<Image>();
         if (root && !window) window = root.Find("Window") as RectTransform;
         if (window && !messageText) messageText = window.GetComponentInChildren<TMP_Text>(true);
+        if (window)
+            EnsureAdvancePrompt();
     }
 
     private void EnsureDedicatedRuntimeUi()
@@ -512,7 +533,203 @@ public class BattleTutorialController : MonoBehaviour
             messageText.color = textColor;
         }
 
+        ApplyMessageTextPadding();
+        EnsureAdvancePrompt();
         root.SetAsLastSibling();
+    }
+
+    private void ApplyMessageTextPadding()
+    {
+        if (!messageText)
+            return;
+
+        RectTransform textRect = messageText.rectTransform;
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+
+        float rightPadding = textPadding.z;
+        if (advancePromptShouldBeVisible)
+            rightPadding += advancePromptSize.x + Mathf.Abs(advancePromptOffset.x) + 12f;
+
+        textRect.offsetMin = new Vector2(textPadding.x, textPadding.w);
+        textRect.offsetMax = new Vector2(-rightPadding, -textPadding.y);
+    }
+
+    private void EnsureAdvancePrompt()
+    {
+        if (!window)
+            return;
+
+        if (!advancePromptSprite)
+            advancePromptSprite = LoadDefaultAdvancePromptSprite();
+
+        if (!advancePromptImage)
+            advancePromptImage = FindAdvancePromptImage();
+
+        if (!advancePromptImage)
+            advancePromptImage = CreateAdvancePromptImage(window);
+
+        if (!advancePromptImage)
+            return;
+
+        if (!advancePromptImage.sprite)
+            advancePromptImage.sprite = advancePromptSprite;
+
+        advancePromptImage.preserveAspect = true;
+        advancePromptImage.raycastTarget = false;
+        ApplyAdvancePromptLayout(advancePromptImage.rectTransform);
+    }
+
+    private Image FindAdvancePromptImage()
+    {
+        if (!window)
+            return null;
+
+        Transform direct = window.Find("Keyboard_UI_01_22");
+        if (direct && direct.TryGetComponent(out Image directImage))
+            return directImage;
+
+        Image[] images = window.GetComponentsInChildren<Image>(true);
+        foreach (Image image in images)
+        {
+            if (image && image.name == "Keyboard_UI_01_22")
+                return image;
+        }
+
+        return null;
+    }
+
+    private Image CreateAdvancePromptImage(Transform parent)
+    {
+        var promptObject = new GameObject("Keyboard_UI_01_22", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        promptObject.transform.SetParent(parent, false);
+
+        Image image = promptObject.GetComponent<Image>();
+        image.sprite = advancePromptSprite != null ? advancePromptSprite : LoadDefaultAdvancePromptSprite();
+        image.preserveAspect = true;
+        image.raycastTarget = false;
+        ApplyAdvancePromptLayout(image.rectTransform);
+        return image;
+    }
+
+    private void ApplyAdvancePromptLayout(RectTransform rect)
+    {
+        if (!rect)
+            return;
+
+        rect.anchorMin = new Vector2(1f, 0f);
+        rect.anchorMax = new Vector2(1f, 0f);
+        rect.pivot = new Vector2(1f, 0f);
+        rect.anchoredPosition = advancePromptOffset;
+        rect.sizeDelta = advancePromptSize;
+        rect.localScale = Vector3.one;
+        rect.localRotation = Quaternion.identity;
+        rect.SetAsLastSibling();
+    }
+
+    private Sprite LoadDefaultAdvancePromptSprite()
+    {
+#if UNITY_EDITOR
+        const string assetPath = "Assets/ElvGames/Fantasy Dreamland/UI/Keyboard Keys/Keyboard_UI_01.png";
+        UnityEngine.Object[] assets = UnityEditor.AssetDatabase.LoadAllAssetRepresentationsAtPath(assetPath);
+        foreach (UnityEngine.Object asset in assets)
+        {
+            if (asset is Sprite sprite && sprite.name == "Keyboard_UI_01_22")
+                return sprite;
+        }
+
+        Sprite mainSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(assetPath);
+        if (mainSprite != null && mainSprite.name == "Keyboard_UI_01_22")
+            return mainSprite;
+#endif
+        return null;
+    }
+
+    private bool ShouldShowAdvancePrompt(BattleTutorialAdvanceMode mode, BattleTutorialAction requiredAction)
+    {
+        if (mode == BattleTutorialAdvanceMode.PressE)
+            return continueKey == KeyCode.E;
+
+        return showAdvancePromptForEActions && IsEAction(requiredAction);
+    }
+
+    private static bool IsEAction(BattleTutorialAction action)
+    {
+        return action == BattleTutorialAction.Continue
+            || action == BattleTutorialAction.CardPanelInteract
+            || action == BattleTutorialAction.ItemPanelInteract
+            || action == BattleTutorialAction.StatePanelInteract
+            || action == BattleTutorialAction.EndPanelInteract
+            || action == BattleTutorialAction.RunPanelInteract
+            || action == BattleTutorialAction.CardSelect
+            || action == BattleTutorialAction.CardUse
+            || action == BattleTutorialAction.CardDiscard
+            || action == BattleTutorialAction.TurnEnd
+            || action == BattleTutorialAction.StateHandInspect;
+    }
+
+    private void ShowAdvancePrompt()
+    {
+        EnsureAdvancePrompt();
+        if (!advancePromptImage || !advancePromptImage.sprite)
+            return;
+
+        advancePromptImage.gameObject.SetActive(true);
+        StartAdvancePromptBlink();
+    }
+
+    private void HideAdvancePrompt()
+    {
+        StopAdvancePromptBlink();
+        if (advancePromptImage)
+            advancePromptImage.gameObject.SetActive(false);
+    }
+
+    private void StartAdvancePromptBlink()
+    {
+        if (!advancePromptImage)
+            return;
+
+        if (advancePromptBlinkRoutine != null)
+            StopCoroutine(advancePromptBlinkRoutine);
+
+        advancePromptBlinkRoutine = StartCoroutine(CoBlinkAdvancePrompt());
+    }
+
+    private void StopAdvancePromptBlink()
+    {
+        if (advancePromptBlinkRoutine != null)
+        {
+            StopCoroutine(advancePromptBlinkRoutine);
+            advancePromptBlinkRoutine = null;
+        }
+
+        if (advancePromptImage)
+            SetAdvancePromptAlpha(advancePromptMaxAlpha);
+    }
+
+    private IEnumerator CoBlinkAdvancePrompt()
+    {
+        while (advancePromptImage)
+        {
+            float minAlpha = Mathf.Min(advancePromptMinAlpha, advancePromptMaxAlpha);
+            float maxAlpha = Mathf.Max(advancePromptMinAlpha, advancePromptMaxAlpha);
+            float t = Mathf.PingPong(Time.unscaledTime / Mathf.Max(0.1f, advancePromptBlinkPeriod), 1f);
+            SetAdvancePromptAlpha(Mathf.Lerp(minAlpha, maxAlpha, t));
+            yield return null;
+        }
+
+        advancePromptBlinkRoutine = null;
+    }
+
+    private void SetAdvancePromptAlpha(float alpha)
+    {
+        if (!advancePromptImage)
+            return;
+
+        Color color = advancePromptImage.color;
+        color.a = alpha;
+        advancePromptImage.color = color;
     }
 
     private static void ResetRootRect(RectTransform rect)
@@ -590,6 +807,11 @@ public class BattleTutorialController : MonoBehaviour
             return;
 
         root.gameObject.SetActive(visible);
+        if (visible && advancePromptShouldBeVisible)
+            ShowAdvancePrompt();
+        else
+            HideAdvancePrompt();
+
         if (!rootGroup)
             return;
 

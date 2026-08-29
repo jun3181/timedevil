@@ -13,10 +13,11 @@ MonoBehaviour:
   m_Name: Shoe
   m_EditorClassIdentifier: 
   id: shoe
-  displayName: 신발 한 짝
+  displayName: "\uC816\uC740 \uAD50\uACFC\uC11C"
   type: 4
-  description: 젖은 신발 한 짝.
+  description: "\uC816\uC740 \uAD50\uACFC\uC11C"
   icon: {fileID: 0}
+  useText: 
   defaultQuantity: 0
   effectAmount: 0
   consumeOnUse: 0

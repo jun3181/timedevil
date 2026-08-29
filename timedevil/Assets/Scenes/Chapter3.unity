@@ -508785,14 +508785,14 @@ MonoBehaviour:
   dialogue:
     name: 
     sentences: []
-    leftPortrait: {fileID: 0}
+    leftPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
     rightPortrait: {fileID: 0}
     lines:
     - text: "\uB108\uB294 \uBABB \uBCF4\uB358 \uB188\uC778\uB370"
       speakerName: "\uC774\uB9AC\uC2A4"
-      leftPortrait: {fileID: 0}
+      leftPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
       rightPortrait: {fileID: 0}
-      focus: 2
+      focus: 1
     - text: "\uC544... \uADF8..."
       speakerName: "\uB8E8\uC2DC"
       leftPortrait: {fileID: 21300000, guid: 2e0827c2b95c6884bae7ed3ac8a82323, type: 3}
@@ -508800,17 +508800,17 @@ MonoBehaviour:
       focus: 1
     - text: "\uC5EC\uD589\uC790\uC778\uAC00..."
       speakerName: "\uC774\uB9AC\uC2A4"
-      leftPortrait: {fileID: 0}
+      leftPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
       rightPortrait: {fileID: 0}
-      focus: 2
+      focus: 1
     - text: "... \uC74C... \uC544\uBB34\uD2BC \uB208\uC5D0 \uB744\uBA74 \uC0AC\uD615\uC774\uB2E4..."
       speakerName: "\uC774\uB9AC\uC2A4"
-      leftPortrait: {fileID: 0}
+      leftPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
       rightPortrait: {fileID: 0}
-      focus: 2
+      focus: 1
     - text: "\uB124... \uB124"
       speakerName: "\uB8E8\uC2DC"
-      leftPortrait: {fileID: 0}
+      leftPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
       rightPortrait: {fileID: 0}
       focus: 1
   waitUntilDone: 1
@@ -522102,7 +522102,7 @@ MonoBehaviour:
   dialogue:
     name: 
     sentences: []
-    leftPortrait: {fileID: 0}
+    leftPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
     rightPortrait: {fileID: 0}
     lines:
     - text: "\uC870\uC2EC\uD788 \uC598\uAE30\uD558\uC138\uC694... \uC798\uBABB \uCC0D\uD788\uBA74...
@@ -522113,52 +522113,52 @@ MonoBehaviour:
       focus: 2
     - text: "\uB124...?"
       speakerName: "\uB8E8\uC2DC"
-      leftPortrait: {fileID: 0}
+      leftPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
       rightPortrait: {fileID: 0}
       focus: 1
     - text: "\uC5B4\uB290 \uC21C\uAC04\uBD80\uD130 \uD604\uC7AC \uC655\uC778 \uC774\uB9AC\uC2A4\uAC00
         \uAD70\uB300\uB85C \uC815\uAD8C\uC744 \uC7A1\uC73C\uBA74\uC11C..."
       speakerName: "\uB9C8\uC744 \uC8FC\uBBFC"
-      leftPortrait: {fileID: 0}
+      leftPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
       rightPortrait: {fileID: 0}
-      focus: 2
+      focus: 1
     - text: "\uC800 \uC0AC\uB78C\uC73C\uB85C \uC778\uD574\uC11C \uC0AC\uB77C\uC9C4
         \uC0AC\uB78C\uC774 \uB108\uBB34 \uB9CE\uACE0"
       speakerName: "\uB9C8\uC744 \uC8FC\uBBFC"
-      leftPortrait: {fileID: 0}
+      leftPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
       rightPortrait: {fileID: 0}
-      focus: 2
+      focus: 1
     - text: "\uB2E4\uB4E4 \uC2AC\uD514\uC5D0 \uC7A0\uAE34 \uC0C1\uD0DC\uC8E0..."
       speakerName: "\uB9C8\uC744 \uC8FC\uBBFC"
-      leftPortrait: {fileID: 0}
+      leftPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
       rightPortrait: {fileID: 0}
-      focus: 2
+      focus: 1
     - text: "\uADF8\uB807\uAD70\uC694..."
       speakerName: "\uB8E8\uC2DC"
-      leftPortrait: {fileID: 0}
+      leftPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
       rightPortrait: {fileID: 0}
       focus: 1
     - text: "\uC774 \uB098\uB77C\uB294 \uADF8\uB0E5 \uC9C0\uB098\uCE58\uB294\uAC78 
         \uCD94\uCC9C\uB4DC\uB9B4\uAC8C\uC694"
       speakerName: "\uB9C8\uC744 \uC8FC\uBBFC"
-      leftPortrait: {fileID: 0}
+      leftPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
       rightPortrait: {fileID: 0}
-      focus: 2
+      focus: 1
     - text: "\uC54C\uACA0\uC5B4\uC694..."
       speakerName: "\uB8E8\uC2DC"
-      leftPortrait: {fileID: 0}
+      leftPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
       rightPortrait: {fileID: 0}
       focus: 1
     - text: "\uB9CC\uC57D \uC26C\uACE0 \uC2F6\uC73C\uC2DC\uBA74 \uC606\uBC29\uC744
         \uC774\uC6A9\uD558\uC138\uC694...\n\uBB34\uC0AC\uD788 \uC9C0\uB098\uAC14\uC73C\uBA74
         \uC88B\uACA0\uB124\uC694"
       speakerName: "\uB9C8\uC744 \uC8FC\uBBFC"
-      leftPortrait: {fileID: 0}
+      leftPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
       rightPortrait: {fileID: 0}
-      focus: 2
+      focus: 1
     - text: "\uC77C\uB2E8 \uD53C\uACE4\uD558\uB2C8 \uC26C\uC790"
       speakerName: "\uB8E8\uC2DC"
-      leftPortrait: {fileID: 0}
+      leftPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
       rightPortrait: {fileID: 0}
       focus: 1
   waitUntilDone: 1
@@ -580485,7 +580485,7 @@ MonoBehaviour:
   dialogue:
     name: 
     sentences: []
-    leftPortrait: {fileID: 0}
+    leftPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
     rightPortrait: {fileID: 0}
     lines:
     - text: "\uD639\uC2DC \uC5EC\uAE30\uB294... \uC5B4\uB5A4 \uACF3\uC778\uAC00\uC694"
@@ -580495,9 +580495,9 @@ MonoBehaviour:
       focus: 1
     - text: "... \uB530\uB77C\uC624\uC138\uC694"
       speakerName: "\uB9C8\uC744 \uC8FC\uBBFC"
-      leftPortrait: {fileID: 0}
+      leftPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
       rightPortrait: {fileID: 0}
-      focus: 2
+      focus: 1
   waitUntilDone: 1
   lockPlayerInput: 1
   blockWorldAdvance: 0

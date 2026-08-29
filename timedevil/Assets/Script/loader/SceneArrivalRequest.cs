@@ -65,6 +65,7 @@ public class SceneArrivalRequest
     public bool keepPlayerZ = true;
 
     public SceneCameraRequest camera = SceneCameraRequest.None;
+    public bool preserveCameraOverride;
 
     public float graceSeconds;
     public bool requestCameraRebind;

@@ -12,6 +12,7 @@ public class BattleDeckRuntime : MonoBehaviour
     [Header("Rules")]
     [SerializeField] private int initialHandSize = 3;
     [SerializeField] private int maxHandSize = 3;
+    [SerializeField, Min(0)] private int turnStartDrawCount = 2;
 
     public int MaxHandSize => maxHandSize;
     public int HandCount => hand.Count;
@@ -86,6 +87,11 @@ public class BattleDeckRuntime : MonoBehaviour
     public void DrawOneIfNeeded()
     {
         if (hand.Count < maxHandSize) Draw(1);
+    }
+
+    public int DrawTurnStart()
+    {
+        return Draw(turnStartDrawCount, ignoreHandCap: true);
     }
 
     // 기본 드로우(최대치 적용)

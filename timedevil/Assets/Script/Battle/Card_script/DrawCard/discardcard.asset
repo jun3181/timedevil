@@ -17,7 +17,7 @@ MonoBehaviour:
   type: 2
   display: "\uC0C1\uB300 \uD328 \uB450\uC7A5 \uBC84\uB9BD\uB2C8\uB2E4"
   explanation: "\uD3EC\uAE30\uD560\uB798.."
-  mainArtwork: {fileID: 0}
+  mainArtwork: {fileID: 21300000, guid: b37b0ac1977e4779a899a848f246d4d9, type: 3}
   arrowArtwork: {fileID: 0}
   effectTextOverride:
   cost: 3

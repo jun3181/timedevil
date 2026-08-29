@@ -14018,19 +14018,19 @@ MonoBehaviour:
   dialogue:
     name: 
     sentences: []
-    leftPortrait: {fileID: 0}
+    leftPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
     rightPortrait: {fileID: 0}
     lines:
     - text: "\uC77C\uACF1 \uAC10\uC815\uC758 \uC0C9\uAE54...?"
       speakerName: 
-      leftPortrait: {fileID: 0}
-      rightPortrait: {fileID: 21300000, guid: 2e0827c2b95c6884bae7ed3ac8a82323, type: 3}
-      focus: 2
+      leftPortrait: {fileID: 21300000, guid: 2e0827c2b95c6884bae7ed3ac8a82323, type: 3}
+      rightPortrait: {fileID: 0}
+      focus: 1
     - text: ".....\uB2E4\uC2DC \uB123\uC790"
       speakerName: 
-      leftPortrait: {fileID: 0}
-      rightPortrait: {fileID: 21300000, guid: 2e0827c2b95c6884bae7ed3ac8a82323, type: 3}
-      focus: 2
+      leftPortrait: {fileID: 21300000, guid: 2e0827c2b95c6884bae7ed3ac8a82323, type: 3}
+      rightPortrait: {fileID: 0}
+      focus: 1
   overrideCardId: 
   disableAfterPickup: 1
   destroyAfterPickup: 0
@@ -28337,14 +28337,14 @@ MonoBehaviour:
   dialogue:
     name: 
     sentences: []
-    leftPortrait: {fileID: 0}
+    leftPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
     rightPortrait: {fileID: 0}
     lines:
     - text: "\uC544\uC9C1...\uC790\uAE30\uB294 \uC2EB\uC5B4"
       speakerName: 
-      leftPortrait: {fileID: 0}
-      rightPortrait: {fileID: 21300000, guid: c47fa7d7138300b4995672f2ef740502, type: 3}
-      focus: 2
+      leftPortrait: {fileID: 21300000, guid: c47fa7d7138300b4995672f2ef740502, type: 3}
+      rightPortrait: {fileID: 0}
+      focus: 1
   overrideCardId: 
   disableAfterPickup: 1
   destroyAfterPickup: 0
@@ -29552,8 +29552,8 @@ MonoBehaviour:
       name: 
       sentences:
       - "\uC73C....\uC544\uCE68\uC774\uAD6C\uB098...."
-      leftPortrait: {fileID: 0}
-      rightPortrait: {fileID: 21300000, guid: 2e0827c2b95c6884bae7ed3ac8a82323, type: 3}
+      leftPortrait: {fileID: 21300000, guid: 2e0827c2b95c6884bae7ed3ac8a82323, type: 3}
+      rightPortrait: {fileID: 0}
       lines: []
     advanceKey: 0
   nextKey: 101
@@ -29639,14 +29639,14 @@ MonoBehaviour:
   dialogue:
     name: 
     sentences: []
-    leftPortrait: {fileID: 0}
+    leftPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
     rightPortrait: {fileID: 0}
     lines:
     - text: "\uC8FD\uB294\uAC8C \uD3B8\uD560\uB824\uB098...?"
       speakerName: 
-      leftPortrait: {fileID: 0}
-      rightPortrait: {fileID: 21300000, guid: c47fa7d7138300b4995672f2ef740502, type: 3}
-      focus: 2
+      leftPortrait: {fileID: 21300000, guid: c47fa7d7138300b4995672f2ef740502, type: 3}
+      rightPortrait: {fileID: 0}
+      focus: 1
   overrideCardId: 
   disableAfterPickup: 1
   destroyAfterPickup: 0

@@ -34,6 +34,11 @@ public class ProgressSaveData
     // -------------------------
     public List<string> flags = new List<string>();
 
+    // -------------------------
+    // Trigger runtime snapshot at save point
+    // -------------------------
+    public TriggerRuntimeSaveData triggerRuntime = new TriggerRuntimeSaveData();
+
     public bool HasFlag(string key)
         => !string.IsNullOrEmpty(key) && flags != null && flags.Contains(key);
 
@@ -43,4 +48,34 @@ public class ProgressSaveData
         if (flags == null) flags = new List<string>();
         if (!flags.Contains(key)) flags.Add(key);
     }
+}
+
+[Serializable]
+public class TriggerRuntimeSaveData
+{
+    public TriggerComponentSaveData triggerGet = new TriggerComponentSaveData();
+    public TriggerComponentSaveData interaction = new TriggerComponentSaveData();
+}
+
+[Serializable]
+public class TriggerComponentSaveData
+{
+    public List<TriggerCallCountEntry> callCounts = new List<TriggerCallCountEntry>();
+    public List<TriggerStageProgressEntry> stageProgress = new List<TriggerStageProgressEntry>();
+    public List<string> completedIds = new List<string>();
+}
+
+[Serializable]
+public class TriggerCallCountEntry
+{
+    public string id;
+    public int callCount;
+}
+
+[Serializable]
+public class TriggerStageProgressEntry
+{
+    public string id;
+    public int stageIndex;
+    public int callCount;
 }

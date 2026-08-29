@@ -23,6 +23,76 @@ public class TriggerGet : MonoBehaviour
     private static readonly Dictionary<string, RouteStageProgress> s_stageProgressById = new();
     private static readonly HashSet<string> s_completedById = new();
 
+    public static TriggerComponentSaveData CaptureRuntimeProgress()
+    {
+        var data = new TriggerComponentSaveData();
+
+        foreach (var pair in s_callCountById)
+        {
+            data.callCounts.Add(new TriggerCallCountEntry
+            {
+                id = pair.Key,
+                callCount = pair.Value
+            });
+        }
+
+        foreach (var pair in s_stageProgressById)
+        {
+            data.stageProgress.Add(new TriggerStageProgressEntry
+            {
+                id = pair.Key,
+                stageIndex = pair.Value.stageIndex,
+                callCount = pair.Value.callCount
+            });
+        }
+
+        data.completedIds.AddRange(s_completedById);
+        return data;
+    }
+
+    public static void RestoreRuntimeProgress(TriggerComponentSaveData data)
+    {
+        ClearRuntimeProgress();
+        if (data == null) return;
+
+        if (data.callCounts != null)
+        {
+            foreach (var entry in data.callCounts)
+            {
+                if (entry == null || string.IsNullOrWhiteSpace(entry.id)) continue;
+                s_callCountById[entry.id] = Mathf.Max(0, entry.callCount);
+            }
+        }
+
+        if (data.stageProgress != null)
+        {
+            foreach (var entry in data.stageProgress)
+            {
+                if (entry == null || string.IsNullOrWhiteSpace(entry.id)) continue;
+                s_stageProgressById[entry.id] = new RouteStageProgress(
+                    Mathf.Max(0, entry.stageIndex),
+                    Mathf.Max(0, entry.callCount)
+                );
+            }
+        }
+
+        if (data.completedIds != null)
+        {
+            foreach (string id in data.completedIds)
+            {
+                if (!string.IsNullOrWhiteSpace(id))
+                    s_completedById.Add(id);
+            }
+        }
+    }
+
+    public static void ClearRuntimeProgress()
+    {
+        s_callCountById.Clear();
+        s_stageProgressById.Clear();
+        s_completedById.Clear();
+    }
+
     [Header("Router")]
     public TriggerRouter router;
 

@@ -17,11 +17,6 @@ public class TriggerStep_Scene : TriggerStepBase
     [Header("Lock (optional)")]
     [SerializeField] private bool lockPlayerInput = true;
 
-    [Header("Myroom -> Chapter HP Restore")]
-    [SerializeField] private bool restorePlayerHpOnMyroomChapterEntry = true;
-    [SerializeField] private string chapterEntrySourceSceneName = "Myroom";
-    [SerializeField] private string chapterSceneNamePrefix = "chapter";
-
     [Header("Debug")]
     [SerializeField] private bool debugLog = true;
 
@@ -34,6 +29,9 @@ public class TriggerStep_Scene : TriggerStepBase
 
     [Tooltip("켜면 progress.json(lastSceneName)에서 씬 이름을 읽어서 그 씬으로 이동합니다.")]
     [SerializeField] private bool loadSceneFromProgress = false;
+
+    [Tooltip("켜면 progress.json에 lastSceneName이 있을 때만 저장된 씬/위치로 이동하고, 없으면 Target Scene을 사용합니다.")]
+    [SerializeField] private bool loadSceneFromProgressIfAvailable = false;
 
     [Tooltip("progress.json에 lastSceneName이 비어있을 때 갈 폴백 씬")]
     [SerializeField] private string fallbackDreamSceneName = "Move_Tutorial";
@@ -51,6 +49,25 @@ public class TriggerStep_Scene : TriggerStepBase
 
     [Tooltip("다음 씬 시작 카메라 Ortho Size. 0이면 텔레포트 afterOrthoSize=0처럼 기본값을 사용합니다.")]
     [SerializeField] private float sceneStartOrthoSize = 0f;
+
+    [Header("Target Scene Camera (optional)")]
+    [Tooltip("켜면 다음 씬 로드 후 카메라 모드/컨파이너를 이 Step 값으로 적용합니다.")]
+    [SerializeField] private bool overrideTargetSceneCamera = false;
+
+    [Tooltip("다음 씬에서 적용할 CameraManager 모드")]
+    [SerializeField] private CameraModeId targetSceneCameraMode = CameraModeId.FollowFree;
+
+    [Tooltip("다음 씬 카메라 Ortho Size. 0이면 CameraManager 기본값을 사용합니다.")]
+    [SerializeField] private float targetSceneCameraOrthoSize = 0f;
+
+    [Tooltip("Fixed/Cutscene 모드일 때 사용할 월드 좌표")]
+    [SerializeField] private Vector3 targetSceneFixedCameraPosition = Vector3.zero;
+
+    [Tooltip("FollowConfined 모드일 때 다음 씬에서 찾을 Collider2D 오브젝트 이름")]
+    [SerializeField] private string targetSceneConfinerBoundsName = "";
+
+    [Tooltip("다음 씬에서 우선 재탐색할 Cinemachine Virtual Camera 이름. 비우면 자동 탐색")]
+    [SerializeField] private string targetScenePreferredVcamName = "";
 
     [Header("Target Scene Spawn (optional)")]
     [Tooltip("켜면 다음 씬의 SceneEntryProfile/SceneEntrySpawnPoint 중 같은 Key를 가진 지점으로 플레이어를 보냅니다.")]
@@ -116,15 +133,23 @@ public class TriggerStep_Scene : TriggerStepBase
         // 1) 이번에 로드할 씬 이름 결정
         // -------------------------
         string targetScene = sceneName;
+        bool useProgressLoad = loadSceneFromProgress;
 
-        if (loadSceneFromProgress)
+        if (loadSceneFromProgress || loadSceneFromProgressIfAvailable)
         {
             // progress.json에서 lastSceneName 읽기
             var prog = ProgressSaveStore.Load();
-            if (!string.IsNullOrEmpty(prog.lastSceneName))
+            bool hasProgressTarget = !string.IsNullOrWhiteSpace(prog.lastSceneName);
+
+            if (hasProgressTarget)
+            {
                 targetScene = prog.lastSceneName;
-            else
+                useProgressLoad = true;
+            }
+            else if (loadSceneFromProgress)
+            {
                 targetScene = fallbackDreamSceneName;
+            }
         }
 
         if (string.IsNullOrWhiteSpace(targetScene))
@@ -133,7 +158,11 @@ public class TriggerStep_Scene : TriggerStepBase
             yield break;
         }
 
-        if (overrideCutsceneStartKey)
+        if (useProgressLoad)
+        {
+            CutsceneStartContext.Clear();
+        }
+        else if (overrideCutsceneStartKey)
         {
             if (string.IsNullOrWhiteSpace(cutsceneStartKey))
             {
@@ -153,7 +182,11 @@ public class TriggerStep_Scene : TriggerStepBase
             CutsceneStartContext.Clear();
         }
 
-        if (overrideSceneStartOrthoSize)
+        if (useProgressLoad)
+        {
+            SceneStartCameraContext.Clear();
+        }
+        else if (overrideSceneStartOrthoSize)
         {
             SceneStartCameraContext.SetNext(targetScene, sceneStartOrthoSize);
 
@@ -168,7 +201,11 @@ public class TriggerStep_Scene : TriggerStepBase
             SceneStartCameraContext.Clear();
         }
 
-        if (overrideTargetSceneSpawn)
+        if (useProgressLoad)
+        {
+            SceneEntrySpawnContext.Clear();
+        }
+        else if (overrideTargetSceneSpawn)
         {
             if (string.IsNullOrWhiteSpace(targetSceneSpawnKey))
             {
@@ -191,7 +228,7 @@ public class TriggerStep_Scene : TriggerStepBase
         // -------------------------
         // 2) SleepLoad 플래그(원샷) 세팅
         // -------------------------
-        if (markAsSleepLoad)
+        if (markAsSleepLoad || useProgressLoad)
         {
             SleepLoadContext.MarkPending();
             if (debugLog) Debug.Log("[TriggerStep_Scene] SleepLoadContext.MarkPending()");
@@ -214,15 +251,12 @@ public class TriggerStep_Scene : TriggerStepBase
         if (debugLog)
             Debug.Log($"[TriggerStep_Scene] Request Load '{targetScene}' mode={loadMode} useRunner={useSceneVisitEffectRunner}");
 
-        // -------------------------
-        // 4) Myroom -> chapterN 진입이면 Player HP를 최대치로 회복
-        // -------------------------
-        RestorePlayerHpForChapterEntryIfNeeded(targetScene);
+        SceneCameraRequest targetSceneCameraRequest = BuildTargetSceneCameraRequest();
 
         // -------------------------
-        // 5) (기존) 배틀 진입이라면 복귀 정보 저장
+        // 4) (기존) 배틀 진입이라면 복귀 정보 저장
         // -------------------------
-        if (saveReturnContext)
+        if (!useProgressLoad && saveReturnContext)
         {
             string curScene = SceneManager.GetActiveScene().name;
             string returnEntryKey = null;
@@ -308,78 +342,84 @@ public class TriggerStep_Scene : TriggerStepBase
         }
 
         // -------------------------
-        // 6) 씬 로드
+        // 5) 씬 로드
         // -------------------------
-        if (saveReturnContext)
-        {
-            SceneTransitionService.EnterBattle(targetScene, null, null, null, useSceneVisitEffectRunner);
-            yield break;
-        }
-
-        if (loadSceneFromProgress)
+        if (useProgressLoad)
         {
             SceneTransitionService.LoadProgressSave(fallbackDreamSceneName, useSceneVisitEffectRunner);
             yield break;
         }
 
+        if (!useProgressLoad && saveReturnContext)
+        {
+            SceneTransitionService.EnterBattle(targetScene, null, null, null, useSceneVisitEffectRunner);
+            yield break;
+        }
+
         if (overrideTargetSceneSpawn && !string.IsNullOrWhiteSpace(targetSceneSpawnKey))
         {
-            SceneTransitionService.LoadSpawn(targetScene, targetSceneSpawnKey, useSceneVisitEffectRunner, loadMode);
+            if (targetSceneCameraRequest.hasCamera)
+            {
+                SceneTransitionService.LoadSpawn(
+                    targetScene,
+                    targetSceneSpawnKey,
+                    targetSceneCameraRequest,
+                    true,
+                    useSceneVisitEffectRunner,
+                    loadMode);
+            }
+            else
+            {
+                SceneTransitionService.LoadSpawn(targetScene, targetSceneSpawnKey, useSceneVisitEffectRunner, loadMode);
+            }
+
+            yield break;
+        }
+
+        if (targetSceneCameraRequest.hasCamera)
+        {
+            SceneTransitionService.LoadDefault(
+                targetScene,
+                targetSceneCameraRequest,
+                true,
+                useSceneVisitEffectRunner,
+                loadMode);
             yield break;
         }
 
         SceneTransitionService.LoadDefault(targetScene, useSceneVisitEffectRunner, loadMode);
     }
 
-    private void RestorePlayerHpForChapterEntryIfNeeded(string targetScene)
+    private SceneCameraRequest BuildTargetSceneCameraRequest()
     {
-        if (!restorePlayerHpOnMyroomChapterEntry) return;
+        if (!overrideTargetSceneCamera)
+            return SceneCameraRequest.None;
 
-        string currentScene = NormalizeSceneName(SceneManager.GetActiveScene().name);
-        string sourceScene = NormalizeSceneName(chapterEntrySourceSceneName);
-        if (!string.Equals(currentScene, sourceScene, System.StringComparison.OrdinalIgnoreCase)) return;
+        string boundsName = string.IsNullOrWhiteSpace(targetSceneConfinerBoundsName)
+            ? null
+            : targetSceneConfinerBoundsName.Trim();
 
-        string targetSceneName = NormalizeSceneName(targetScene);
-        if (!IsChapterSceneName(targetSceneName)) return;
+        string preferredVcamName = string.IsNullOrWhiteSpace(targetScenePreferredVcamName)
+            ? null
+            : targetScenePreferredVcamName.Trim();
 
-        var runtime = PlayerDataRuntime.Instance ?? Object.FindObjectOfType<PlayerDataRuntime>(true);
-        var data = runtime != null ? runtime.Data : null;
-        if (data == null)
-        {
-            Debug.LogWarning("[TriggerStep_Scene] Myroom -> chapter entry HP restore skipped: PlayerDataRuntime/Data not found.");
-            return;
-        }
-
-        int before = data.currentHP;
-        data.currentHP = Mathf.Max(0, data.maxHP);
+        SceneCameraRequest request = SceneCameraRequest.FromSnapshot(
+            targetSceneCameraMode,
+            targetSceneCameraOrthoSize,
+            targetSceneFixedCameraPosition,
+            boundsName,
+            preferredVcamName
+        );
 
         if (debugLog)
-            Debug.Log($"[TriggerStep_Scene] Myroom -> '{targetSceneName}' Player HP restored: {before} -> {data.currentHP}/{data.maxHP}");
-    }
+        {
+            string sizeText = targetSceneCameraOrthoSize > 0f ? targetSceneCameraOrthoSize.ToString("F2") : "default";
+            string boundsText = string.IsNullOrWhiteSpace(boundsName) ? "(none)" : boundsName;
+            string vcamText = string.IsNullOrWhiteSpace(preferredVcamName) ? "(auto)" : preferredVcamName;
+            Debug.Log($"[TriggerStep_Scene] Queue target camera mode={targetSceneCameraMode} ortho={sizeText} bounds='{boundsText}' vcam='{vcamText}'");
+        }
 
-    private bool IsChapterSceneName(string scene)
-    {
-        if (string.IsNullOrWhiteSpace(scene)) return false;
-        string prefix = NormalizeSceneName(chapterSceneNamePrefix);
-        if (string.IsNullOrWhiteSpace(prefix)) return false;
-
-        return scene.StartsWith(prefix, System.StringComparison.OrdinalIgnoreCase);
-    }
-
-    private static string NormalizeSceneName(string scene)
-    {
-        if (string.IsNullOrWhiteSpace(scene)) return string.Empty;
-
-        string normalized = scene.Trim().Replace('\\', '/');
-        int slashIndex = normalized.LastIndexOf('/');
-        if (slashIndex >= 0 && slashIndex + 1 < normalized.Length)
-            normalized = normalized.Substring(slashIndex + 1);
-
-        const string unityExtension = ".unity";
-        if (normalized.EndsWith(unityExtension, System.StringComparison.OrdinalIgnoreCase))
-            normalized = normalized.Substring(0, normalized.Length - unityExtension.Length);
-
-        return normalized;
+        return request;
     }
 
     private void OnDisable()

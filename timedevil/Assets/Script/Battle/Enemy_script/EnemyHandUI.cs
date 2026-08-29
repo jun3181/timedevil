@@ -53,6 +53,8 @@ public class EnemyHandUI : MonoBehaviour
     public bool IsReadOnlySelectEmphasisEnabled => readOnlySelectEmphasisEnabled;
     public int CurrentSelectIndex => selectIndex;
     public int CardCount => handIdsSnapshot.Count;
+    public CardTemplateView CardTemplateSource =>
+        cardPrefab != null ? cardPrefab.GetComponentInChildren<CardTemplateView>(true) : null;
 
     private void EnsureCardDatabase()
     {

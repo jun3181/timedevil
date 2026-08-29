@@ -93,6 +93,12 @@ public class SupportTrapPlacement
 {
     public SupportPanelSide panelSide = SupportPanelSide.OpponentPanel;
     public SupportGridMask gridMask = new SupportGridMask();
+
+    [Header("Trap Visual")]
+    public GameObject trapPrefab;
+    public Vector3 trapPrefabOffset = Vector3.zero;
+    public float trapPrefabZ = -5f;
+    [Min(0f)] public float trapPrefabScale = 1f;
 }
 
 [Serializable]
@@ -149,7 +155,11 @@ public class SupportCardSO : BaseCardSO
         {
             if (effect == null || effect.trapPlacements == null) continue;
             foreach (SupportTrapPlacement placement in effect.trapPlacements)
-                placement?.gridMask?.EnsureSize();
+            {
+                if (placement == null) continue;
+                placement.gridMask?.EnsureSize();
+                if (placement.trapPrefabScale < 0f) placement.trapPrefabScale = 0f;
+            }
         }
     }
 #endif

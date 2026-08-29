@@ -6,11 +6,18 @@ using UnityEngine.UI;
 [DisallowMultipleComponent]
 public class GetCardButtonController : MonoBehaviour
 {
+    private enum CardGrantMode
+    {
+        GuaranteedCard,
+        RandomCard
+    }
+
     [Header("Required")]
     [SerializeField] private CardDatabaseSO cardDatabase;
 
-    [Header("Deck")]
-    [SerializeField, Min(1)] private int cardsToDeck = CardStateRuntime.MAX_DECK;
+    [Header("Card")]
+    [SerializeField] private CardGrantMode cardGrantMode = CardGrantMode.GuaranteedCard;
+    [SerializeField] private string guaranteedCardId = "infit";
     [SerializeField] private bool saveAfterClick = false;
 
     private Button button;
@@ -38,7 +45,9 @@ public class GetCardButtonController : MonoBehaviour
 
     private void OnValidate()
     {
-        cardsToDeck = Mathf.Clamp(cardsToDeck, 1, CardStateRuntime.MAX_DECK);
+        if (string.IsNullOrWhiteSpace(guaranteedCardId))
+            guaranteedCardId = "infit";
+
         if (cardDatabase == null)
             cardDatabase = Resources.Load<CardDatabaseSO>("CardDatabase");
     }
@@ -61,17 +70,14 @@ public class GetCardButtonController : MonoBehaviour
             return;
         }
 
-        List<string> candidateIds = CollectUniqueCardIds();
-        if (candidateIds.Count == 0)
+        BaseCardSO card = SelectCard();
+        if (card == null)
         {
-            Debug.LogWarning("[GetCardButtonController] No valid card ids in CardDatabaseSO.", this);
+            Debug.LogWarning($"[GetCardButtonController] Failed to select card. Mode: {cardGrantMode}", this);
             return;
         }
 
-        Shuffle(candidateIds);
-
-        int takeCount = Mathf.Min(Mathf.Min(cardsToDeck, CardStateRuntime.MAX_DECK), candidateIds.Count);
-        List<string> selectedIds = candidateIds.GetRange(0, takeCount);
+        List<string> selectedIds = new() { card.id };
 
         foreach (string id in selectedIds)
             runtime.AddOwned(id);
@@ -82,10 +88,7 @@ public class GetCardButtonController : MonoBehaviour
         if (saveAfterClick)
             runtime.SaveNow();
 
-        if (takeCount < cardsToDeck)
-            Debug.LogWarning($"[GetCardButtonController] Only {takeCount} valid cards were available.", this);
-
-        Debug.Log($"[GetCardButtonController] Random deck ready: {runtime.DeckCount}/{CardStateRuntime.MAX_DECK} ({string.Join(", ", selectedIds)})", this);
+        Debug.Log($"[GetCardButtonController] Card ready: {card.id} ({card.displayName}) / Mode: {cardGrantMode}", this);
     }
 
     private void EnsureButton()
@@ -117,21 +120,54 @@ public class GetCardButtonController : MonoBehaviour
         eventSystemObject.AddComponent<StandaloneInputModule>();
     }
 
-    private List<string> CollectUniqueCardIds()
+    private BaseCardSO FindCardById(string cardId)
     {
-        List<string> ids = new();
-        HashSet<string> seen = new();
+        if (string.IsNullOrWhiteSpace(cardId) || cardDatabase == null || cardDatabase.cards == null)
+            return null;
 
-        foreach (BaseCardSO card in cardDatabase.cards)
+        BaseCardSO card = cardDatabase.GetById(cardId);
+        if (card != null)
+            return card;
+
+        foreach (BaseCardSO candidate in cardDatabase.cards)
         {
-            if (card == null || string.IsNullOrWhiteSpace(card.id))
+            if (candidate == null)
                 continue;
 
-            if (seen.Add(card.id))
-                ids.Add(card.id);
+            if (candidate.id == cardId)
+                return candidate;
         }
 
-        return ids;
+        return null;
+    }
+
+    private BaseCardSO SelectCard()
+    {
+        if (cardGrantMode == CardGrantMode.RandomCard)
+            return GetRandomCard();
+
+        string cardId = string.IsNullOrWhiteSpace(guaranteedCardId) ? "infit" : guaranteedCardId.Trim();
+        return FindCardById(cardId);
+    }
+
+    private BaseCardSO GetRandomCard()
+    {
+        if (cardDatabase == null || cardDatabase.cards == null)
+            return null;
+
+        List<BaseCardSO> candidates = new();
+        foreach (BaseCardSO candidate in cardDatabase.cards)
+        {
+            if (candidate == null || string.IsNullOrWhiteSpace(candidate.id))
+                continue;
+
+            candidates.Add(candidate);
+        }
+
+        if (candidates.Count == 0)
+            return null;
+
+        return candidates[Random.Range(0, candidates.Count)];
     }
 
     private void SyncBattleDeckRuntime(List<string> selectedIds)
@@ -142,15 +178,5 @@ public class GetCardButtonController : MonoBehaviour
 
         battleDeck.deck.Clear();
         battleDeck.deck.AddRange(selectedIds);
-        BattleDeckRuntime.Shuffle(battleDeck.deck);
-    }
-
-    private static void Shuffle<T>(List<T> list)
-    {
-        for (int i = list.Count - 1; i > 0; i--)
-        {
-            int j = Random.Range(0, i + 1);
-            (list[i], list[j]) = (list[j], list[i]);
-        }
     }
 }

@@ -152,7 +152,7 @@ MonoBehaviour:
   - text: "\uC774..\uC774\uAC8C \uBB50\uC9C0...?"
     speakerName: "\uB8E8\uC2DC"
     leftPortrait: {fileID: 0}
-    rightPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
+    rightPortrait: {fileID: 0}
     focus: 0
   dialogue:
     name: 
@@ -163,11 +163,11 @@ MonoBehaviour:
     - text: "\uC544.... \uAC1C\uB354\uB7EC..."
       speakerName: "\uB8E8\uC2DC"
       leftPortrait: {fileID: 0}
-      rightPortrait: {fileID: 21300000, guid: c47fa7d7138300b4995672f2ef740502, type: 3}
+      rightPortrait: {fileID: 0}
       focus: 0
     - text: "\uB098\uC911\uC5D0 \uC190... \uC53B\uC5B4\uC57C\uACA0\uB2E4...."
       speakerName: "\uB8E8\uC2DC"
       leftPortrait: {fileID: 0}
-      rightPortrait: {fileID: 21300000, guid: 92cf3209a5e8da8428197ddd7d97fb2b, type: 3}
+      rightPortrait: {fileID: 0}
       focus: 0
   debuged: 1

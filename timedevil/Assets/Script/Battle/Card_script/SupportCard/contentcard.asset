@@ -17,7 +17,7 @@ MonoBehaviour:
   type: 1
   display: "HP 10%\ub97c \ub0b4\uace0 \ucf54\uc2a4\ud2b8 +2"
   explanation: "\ub108\ubb34 \ub9cc\uc871\ub410\uc5b4"
-  mainArtwork: {fileID: 0}
+  mainArtwork: {fileID: 21300000, guid: 9bf1c88d272744809d7ae72ab4c187b6, type: 3}
   arrowArtwork: {fileID: 0}
   effectTextOverride:
   cost: 0

@@ -17,7 +17,7 @@ MonoBehaviour:
   type: 0
   display: "\ub370\ubbf8\uc9c0 + 12"
   explanation: "\uae34\uc7a5\ub3fc...!"
-  mainArtwork: {fileID: 0}
+  mainArtwork: {fileID: 21300000, guid: cf4ca6986f4741fdb0d2a04545888ba8, type: 3}
   arrowArtwork: {fileID: 0}
   effectTextOverride:
   cost: 3
@@ -100,7 +100,7 @@ MonoBehaviour:
     projectileScale: 1
     labelsA: 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
     labelsB: 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-    explosionPrefab: {fileID: 0}
+    explosionPrefab: {fileID: 1827235202747734, guid: 2ca619e9040ef274fbc38909f408a3bd, type: 3}
     explosionLifetime: 0.8
     explosionScale: 1
     clipKey:

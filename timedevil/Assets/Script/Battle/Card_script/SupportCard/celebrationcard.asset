@@ -17,7 +17,7 @@ MonoBehaviour:
   type: 1
   display: "\ub2e4\uc74c\uce74\ub4dc\ub294 \ucf54\uc2a4\ud2b8\uac00 \uc5c6\uc2b5\ub2c8\ub2e4"
   explanation: "\ubaa8\ub4e0\uac70\uc5d0 \uace0\ub9c8\uc6cc\uc694"
-  mainArtwork: {fileID: 0}
+  mainArtwork: {fileID: 21300000, guid: 8b1de27cc04e441bafe597fd4fe961b7, type: 3}
   arrowArtwork: {fileID: 0}
   effectTextOverride:
   cost: 0

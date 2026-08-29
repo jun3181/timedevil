@@ -21,19 +21,19 @@ MonoBehaviour:
   baseDEF: 1
   baseSPD: 1
   deckIds:
-  - DrawCard10
-  - DrawCard4
-  - AttackCard8
-  - AttackCard9
-  - AttackCard10
-  - MoveCard5
-  - MoveCard3
-  - MoveCard7
-  - AttackCard2
-  - AttackCard1
-  - MoveCard10
-  - DrawCard3
-  - DrawCard1
+  - reassurance
+  - attachment
+  - trust
+  - guilt
+  - brave
+  - fascination
+  - attachment
+  - regret
+  - celebration
+  - unrest
+  - fear
+  - longing
+  - panic
   itemDrops:
   - item: {fileID: 11400000, guid: 0859f999fc4b46a18ff9f13c346bb3c5, type: 2}
     chancePercent: 100

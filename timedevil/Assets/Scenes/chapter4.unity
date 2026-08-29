@@ -12607,12 +12607,12 @@ MonoBehaviour:
     lines:
     - text: "\uC5B4\uCA4C\uAD6C\uC800\uCA4C\uAD6C"
       speakerName: 
-      leftPortrait: {fileID: 0}
+      leftPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
       rightPortrait: {fileID: 0}
       focus: 0
     - text: "\uC800\uCA4C\uAD6C\uC5B4\uCA4C\uAD6C"
       speakerName: 
-      leftPortrait: {fileID: 0}
+      leftPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
       rightPortrait: {fileID: 0}
       focus: 0
   waitUntilDone: 1
@@ -239251,7 +239251,7 @@ MonoBehaviour:
     lines:
     - text: "\uB3CC\uC544\uAC00\uC790"
       speakerName: 
-      leftPortrait: {fileID: 0}
+      leftPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
       rightPortrait: {fileID: 0}
       focus: 0
   waitUntilDone: 1

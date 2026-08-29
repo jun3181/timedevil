@@ -22,6 +22,40 @@ public class CardStateRuntime : MonoBehaviour
         "MoveCard1", "MoveCard2", "MoveCard3", "MoveCard4", "MoveCard5"
     };
 
+    private static readonly Dictionary<string, string> LegacyCardIdMap = new Dictionary<string, string>
+    {
+        { "AttackCard1", "unrest" },
+        { "AttackCard2", "celebration" },
+        { "AttackCard3", "obsession" },
+        { "AttackCard4", "calm" },
+        { "AttackCard5", "jealousy" },
+        { "AttackCard6", "cynicism" },
+        { "AttackCard7", "confidence" },
+        { "AttackCard8", "trust" },
+        { "AttackCard9", "guilt" },
+        { "AttackCard10", "brave" },
+        { "DrawCard1", "panic" },
+        { "DrawCard2", "discard" },
+        { "DrawCard3", "longing" },
+        { "DrawCard4", "attachment" },
+        { "DrawCard5", "question" },
+        { "DrawCard6", "excitement" },
+        { "DrawCard7", "contempt" },
+        { "DrawCard8", "relief" },
+        { "DrawCard9", "humiliation" },
+        { "DrawCard10", "reassurance" },
+        { "MoveCard1", "hope" },
+        { "MoveCard2", "passion" },
+        { "MoveCard3", "attachment" },
+        { "MoveCard4", "sympathy" },
+        { "MoveCard5", "fascination" },
+        { "MoveCard6", "content" },
+        { "MoveCard7", "regret" },
+        { "MoveCard8", "depression" },
+        { "MoveCard9", "hatred" },
+        { "MoveCard10", "fear" },
+    };
+
     [Header("자동 저장 옵션 (기본 꺼짐)")]
     public bool saveOnDisable = false;
     public bool saveOnQuit = false;
@@ -75,6 +109,15 @@ public class CardStateRuntime : MonoBehaviour
 #endif
     }
 
+    public void LoadFromDisk()
+    {
+        Data = CardSaveStore.Load();
+        EnsureDefaultBattleCardsSaved();
+#if UNITY_EDITOR
+        Debug.Log($"[CardStateRuntime] LoadFromDisk. owned={Data.owned?.Count ?? 0}, deck={Data.deck?.Count ?? 0}");
+#endif
+    }
+
     public void EnsureDefaultBattleCardsSaved()
     {
         bool changed = EnsureCardDataInitialized();
@@ -86,6 +129,7 @@ public class CardStateRuntime : MonoBehaviour
     // ----- Owned 관리 -----
     public bool AddOwned(string cardId)
     {
+        cardId = NormalizeCardId(cardId);
         if (string.IsNullOrEmpty(cardId)) return false;
         if (Data.owned == null) Data.owned = new System.Collections.Generic.List<string>();
         if (!Data.owned.Contains(cardId))
@@ -98,6 +142,7 @@ public class CardStateRuntime : MonoBehaviour
 
     public bool RemoveOwned(string cardId)
     {
+        cardId = NormalizeCardId(cardId);
         if (Data.owned == null) return false;
         bool removed = Data.owned.Remove(cardId);
         if (removed && Data.deck != null)
@@ -107,11 +152,12 @@ public class CardStateRuntime : MonoBehaviour
 
     // ----- Deck 관리 -----
     public int DeckCount => Data.deck?.Count ?? 0;
-    public bool DeckContains(string id) => Data.deck != null && Data.deck.Contains(id);
+    public bool DeckContains(string id) => Data.deck != null && Data.deck.Contains(NormalizeCardId(id));
 
     /// <summary>중복 금지 + 최대 장수 제한</summary>
     public bool TryAddToDeck(string id)
     {
+        id = NormalizeCardId(id);
         if (string.IsNullOrEmpty(id)) return false;
         if (Data.deck == null) Data.deck = new System.Collections.Generic.List<string>();
         if (Data.deck.Contains(id)) return false;              // 중복 불가
@@ -122,13 +168,14 @@ public class CardStateRuntime : MonoBehaviour
 
     public bool RemoveFromDeck(string id)
     {
+        id = NormalizeCardId(id);
         if (Data.deck == null) return false;
         return Data.deck.Remove(id);
     }
 
     public void SetDeck(System.Collections.Generic.IEnumerable<string> ids)
     {
-        Data.deck = ids?.ToList() ?? new System.Collections.Generic.List<string>();
+        Data.deck = ids?.Select(NormalizeCardId).ToList() ?? new System.Collections.Generic.List<string>();
         if (Data.deck.Count > MAX_DECK)
             Data.deck = Data.deck.Take(MAX_DECK).ToList();
         // 중복 제거
@@ -161,6 +208,9 @@ public class CardStateRuntime : MonoBehaviour
             return changed;
         }
 
+        changed |= NormalizeCardIdsInPlace(Data.owned);
+        changed |= NormalizeCardIdsInPlace(Data.deck);
+
         var normalizedOwned = Data.owned
             .Where(id => !string.IsNullOrEmpty(id))
             .Distinct()
@@ -181,6 +231,33 @@ public class CardStateRuntime : MonoBehaviour
         if (!Data.deck.SequenceEqual(normalizedDeck))
         {
             Data.deck = normalizedDeck;
+            changed = true;
+        }
+
+        return changed;
+    }
+
+    private static string NormalizeCardId(string cardId)
+    {
+        if (string.IsNullOrEmpty(cardId))
+            return cardId;
+
+        return LegacyCardIdMap.TryGetValue(cardId, out string normalizedId) ? normalizedId : cardId;
+    }
+
+    private static bool NormalizeCardIdsInPlace(List<string> cardIds)
+    {
+        if (cardIds == null)
+            return false;
+
+        bool changed = false;
+        for (int i = 0; i < cardIds.Count; i++)
+        {
+            string normalizedId = NormalizeCardId(cardIds[i]);
+            if (cardIds[i] == normalizedId)
+                continue;
+
+            cardIds[i] = normalizedId;
             changed = true;
         }
 

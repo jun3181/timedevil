@@ -116,7 +116,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cardDatabase: {fileID: 11400000, guid: c0cc44962aa33464ca629e77b4d09b2b, type: 2}
-  cardsToDeck: 13
+  cardGrantMode: 0
+  guaranteedCardId: infit
   saveAfterClick: 0
 --- !u!1 &200000
 GameObject:

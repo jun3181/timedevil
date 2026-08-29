@@ -115,6 +115,10 @@ public class RandomBattleZone : MonoBehaviour
         while(true) {
             yield return WAIT_INTERVAL;
 
+            if(IsDialogueActive()) {
+                continue;
+            }
+
             matchFactor = Random.Range(0f,100f);
             if(matchFactor<=adjustedProb) {
                 enemyFactor = Random.Range(0f, totalWeight);
@@ -136,5 +140,9 @@ public class RandomBattleZone : MonoBehaviour
                 if(debuged) Debug.LogWarning($"{gameObject.name}에서 알 수 없는 이유로 적과 매칭되지 않음.");
             }
         }
+    }
+
+    private bool IsDialogueActive() {
+        return DialogueManager.instance != null && DialogueManager.instance.isDialogueActive;
     }
 }

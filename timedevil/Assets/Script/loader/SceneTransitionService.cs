@@ -13,6 +13,28 @@ public static class SceneTransitionService
         LoadScene(targetScene, useFaderIfExists, mode);
     }
 
+    public static void LoadDefault(
+        string targetScene,
+        SceneCameraRequest cameraOverride,
+        bool preserveCameraOverride = true,
+        bool useFaderIfExists = true,
+        LoadSceneMode mode = LoadSceneMode.Single)
+    {
+        if (!cameraOverride.hasCamera)
+        {
+            LoadDefault(targetScene, useFaderIfExists, mode);
+            return;
+        }
+
+        ClearLegacyEntryOneShots();
+
+        var request = SceneArrivalRequest.Default(targetScene);
+        ApplyCameraOverride(request, cameraOverride, preserveCameraOverride);
+        SceneArrivalContext.SetNext(request);
+
+        LoadScene(targetScene, useFaderIfExists, mode);
+    }
+
     public static void LoadSpawn(
         string targetScene,
         string spawnKey,
@@ -28,6 +50,36 @@ public static class SceneTransitionService
 
         ClearLegacyEntryOneShots();
         SceneArrivalContext.SetNext(SceneArrivalRequest.SpawnKey(targetScene, spawnKey));
+        LoadScene(targetScene, useFaderIfExists, mode);
+    }
+
+    public static void LoadSpawn(
+        string targetScene,
+        string spawnKey,
+        SceneCameraRequest cameraOverride,
+        bool preserveCameraOverride = true,
+        bool useFaderIfExists = true,
+        LoadSceneMode mode = LoadSceneMode.Single)
+    {
+        if (!cameraOverride.hasCamera)
+        {
+            LoadSpawn(targetScene, spawnKey, useFaderIfExists, mode);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(spawnKey))
+        {
+            Debug.LogWarning("[SceneTransitionService] spawnKey is empty. Loading default scene entry.");
+            LoadDefault(targetScene, cameraOverride, preserveCameraOverride, useFaderIfExists, mode);
+            return;
+        }
+
+        ClearLegacyEntryOneShots();
+
+        var request = SceneArrivalRequest.SpawnKey(targetScene, spawnKey);
+        ApplyCameraOverride(request, cameraOverride, preserveCameraOverride);
+        SceneArrivalContext.SetNext(request);
+
         LoadScene(targetScene, useFaderIfExists, mode);
     }
 
@@ -59,9 +111,13 @@ public static class SceneTransitionService
         string fallbackSceneName = "Move_Tutorial",
         bool useFaderIfExists = true)
     {
-        ClearLegacyEntryOneShots();
+        ClearLegacyEntryOneShots(clearSleepLoadContext: false);
+        SleepLoadContext.MarkPending();
 
         var data = ProgressSaveStore.Load();
+        SaveSystem.LoadCheckpointRuntime();
+        TriggerRuntimeSaveBridge.Restore(data.triggerRuntime);
+
         string targetScene = !string.IsNullOrWhiteSpace(data.lastSceneName)
             ? data.lastSceneName
             : fallbackSceneName;
@@ -247,10 +303,23 @@ public static class SceneTransitionService
         SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
     }
 
-    private static void ClearLegacyEntryOneShots()
+    private static void ApplyCameraOverride(
+        SceneArrivalRequest request,
+        SceneCameraRequest cameraOverride,
+        bool preserveCameraOverride)
+    {
+        if (request == null || !cameraOverride.hasCamera)
+            return;
+
+        request.camera = cameraOverride;
+        request.preserveCameraOverride = preserveCameraOverride;
+    }
+
+    private static void ClearLegacyEntryOneShots(bool clearSleepLoadContext = true)
     {
         SceneEntrySpawnContext.Clear();
         MyroomEntryContext.Clear();
-        SleepLoadContext.Consume();
+        if (clearSleepLoadContext)
+            SleepLoadContext.Consume();
     }
 }

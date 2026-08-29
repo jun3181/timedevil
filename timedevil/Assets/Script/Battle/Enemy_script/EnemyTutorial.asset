@@ -21,6 +21,6 @@ MonoBehaviour:
   baseDEF: 3
   baseSPD: 1
   deckIds:
-  - AttackCard1
-  - MoveCard1
-  - DrawCard1
+  - unrest
+  - hope
+  - panic

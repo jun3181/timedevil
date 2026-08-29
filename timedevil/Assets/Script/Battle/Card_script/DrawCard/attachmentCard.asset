@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae67f8acdd35dd84fb814605a4b67711, type: 3}
+  m_Name: attachmentCard
+  m_EditorClassIdentifier:
+  id: attachment
+  displayName: 애착
+  type: 2
+  display: 2장드로우를 합니다
+  explanation: 그냥... 오늘은 좀 더 있어줘도 괜찮잖아
+  mainArtwork: {fileID: 21300000, guid: 02d3aec6edad48f08b142048168ddd4a, type: 3}
+  arrowArtwork: {fileID: 0}
+  effectTextOverride:
+  cost: 2
+  positive: 2
+  negative: 0
+  drawMode: 0
+  amount: 2
+  refreshDiscardAmount: 1
+  refreshDrawAmount: 2
+  handEffectSequence:
+  - effectType: 1
+    amount: 1

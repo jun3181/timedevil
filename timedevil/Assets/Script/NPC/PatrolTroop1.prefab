@@ -48,20 +48,20 @@ MonoBehaviour:
   dialogue:
     name: 
     sentences: []
-    leftPortrait: {fileID: 0}
-    rightPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
+    leftPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
+    rightPortrait: {fileID: 0}
     lines:
     - text: "\uC7A0\uAE50, \uB108 \uAC70\uAE30 \uC11C!"
       speakerName: "\uC21C\uCC30\uBCD1"
-      leftPortrait: {fileID: 0}
+      leftPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
       rightPortrait: {fileID: 0}
       focus: 0
     - text: "\uD5C9... \uBB50\uB4E0\uC9C0 \uD560\uAC8C\uC694! \uC81C\uBC1C \uC0B4\uB824\uB9CC
         \uC8FC\uC138\uC694!"
       speakerName: Lucy
-      leftPortrait: {fileID: 0}
+      leftPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
       rightPortrait: {fileID: 0}
-      focus: 2
+      focus: 1
 --- !u!60 &2316201696297370358
 PolygonCollider2D:
   m_ObjectHideFlags: 0
