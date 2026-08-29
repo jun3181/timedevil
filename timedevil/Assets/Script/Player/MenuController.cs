@@ -146,9 +146,13 @@ public class MenuController : MonoBehaviour
     [SerializeField] private Vector2 exitConfirmYesPosition = new Vector2(44f, -225f);
     [SerializeField] private Vector2 exitConfirmNoPosition = new Vector2(590f, -225f);
     [SerializeField] private Vector2 exitConfirmAnswerSize = new Vector2(210f, 60f);
-    [SerializeField] private string exitConfirmMessage = "게임을 완전히 종료하시겠습니까?";
+    [SerializeField] private string exitConfirmMessage = DefaultExitConfirmMessage;
     [SerializeField] private string exitConfirmYesLabel = "예 : E";
-    [SerializeField] private string exitConfirmNoLabel = "아니요 : Q";
+    [SerializeField] private string exitConfirmNoLabel = DefaultExitConfirmNoLabel;
+
+    [Header("Exit Behavior")]
+    [SerializeField] private string mainMenuSceneName = DefaultMainMenuSceneName;
+    [SerializeField] private bool useFaderIfExists = true;
 
     private int currentIndex = 0;
     private bool isPaused = false;
@@ -207,6 +211,11 @@ public class MenuController : MonoBehaviour
     private TextMeshProUGUI exitConfirmYesText;
     private TextMeshProUGUI exitConfirmNoText;
     private static Sprite generatedFrameSprite;
+    private const string DefaultMainMenuSceneName = "Mainmenu";
+    private const string DefaultExitConfirmMessage = "메인 메뉴로 돌아가시겠습니까?";
+    private const string LegacyExitConfirmMessage = "게임을 완전히 종료하시겠습니까?";
+    private const string DefaultExitConfirmNoLabel = "뒤로가기 : Q";
+    private const string LegacyExitConfirmNoLabel = "아니요 : Q";
     private static readonly string[] DefaultMenuLabels = { "item", "card", "deck", "option", "status", "exit" };
     private static readonly Vector2 ReferenceItemFramePosition = new Vector2(746f, -50f);
     private static readonly Vector2 ReferenceItemFrameSize = new Vector2(784.8384f, 360f);
@@ -243,6 +252,7 @@ public class MenuController : MonoBehaviour
     {
         if (Application.isPlaying && !manager) manager = GameManager.Instance;
         NormalizeMenuLabels();
+        NormalizeExitSettings();
         ResolveItemDatabase();
         ResolveCardDatabase();
         EnsureRetroMenuView();
@@ -261,6 +271,7 @@ public class MenuController : MonoBehaviour
         cardPreviewCornerFontSize = Mathf.Max(1f, cardPreviewCornerFontSize);
         cardPreviewEffectFontSize = Mathf.Max(1f, cardPreviewEffectFontSize);
         NormalizeMenuLabels();
+        NormalizeExitSettings();
         ResolveItemDatabase();
         ResolveCardDatabase();
 
@@ -666,17 +677,38 @@ public class MenuController : MonoBehaviour
     private void NormalizeMenuLabels()
     {
         if (menuLabels == null || menuLabels.Length < DefaultMenuLabels.Length)
+        {
+            menuLabels = (string[])DefaultMenuLabels.Clone();
             return;
+        }
+
+        for (int i = 0; i < DefaultMenuLabels.Length; i++)
+        {
+            if (string.IsNullOrWhiteSpace(menuLabels[i]))
+                menuLabels[i] = DefaultMenuLabels[i];
+        }
 
         if (!string.IsNullOrEmpty(menuLabels[4]) && menuLabels[4].ToLowerInvariant() == "close")
             menuLabels[4] = "status";
+    }
+
+    private void NormalizeExitSettings()
+    {
+        if (string.IsNullOrWhiteSpace(mainMenuSceneName))
+            mainMenuSceneName = DefaultMainMenuSceneName;
+
+        if (string.IsNullOrWhiteSpace(exitConfirmMessage) || exitConfirmMessage == LegacyExitConfirmMessage)
+            exitConfirmMessage = DefaultExitConfirmMessage;
+
+        if (string.IsNullOrWhiteSpace(exitConfirmNoLabel) || exitConfirmNoLabel == LegacyExitConfirmNoLabel)
+            exitConfirmNoLabel = DefaultExitConfirmNoLabel;
     }
 
     private void OpenExitConfirmWindow()
     {
         if (!autoBuildExitConfirmWindow || menuUI == null || (menuUI.transform as RectTransform) == null)
         {
-            QuitGame();
+            ExitToMainMenu();
             return;
         }
 
@@ -712,7 +744,7 @@ public class MenuController : MonoBehaviour
     private void ConfirmQuitGame()
     {
         if (debugMenu) Debug.Log("[MenuController] Exit confirmed", this);
-        QuitGame();
+        ExitToMainMenu();
     }
 
     private void EnsureExitConfirmWindowView()
@@ -830,15 +862,14 @@ public class MenuController : MonoBehaviour
             exitConfirmContentRoot.gameObject.SetActive(visible);
     }
 
-    private void QuitGame()
+    private void ExitToMainMenu()
     {
-        Debug.Log("[MenuController] Exit selected", this);
+        Debug.Log($"[MenuController] Exit selected -> {mainMenuSceneName}", this);
 
-#if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
-#else
-        Application.Quit();
-#endif
+        if (isPaused)
+            Close();
+
+        SceneTransitionService.LoadDefault(mainMenuSceneName, useFaderIfExists);
     }
 
     private void ResolveItemDatabase()
@@ -3525,7 +3556,8 @@ public class MenuController : MonoBehaviour
 
         int serializedCount = menuLabels != null ? menuLabels.Length : 0;
         int targetCount = Mathf.Max(DefaultMenuLabels.Length, serializedCount);
-        if (menuItems != null && menuItems.Length == targetCount) return;
+        if (menuItems != null && menuItems.Length == targetCount && !HasMissingMenuItems())
+            return;
 
         TextMeshProUGUI[] existing = menuItems ?? new TextMeshProUGUI[0];
         TextMeshProUGUI fontSource = GetFirstMenuText();
@@ -3553,6 +3585,19 @@ public class MenuController : MonoBehaviour
 
         menuItems = expanded;
         currentIndex = Mathf.Clamp(currentIndex, 0, menuItems.Length - 1);
+    }
+
+    private bool HasMissingMenuItems()
+    {
+        if (menuItems == null) return true;
+
+        for (int i = 0; i < menuItems.Length; i++)
+        {
+            if (menuItems[i] == null)
+                return true;
+        }
+
+        return false;
     }
 
     private TextMeshProUGUI CreateMenuItemText(int index, TextMeshProUGUI fontSource)
