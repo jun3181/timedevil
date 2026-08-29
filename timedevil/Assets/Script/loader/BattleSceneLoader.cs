@@ -20,7 +20,7 @@ public static class BattleSceneLoader
         return go.AddComponent<ObjectNameRuntime>();
     }
 
-    public static void Go(string battleSceneName, string enemyIdToLoad, Transform playerT, Transform enemyT)
+    public static bool Go(string battleSceneName, string enemyIdToLoad, Transform playerT, Transform enemyT)
     {
         // 1) 적 ID 기록 (ObjectNameRuntime 자동 보장)
         var runtime = EnsureObjectNameRuntime();
@@ -37,6 +37,6 @@ public static class BattleSceneLoader
         BattleSceneLoader.enemyIdToLoad = enemyIdToLoad;
 
         // 3) 배틀 씬 이동
-        SceneTransitionService.EnterBattle(battleSceneName, enemyIdToLoad, playerT, enemyT, useFaderIfExists: true);
+        return SceneTransitionService.EnterBattle(battleSceneName, enemyIdToLoad, playerT, enemyT, useFaderIfExists: true);
     }
 }

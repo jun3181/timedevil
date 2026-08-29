@@ -93,6 +93,7 @@ public class CardUseOrchestrator : MonoBehaviour
             return;
         }
         if (busy || hand == null || !hand.IsInSelectMode) return;
+        if (!CanSelectPlayerCards()) return;
         int idx = hand.CurrentSelectIndex;
         if (idx < 0 || idx >= hand.CardCount) return;
         ClearSelectedAttackWarning();
@@ -126,6 +127,17 @@ public class CardUseOrchestrator : MonoBehaviour
     public void ClearSelectedAttackWarning()
     {
         attackController?.ClearPreviewWarning();
+    }
+
+    private bool CanSelectPlayerCards()
+    {
+        BattleDeckRuntime battleDeck = BattleDeckRuntime.Instance;
+        if (battleDeck == null || battleDeck.CanSelectCards)
+            return true;
+
+        desc?.ShowOneShotMessage(battleDeck.CardSelectionLockMessage);
+        Debug.LogWarning($"[Orchestrator] {battleDeck.CardSelectionLockMessage}", this);
+        return false;
     }
 
     /// <summary>

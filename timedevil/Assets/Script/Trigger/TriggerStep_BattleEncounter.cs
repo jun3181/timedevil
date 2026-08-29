@@ -82,7 +82,8 @@ public class TriggerStep_BattleEncounter : TriggerStepBase
         if (GameManager.Instance != null)
             GameManager.Instance.LockAction();
 
-        BattleSceneLoader.Go(battleSceneName, enemyId, player, snapshotTarget);
+        if (!BattleSceneLoader.Go(battleSceneName, enemyId, player, snapshotTarget) && GameManager.Instance != null)
+            GameManager.Instance.UnlockAction();
     }
 
     private IEnumerator PlayBeforeBattleDialogue()

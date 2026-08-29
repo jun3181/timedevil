@@ -73,7 +73,9 @@ public class NPCBattleInteraction : MonoBehaviour, IInteractable
         SaveReturnCameraContext();
         ArmVictoryRouteIfNeeded();
         if(GameManager.Instance != null) GameManager.Instance.LockAction();
-        BattleSceneLoader.Go(BATTLE_SCENE, enemySO.enemyId, player, enemySnapshotTarget);
+
+        if (!BattleSceneLoader.Go(BATTLE_SCENE, enemySO.enemyId, player, enemySnapshotTarget) && GameManager.Instance != null)
+            GameManager.Instance.UnlockAction();
     }
 
     private void ArmVictoryRouteIfNeeded() {

@@ -76,7 +76,14 @@ public class BattleTransition : MonoBehaviour, IInteractable
 
         ArmVictoryRouteIfNeeded();
 
-        SceneTransitionService.EnterBattle(battleSceneName, null, null, null, useFaderIfExists: useFaderIfExists);
+        if (!SceneTransitionService.EnterBattle(battleSceneName, null, null, null, useFaderIfExists: useFaderIfExists))
+        {
+            if (GameManager.Instance != null)
+                GameManager.Instance.UnlockAction();
+
+            isTransitioning = false;
+            yield break;
+        }
 
         yield return null;
     }

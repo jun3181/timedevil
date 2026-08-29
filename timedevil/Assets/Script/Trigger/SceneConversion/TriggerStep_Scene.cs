@@ -352,7 +352,9 @@ public class TriggerStep_Scene : TriggerStepBase
 
         if (!useProgressLoad && saveReturnContext)
         {
-            SceneTransitionService.EnterBattle(targetScene, null, null, null, useSceneVisitEffectRunner);
+            if (!SceneTransitionService.EnterBattle(targetScene, null, null, null, useSceneVisitEffectRunner))
+                ReleaseActionLockIfHeld();
+
             yield break;
         }
 

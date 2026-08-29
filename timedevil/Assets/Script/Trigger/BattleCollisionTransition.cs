@@ -299,7 +299,14 @@ public class BattleCollisionTransition : MonoBehaviour
         if (GameManager.Instance != null)
             GameManager.Instance.LockAction();
 
-        BattleSceneLoader.Go(battleSceneName, resolvedEnemyId, player, enemy);
+        if (!BattleSceneLoader.Go(battleSceneName, resolvedEnemyId, player, enemy))
+        {
+            if (GameManager.Instance != null)
+                GameManager.Instance.UnlockAction();
+
+            _entered = false;
+            return;
+        }
 
         if (disableAfterEnter)
             gameObject.SetActive(false);

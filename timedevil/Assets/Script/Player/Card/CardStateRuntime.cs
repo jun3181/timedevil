@@ -9,6 +9,7 @@ public class CardStateRuntime : MonoBehaviour
 
     //  덱 최대 장수
     public const int MAX_DECK = 13;
+    public const int MIN_BATTLE_DECK = 10;
     private static readonly string[] LegacyAutoOwnedCardIds =
         Enumerable.Range(1, 4).Select(i => $"AttackCard{i}")
             .Concat(Enumerable.Range(1, 5).Select(i => $"DrawCard{i}"))
@@ -180,6 +181,42 @@ public class CardStateRuntime : MonoBehaviour
             Data.deck = Data.deck.Take(MAX_DECK).ToList();
         // 중복 제거
         Data.deck = Data.deck.Distinct().ToList();
+    }
+
+    public bool TryPrepareDeckForBattle(out string failureReason)
+    {
+        failureReason = string.Empty;
+
+        bool changed = EnsureCardDataInitialized();
+        int targetCount = Mathf.Min(MIN_BATTLE_DECK, MAX_DECK);
+
+        if (Data.deck.Count < targetCount)
+        {
+            HashSet<string> deckSet = new HashSet<string>(Data.deck);
+            foreach (string ownedId in Data.owned)
+            {
+                if (Data.deck.Count >= targetCount)
+                    break;
+
+                string id = NormalizeCardId(ownedId);
+                if (string.IsNullOrEmpty(id) || deckSet.Contains(id))
+                    continue;
+
+                Data.deck.Add(id);
+                deckSet.Add(id);
+                changed = true;
+            }
+        }
+
+        if (changed)
+            CardSaveStore.Save(Data);
+
+        if (Data.deck.Count >= targetCount)
+            return true;
+
+        int ownedCount = Data.owned?.Count ?? 0;
+        failureReason = $"덱 카드가 {targetCount}장 미만입니다. 배틀은 시작되지만 Card 선택은 잠깁니다. 현재 덱 {Data.deck.Count}장 / 보유 {ownedCount}장";
+        return false;
     }
 
     // --- Helpers ---

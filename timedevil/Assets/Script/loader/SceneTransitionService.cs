@@ -137,13 +137,21 @@ public static class SceneTransitionService
         LoadScene(targetScene, useFaderIfExists, LoadSceneMode.Single);
     }
 
-    public static void EnterBattle(
+    public static bool EnterBattle(
         string battleSceneName,
         string enemyId,
         Transform player,
         Transform enemy,
         bool useFaderIfExists = true)
     {
+        if (string.IsNullOrWhiteSpace(battleSceneName))
+        {
+            Debug.LogWarning("[SceneTransitionService] battleSceneName is empty.");
+            return false;
+        }
+
+        PrepareBattleDeckForEntry();
+
         SceneArrivalRequest returnRequest = BuildBattleReturnRequest(enemyId, player, enemy);
         if (returnRequest != null)
         {
@@ -157,6 +165,22 @@ public static class SceneTransitionService
             WorldNPCStateService.Instance.SaveSnapshot(enemy.gameObject);
 
         LoadScene(battleSceneName, useFaderIfExists, LoadSceneMode.Single);
+        return true;
+    }
+
+    public static bool PrepareBattleDeckForEntry()
+    {
+        CardStateRuntime runtime = ResolveCardStateRuntimeForBattleEntry();
+        if (runtime == null)
+        {
+            Debug.LogWarning("[SceneTransitionService] CardStateRuntime is missing. Battle will continue without deck preparation.");
+            return true;
+        }
+
+        if (!runtime.TryPrepareDeckForBattle(out string failureReason))
+            Debug.LogWarning($"[SceneTransitionService] {failureReason}");
+
+        return true;
     }
 
     public static void ReturnFromBattle(float graceSeconds = 1.0f, bool useFaderIfExists = true)
@@ -301,6 +325,19 @@ public static class SceneTransitionService
         }
 
         SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
+    }
+
+    private static CardStateRuntime ResolveCardStateRuntimeForBattleEntry()
+    {
+        if (CardStateRuntime.Instance != null)
+            return CardStateRuntime.Instance;
+
+        CardStateRuntime existing = Object.FindObjectOfType<CardStateRuntime>(true);
+        if (existing != null)
+            return existing;
+
+        var runtimeObject = new GameObject("CardStateRuntime (Battle Entry Auto)");
+        return runtimeObject.AddComponent<CardStateRuntime>();
     }
 
     private static void ApplyCameraOverride(

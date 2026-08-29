@@ -266,6 +266,9 @@ public class PanelController : MonoBehaviour
             if (!BattleTutorialGate.Allows(BattleTutorialAction.CardPanelInteract))
                 return;
 
+            if (!CanSelectPlayerCards())
+                return;
+
             if (!EnsurePlayerHandReadyForInteraction())
                 return;
 
@@ -768,8 +771,25 @@ public class PanelController : MonoBehaviour
         return handUI.EnsureCardsReady(BattleTutorialGate.IsActive);
     }
 
+    private bool CanSelectPlayerCards()
+    {
+        BattleDeckRuntime battleDeck = BattleDeckRuntime.Instance;
+        if (battleDeck == null || battleDeck.CanSelectCards)
+            return true;
+
+        if (!descriptionPanel)
+            descriptionPanel = FindObjectOfType<DescriptionPanelController>(true);
+
+        descriptionPanel?.ShowOneShotMessage(battleDeck.CardSelectionLockMessage);
+        Debug.LogWarning($"[PanelController] {battleDeck.CardSelectionLockMessage}", this);
+        return false;
+    }
+
     private void EnterCardPanelInteractionMode()
     {
+        if (!CanSelectPlayerCards())
+            return;
+
         if (!handUI)
             handUI = FindObjectOfType<HandUI>(true);
 

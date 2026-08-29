@@ -131,7 +131,15 @@ public class RandomBattleZone : MonoBehaviour
                     if(scale>=enemyFactor) {
                         if(debuged) Debug.Log($"{gameObject.name}에서 매칭된 적의 이름은 {enemyInfos[i].enemySO.enemyId}");
                         
-                        BattleSceneLoader.Go(BATTLE_SCENE, enemyInfos[i].enemySO.enemyId, player, null);
+                        if (BattleSceneLoader.Go(BATTLE_SCENE, enemyInfos[i].enemySO.enemyId, player, null))
+                        {
+                            matchRoutine = null;
+                            yield break;
+                        }
+
+                        if (debuged)
+                            Debug.LogWarning($"{gameObject.name}에서 배틀 진입이 취소되었습니다.");
+
                         matchRoutine = null;
                         yield break;
                     }
