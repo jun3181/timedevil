@@ -13,7 +13,8 @@ public class MenuController : MonoBehaviour
         Item,
         Card,
         Deck,
-        Status
+        Status,
+        ExitConfirm
     }
 
     private enum MenuPanelFocusArea
@@ -134,6 +135,21 @@ public class MenuController : MonoBehaviour
     [SerializeField] private string statusCloseLabel = "close";
     [SerializeField] private string emptyStatusLabel = "no data";
 
+    [Header("Exit Confirm View")]
+    [SerializeField] private bool autoBuildExitConfirmWindow = true;
+    [SerializeField] private bool previewExitConfirmInEditor = false;
+    [SerializeField] private bool preserveManualExitConfirmLayout = true;
+    [SerializeField] private Vector2 exitConfirmWindowOffsetFromTopLeft = new Vector2(690f, -50f);
+    [SerializeField] private Vector2 exitConfirmWindowSize = new Vector2(820f, 360f);
+    [SerializeField] private Vector2 exitConfirmMessagePosition = new Vector2(44f, -28f);
+    [SerializeField] private Vector2 exitConfirmMessageSize = new Vector2(740f, 96f);
+    [SerializeField] private Vector2 exitConfirmYesPosition = new Vector2(44f, -225f);
+    [SerializeField] private Vector2 exitConfirmNoPosition = new Vector2(590f, -225f);
+    [SerializeField] private Vector2 exitConfirmAnswerSize = new Vector2(210f, 60f);
+    [SerializeField] private string exitConfirmMessage = "게임을 완전히 종료하시겠습니까?";
+    [SerializeField] private string exitConfirmYesLabel = "예 : E";
+    [SerializeField] private string exitConfirmNoLabel = "아니요 : Q";
+
     private int currentIndex = 0;
     private bool isPaused = false;
     private MenuFocusMode focusMode = MenuFocusMode.Main;
@@ -150,6 +166,7 @@ public class MenuController : MonoBehaviour
     private int cardCurrentIndex = 0;
     private int deckCurrentPage = 0;
     private int deckCurrentIndex = 0;
+    private bool exitConfirmOpen = false;
     private RectTransform retroContentRoot;
     private TextMeshProUGUI cursorText;
     private RectTransform itemWindowFrame;
@@ -184,6 +201,11 @@ public class MenuController : MonoBehaviour
     private TextMeshProUGUI[] statusWindowTexts;
     private TextMeshProUGUI statusWindowCloseText;
     private TextMeshProUGUI statusWindowCursorText;
+    private RectTransform exitConfirmWindowFrame;
+    private RectTransform exitConfirmContentRoot;
+    private TextMeshProUGUI exitConfirmMessageText;
+    private TextMeshProUGUI exitConfirmYesText;
+    private TextMeshProUGUI exitConfirmNoText;
     private static Sprite generatedFrameSprite;
     private static readonly string[] DefaultMenuLabels = { "item", "card", "deck", "option", "status", "exit" };
     private static readonly Vector2 ReferenceItemFramePosition = new Vector2(746f, -50f);
@@ -276,6 +298,7 @@ public class MenuController : MonoBehaviour
         cardWindowOpen = false;
         deckWindowOpen = false;
         statusWindowOpen = false;
+        exitConfirmOpen = false;
         itemCurrentPage = 0;
         itemCurrentIndex = 0;
         cardCurrentPage = 0;
@@ -308,6 +331,8 @@ public class MenuController : MonoBehaviour
         SetCardWindowVisible(false);
         SetDeckWindowVisible(false);
         SetStatusWindowVisible(false);
+        exitConfirmOpen = false;
+        SetExitConfirmWindowVisible(false);
 
         if (menuUI) menuUI.SetActive(false);
         isPaused = false;
@@ -320,6 +345,9 @@ public class MenuController : MonoBehaviour
     public void Navigate(int delta)
     {
         if (!isPaused) return;
+
+        if (focusMode == MenuFocusMode.ExitConfirm && exitConfirmOpen)
+            return;
 
         if (focusMode == MenuFocusMode.Item && itemWindowOpen)
         {
@@ -357,6 +385,9 @@ public class MenuController : MonoBehaviour
     {
         if (!isPaused) return;
 
+        if (focusMode == MenuFocusMode.ExitConfirm && exitConfirmOpen)
+            return;
+
         if (focusMode == MenuFocusMode.Item && itemWindowOpen)
         {
             NavigateItemWindowHorizontal(delta);
@@ -393,6 +424,12 @@ public class MenuController : MonoBehaviour
     public void SubmitCurrent()
     {
         if (!isPaused) return;
+
+        if (focusMode == MenuFocusMode.ExitConfirm && exitConfirmOpen)
+        {
+            ConfirmQuitGame();
+            return;
+        }
 
         if (focusMode == MenuFocusMode.Item && itemWindowOpen)
         {
@@ -443,7 +480,7 @@ public class MenuController : MonoBehaviour
                 break;
 
             case 5: // Exit
-                QuitGame();
+                OpenExitConfirmWindow();
                 break;
         }
     }
@@ -585,11 +622,19 @@ public class MenuController : MonoBehaviour
         RefreshDeckWindow();
         EnsureStatusWindowView();
         RefreshStatusWindow();
+        EnsureExitConfirmWindowView();
+        RefreshExitConfirmWindow();
     }
 
     public void BackOrClose()
     {
         if (!isPaused) return;
+
+        if (focusMode == MenuFocusMode.ExitConfirm && exitConfirmOpen)
+        {
+            CloseExitConfirmWindow();
+            return;
+        }
 
         if (focusMode == MenuFocusMode.Item && itemWindowOpen)
         {
@@ -625,6 +670,164 @@ public class MenuController : MonoBehaviour
 
         if (!string.IsNullOrEmpty(menuLabels[4]) && menuLabels[4].ToLowerInvariant() == "close")
             menuLabels[4] = "status";
+    }
+
+    private void OpenExitConfirmWindow()
+    {
+        if (!autoBuildExitConfirmWindow || menuUI == null || (menuUI.transform as RectTransform) == null)
+        {
+            QuitGame();
+            return;
+        }
+
+        if (debugMenu) Debug.Log("[MenuController] Exit confirm open", this);
+
+        itemWindowOpen = false;
+        SetItemWindowVisible(false);
+        cardWindowOpen = false;
+        SetCardWindowVisible(false);
+        deckWindowOpen = false;
+        SetDeckWindowVisible(false);
+        statusWindowOpen = false;
+        SetStatusWindowVisible(false);
+
+        exitConfirmOpen = true;
+        focusMode = MenuFocusMode.ExitConfirm;
+
+        EnsureExitConfirmWindowView();
+        RefreshExitConfirmWindow();
+        HighlightCurrent();
+    }
+
+    private void CloseExitConfirmWindow()
+    {
+        if (debugMenu) Debug.Log("[MenuController] Exit confirm close", this);
+
+        exitConfirmOpen = false;
+        focusMode = MenuFocusMode.Main;
+        SetExitConfirmWindowVisible(false);
+        HighlightCurrent();
+    }
+
+    private void ConfirmQuitGame()
+    {
+        if (debugMenu) Debug.Log("[MenuController] Exit confirmed", this);
+        QuitGame();
+    }
+
+    private void EnsureExitConfirmWindowView()
+    {
+        if (!autoBuildExitConfirmWindow || menuUI == null) return;
+
+        RectTransform menuRoot = menuUI.transform as RectTransform;
+        if (menuRoot == null) return;
+
+        bool frameAlreadyExists = menuRoot.Find("ExitConfirmWindowFrame") != null;
+        exitConfirmWindowFrame = GetOrCreateRect(menuRoot, "ExitConfirmWindowFrame");
+        if (!preserveManualExitConfirmLayout || !frameAlreadyExists)
+        {
+            exitConfirmWindowFrame.anchorMin = new Vector2(0f, 1f);
+            exitConfirmWindowFrame.anchorMax = new Vector2(0f, 1f);
+            exitConfirmWindowFrame.pivot = new Vector2(0f, 1f);
+            exitConfirmWindowFrame.anchoredPosition = exitConfirmWindowOffsetFromTopLeft;
+            exitConfirmWindowFrame.sizeDelta = exitConfirmWindowSize;
+            exitConfirmWindowFrame.localScale = Vector3.one;
+        }
+        exitConfirmWindowFrame.SetAsLastSibling();
+
+        Image frameImage = exitConfirmWindowFrame.GetComponent<Image>();
+        if (frameImage == null) frameImage = exitConfirmWindowFrame.gameObject.AddComponent<Image>();
+        frameImage.sprite = LoadMenuFrameSprite();
+        frameImage.type = Image.Type.Sliced;
+        frameImage.color = Color.white;
+        frameImage.raycastTarget = false;
+
+        bool contentAlreadyExists = menuRoot.Find("ExitConfirmWindowContent") != null;
+        exitConfirmContentRoot = GetOrCreateRect(menuRoot, "ExitConfirmWindowContent");
+        if (!preserveManualExitConfirmLayout || !contentAlreadyExists)
+        {
+            exitConfirmContentRoot.anchorMin = new Vector2(0f, 1f);
+            exitConfirmContentRoot.anchorMax = new Vector2(0f, 1f);
+            exitConfirmContentRoot.pivot = new Vector2(0f, 1f);
+            exitConfirmContentRoot.anchoredPosition = exitConfirmWindowOffsetFromTopLeft;
+            exitConfirmContentRoot.sizeDelta = exitConfirmWindowSize;
+            exitConfirmContentRoot.localScale = Vector3.one;
+        }
+        exitConfirmContentRoot.SetAsLastSibling();
+
+        EnsureExitConfirmWindowTexts();
+        SetExitConfirmWindowVisible(exitConfirmOpen || (!Application.isPlaying && previewExitConfirmInEditor));
+    }
+
+    private void EnsureExitConfirmWindowTexts()
+    {
+        if (exitConfirmContentRoot == null) return;
+
+        bool messageAlreadyExists = exitConfirmContentRoot.Find("ExitConfirmMessage") != null;
+        exitConfirmMessageText = GetOrCreateText(exitConfirmContentRoot, "ExitConfirmMessage");
+        StyleItemInfoText(
+            exitConfirmMessageText,
+            exitConfirmMessage,
+            exitConfirmMessagePosition,
+            exitConfirmMessageSize,
+            itemFontSize,
+            !preserveManualExitConfirmLayout || !messageAlreadyExists
+        );
+        exitConfirmMessageText.alignment = TextAlignmentOptions.TopLeft;
+        exitConfirmMessageText.overflowMode = TextOverflowModes.Overflow;
+
+        bool yesAlreadyExists = exitConfirmContentRoot.Find("ExitConfirmYes") != null;
+        exitConfirmYesText = GetOrCreateText(exitConfirmContentRoot, "ExitConfirmYes");
+        StyleItemWindowText(
+            exitConfirmYesText,
+            exitConfirmYesLabel,
+            exitConfirmYesPosition,
+            exitConfirmAnswerSize,
+            !preserveManualExitConfirmLayout || !yesAlreadyExists
+        );
+
+        bool noAlreadyExists = exitConfirmContentRoot.Find("ExitConfirmNo") != null;
+        exitConfirmNoText = GetOrCreateText(exitConfirmContentRoot, "ExitConfirmNo");
+        StyleItemWindowText(
+            exitConfirmNoText,
+            exitConfirmNoLabel,
+            exitConfirmNoPosition,
+            exitConfirmAnswerSize,
+            !preserveManualExitConfirmLayout || !noAlreadyExists
+        );
+    }
+
+    private void RefreshExitConfirmWindow()
+    {
+        if (!autoBuildExitConfirmWindow || exitConfirmContentRoot == null) return;
+
+        bool shouldShow = exitConfirmOpen || (!Application.isPlaying && previewExitConfirmInEditor);
+        SetExitConfirmWindowVisible(shouldShow);
+        if (!shouldShow) return;
+
+        if (exitConfirmWindowFrame != null)
+            exitConfirmWindowFrame.SetAsLastSibling();
+
+        if (exitConfirmContentRoot != null)
+            exitConfirmContentRoot.SetAsLastSibling();
+
+        if (exitConfirmMessageText != null)
+            exitConfirmMessageText.text = exitConfirmMessage;
+
+        if (exitConfirmYesText != null)
+            exitConfirmYesText.text = exitConfirmYesLabel;
+
+        if (exitConfirmNoText != null)
+            exitConfirmNoText.text = exitConfirmNoLabel;
+    }
+
+    private void SetExitConfirmWindowVisible(bool visible)
+    {
+        if (exitConfirmWindowFrame != null)
+            exitConfirmWindowFrame.gameObject.SetActive(visible);
+
+        if (exitConfirmContentRoot != null)
+            exitConfirmContentRoot.gameObject.SetActive(visible);
     }
 
     private void QuitGame()
