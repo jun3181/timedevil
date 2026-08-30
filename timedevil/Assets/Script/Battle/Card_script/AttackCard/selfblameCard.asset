@@ -1,0 +1,106 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ab7059ed9806584bab32746afc3b7b5, type: 3}
+  m_Name: selfblameCard
+  m_EditorClassIdentifier:
+  id: selfblame
+  displayName: "\uc790\ucc45"
+  type: 0
+  display: "\ub370\ubbf8\uc9c0 + 4"
+  explanation: "\ub2e4 \ub0b4 \ud0d3\uc778 \uac83\ub9cc \uac19\uc544."
+  mainArtwork: {fileID: 21300000, guid: 5ce50bfdde4944b83c0e7eddb799f73f, type: 3}
+  arrowArtwork: {fileID: 0}
+  effectTextOverride:
+  cost: 4
+  positive: 2
+  negative: 7
+  power: 4
+  hitMask:
+    cells: 00000000000101000001010000000000
+  timeline:
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  cameraShake: 0
+  animationKey:
+  sfx: {fileID: 0}
+  waves:
+  - castType: 0
+    hitMask:
+      cells: 00000000000101000001010000000000
+    timeline:
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    delayBefore: 0
+    delayAfter: 0
+    sfx: {fileID: 0}
+    sfxEveryHit: 1
+    vfxPrefab: {fileID: 0}
+    vfxEveryHit: 1
+    vfxLifetime: 0.6
+    hitDelays:
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    projectileRoutes: []
+    projectilePrefab: {fileID: 0}
+    projectileSpeed: 8
+    projectileHitWidth: 0.8
+    projectileHitHeight: 0.8
+    destroyOnImpact: 1
+    projectileScale: 1
+    labelsA: 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+    labelsB: 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+    explosionPrefab: {fileID: 1036319122809482, guid: b52193ca195f0754f82a9f114c6585a7, type: 3}
+    explosionLifetime: 0.8
+    explosionScale: 1
+    clipKey:

@@ -502,11 +502,15 @@ public class CardTemplateView : MonoBehaviour
 
             Rect iconRect = BuildStackedIconRect(i, amount);
             SetNormalizedRect((RectTransform)icon.transform, iconRect);
-            icon.sprite = moveIconSprite;
+            bool useCardArrow = moveCard != null && moveCard.arrowArtwork != null;
+            Sprite iconSprite = useCardArrow ? moveCard.arrowArtwork : moveIconSprite;
+            icon.sprite = iconSprite;
             icon.preserveAspect = true;
             icon.raycastTarget = false;
-            icon.transform.localRotation = Quaternion.Euler(0f, 0f, moveIconBaseRotation + GetMoveRotation(moveCard));
-            icon.gameObject.SetActive(moveIconSprite != null);
+            icon.transform.localRotation = useCardArrow
+                ? Quaternion.identity
+                : Quaternion.Euler(0f, 0f, moveIconBaseRotation + GetMoveRotation(moveCard));
+            icon.gameObject.SetActive(iconSprite != null);
         }
     }
 

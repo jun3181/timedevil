@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 12fb9ea00e2eff64fa777bc8f86ce364, type: 3}
+  m_Name: comfortCard
+  m_EditorClassIdentifier:
+  id: comfort
+  displayName: "\ud3b8\uc548\ud568"
+  type: 3
+  display: "\uc790\uc2e0 \uc544\ub798\ub85c 2\uce78"
+  explanation: "\uc774\ub807\uac8c \ud3b8\uc548\ud55c \uac74 \uc624\ub79c\ub9cc\uc774\uc57c."
+  mainArtwork: {fileID: 21300000, guid: 744a05af8fbfe3c2135746a74a8b3890, type: 3}
+  arrowArtwork: {fileID: 21300000, guid: 327032dc82c1f20c7d661a2f1af2216c, type: 3}
+  effectTextOverride:
+  cost: 4
+  positive: 8
+  negative: 3
+  moveMode: 0
+  where: 1
+  amount: 2

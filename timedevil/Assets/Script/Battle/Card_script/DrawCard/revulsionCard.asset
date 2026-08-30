@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae67f8acdd35dd84fb814605a4b67711, type: 3}
+  m_Name: revulsionCard
+  m_EditorClassIdentifier:
+  id: revulsion
+  displayName: "\uc5ed\uaca8\uc6c0"
+  type: 2
+  display: "\uc0c1\ub300 \ud328 - 2"
+  explanation: "\uc0dd\uac01\ub9cc \ud574\ub3c4 \uc18d\uc774 \ub4a4\uc9d1\ud600."
+  mainArtwork: {fileID: 21300000, guid: 872c2a404f2f6faa4ff9e09aaae6d06c, type: 3}
+  arrowArtwork: {fileID: 0}
+  effectTextOverride:
+  cost: 5
+  positive: 2
+  negative: 7
+  drawMode: 1
+  amount: 2
+  refreshDiscardAmount: 1
+  refreshDrawAmount: 1
+  handEffectSequence: []
