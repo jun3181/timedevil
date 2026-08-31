@@ -26,6 +26,12 @@ public class DialogueManager : MonoBehaviour
     [SerializeField] private Image dialoguePanelImage;
     [SerializeField] private Color dialoguePanelColor = new Color(0f, 0f, 0f, 0.78f);
 
+    [Header("Dialogue Text Layout")]
+    [SerializeField] private bool fitDialogueTextToPanel = true;
+    [SerializeField] private Vector2 dialogueTextInsetMin = new Vector2(90f, 42f);
+    [SerializeField] private Vector2 dialogueTextInsetMax = new Vector2(-170f, -70f);
+    [SerializeField, Min(1f)] private float dialogueTextFontSize = 100f;
+
     [Header("Advance Prompt")]
     [SerializeField] private bool showAdvancePrompt = true;
     [SerializeField] private Image advancePromptImage;
@@ -95,6 +101,7 @@ public class DialogueManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         ApplyDialoguePanelStyle();
+        ApplyDialogueTextLayout();
         EnsureAdvancePrompt();
         HideAdvancePrompt();
 
@@ -111,6 +118,7 @@ public class DialogueManager : MonoBehaviour
         if (dialogue == null) return;
 
         ApplyDialoguePanelStyle();
+        ApplyDialogueTextLayout();
         EnsureAdvancePrompt();
 
         // UI ON
@@ -353,6 +361,31 @@ public class DialogueManager : MonoBehaviour
             return dialoguePanelImage;
 
         return null;
+    }
+
+    private void ApplyDialogueTextLayout()
+    {
+        if (!fitDialogueTextToPanel || !dialogueText)
+            return;
+
+        Image panelImage = ResolveDialoguePanelImage();
+        RectTransform textRect = dialogueText.rectTransform;
+
+        if (panelImage != null && textRect.parent != panelImage.transform)
+            textRect.SetParent(panelImage.transform, false);
+
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.pivot = new Vector2(0.5f, 0.5f);
+        textRect.offsetMin = dialogueTextInsetMin;
+        textRect.offsetMax = dialogueTextInsetMax;
+        textRect.localScale = Vector3.one;
+
+        dialogueText.alignment = TextAlignmentOptions.TopLeft;
+        dialogueText.enableWordWrapping = true;
+        dialogueText.raycastTarget = false;
+        dialogueText.margin = Vector4.zero;
+        dialogueText.fontSize = Mathf.Max(1f, dialogueTextFontSize);
     }
 
     private void EnsureAdvancePrompt()

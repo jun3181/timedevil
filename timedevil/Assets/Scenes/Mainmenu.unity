@@ -283,7 +283,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: game start
+  m_text: new game
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -1302,6 +1302,14 @@ MonoBehaviour:
   clickSound: {fileID: 8300000, guid: 70cbbd69eeefc4841aef5f9432895e57, type: 3}
   myRoomSceneName: Myroom
   newGameIntro: {fileID: 1523359873}
+  usePreIntroBlackFade: 1
+  preIntroFadeToBlackSeconds: 0.85
+  preIntroBlackHoldSeconds: 0.15
+  preIntroFadeFromBlackSeconds: 0.45
+  preIntroFadeCanvas: {fileID: 0}
+  preIntroFadeGroup: {fileID: 0}
+  autoCreatePreIntroFadeIfMissing: 1
+  preIntroFadeSortingOrder: 2000
 --- !u!4 &1523359872
 Transform:
   m_ObjectHideFlags: 0
@@ -1335,7 +1343,7 @@ MonoBehaviour:
     - .....
     overrideFade: 1
     fadeOutSeconds: 0.25
-    fadeInSeconds: 0.25
+    fadeInSeconds: 2.13
   - image: {fileID: 21300000, guid: 153da1583d4c7ba4dbf40a18d7415f33, type: 3}
     dialogueLines:
     - .....!
@@ -1365,7 +1373,8 @@ MonoBehaviour:
   speakerName: 
   panelColor: {r: 0, g: 0, b: 0, a: 0.78}
   advancePromptImage: {fileID: 0}
-  advancePromptSprite: {fileID: -1985648346, guid: d37202d2ebe95ae44abeed50747f9a4a, type: 3}
+  advancePromptSprite: {fileID: -1985648346, guid: d37202d2ebe95ae44abeed50747f9a4a,
+    type: 3}
   advancePromptSize: {x: 52, y: 52}
   advancePromptScale: 2
   advancePromptOffset: {x: -26, y: 18}
