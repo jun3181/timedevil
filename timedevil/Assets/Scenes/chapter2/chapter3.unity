@@ -297,7 +297,7 @@ MonoBehaviour:
     - "\u201C\uB124\u2026\uB124\u201D"
     - "\uC655\uCC98\uB7FC \uBCF4\uC774\uB294 \uADF8\uB140\uB294 \uC9C0\uB098\uAC00\uACE0
       \uB9C8\uC744\uC0AC\uB78C\uB4E4\uC740 \uD55C\uC228\uC744 \uD479 \uC167\uB2E4"
-    leftPortrait: {fileID: 0}
+    leftPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
     rightPortrait: {fileID: 0}
     lines: []
   waitUntilDone: 1

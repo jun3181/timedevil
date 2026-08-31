@@ -414,7 +414,7 @@ public class TurnManager : MonoBehaviour
             if (menu) menu.EnableInput(false);
             return;
         }
-        if (deck) deck.DrawOneIfNeeded();
+        if (deck) deck.DrawTurnStart();
 
         if (handUI) handUI.ShowCards();
         if (menu) menu.EnableInput(true);

@@ -93,6 +93,14 @@ public class PlayerMainManager : MonoBehaviour
             LogBlockState(false, "");
             move?.SetMoveInput(0, 0, false, false, false, false);
 
+            if (menu.IsFirstOpenTutorialActive)
+            {
+                if (interactPressed)
+                    menu.AdvanceFirstOpenTutorial();
+
+                return;
+            }
+
             // 메뉴 닫기: Q 또는 W
             if (menuPressed || backPressed)
             {

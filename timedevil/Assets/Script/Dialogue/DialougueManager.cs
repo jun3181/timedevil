@@ -26,6 +26,24 @@ public class DialogueManager : MonoBehaviour
     [SerializeField] private Image dialoguePanelImage;
     [SerializeField] private Color dialoguePanelColor = new Color(0f, 0f, 0f, 0.78f);
 
+    [Header("Dialogue Text Layout")]
+    [SerializeField] private bool fitDialogueTextToPanel = true;
+    [SerializeField] private Vector2 dialogueTextInsetMin = new Vector2(90f, 42f);
+    [SerializeField] private Vector2 dialogueTextInsetMax = new Vector2(-170f, -70f);
+    [SerializeField, Min(1f)] private float dialogueTextFontSize = 100f;
+
+    [Header("Advance Prompt")]
+    [SerializeField] private bool showAdvancePrompt = true;
+    [SerializeField] private Image advancePromptImage;
+    [SerializeField] private Sprite advancePromptSprite;
+    [SerializeField] private string advancePromptObjectName = "Keyboard_UI_01_22";
+    [SerializeField] private Vector2 advancePromptSize = new Vector2(52f, 52f);
+    [SerializeField, Min(0.1f)] private float advancePromptScale = 3f;
+    [SerializeField] private Vector2 advancePromptOffset = new Vector2(-26f, 18f);
+    [Range(0f, 1f)][SerializeField] private float advancePromptMinAlpha = 0.25f;
+    [Range(0f, 1f)][SerializeField] private float advancePromptMaxAlpha = 1f;
+    [Min(0.05f)][SerializeField] private float advancePromptBlinkPeriod = 0.9f;
+
     [Header("Dimming")]
     public bool dimInactive = true;
     [Range(0f, 1f)] public float activeAlpha = 1f;
@@ -55,6 +73,7 @@ public class DialogueManager : MonoBehaviour
     private Coroutine _typingCo;
     private bool _isTyping = false;
     private float _nextAdvanceAllowedUnscaledTime = 0f;
+    private Coroutine _advancePromptBlinkCo;
 
     // =========================
     // Cutscene API (추가)
@@ -82,8 +101,16 @@ public class DialogueManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         ApplyDialoguePanelStyle();
+        ApplyDialogueTextLayout();
+        EnsureAdvancePrompt();
+        HideAdvancePrompt();
 
         if (uiRoot) uiRoot.SetActive(false);
+    }
+
+    private void OnDisable()
+    {
+        StopAdvancePromptBlink();
     }
 
     public void StartDialogue(Dialogue dialogue)
@@ -91,9 +118,12 @@ public class DialogueManager : MonoBehaviour
         if (dialogue == null) return;
 
         ApplyDialoguePanelStyle();
+        ApplyDialogueTextLayout();
+        EnsureAdvancePrompt();
 
         // UI ON
         if (uiRoot) uiRoot.SetActive(true);
+        ShowAdvancePrompt();
 
         isDialogueActive = true;
 
@@ -333,6 +363,180 @@ public class DialogueManager : MonoBehaviour
         return null;
     }
 
+    private void ApplyDialogueTextLayout()
+    {
+        if (!fitDialogueTextToPanel || !dialogueText)
+            return;
+
+        Image panelImage = ResolveDialoguePanelImage();
+        RectTransform textRect = dialogueText.rectTransform;
+
+        if (panelImage != null && textRect.parent != panelImage.transform)
+            textRect.SetParent(panelImage.transform, false);
+
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.pivot = new Vector2(0.5f, 0.5f);
+        textRect.offsetMin = dialogueTextInsetMin;
+        textRect.offsetMax = dialogueTextInsetMax;
+        textRect.localScale = Vector3.one;
+
+        dialogueText.alignment = TextAlignmentOptions.TopLeft;
+        dialogueText.enableWordWrapping = true;
+        dialogueText.raycastTarget = false;
+        dialogueText.margin = Vector4.zero;
+        dialogueText.fontSize = Mathf.Max(1f, dialogueTextFontSize);
+    }
+
+    private void EnsureAdvancePrompt()
+    {
+        if (!showAdvancePrompt || !uiRoot) return;
+
+        if (!advancePromptImage)
+            advancePromptImage = FindAdvancePromptImage();
+
+        if (!advancePromptSprite)
+            advancePromptSprite = LoadDefaultAdvancePromptSprite();
+
+        if (!advancePromptImage && advancePromptSprite)
+            CreateAdvancePromptImage();
+
+        if (!advancePromptImage) return;
+
+        if (!advancePromptImage.sprite && advancePromptSprite)
+            advancePromptImage.sprite = advancePromptSprite;
+
+        ApplyAdvancePromptLayout();
+
+        advancePromptImage.preserveAspect = true;
+        advancePromptImage.raycastTarget = false;
+    }
+
+    private Image FindAdvancePromptImage()
+    {
+        if (!uiRoot) return null;
+
+        foreach (Image image in uiRoot.GetComponentsInChildren<Image>(true))
+        {
+            if (image.gameObject.name == advancePromptObjectName)
+                return image;
+        }
+
+        return null;
+    }
+
+    private void CreateAdvancePromptImage()
+    {
+        Transform parent = null;
+        Image panelImage = ResolveDialoguePanelImage();
+        if (panelImage)
+            parent = panelImage.transform;
+
+        if (!parent && uiRoot)
+            parent = uiRoot.transform;
+
+        if (!parent) return;
+
+        var promptObject = new GameObject(advancePromptObjectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        promptObject.transform.SetParent(parent, false);
+        promptObject.transform.SetAsLastSibling();
+
+        advancePromptImage = promptObject.GetComponent<Image>();
+        advancePromptImage.sprite = advancePromptSprite;
+    }
+
+    private void ApplyAdvancePromptLayout()
+    {
+        RectTransform rect = advancePromptImage ? advancePromptImage.rectTransform : null;
+        if (!rect) return;
+
+        Image panelImage = ResolveDialoguePanelImage();
+        if (panelImage && rect.parent != panelImage.transform)
+            rect.SetParent(panelImage.transform, false);
+
+        rect.SetAsLastSibling();
+        rect.anchorMin = new Vector2(1f, 0f);
+        rect.anchorMax = new Vector2(1f, 0f);
+        rect.pivot = new Vector2(1f, 0f);
+        rect.anchoredPosition = advancePromptOffset;
+        rect.sizeDelta = advancePromptSize;
+        rect.localScale = Vector3.one * Mathf.Max(0.1f, advancePromptScale);
+    }
+
+    private Sprite LoadDefaultAdvancePromptSprite()
+    {
+        if (advancePromptSprite)
+            return advancePromptSprite;
+
+#if UNITY_EDITOR
+        const string keyboardSpriteSheetPath = "Assets/ElvGames/Fantasy Dreamland/UI/Keyboard Keys/Keyboard_UI_01.png";
+        UnityEngine.Object[] assets = UnityEditor.AssetDatabase.LoadAllAssetRepresentationsAtPath(keyboardSpriteSheetPath);
+        for (int i = 0; i < assets.Length; i++)
+        {
+            if (assets[i] is Sprite sprite && sprite.name == "Keyboard_UI_01_22")
+                return sprite;
+        }
+#endif
+
+        return null;
+    }
+
+    private void ShowAdvancePrompt()
+    {
+        if (!showAdvancePrompt) return;
+
+        EnsureAdvancePrompt();
+        if (!advancePromptImage) return;
+
+        advancePromptImage.gameObject.SetActive(true);
+        SetAlpha(advancePromptImage, advancePromptMaxAlpha);
+        StartAdvancePromptBlink();
+    }
+
+    private void HideAdvancePrompt()
+    {
+        StopAdvancePromptBlink();
+
+        if (!advancePromptImage) return;
+
+        SetAlpha(advancePromptImage, advancePromptMaxAlpha);
+        advancePromptImage.gameObject.SetActive(false);
+    }
+
+    private void StartAdvancePromptBlink()
+    {
+        StopAdvancePromptBlink();
+
+        if (!advancePromptImage || !isActiveAndEnabled) return;
+
+        _advancePromptBlinkCo = StartCoroutine(CoBlinkAdvancePrompt());
+    }
+
+    private void StopAdvancePromptBlink()
+    {
+        if (_advancePromptBlinkCo == null) return;
+
+        StopCoroutine(_advancePromptBlinkCo);
+        _advancePromptBlinkCo = null;
+    }
+
+    private IEnumerator CoBlinkAdvancePrompt()
+    {
+        float minAlpha = Mathf.Clamp01(advancePromptMinAlpha);
+        float maxAlpha = Mathf.Clamp01(Mathf.Max(minAlpha, advancePromptMaxAlpha));
+        float period = Mathf.Max(0.05f, advancePromptBlinkPeriod);
+
+        while (advancePromptImage && advancePromptImage.gameObject.activeInHierarchy)
+        {
+            float t = Mathf.PingPong(Time.unscaledTime / period, 1f);
+            float eased = Mathf.SmoothStep(0f, 1f, t);
+            SetAlpha(advancePromptImage, Mathf.Lerp(maxAlpha, minAlpha, eased));
+            yield return null;
+        }
+
+        _advancePromptBlinkCo = null;
+    }
+
     private void SetAlpha(Image img, float a)
     {
         var c = img.color;
@@ -344,6 +548,7 @@ public class DialogueManager : MonoBehaviour
     {
         // 타이핑 중이면 정리
         CompleteTyping();
+        HideAdvancePrompt();
 
         isDialogueActive = false;
         _queue.Clear();

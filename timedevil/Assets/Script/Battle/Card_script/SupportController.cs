@@ -44,6 +44,7 @@ public class SupportController : MonoBehaviour
         public int damage;
         public int remainingTurnStarts;
         public bool removeAfterTrigger;
+        public readonly List<GameObject> visualInstances = new();
     }
 
     private class GuardEffect
@@ -78,6 +79,8 @@ public class SupportController : MonoBehaviour
 
     private void OnDestroy()
     {
+        ClearTraps();
+
         if (Instance == this)
             Instance = null;
     }
@@ -317,6 +320,7 @@ public class SupportController : MonoBehaviour
                 removeAfterTrigger = effect.removeAfterTrigger
             };
 
+            SpawnTrapVisuals(trap, placement);
             traps.Add(trap);
             Debug.Log($"[SupportController] Trap armed: card={cardId}, panel={panelFaction}, pattern={placement.gridMask.ToPattern16()}");
 
@@ -324,7 +328,7 @@ public class SupportController : MonoBehaviour
                 TryTriggerTrap(trap, panelFaction, moveController.GetGrid(panelFaction)) &&
                 trap.removeAfterTrigger)
             {
-                traps.Remove(trap);
+                RemoveTrap(trap);
             }
         }
     }
@@ -403,7 +407,7 @@ public class SupportController : MonoBehaviour
             if (trap.remainingTurnStarts <= 0)
             {
                 Debug.Log($"[SupportController] Trap expired: card={trap.cardId}, panel={trap.panelFaction}");
-                traps.RemoveAt(i);
+                RemoveTrapAt(i);
             }
         }
     }
@@ -416,8 +420,86 @@ public class SupportController : MonoBehaviour
             if (trap.panelFaction != movedFaction) continue;
 
             if (TryTriggerTrap(trap, movedFaction, rc) && trap.removeAfterTrigger)
-                traps.RemoveAt(i);
+                RemoveTrapAt(i);
         }
+    }
+
+    private void SpawnTrapVisuals(TrapInstance trap, SupportTrapPlacement placement)
+    {
+        if (trap == null || placement == null || !placement.trapPrefab || moveController == null)
+            return;
+
+        for (int row = 1; row <= 4; row++)
+        {
+            for (int col = 1; col <= 4; col++)
+            {
+                Vector2Int rc = new Vector2Int(row, col);
+                if (trap.gridMask == null || !trap.gridMask.Contains(rc))
+                    continue;
+
+                Vector3 position = moveController.GridToWorld(trap.panelFaction, rc, placement.trapPrefabZ);
+                if (!IsFinite(position))
+                    continue;
+
+                position += placement.trapPrefabOffset;
+                GameObject instance = Instantiate(placement.trapPrefab, position, placement.trapPrefab.transform.rotation);
+                if (placement.trapPrefabScale > 0f)
+                    instance.transform.localScale *= placement.trapPrefabScale;
+
+                trap.visualInstances.Add(instance);
+            }
+        }
+    }
+
+    private void RemoveTrap(TrapInstance trap)
+    {
+        if (trap == null)
+            return;
+
+        DestroyTrapVisuals(trap);
+        traps.Remove(trap);
+    }
+
+    private void RemoveTrapAt(int index)
+    {
+        if (index < 0 || index >= traps.Count)
+            return;
+
+        DestroyTrapVisuals(traps[index]);
+        traps.RemoveAt(index);
+    }
+
+    private void ClearTraps()
+    {
+        for (int i = traps.Count - 1; i >= 0; i--)
+            DestroyTrapVisuals(traps[i]);
+
+        traps.Clear();
+    }
+
+    private void DestroyTrapVisuals(TrapInstance trap)
+    {
+        if (trap == null || trap.visualInstances == null)
+            return;
+
+        for (int i = trap.visualInstances.Count - 1; i >= 0; i--)
+        {
+            GameObject instance = trap.visualInstances[i];
+            if (instance)
+                Destroy(instance);
+        }
+
+        trap.visualInstances.Clear();
+    }
+
+    private static bool IsFinite(Vector3 value)
+    {
+        return IsFinite(value.x) && IsFinite(value.y) && IsFinite(value.z);
+    }
+
+    private static bool IsFinite(float value)
+    {
+        return !float.IsNaN(value) && !float.IsInfinity(value);
     }
 
     private bool TryTriggerTrap(TrapInstance trap, Faction target, Vector2Int rc)

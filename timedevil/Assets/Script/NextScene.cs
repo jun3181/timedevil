@@ -11,12 +11,15 @@ public class NextScene : MonoBehaviour
         //  Myroom에서 상호작용한 대상의 이름을 전투 컨텍스트로 전달
         BattleContext.EnemyName = scanObj != null ? scanObj.name : "Enemy1";
 
-        SceneTransitionService.EnterBattle(
+        bool entered = SceneTransitionService.EnterBattle(
             sceneName,
             BattleContext.EnemyName,
             SaveSystem.ResolvePlayerTransform(),
             scanObj != null ? scanObj.transform : null,
             useFaderIfExists: true
         );
+
+        if (!entered)
+            BattleContext.EnemyName = null;
     }
 }

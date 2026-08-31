@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 12fb9ea00e2eff64fa777bc8f86ce364, type: 3}
+  m_Name: irritationCard
+  m_EditorClassIdentifier:
+  id: irritation
+  displayName: "\uc9dc\uc99d"
+  type: 3
+  display: "\uc790\uc2e0 \uc544\ub798\ub85c 3\uce78"
+  explanation: "\uc544, \uc9c4\uc9dc \uc9dc\uc99d \ub098\uc11c \ubabb \ucc38\uaca0\uc5b4."
+  mainArtwork: {fileID: 21300000, guid: 9ef0a0709a793ecec2fe5797228bad4f, type: 3}
+  arrowArtwork: {fileID: 21300000, guid: 327032dc82c1f20c7d661a2f1af2216c, type: 3}
+  effectTextOverride:
+  cost: 5
+  positive: 2
+  negative: 10
+  moveMode: 0
+  where: 1
+  amount: 3

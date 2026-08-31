@@ -1,0 +1,54 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4aba08e57345df14899d9494d051ce96, type: 3}
+  m_Name: despaircard
+  m_EditorClassIdentifier:
+  id: despair
+  displayName: "\uc808\ub9dd"
+  type: 1
+  display: "\ub370\ubbf8\uc9c0 3\uc758 \ud2b8\ub7a9\uc744 \uc124\uce58\ud569\ub2c8\ub2e4"
+  explanation: "\uc774\uc81c \uc9c4\uc9dc \ud558.."
+  mainArtwork: {fileID: 21300000, guid: ce8789196eb14c06a0c749ce4901c38d, type: 3}
+  arrowArtwork: {fileID: 0}
+  effectTextOverride:
+  cost: 5
+  positive: 0
+  negative: 0
+  effects:
+  - category: 3
+    target: 1
+    costType: 0
+    freeCardCount: 1
+    hpCostPercent: 10
+    costGainAmount: 1
+    discardHandCount: 1
+    allowCostOverMax: 0
+    hpPaymentCanDefeat: 0
+    hpType: 0
+    hpAmount: -1
+    hpTurns: 1
+    statType: 0
+    statAmount: 1
+    statTurns: 1
+    trapPlacements:
+    - panelSide: 1
+      gridMask:
+        cells: 01010000000000000000000000000101
+      trapPrefab: {fileID: 1036319122809482, guid: b52193ca195f0754f82a9f114c6585a7, type: 3}
+      trapPrefabOffset: {x: 0, y: 0, z: 0}
+      trapPrefabZ: -5
+      trapPrefabScale: 1
+    trapDamage: 3
+    trapDurationTurns: 3
+    triggerImmediatelyIfOccupied: 1
+    removeAfterTrigger: 1
+    guardTurns: 1

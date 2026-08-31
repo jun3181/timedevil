@@ -16,6 +16,7 @@ public class EnemyDeckRuntime : MonoBehaviour
     [Header("Rules")]
     [SerializeField] private int initialHandSize = 3;
     [SerializeField] private int maxHandSize = 3;
+    [SerializeField, Min(0)] private int turnStartDrawCount = 2;
 
     public event Action OnHandChanged;
     public int MaxHandSize => maxHandSize;
@@ -91,6 +92,11 @@ public class EnemyDeckRuntime : MonoBehaviour
     public void DrawOneIfNeeded()
     {
         if (hand.Count < maxHandSize) Draw(1);
+    }
+
+    public int DrawTurnStart()
+    {
+        return Draw(turnStartDrawCount, ignoreHandCap: true);
     }
 
     //  새 오버로드: cap을 무시할지 선택 가능

@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae67f8acdd35dd84fb814605a4b67711, type: 3}
+  m_Name: lossCard
+  m_EditorClassIdentifier:
+  id: loss
+  displayName: "\uc0c1\uc2e4\uac10"
+  type: 2
+  display: "\uc790\uc2e0 \ud328 + 3"
+  explanation: "\ub0b4\uac00 \ubb54\uac00\ub97c \uc601\uc601 \uc783\uc5b4\ubc84\ub9b0 \uac83 \uac19\uc544."
+  mainArtwork: {fileID: 21300000, guid: e504b63e1d5241870ed6670ca67e42a1, type: 3}
+  arrowArtwork: {fileID: 0}
+  effectTextOverride:
+  cost: 5
+  positive: 3
+  negative: 8
+  drawMode: 0
+  amount: 3
+  refreshDiscardAmount: 1
+  refreshDrawAmount: 3
+  handEffectSequence: []

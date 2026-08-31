@@ -1,4 +1,5 @@
 // Assets/Script/Player/MenuController.cs
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
@@ -13,7 +14,8 @@ public class MenuController : MonoBehaviour
         Item,
         Card,
         Deck,
-        Status
+        Status,
+        ExitConfirm
     }
 
     private enum MenuPanelFocusArea
@@ -108,6 +110,11 @@ public class MenuController : MonoBehaviour
     [SerializeField] private string cardCloseLabel = "close";
     [SerializeField] private string emptyCardLabel = "����";
 
+    [Header("Card Preview Text")]
+    [SerializeField] private bool overrideCardPreviewTextSize = true;
+    [SerializeField, Min(1f)] private float cardPreviewCornerFontSize = 18f;
+    [SerializeField, Min(1f)] private float cardPreviewEffectFontSize = 13f;
+
     [Header("Deck Window View")]
     [SerializeField] private bool autoBuildDeckWindow = true;
     [SerializeField] private bool previewDeckWindowInEditor = false;
@@ -129,6 +136,49 @@ public class MenuController : MonoBehaviour
     [SerializeField] private string statusCloseLabel = "close";
     [SerializeField] private string emptyStatusLabel = "no data";
 
+    [Header("Exit Confirm View")]
+    [SerializeField] private bool autoBuildExitConfirmWindow = true;
+    [SerializeField] private bool previewExitConfirmInEditor = false;
+    [SerializeField] private bool preserveManualExitConfirmLayout = true;
+    [SerializeField] private Vector2 exitConfirmWindowOffsetFromTopLeft = new Vector2(690f, -50f);
+    [SerializeField] private Vector2 exitConfirmWindowSize = new Vector2(820f, 360f);
+    [SerializeField] private Vector2 exitConfirmMessagePosition = new Vector2(44f, -28f);
+    [SerializeField] private Vector2 exitConfirmMessageSize = new Vector2(740f, 96f);
+    [SerializeField] private Vector2 exitConfirmYesPosition = new Vector2(44f, -225f);
+    [SerializeField] private Vector2 exitConfirmNoPosition = new Vector2(590f, -225f);
+    [SerializeField] private Vector2 exitConfirmAnswerSize = new Vector2(210f, 60f);
+    [SerializeField] private string exitConfirmMessage = DefaultExitConfirmMessage;
+    [SerializeField] private string exitConfirmYesLabel = "예 : E";
+    [SerializeField] private string exitConfirmNoLabel = DefaultExitConfirmNoLabel;
+
+    [Header("Exit Behavior")]
+    [SerializeField] private string mainMenuSceneName = DefaultMainMenuSceneName;
+    [SerializeField] private bool useFaderIfExists = true;
+
+    [Header("Exit Fade")]
+    [SerializeField] private bool fadeWhenReturningToMainMenu = true;
+    [SerializeField, Min(0f)] private float exitFadeToBlackSeconds = 0.45f;
+    [SerializeField, Min(0f)] private float mainMenuReturnFadeFromBlackSeconds = 0.45f;
+    [SerializeField] private Canvas exitFadeCanvas;
+    [SerializeField] private CanvasGroup exitFadeGroup;
+    [SerializeField] private bool autoCreateExitFadeIfMissing = true;
+    [SerializeField] private int exitFadeSortingOrder = 3000;
+
+    [Header("First Menu Tutorial")]
+    [SerializeField] private bool autoBuildFirstOpenTutorial = true;
+    [SerializeField] private bool preserveManualFirstOpenTutorialLayout = true;
+    [SerializeField] private bool previewFirstOpenTutorialInEditor = false;
+    [SerializeField] private bool resetFirstOpenTutorialSeenOnNewGameStart = true;
+    [SerializeField] private string firstOpenTutorialPrefsKey = DefaultFirstOpenTutorialPrefsKey;
+    [SerializeField] private Vector2 firstOpenTutorialWindowOffsetFromTopLeft = new Vector2(690f, -50f);
+    [SerializeField] private Vector2 firstOpenTutorialWindowSize = new Vector2(820f, 360f);
+    [SerializeField] private Vector2 firstOpenTutorialMessagePosition = new Vector2(44f, -48f);
+    [SerializeField] private Vector2 firstOpenTutorialMessageSize = new Vector2(740f, 210f);
+    [SerializeField] private Vector2 firstOpenTutorialAdvancePosition = new Vector2(590f, -260f);
+    [SerializeField] private Vector2 firstOpenTutorialAdvanceSize = new Vector2(210f, 60f);
+    [SerializeField, Min(1f)] private float firstOpenTutorialMessageFontSize = 42f;
+    [SerializeField] private string firstOpenTutorialAdvanceLabel = "E로 넘기기";
+
     private int currentIndex = 0;
     private bool isPaused = false;
     private MenuFocusMode focusMode = MenuFocusMode.Main;
@@ -145,6 +195,7 @@ public class MenuController : MonoBehaviour
     private int cardCurrentIndex = 0;
     private int deckCurrentPage = 0;
     private int deckCurrentIndex = 0;
+    private bool exitConfirmOpen = false;
     private RectTransform retroContentRoot;
     private TextMeshProUGUI cursorText;
     private RectTransform itemWindowFrame;
@@ -160,6 +211,7 @@ public class MenuController : MonoBehaviour
     private RectTransform cardWindowContentRoot;
     private RectTransform cardPreviewRoot;
     private Image cardPreviewImage;
+    private CardTemplateView cardPreviewView;
     private TextMeshProUGUI[] cardWindowTexts;
     private TextMeshProUGUI cardWindowCloseText;
     private TextMeshProUGUI cardWindowPageText;
@@ -168,6 +220,7 @@ public class MenuController : MonoBehaviour
     private RectTransform deckWindowContentRoot;
     private RectTransform deckPreviewRoot;
     private Image deckPreviewImage;
+    private CardTemplateView deckPreviewView;
     private TextMeshProUGUI[] deckWindowTexts;
     private TextMeshProUGUI deckWindowCloseText;
     private TextMeshProUGUI deckWindowPageText;
@@ -177,8 +230,42 @@ public class MenuController : MonoBehaviour
     private TextMeshProUGUI[] statusWindowTexts;
     private TextMeshProUGUI statusWindowCloseText;
     private TextMeshProUGUI statusWindowCursorText;
+    private RectTransform exitConfirmWindowFrame;
+    private RectTransform exitConfirmContentRoot;
+    private TextMeshProUGUI exitConfirmMessageText;
+    private TextMeshProUGUI exitConfirmYesText;
+    private TextMeshProUGUI exitConfirmNoText;
+    private RectTransform firstOpenTutorialWindowFrame;
+    private RectTransform firstOpenTutorialContentRoot;
+    private TextMeshProUGUI firstOpenTutorialMessageText;
+    private TextMeshProUGUI firstOpenTutorialAdvanceText;
+    private TextMeshProUGUI[] firstOpenTutorialMarkerTexts;
+    private bool firstOpenTutorialActive = false;
+    private int firstOpenTutorialStepIndex = -1;
+    private bool exitReturnInProgress = false;
     private static Sprite generatedFrameSprite;
+    private static int s_lastFirstOpenTutorialResetToken = -1;
+    private const string DefaultMainMenuSceneName = "Mainmenu";
+    private const string DefaultExitConfirmMessage = "메인 메뉴로 돌아가시겠습니까?";
+    private const string LegacyExitConfirmMessage = "게임을 완전히 종료하시겠습니까?";
+    private const string DefaultExitConfirmNoLabel = "뒤로가기 : Q";
+    private const string LegacyExitConfirmNoLabel = "아니요 : Q";
+    private const string DefaultFirstOpenTutorialPrefsKey = "Menu_FirstOpenTutorial_Seen_v1";
     private static readonly string[] DefaultMenuLabels = { "item", "card", "deck", "option", "status", "exit" };
+    private static readonly string[] FirstOpenTutorialMessages =
+    {
+        "Q를 다시 누르면 메뉴창을 빠져나옵니다.",
+        "각 목록들은 E로 상호작용이 가능하고\n상하좌우로 이동이 가능합니다",
+        "얻은 감정카드들은 card에서 확인이\n가능하며, 카드 상호작용 시\ncard에서 deck으로\n덱 빌딩이 됩니다(덱은 10~13장)",
+        "게임은 exit로 나가게 됩니다."
+    };
+    private static readonly int[][] FirstOpenTutorialMarkerIndices =
+    {
+        new int[0],
+        new[] { 0 },
+        new[] { 1, 2 },
+        new[] { 5 }
+    };
     private static readonly Vector2 ReferenceItemFramePosition = new Vector2(746f, -50f);
     private static readonly Vector2 ReferenceItemFrameSize = new Vector2(784.8384f, 360f);
     private static readonly Vector2 ReferenceItemContentPosition = new Vector2(783f, -74f);
@@ -209,11 +296,13 @@ public class MenuController : MonoBehaviour
     };
 
     public bool IsOpen => isPaused;
+    public bool IsFirstOpenTutorialActive => firstOpenTutorialActive;
 
     private void Awake()
     {
         if (Application.isPlaying && !manager) manager = GameManager.Instance;
         NormalizeMenuLabels();
+        NormalizeExitSettings();
         ResolveItemDatabase();
         ResolveCardDatabase();
         EnsureRetroMenuView();
@@ -229,7 +318,11 @@ public class MenuController : MonoBehaviour
     {
         itemEntriesPerPage = Mathf.Max(1, itemEntriesPerPage);
         cardEntriesPerPage = Mathf.Max(1, cardEntriesPerPage);
+        cardPreviewCornerFontSize = Mathf.Max(1f, cardPreviewCornerFontSize);
+        cardPreviewEffectFontSize = Mathf.Max(1f, cardPreviewEffectFontSize);
+        firstOpenTutorialMessageFontSize = Mathf.Max(1f, firstOpenTutorialMessageFontSize);
         NormalizeMenuLabels();
+        NormalizeExitSettings();
         ResolveItemDatabase();
         ResolveCardDatabase();
 
@@ -267,6 +360,7 @@ public class MenuController : MonoBehaviour
         cardWindowOpen = false;
         deckWindowOpen = false;
         statusWindowOpen = false;
+        exitConfirmOpen = false;
         itemCurrentPage = 0;
         itemCurrentIndex = 0;
         cardCurrentPage = 0;
@@ -281,6 +375,7 @@ public class MenuController : MonoBehaviour
         if (manager != null) manager.LockAction();
 
         Time.timeScale = 0f;
+        TryStartFirstOpenTutorial();
         HighlightCurrent();
     }
 
@@ -290,6 +385,7 @@ public class MenuController : MonoBehaviour
 
         if (debugMenu) Debug.Log("[MenuController] Close()", this);
 
+        StopFirstOpenTutorial(false);
         itemWindowOpen = false;
         cardWindowOpen = false;
         deckWindowOpen = false;
@@ -299,6 +395,8 @@ public class MenuController : MonoBehaviour
         SetCardWindowVisible(false);
         SetDeckWindowVisible(false);
         SetStatusWindowVisible(false);
+        exitConfirmOpen = false;
+        SetExitConfirmWindowVisible(false);
 
         if (menuUI) menuUI.SetActive(false);
         isPaused = false;
@@ -311,6 +409,11 @@ public class MenuController : MonoBehaviour
     public void Navigate(int delta)
     {
         if (!isPaused) return;
+        if (exitReturnInProgress) return;
+        if (firstOpenTutorialActive) return;
+
+        if (focusMode == MenuFocusMode.ExitConfirm && exitConfirmOpen)
+            return;
 
         if (focusMode == MenuFocusMode.Item && itemWindowOpen)
         {
@@ -347,6 +450,11 @@ public class MenuController : MonoBehaviour
     public void NavigateHorizontal(int delta)
     {
         if (!isPaused) return;
+        if (exitReturnInProgress) return;
+        if (firstOpenTutorialActive) return;
+
+        if (focusMode == MenuFocusMode.ExitConfirm && exitConfirmOpen)
+            return;
 
         if (focusMode == MenuFocusMode.Item && itemWindowOpen)
         {
@@ -384,6 +492,14 @@ public class MenuController : MonoBehaviour
     public void SubmitCurrent()
     {
         if (!isPaused) return;
+        if (exitReturnInProgress) return;
+        if (firstOpenTutorialActive) return;
+
+        if (focusMode == MenuFocusMode.ExitConfirm && exitConfirmOpen)
+        {
+            ConfirmQuitGame();
+            return;
+        }
 
         if (focusMode == MenuFocusMode.Item && itemWindowOpen)
         {
@@ -434,7 +550,7 @@ public class MenuController : MonoBehaviour
                 break;
 
             case 5: // Exit
-                QuitGame();
+                OpenExitConfirmWindow();
                 break;
         }
     }
@@ -576,11 +692,23 @@ public class MenuController : MonoBehaviour
         RefreshDeckWindow();
         EnsureStatusWindowView();
         RefreshStatusWindow();
+        EnsureExitConfirmWindowView();
+        RefreshExitConfirmWindow();
+        EnsureFirstOpenTutorialView();
+        RefreshFirstOpenTutorialView();
     }
 
     public void BackOrClose()
     {
         if (!isPaused) return;
+        if (exitReturnInProgress) return;
+        if (firstOpenTutorialActive) return;
+
+        if (focusMode == MenuFocusMode.ExitConfirm && exitConfirmOpen)
+        {
+            CloseExitConfirmWindow();
+            return;
+        }
 
         if (focusMode == MenuFocusMode.Item && itemWindowOpen)
         {
@@ -612,21 +740,656 @@ public class MenuController : MonoBehaviour
     private void NormalizeMenuLabels()
     {
         if (menuLabels == null || menuLabels.Length < DefaultMenuLabels.Length)
+        {
+            menuLabels = (string[])DefaultMenuLabels.Clone();
             return;
+        }
+
+        for (int i = 0; i < DefaultMenuLabels.Length; i++)
+        {
+            if (string.IsNullOrWhiteSpace(menuLabels[i]))
+                menuLabels[i] = DefaultMenuLabels[i];
+        }
 
         if (!string.IsNullOrEmpty(menuLabels[4]) && menuLabels[4].ToLowerInvariant() == "close")
             menuLabels[4] = "status";
     }
 
-    private void QuitGame()
+    private void NormalizeExitSettings()
     {
-        Debug.Log("[MenuController] Exit selected", this);
+        if (string.IsNullOrWhiteSpace(mainMenuSceneName))
+            mainMenuSceneName = DefaultMainMenuSceneName;
 
-#if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
-#else
-        Application.Quit();
-#endif
+        if (string.IsNullOrWhiteSpace(exitConfirmMessage) || exitConfirmMessage == LegacyExitConfirmMessage)
+            exitConfirmMessage = DefaultExitConfirmMessage;
+
+        if (string.IsNullOrWhiteSpace(exitConfirmNoLabel) || exitConfirmNoLabel == LegacyExitConfirmNoLabel)
+            exitConfirmNoLabel = DefaultExitConfirmNoLabel;
+    }
+
+    private void OpenExitConfirmWindow()
+    {
+        if (!autoBuildExitConfirmWindow || menuUI == null || (menuUI.transform as RectTransform) == null)
+        {
+            ExitToMainMenu();
+            return;
+        }
+
+        if (debugMenu) Debug.Log("[MenuController] Exit confirm open", this);
+
+        itemWindowOpen = false;
+        SetItemWindowVisible(false);
+        cardWindowOpen = false;
+        SetCardWindowVisible(false);
+        deckWindowOpen = false;
+        SetDeckWindowVisible(false);
+        statusWindowOpen = false;
+        SetStatusWindowVisible(false);
+
+        exitConfirmOpen = true;
+        focusMode = MenuFocusMode.ExitConfirm;
+
+        EnsureExitConfirmWindowView();
+        RefreshExitConfirmWindow();
+        HighlightCurrent();
+    }
+
+    private void CloseExitConfirmWindow()
+    {
+        if (debugMenu) Debug.Log("[MenuController] Exit confirm close", this);
+
+        exitConfirmOpen = false;
+        focusMode = MenuFocusMode.Main;
+        SetExitConfirmWindowVisible(false);
+        HighlightCurrent();
+    }
+
+    private void ConfirmQuitGame()
+    {
+        if (debugMenu) Debug.Log("[MenuController] Exit confirmed", this);
+        ExitToMainMenu();
+    }
+
+    private void EnsureExitConfirmWindowView()
+    {
+        if (!autoBuildExitConfirmWindow || menuUI == null) return;
+
+        RectTransform menuRoot = menuUI.transform as RectTransform;
+        if (menuRoot == null) return;
+
+        bool frameAlreadyExists = menuRoot.Find("ExitConfirmWindowFrame") != null;
+        exitConfirmWindowFrame = GetOrCreateRect(menuRoot, "ExitConfirmWindowFrame");
+        if (!preserveManualExitConfirmLayout || !frameAlreadyExists)
+        {
+            exitConfirmWindowFrame.anchorMin = new Vector2(0f, 1f);
+            exitConfirmWindowFrame.anchorMax = new Vector2(0f, 1f);
+            exitConfirmWindowFrame.pivot = new Vector2(0f, 1f);
+            exitConfirmWindowFrame.anchoredPosition = exitConfirmWindowOffsetFromTopLeft;
+            exitConfirmWindowFrame.sizeDelta = exitConfirmWindowSize;
+            exitConfirmWindowFrame.localScale = Vector3.one;
+        }
+        exitConfirmWindowFrame.SetAsLastSibling();
+
+        Image frameImage = exitConfirmWindowFrame.GetComponent<Image>();
+        if (frameImage == null) frameImage = exitConfirmWindowFrame.gameObject.AddComponent<Image>();
+        frameImage.sprite = LoadMenuFrameSprite();
+        frameImage.type = Image.Type.Sliced;
+        frameImage.color = Color.white;
+        frameImage.raycastTarget = false;
+
+        bool contentAlreadyExists = menuRoot.Find("ExitConfirmWindowContent") != null;
+        exitConfirmContentRoot = GetOrCreateRect(menuRoot, "ExitConfirmWindowContent");
+        if (!preserveManualExitConfirmLayout || !contentAlreadyExists)
+        {
+            exitConfirmContentRoot.anchorMin = new Vector2(0f, 1f);
+            exitConfirmContentRoot.anchorMax = new Vector2(0f, 1f);
+            exitConfirmContentRoot.pivot = new Vector2(0f, 1f);
+            exitConfirmContentRoot.anchoredPosition = exitConfirmWindowOffsetFromTopLeft;
+            exitConfirmContentRoot.sizeDelta = exitConfirmWindowSize;
+            exitConfirmContentRoot.localScale = Vector3.one;
+        }
+        exitConfirmContentRoot.SetAsLastSibling();
+
+        EnsureExitConfirmWindowTexts();
+        SetExitConfirmWindowVisible(exitConfirmOpen || (!Application.isPlaying && previewExitConfirmInEditor));
+    }
+
+    private void EnsureExitConfirmWindowTexts()
+    {
+        if (exitConfirmContentRoot == null) return;
+
+        bool messageAlreadyExists = exitConfirmContentRoot.Find("ExitConfirmMessage") != null;
+        exitConfirmMessageText = GetOrCreateText(exitConfirmContentRoot, "ExitConfirmMessage");
+        StyleItemInfoText(
+            exitConfirmMessageText,
+            exitConfirmMessage,
+            exitConfirmMessagePosition,
+            exitConfirmMessageSize,
+            itemFontSize,
+            !preserveManualExitConfirmLayout || !messageAlreadyExists
+        );
+        exitConfirmMessageText.alignment = TextAlignmentOptions.TopLeft;
+        exitConfirmMessageText.overflowMode = TextOverflowModes.Overflow;
+
+        bool yesAlreadyExists = exitConfirmContentRoot.Find("ExitConfirmYes") != null;
+        exitConfirmYesText = GetOrCreateText(exitConfirmContentRoot, "ExitConfirmYes");
+        StyleItemWindowText(
+            exitConfirmYesText,
+            exitConfirmYesLabel,
+            exitConfirmYesPosition,
+            exitConfirmAnswerSize,
+            !preserveManualExitConfirmLayout || !yesAlreadyExists
+        );
+
+        bool noAlreadyExists = exitConfirmContentRoot.Find("ExitConfirmNo") != null;
+        exitConfirmNoText = GetOrCreateText(exitConfirmContentRoot, "ExitConfirmNo");
+        StyleItemWindowText(
+            exitConfirmNoText,
+            exitConfirmNoLabel,
+            exitConfirmNoPosition,
+            exitConfirmAnswerSize,
+            !preserveManualExitConfirmLayout || !noAlreadyExists
+        );
+    }
+
+    private void RefreshExitConfirmWindow()
+    {
+        if (!autoBuildExitConfirmWindow || exitConfirmContentRoot == null) return;
+
+        bool shouldShow = exitConfirmOpen || (!Application.isPlaying && previewExitConfirmInEditor);
+        SetExitConfirmWindowVisible(shouldShow);
+        if (!shouldShow) return;
+
+        if (exitConfirmWindowFrame != null)
+            exitConfirmWindowFrame.SetAsLastSibling();
+
+        if (exitConfirmContentRoot != null)
+            exitConfirmContentRoot.SetAsLastSibling();
+
+        if (exitConfirmMessageText != null)
+            exitConfirmMessageText.text = exitConfirmMessage;
+
+        if (exitConfirmYesText != null)
+            exitConfirmYesText.text = exitConfirmYesLabel;
+
+        if (exitConfirmNoText != null)
+            exitConfirmNoText.text = exitConfirmNoLabel;
+    }
+
+    private void SetExitConfirmWindowVisible(bool visible)
+    {
+        if (exitConfirmWindowFrame != null)
+            exitConfirmWindowFrame.gameObject.SetActive(visible);
+
+        if (exitConfirmContentRoot != null)
+            exitConfirmContentRoot.gameObject.SetActive(visible);
+    }
+
+    public void AdvanceFirstOpenTutorial()
+    {
+        if (!firstOpenTutorialActive) return;
+
+        firstOpenTutorialStepIndex++;
+        if (firstOpenTutorialStepIndex >= FirstOpenTutorialMessages.Length)
+        {
+            StopFirstOpenTutorial(true);
+            currentIndex = 0;
+            HighlightCurrent();
+            return;
+        }
+
+        ApplyFirstOpenTutorialStepVisuals();
+    }
+
+    [ContextMenu("Debug/Reset First Menu Tutorial Seen")]
+    public void ResetFirstOpenTutorialSeenFlag()
+    {
+        if (string.IsNullOrEmpty(firstOpenTutorialPrefsKey)) return;
+
+        PlayerPrefs.DeleteKey(firstOpenTutorialPrefsKey);
+        PlayerPrefs.Save();
+    }
+
+    private void TryStartFirstOpenTutorial()
+    {
+        if (!Application.isPlaying) return;
+        if (!autoBuildFirstOpenTutorial || menuUI == null) return;
+
+        ResetFirstOpenTutorialSeenForNewGameIfNeeded();
+
+        if (!string.IsNullOrEmpty(firstOpenTutorialPrefsKey) &&
+            PlayerPrefs.GetInt(firstOpenTutorialPrefsKey, 0) == 1)
+        {
+            return;
+        }
+
+        if (!EnsureFirstOpenTutorialView())
+            return;
+
+        firstOpenTutorialActive = true;
+        firstOpenTutorialStepIndex = 0;
+        currentIndex = 0;
+
+        ApplyFirstOpenTutorialStepVisuals();
+    }
+
+    private void ResetFirstOpenTutorialSeenForNewGameIfNeeded()
+    {
+        if (!resetFirstOpenTutorialSeenOnNewGameStart) return;
+        if (string.IsNullOrEmpty(firstOpenTutorialPrefsKey)) return;
+        if (GameStartContext.Mode != GameStartMode.NewGame) return;
+        if (GameStartContext.StartToken <= 0) return;
+        if (s_lastFirstOpenTutorialResetToken == GameStartContext.StartToken) return;
+
+        s_lastFirstOpenTutorialResetToken = GameStartContext.StartToken;
+        PlayerPrefs.DeleteKey(firstOpenTutorialPrefsKey);
+        PlayerPrefs.Save();
+    }
+
+    private void StopFirstOpenTutorial(bool markSeen)
+    {
+        if (markSeen && Application.isPlaying && !string.IsNullOrEmpty(firstOpenTutorialPrefsKey))
+        {
+            PlayerPrefs.SetInt(firstOpenTutorialPrefsKey, 1);
+            PlayerPrefs.Save();
+        }
+
+        firstOpenTutorialActive = false;
+        firstOpenTutorialStepIndex = -1;
+
+        SetFirstOpenTutorialWindowVisible(false);
+        SetFirstOpenTutorialMarkersVisible(false);
+
+        if (cursorText != null)
+            cursorText.gameObject.SetActive(isPaused && autoBuildRetroMenu);
+    }
+
+    private bool EnsureFirstOpenTutorialView()
+    {
+        if (!autoBuildFirstOpenTutorial || menuUI == null) return false;
+
+        RectTransform menuRoot = menuUI.transform as RectTransform;
+        if (menuRoot == null) return false;
+
+        bool frameAlreadyExists = menuRoot.Find("FirstOpenTutorialWindowFrame") != null;
+        firstOpenTutorialWindowFrame = GetOrCreateRect(menuRoot, "FirstOpenTutorialWindowFrame");
+        if (!preserveManualFirstOpenTutorialLayout || !frameAlreadyExists)
+            ApplyTopLeftRect(firstOpenTutorialWindowFrame, firstOpenTutorialWindowOffsetFromTopLeft, firstOpenTutorialWindowSize);
+        firstOpenTutorialWindowFrame.SetAsLastSibling();
+
+        Image frameImage = firstOpenTutorialWindowFrame.GetComponent<Image>();
+        if (frameImage == null) frameImage = firstOpenTutorialWindowFrame.gameObject.AddComponent<Image>();
+        frameImage.sprite = LoadMenuFrameSprite();
+        frameImage.type = Image.Type.Sliced;
+        frameImage.color = Color.white;
+        frameImage.raycastTarget = false;
+
+        bool contentAlreadyExists = menuRoot.Find("FirstOpenTutorialWindowContent") != null;
+        firstOpenTutorialContentRoot = GetOrCreateRect(menuRoot, "FirstOpenTutorialWindowContent");
+        if (!preserveManualFirstOpenTutorialLayout || !contentAlreadyExists)
+            ApplyTopLeftRect(firstOpenTutorialContentRoot, firstOpenTutorialWindowOffsetFromTopLeft, firstOpenTutorialWindowSize);
+        firstOpenTutorialContentRoot.SetAsLastSibling();
+
+        EnsureFirstOpenTutorialTexts();
+        EnsureFirstOpenTutorialMarkers();
+
+        SetFirstOpenTutorialWindowVisible(firstOpenTutorialActive || (!Application.isPlaying && previewFirstOpenTutorialInEditor));
+        return firstOpenTutorialWindowFrame != null &&
+               firstOpenTutorialContentRoot != null &&
+               firstOpenTutorialMessageText != null &&
+               firstOpenTutorialAdvanceText != null;
+    }
+
+    private void EnsureFirstOpenTutorialTexts()
+    {
+        if (firstOpenTutorialContentRoot == null) return;
+
+        bool messageAlreadyExists = firstOpenTutorialContentRoot.Find("FirstOpenTutorialMessage") != null;
+        firstOpenTutorialMessageText = GetOrCreateText(firstOpenTutorialContentRoot, "FirstOpenTutorialMessage");
+        StyleFirstOpenTutorialText(
+            firstOpenTutorialMessageText,
+            GetFirstOpenTutorialMessageForCurrentStep(),
+            firstOpenTutorialMessagePosition,
+            firstOpenTutorialMessageSize,
+            !preserveManualFirstOpenTutorialLayout || !messageAlreadyExists
+        );
+        firstOpenTutorialMessageText.alignment = TextAlignmentOptions.TopLeft;
+
+        bool advanceAlreadyExists = firstOpenTutorialContentRoot.Find("FirstOpenTutorialAdvance") != null;
+        firstOpenTutorialAdvanceText = GetOrCreateText(firstOpenTutorialContentRoot, "FirstOpenTutorialAdvance");
+        StyleFirstOpenTutorialText(
+            firstOpenTutorialAdvanceText,
+            firstOpenTutorialAdvanceLabel,
+            firstOpenTutorialAdvancePosition,
+            firstOpenTutorialAdvanceSize,
+            !preserveManualFirstOpenTutorialLayout || !advanceAlreadyExists
+        );
+        firstOpenTutorialAdvanceText.alignment = TextAlignmentOptions.Right;
+    }
+
+    private void StyleFirstOpenTutorialText(
+        TextMeshProUGUI text,
+        string value,
+        Vector2 anchoredPosition,
+        Vector2 size,
+        bool applyDefaultTransform
+    )
+    {
+        StyleItemWindowText(text, value, anchoredPosition, size, applyDefaultTransform);
+        if (text == null) return;
+
+        text.fontSize = firstOpenTutorialMessageFontSize;
+        text.enableAutoSizing = false;
+        text.enableWordWrapping = false;
+        text.overflowMode = TextOverflowModes.Overflow;
+        text.lineSpacing = 0f;
+    }
+
+    private void EnsureFirstOpenTutorialMarkers()
+    {
+        if (retroContentRoot == null) return;
+
+        int markerCount = GetFirstOpenTutorialMarkerCount();
+        if (firstOpenTutorialMarkerTexts == null || firstOpenTutorialMarkerTexts.Length != markerCount)
+            firstOpenTutorialMarkerTexts = new TextMeshProUGUI[markerCount];
+
+        for (int i = 0; i < markerCount; i++)
+        {
+            TextMeshProUGUI marker = GetOrCreateText(retroContentRoot, $"FirstOpenTutorialMarker_{i}");
+            firstOpenTutorialMarkerTexts[i] = marker;
+            StyleFirstOpenTutorialMarker(marker);
+            marker.gameObject.SetActive(false);
+        }
+    }
+
+    private int GetFirstOpenTutorialMarkerCount()
+    {
+        int markerCount = 0;
+        for (int i = 0; i < FirstOpenTutorialMarkerIndices.Length; i++)
+        {
+            int count = FirstOpenTutorialMarkerIndices[i] != null
+                ? FirstOpenTutorialMarkerIndices[i].Length
+                : 0;
+            markerCount = Mathf.Max(markerCount, count);
+        }
+
+        return Mathf.Max(1, markerCount);
+    }
+
+    private void StyleFirstOpenTutorialMarker(TextMeshProUGUI marker)
+    {
+        if (marker == null) return;
+
+        marker.text = "<";
+        marker.color = Color.white;
+        marker.fontSize = itemFontSize;
+        marker.enableAutoSizing = false;
+        marker.fontStyle = FontStyles.Bold;
+        marker.alignment = TextAlignmentOptions.Center;
+        marker.enableWordWrapping = false;
+        marker.overflowMode = TextOverflowModes.Overflow;
+        marker.richText = false;
+        marker.raycastTarget = false;
+        marker.characterSpacing = 0f;
+
+        RectTransform markerRect = marker.rectTransform;
+        markerRect.anchorMin = new Vector2(0f, 1f);
+        markerRect.anchorMax = new Vector2(0f, 1f);
+        markerRect.pivot = new Vector2(0f, 1f);
+        markerRect.sizeDelta = new Vector2(46f, itemSize.y);
+        markerRect.localScale = Vector3.one;
+        marker.transform.SetAsLastSibling();
+    }
+
+    private void RefreshFirstOpenTutorialView()
+    {
+        bool shouldShow = firstOpenTutorialActive || (!Application.isPlaying && previewFirstOpenTutorialInEditor);
+        if (!shouldShow)
+        {
+            SetFirstOpenTutorialWindowVisible(false);
+            SetFirstOpenTutorialMarkersVisible(false);
+            return;
+        }
+
+        if (firstOpenTutorialStepIndex < 0)
+            firstOpenTutorialStepIndex = 0;
+
+        ApplyFirstOpenTutorialStepVisuals();
+    }
+
+    private void ApplyFirstOpenTutorialStepVisuals()
+    {
+        if (!EnsureFirstOpenTutorialView())
+            return;
+
+        int safeStep = Mathf.Clamp(firstOpenTutorialStepIndex, 0, FirstOpenTutorialMessages.Length - 1);
+
+        SetFirstOpenTutorialWindowVisible(true);
+
+        if (firstOpenTutorialWindowFrame != null)
+            firstOpenTutorialWindowFrame.SetAsLastSibling();
+
+        if (firstOpenTutorialContentRoot != null)
+            firstOpenTutorialContentRoot.SetAsLastSibling();
+
+        if (firstOpenTutorialMessageText != null)
+            firstOpenTutorialMessageText.text = FirstOpenTutorialMessages[safeStep];
+
+        if (firstOpenTutorialAdvanceText != null)
+            firstOpenTutorialAdvanceText.text = firstOpenTutorialAdvanceLabel;
+
+        if (cursorText != null)
+            cursorText.gameObject.SetActive(false);
+
+        ApplyFirstOpenTutorialMarkers(FirstOpenTutorialMarkerIndices[safeStep]);
+    }
+
+    private string GetFirstOpenTutorialMessageForCurrentStep()
+    {
+        if (FirstOpenTutorialMessages == null || FirstOpenTutorialMessages.Length == 0)
+            return string.Empty;
+
+        int safeStep = Mathf.Clamp(firstOpenTutorialStepIndex, 0, FirstOpenTutorialMessages.Length - 1);
+        return FirstOpenTutorialMessages[safeStep];
+    }
+
+    private void ApplyFirstOpenTutorialMarkers(int[] menuIndices)
+    {
+        SetFirstOpenTutorialMarkersVisible(false);
+
+        if (menuIndices == null || firstOpenTutorialMarkerTexts == null)
+            return;
+
+        for (int i = 0; i < menuIndices.Length && i < firstOpenTutorialMarkerTexts.Length; i++)
+        {
+            TextMeshProUGUI marker = firstOpenTutorialMarkerTexts[i];
+            if (marker == null) continue;
+
+            if (!PlaceFirstOpenTutorialMarker(marker, menuIndices[i]))
+                continue;
+
+            marker.gameObject.SetActive(true);
+            marker.transform.SetAsLastSibling();
+        }
+    }
+
+    private bool PlaceFirstOpenTutorialMarker(TextMeshProUGUI marker, int menuIndex)
+    {
+        if (marker == null || menuItems == null) return false;
+        if (menuIndex < 0 || menuIndex >= menuItems.Length) return false;
+
+        TextMeshProUGUI itemText = menuItems[menuIndex];
+        if (itemText == null) return false;
+
+        RectTransform itemRoot = GetItemRoot(itemText);
+        Vector2 itemPosition = itemRoot != null ? itemRoot.anchoredPosition : GetItemPosition(menuIndex);
+        if (itemRoot != null && itemText.rectTransform != itemRoot)
+            itemPosition += itemText.rectTransform.anchoredPosition;
+
+        float textWidth = itemText.GetPreferredValues(itemText.text).x;
+        marker.rectTransform.anchoredPosition = new Vector2(
+            itemPosition.x + textWidth + cursorGapAfterText,
+            itemPosition.y + 1f
+        );
+
+        return true;
+    }
+
+    private void SetFirstOpenTutorialWindowVisible(bool visible)
+    {
+        if (firstOpenTutorialWindowFrame != null)
+            firstOpenTutorialWindowFrame.gameObject.SetActive(visible);
+
+        if (firstOpenTutorialContentRoot != null)
+            firstOpenTutorialContentRoot.gameObject.SetActive(visible);
+    }
+
+    private void SetFirstOpenTutorialMarkersVisible(bool visible)
+    {
+        if (firstOpenTutorialMarkerTexts == null)
+            return;
+
+        for (int i = 0; i < firstOpenTutorialMarkerTexts.Length; i++)
+        {
+            if (firstOpenTutorialMarkerTexts[i] != null)
+                firstOpenTutorialMarkerTexts[i].gameObject.SetActive(visible);
+        }
+    }
+
+    private void ExitToMainMenu()
+    {
+        if (exitReturnInProgress)
+            return;
+
+        Debug.Log($"[MenuController] Exit selected -> {mainMenuSceneName}", this);
+
+        if (fadeWhenReturningToMainMenu && Application.isPlaying)
+        {
+            exitReturnInProgress = true;
+            StartCoroutine(CoExitToMainMenuWithFade());
+            return;
+        }
+
+        LoadMainMenuNow(useFaderIfExists);
+    }
+
+    private IEnumerator CoExitToMainMenuWithFade()
+    {
+        exitReturnInProgress = true;
+        MainMenu.RequestReturnFadeIn(mainMenuReturnFadeFromBlackSeconds);
+
+        if (ResolveExitFadeUi())
+        {
+            BringExitFadeToFront();
+            yield return CoFadeExitOverlay(0f, 1f, exitFadeToBlackSeconds);
+        }
+
+        LoadMainMenuNow(false);
+    }
+
+    private void LoadMainMenuNow(bool useSceneFader)
+    {
+        if (isPaused)
+            Close();
+
+        SceneTransitionService.LoadDefault(mainMenuSceneName, useSceneFader);
+    }
+
+    private bool ResolveExitFadeUi()
+    {
+        if (exitFadeGroup != null)
+            return true;
+
+        if (!autoCreateExitFadeIfMissing)
+            return false;
+
+        if (exitFadeCanvas == null)
+            exitFadeCanvas = CreateExitFadeCanvas();
+
+        if (exitFadeCanvas == null)
+            return false;
+
+        GameObject panelObject = new GameObject("MenuExitBlackFade", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(CanvasGroup));
+        panelObject.transform.SetParent(exitFadeCanvas.transform, false);
+
+        RectTransform rect = panelObject.GetComponent<RectTransform>();
+        Stretch(rect);
+
+        Image image = panelObject.GetComponent<Image>();
+        image.color = Color.black;
+        image.raycastTarget = true;
+
+        exitFadeGroup = panelObject.GetComponent<CanvasGroup>();
+        SetExitFadeAlpha(0f, false);
+        return true;
+    }
+
+    private Canvas CreateExitFadeCanvas()
+    {
+        GameObject canvasObject = new GameObject("MenuExitFadeCanvas", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+        Canvas canvas = canvasObject.GetComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = exitFadeSortingOrder;
+
+        CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920f, 1080f);
+        scaler.matchWidthOrHeight = 0.5f;
+
+        return canvas;
+    }
+
+    private void BringExitFadeToFront()
+    {
+        if (exitFadeCanvas != null)
+            exitFadeCanvas.sortingOrder = exitFadeSortingOrder;
+
+        if (exitFadeGroup != null)
+            exitFadeGroup.transform.SetAsLastSibling();
+    }
+
+    private IEnumerator CoFadeExitOverlay(float fromAlpha, float toAlpha, float duration)
+    {
+        SetExitFadeAlpha(fromAlpha, true);
+
+        if (duration <= 0f)
+        {
+            SetExitFadeAlpha(toAlpha, toAlpha > 0.0001f);
+            yield break;
+        }
+
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float alpha = Mathf.Lerp(fromAlpha, toAlpha, Mathf.Clamp01(elapsed / duration));
+            SetExitFadeAlpha(alpha, true);
+            yield return null;
+        }
+
+        SetExitFadeAlpha(toAlpha, toAlpha > 0.0001f);
+    }
+
+    private void SetExitFadeAlpha(float alpha, bool blockRaycasts)
+    {
+        if (exitFadeGroup == null)
+            return;
+
+        exitFadeGroup.alpha = Mathf.Clamp01(alpha);
+        exitFadeGroup.interactable = false;
+        exitFadeGroup.blocksRaycasts = blockRaycasts;
+    }
+
+    private static void Stretch(RectTransform rect)
+    {
+        if (rect == null)
+            return;
+
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
+        rect.localScale = Vector3.one;
     }
 
     private void ResolveItemDatabase()
@@ -1766,6 +2529,7 @@ public class MenuController : MonoBehaviour
         cardPreviewImage.color = Color.white;
         cardPreviewImage.preserveAspect = true;
         cardPreviewImage.raycastTarget = false;
+        cardPreviewView = EnsureCardPreviewView(previewImageRect);
 
         if (IsLegacySubWindowLayout(cardWindowFrame, cardWindowContentRoot, cardPreviewRoot, cardPreviewImage.rectTransform))
             ApplyReferenceCardWindowLayout();
@@ -1907,39 +2671,84 @@ public class MenuController : MonoBehaviour
         bool shouldShow = cardWindowOpen || (!Application.isPlaying && previewCardWindowInEditor);
         cardPreviewRoot.gameObject.SetActive(shouldShow);
         cardPreviewImage.gameObject.SetActive(shouldShow);
-        if (!shouldShow) return;
+        if (!shouldShow)
+        {
+            ClearCardPreview(cardPreviewView, cardPreviewImage);
+            return;
+        }
 
         CardMenuEntry entry = GetSelectedCardEntry();
-        Sprite sprite = ResolveCardSprite(entry);
-        cardPreviewImage.sprite = sprite;
-        cardPreviewImage.enabled = sprite != null;
-        cardPreviewImage.preserveAspect = true;
+        BindCardPreview(cardPreviewView, cardPreviewImage, entry);
     }
 
-    private Sprite ResolveCardSprite(CardMenuEntry entry)
+    private CardTemplateView EnsureCardPreviewView(RectTransform previewRect)
     {
-        if (entry.card != null && entry.card.mainArtwork != null)
-            return entry.card.mainArtwork;
-
-        if (string.IsNullOrEmpty(entry.id))
+        if (previewRect == null)
             return null;
 
-        Sprite sprite = Resources.Load<Sprite>($"my_asset/{entry.id}");
-        if (sprite != null) return sprite;
+        CardTemplateView view = previewRect.GetComponent<CardTemplateView>();
+        if (view == null)
+            view = previewRect.gameObject.AddComponent<CardTemplateView>();
 
-        string typeFolder = GetCardTypeFolder(entry.id);
-        return string.IsNullOrEmpty(typeFolder)
-            ? null
-            : Resources.Load<Sprite>($"my_asset/{typeFolder}/{entry.id}");
+        ApplyCardPreviewTextOverride(view);
+
+        Image image = previewRect.GetComponent<Image>();
+        if (image != null)
+        {
+            image.sprite = null;
+            image.color = new Color(1f, 1f, 1f, 0f);
+            image.raycastTarget = false;
+        }
+
+        return view;
     }
 
-    private static string GetCardTypeFolder(string id)
+    private void ApplyCardPreviewTextOverride(CardTemplateView view)
     {
-        if (string.IsNullOrEmpty(id)) return null;
-        if (id.StartsWith("AttackCard")) return "AttackCard";
-        if (id.StartsWith("DrawCard")) return "DrawCard";
-        if (id.StartsWith("MoveCard")) return "MoveCard";
-        return null;
+        if (view == null || !overrideCardPreviewTextSize)
+            return;
+
+        view.OverrideTextFontSizes(cardPreviewCornerFontSize, cardPreviewEffectFontSize);
+    }
+
+    private void BindCardPreview(CardTemplateView previewView, Image previewImage, CardMenuEntry entry)
+    {
+        BaseCardSO card = entry.card;
+        if (card == null && !string.IsNullOrEmpty(entry.id) && cardDatabase != null)
+            card = cardDatabase.GetById(entry.id);
+
+        if (card == null)
+        {
+            ClearCardPreview(previewView, previewImage);
+            return;
+        }
+
+        if (previewImage != null)
+        {
+            previewImage.sprite = null;
+            previewImage.color = new Color(1f, 1f, 1f, 0f);
+            previewImage.enabled = true;
+            previewImage.raycastTarget = false;
+        }
+
+        if (previewView != null)
+        {
+            ApplyCardPreviewTextOverride(previewView);
+            previewView.Bind(card);
+        }
+    }
+
+    private void ClearCardPreview(CardTemplateView previewView, Image previewImage)
+    {
+        if (previewView != null)
+            previewView.Clear();
+
+        if (previewImage == null)
+            return;
+
+        previewImage.sprite = null;
+        previewImage.color = new Color(1f, 1f, 1f, 0f);
+        previewImage.enabled = false;
     }
 
     private TextMeshProUGUI GetCurrentCardText()
@@ -2170,6 +2979,7 @@ public class MenuController : MonoBehaviour
         deckPreviewImage.color = Color.white;
         deckPreviewImage.preserveAspect = true;
         deckPreviewImage.raycastTarget = false;
+        deckPreviewView = EnsureCardPreviewView(previewImageRect);
 
         if (IsLegacySubWindowLayout(deckWindowFrame, deckWindowContentRoot, deckPreviewRoot, deckPreviewImage.rectTransform))
             ApplyReferenceDeckWindowLayout();
@@ -2323,13 +3133,14 @@ public class MenuController : MonoBehaviour
         bool shouldShow = deckWindowOpen || (!Application.isPlaying && previewDeckWindowInEditor);
         deckPreviewRoot.gameObject.SetActive(shouldShow);
         deckPreviewImage.gameObject.SetActive(shouldShow);
-        if (!shouldShow) return;
+        if (!shouldShow)
+        {
+            ClearCardPreview(deckPreviewView, deckPreviewImage);
+            return;
+        }
 
         CardMenuEntry entry = GetSelectedDeckEntry();
-        Sprite sprite = ResolveCardSprite(entry);
-        deckPreviewImage.sprite = sprite;
-        deckPreviewImage.enabled = sprite != null;
-        deckPreviewImage.preserveAspect = true;
+        BindCardPreview(deckPreviewView, deckPreviewImage, entry);
     }
 
     private TextMeshProUGUI GetCurrentDeckText()
@@ -3265,7 +4076,8 @@ public class MenuController : MonoBehaviour
 
         int serializedCount = menuLabels != null ? menuLabels.Length : 0;
         int targetCount = Mathf.Max(DefaultMenuLabels.Length, serializedCount);
-        if (menuItems != null && menuItems.Length == targetCount) return;
+        if (menuItems != null && menuItems.Length == targetCount && !HasMissingMenuItems())
+            return;
 
         TextMeshProUGUI[] existing = menuItems ?? new TextMeshProUGUI[0];
         TextMeshProUGUI fontSource = GetFirstMenuText();
@@ -3293,6 +4105,19 @@ public class MenuController : MonoBehaviour
 
         menuItems = expanded;
         currentIndex = Mathf.Clamp(currentIndex, 0, menuItems.Length - 1);
+    }
+
+    private bool HasMissingMenuItems()
+    {
+        if (menuItems == null) return true;
+
+        for (int i = 0; i < menuItems.Length; i++)
+        {
+            if (menuItems[i] == null)
+                return true;
+        }
+
+        return false;
     }
 
     private TextMeshProUGUI CreateMenuItemText(int index, TextMeshProUGUI fontSource)
@@ -3362,6 +4187,14 @@ public class MenuController : MonoBehaviour
     private void MoveCursorToCurrentItem()
     {
         if (!autoBuildRetroMenu || cursorText == null || menuItems == null || menuItems.Length == 0) return;
+
+        if (firstOpenTutorialActive)
+        {
+            cursorText.gameObject.SetActive(false);
+            return;
+        }
+
+        cursorText.gameObject.SetActive(true);
 
         TextMeshProUGUI itemText = currentIndex >= 0 && currentIndex < menuItems.Length ? menuItems[currentIndex] : null;
         RectTransform itemRoot = itemText != null ? GetItemRoot(itemText) : null;

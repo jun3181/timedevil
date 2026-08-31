@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae67f8acdd35dd84fb814605a4b67711, type: 3}
+  m_Name: suffocationCard
+  m_EditorClassIdentifier:
+  id: suffocation
+  displayName: "\ub2f5\ub2f5\ud568"
+  type: 2
+  display: "\uc790\uc2e0 \ud328 \uad50\uccb4 - 3 + 2"
+  explanation: "\uac00\uc2b4\uc774 \uaf49 \ub9c9\ud600\uc11c \ub9d0\ub3c4 \uc548 \ub098\uc640."
+  mainArtwork: {fileID: 21300000, guid: b5074cb83ccd8f3b703f1beb2e55b07c, type: 3}
+  arrowArtwork: {fileID: 0}
+  effectTextOverride:
+  cost: 7
+  positive: 5
+  negative: 4
+  drawMode: 2
+  amount: 2
+  refreshDiscardAmount: 3
+  refreshDrawAmount: 2
+  handEffectSequence: []

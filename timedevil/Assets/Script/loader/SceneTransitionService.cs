@@ -13,6 +13,28 @@ public static class SceneTransitionService
         LoadScene(targetScene, useFaderIfExists, mode);
     }
 
+    public static void LoadDefault(
+        string targetScene,
+        SceneCameraRequest cameraOverride,
+        bool preserveCameraOverride = true,
+        bool useFaderIfExists = true,
+        LoadSceneMode mode = LoadSceneMode.Single)
+    {
+        if (!cameraOverride.hasCamera)
+        {
+            LoadDefault(targetScene, useFaderIfExists, mode);
+            return;
+        }
+
+        ClearLegacyEntryOneShots();
+
+        var request = SceneArrivalRequest.Default(targetScene);
+        ApplyCameraOverride(request, cameraOverride, preserveCameraOverride);
+        SceneArrivalContext.SetNext(request);
+
+        LoadScene(targetScene, useFaderIfExists, mode);
+    }
+
     public static void LoadSpawn(
         string targetScene,
         string spawnKey,
@@ -28,6 +50,36 @@ public static class SceneTransitionService
 
         ClearLegacyEntryOneShots();
         SceneArrivalContext.SetNext(SceneArrivalRequest.SpawnKey(targetScene, spawnKey));
+        LoadScene(targetScene, useFaderIfExists, mode);
+    }
+
+    public static void LoadSpawn(
+        string targetScene,
+        string spawnKey,
+        SceneCameraRequest cameraOverride,
+        bool preserveCameraOverride = true,
+        bool useFaderIfExists = true,
+        LoadSceneMode mode = LoadSceneMode.Single)
+    {
+        if (!cameraOverride.hasCamera)
+        {
+            LoadSpawn(targetScene, spawnKey, useFaderIfExists, mode);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(spawnKey))
+        {
+            Debug.LogWarning("[SceneTransitionService] spawnKey is empty. Loading default scene entry.");
+            LoadDefault(targetScene, cameraOverride, preserveCameraOverride, useFaderIfExists, mode);
+            return;
+        }
+
+        ClearLegacyEntryOneShots();
+
+        var request = SceneArrivalRequest.SpawnKey(targetScene, spawnKey);
+        ApplyCameraOverride(request, cameraOverride, preserveCameraOverride);
+        SceneArrivalContext.SetNext(request);
+
         LoadScene(targetScene, useFaderIfExists, mode);
     }
 
@@ -59,9 +111,13 @@ public static class SceneTransitionService
         string fallbackSceneName = "Move_Tutorial",
         bool useFaderIfExists = true)
     {
-        ClearLegacyEntryOneShots();
+        ClearLegacyEntryOneShots(clearSleepLoadContext: false);
+        SleepLoadContext.MarkPending();
 
         var data = ProgressSaveStore.Load();
+        SaveSystem.LoadCheckpointRuntime();
+        TriggerRuntimeSaveBridge.Restore(data.triggerRuntime);
+
         string targetScene = !string.IsNullOrWhiteSpace(data.lastSceneName)
             ? data.lastSceneName
             : fallbackSceneName;
@@ -81,13 +137,21 @@ public static class SceneTransitionService
         LoadScene(targetScene, useFaderIfExists, LoadSceneMode.Single);
     }
 
-    public static void EnterBattle(
+    public static bool EnterBattle(
         string battleSceneName,
         string enemyId,
         Transform player,
         Transform enemy,
         bool useFaderIfExists = true)
     {
+        if (string.IsNullOrWhiteSpace(battleSceneName))
+        {
+            Debug.LogWarning("[SceneTransitionService] battleSceneName is empty.");
+            return false;
+        }
+
+        PrepareBattleDeckForEntry();
+
         SceneArrivalRequest returnRequest = BuildBattleReturnRequest(enemyId, player, enemy);
         if (returnRequest != null)
         {
@@ -101,6 +165,22 @@ public static class SceneTransitionService
             WorldNPCStateService.Instance.SaveSnapshot(enemy.gameObject);
 
         LoadScene(battleSceneName, useFaderIfExists, LoadSceneMode.Single);
+        return true;
+    }
+
+    public static bool PrepareBattleDeckForEntry()
+    {
+        CardStateRuntime runtime = ResolveCardStateRuntimeForBattleEntry();
+        if (runtime == null)
+        {
+            Debug.LogWarning("[SceneTransitionService] CardStateRuntime is missing. Battle will continue without deck preparation.");
+            return true;
+        }
+
+        if (!runtime.TryPrepareDeckForBattle(out string failureReason))
+            Debug.LogWarning($"[SceneTransitionService] {failureReason}");
+
+        return true;
     }
 
     public static void ReturnFromBattle(float graceSeconds = 1.0f, bool useFaderIfExists = true)
@@ -247,10 +327,36 @@ public static class SceneTransitionService
         SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
     }
 
-    private static void ClearLegacyEntryOneShots()
+    private static CardStateRuntime ResolveCardStateRuntimeForBattleEntry()
+    {
+        if (CardStateRuntime.Instance != null)
+            return CardStateRuntime.Instance;
+
+        CardStateRuntime existing = Object.FindObjectOfType<CardStateRuntime>(true);
+        if (existing != null)
+            return existing;
+
+        var runtimeObject = new GameObject("CardStateRuntime (Battle Entry Auto)");
+        return runtimeObject.AddComponent<CardStateRuntime>();
+    }
+
+    private static void ApplyCameraOverride(
+        SceneArrivalRequest request,
+        SceneCameraRequest cameraOverride,
+        bool preserveCameraOverride)
+    {
+        if (request == null || !cameraOverride.hasCamera)
+            return;
+
+        request.camera = cameraOverride;
+        request.preserveCameraOverride = preserveCameraOverride;
+    }
+
+    private static void ClearLegacyEntryOneShots(bool clearSleepLoadContext = true)
     {
         SceneEntrySpawnContext.Clear();
         MyroomEntryContext.Clear();
-        SleepLoadContext.Consume();
+        if (clearSleepLoadContext)
+            SleepLoadContext.Consume();
     }
 }

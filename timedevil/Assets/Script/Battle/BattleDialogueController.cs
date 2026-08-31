@@ -79,6 +79,15 @@ public class BattleDialogueController : MonoBehaviour
     [SerializeField, Min(1f)] private float nameFontSize = 30f;
     [SerializeField, Min(1f)] private float dialogueFontSize = 28f;
 
+    [Header("Advance Prompt")]
+    [SerializeField] private Image advancePromptImage;
+    [SerializeField] private Sprite advancePromptSprite;
+    [SerializeField] private Vector2 advancePromptSize = new Vector2(104f, 104f);
+    [SerializeField] private Vector2 advancePromptOffset = new Vector2(-18f, 18f);
+    [SerializeField, Range(0f, 1f)] private float advancePromptMinAlpha = 0.35f;
+    [SerializeField, Range(0f, 1f)] private float advancePromptMaxAlpha = 1f;
+    [SerializeField, Min(0.1f)] private float advancePromptBlinkPeriod = 0.9f;
+
     [Header("Portraits")]
     [SerializeField] private bool dimInactivePortrait = true;
     [SerializeField, Range(0f, 1f)] private float activePortraitAlpha = 1f;
@@ -103,6 +112,7 @@ public class BattleDialogueController : MonoBehaviour
     private Sprite currentLeftPortrait;
     private Sprite currentRightPortrait;
     private BattleTutorialController tutorialController;
+    private Coroutine advancePromptBlinkRoutine;
 
     public bool IsDialogueActive => isDialogueActive;
     public bool IsTyping => isTyping;
@@ -123,6 +133,8 @@ public class BattleDialogueController : MonoBehaviour
     {
         if (isDialogueActive)
             EndDialogue(false);
+        else
+            HideAdvancePrompt();
 
         if (Instance == this)
             Instance = null;
@@ -464,6 +476,8 @@ public class BattleDialogueController : MonoBehaviour
             leftPortraitImage = window.Find("LeftPortrait")?.GetComponent<Image>();
         if (window && !rightPortraitImage)
             rightPortraitImage = window.Find("RightPortrait")?.GetComponent<Image>();
+        if (window)
+            EnsureAdvancePrompt();
     }
 
     private void CreateRuntimeUi()
@@ -538,7 +552,152 @@ public class BattleDialogueController : MonoBehaviour
             dialogueText.raycastTarget = false;
         }
 
+        EnsureAdvancePrompt();
         root.SetAsLastSibling();
+    }
+
+    private void EnsureAdvancePrompt()
+    {
+        if (!window)
+            return;
+
+        if (!advancePromptSprite)
+            advancePromptSprite = LoadDefaultAdvancePromptSprite();
+
+        if (!advancePromptImage)
+            advancePromptImage = FindAdvancePromptImage();
+
+        if (!advancePromptImage)
+            advancePromptImage = CreateAdvancePromptImage(window);
+
+        if (!advancePromptImage)
+            return;
+
+        if (!advancePromptImage.sprite)
+            advancePromptImage.sprite = advancePromptSprite;
+
+        advancePromptImage.preserveAspect = true;
+        advancePromptImage.raycastTarget = false;
+        ApplyAdvancePromptLayout(advancePromptImage.rectTransform);
+    }
+
+    private Image FindAdvancePromptImage()
+    {
+        if (!window)
+            return null;
+
+        Transform direct = window.Find("Keyboard_UI_01_22");
+        if (direct && direct.TryGetComponent(out Image directImage))
+            return directImage;
+
+        Image[] images = window.GetComponentsInChildren<Image>(true);
+        foreach (Image image in images)
+        {
+            if (image && image.name == "Keyboard_UI_01_22")
+                return image;
+        }
+
+        return null;
+    }
+
+    private Image CreateAdvancePromptImage(Transform parent)
+    {
+        var promptObject = new GameObject("Keyboard_UI_01_22", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        promptObject.transform.SetParent(parent, false);
+
+        Image image = promptObject.GetComponent<Image>();
+        image.sprite = advancePromptSprite != null ? advancePromptSprite : LoadDefaultAdvancePromptSprite();
+        image.preserveAspect = true;
+        image.raycastTarget = false;
+        ApplyAdvancePromptLayout(image.rectTransform);
+        return image;
+    }
+
+    private void ApplyAdvancePromptLayout(RectTransform rect)
+    {
+        if (!rect)
+            return;
+
+        rect.anchorMin = new Vector2(1f, 0f);
+        rect.anchorMax = new Vector2(1f, 0f);
+        rect.pivot = new Vector2(1f, 0f);
+        rect.anchoredPosition = advancePromptOffset;
+        rect.sizeDelta = advancePromptSize;
+        rect.localScale = Vector3.one;
+        rect.localRotation = Quaternion.identity;
+        rect.SetAsLastSibling();
+    }
+
+    private Sprite LoadDefaultAdvancePromptSprite()
+    {
+#if UNITY_EDITOR
+        const string assetPath = "Assets/ElvGames/Fantasy Dreamland/UI/Keyboard Keys/Keyboard_UI_01.png";
+        UnityEngine.Object[] assets = UnityEditor.AssetDatabase.LoadAllAssetRepresentationsAtPath(assetPath);
+        foreach (UnityEngine.Object asset in assets)
+        {
+            if (asset is Sprite sprite && sprite.name == "Keyboard_UI_01_22")
+                return sprite;
+        }
+
+        Sprite mainSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(assetPath);
+        if (mainSprite != null && mainSprite.name == "Keyboard_UI_01_22")
+            return mainSprite;
+#endif
+        return null;
+    }
+
+    private void ShowAdvancePrompt()
+    {
+        EnsureAdvancePrompt();
+        if (!advancePromptImage || !advancePromptImage.sprite)
+            return;
+
+        advancePromptImage.gameObject.SetActive(true);
+        StartAdvancePromptBlink();
+    }
+
+    private void HideAdvancePrompt()
+    {
+        StopAdvancePromptBlink();
+        if (advancePromptImage)
+            advancePromptImage.gameObject.SetActive(false);
+    }
+
+    private void StartAdvancePromptBlink()
+    {
+        if (!advancePromptImage)
+            return;
+
+        if (advancePromptBlinkRoutine != null)
+            StopCoroutine(advancePromptBlinkRoutine);
+
+        advancePromptBlinkRoutine = StartCoroutine(CoBlinkAdvancePrompt());
+    }
+
+    private void StopAdvancePromptBlink()
+    {
+        if (advancePromptBlinkRoutine != null)
+        {
+            StopCoroutine(advancePromptBlinkRoutine);
+            advancePromptBlinkRoutine = null;
+        }
+
+        if (advancePromptImage)
+            SetAlpha(advancePromptImage, advancePromptMaxAlpha);
+    }
+
+    private IEnumerator CoBlinkAdvancePrompt()
+    {
+        while (advancePromptImage)
+        {
+            float minAlpha = Mathf.Min(advancePromptMinAlpha, advancePromptMaxAlpha);
+            float maxAlpha = Mathf.Max(advancePromptMinAlpha, advancePromptMaxAlpha);
+            float t = Mathf.PingPong(Time.unscaledTime / Mathf.Max(0.1f, advancePromptBlinkPeriod), 1f);
+            SetAlpha(advancePromptImage, Mathf.Lerp(minAlpha, maxAlpha, t));
+            yield return null;
+        }
+
+        advancePromptBlinkRoutine = null;
     }
 
     private Image CreatePortrait(string objectName, Vector2 edgeOffset, Vector2 size, bool rightSide = false)
@@ -564,6 +723,11 @@ public class BattleDialogueController : MonoBehaviour
             return;
 
         root.gameObject.SetActive(visible);
+        if (visible)
+            ShowAdvancePrompt();
+        else
+            HideAdvancePrompt();
+
         if (!rootGroup)
             return;
 

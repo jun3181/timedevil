@@ -7281,7 +7281,7 @@ MonoBehaviour:
     sentences:
     - "\uB098... \uAE30\uC5B5\uC774... \uB04A\uACA8..."
     - "\uC870\uAC01... \uAC19\uC740 \uAC8C \uD769\uC5B4\uC84C\uC5B4..."
-    leftPortrait: {fileID: 0}
+    leftPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
     rightPortrait: {fileID: 0}
     lines: []
   completeDialogue:
@@ -7289,7 +7289,7 @@ MonoBehaviour:
     sentences:
     - "\uACE0\uB9C8\uC6CC... \uB450\uB824\uC6C0\uC5D0\uC11C \uBC97\uC5B4\uB0A0 \uC218
       \uC788\uC744 \uAC83 \uAC19\uC544."
-    leftPortrait: {fileID: 0}
+    leftPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
     rightPortrait: {fileID: 0}
     lines: []
 --- !u!1 &2023173058

@@ -77,4 +77,9 @@ public class WorldNPCStateService : MonoBehaviour
         _triggerRouteProgress.Remove(routeRuntimeId);
     }
 
+    public void ClearAllTriggerRouteProgress()
+    {
+        _triggerRouteProgress.Clear();
+    }
+
 }

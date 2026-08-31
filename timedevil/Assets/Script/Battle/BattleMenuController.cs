@@ -17,6 +17,7 @@ public class BattleMenuController : MonoBehaviour
     public IntEvent onSubmit = new IntEvent();
 
     private int index = 0;
+    private DescriptionPanelController desc;
     public int Index => index;
     public int CurrentIndex => index;
     public int EntryCount => entries != null ? entries.Length : 0;
@@ -75,6 +76,8 @@ public class BattleMenuController : MonoBehaviour
         {
             BattleTutorialAction submitAction = GetSubmitAction(index);
             if (!BattleTutorialGate.Allows(submitAction)) return;
+            if (submitAction == BattleTutorialAction.CardPanelInteract && !CanSubmitCardPanel())
+                return;
 
             string name = GetEntryName(index);
             Debug.Log($"[BattleMenu] E pressed → {name} selected (index={index})");
@@ -209,5 +212,19 @@ public class BattleMenuController : MonoBehaviour
             kind = "Run";
 
         return kind != null;
+    }
+
+    private bool CanSubmitCardPanel()
+    {
+        BattleDeckRuntime battleDeck = BattleDeckRuntime.Instance;
+        if (battleDeck == null || battleDeck.CanSelectCards)
+            return true;
+
+        if (!desc)
+            desc = FindObjectOfType<DescriptionPanelController>(true);
+
+        desc?.ShowOneShotMessage(battleDeck.CardSelectionLockMessage);
+        Debug.LogWarning($"[BattleMenu] {battleDeck.CardSelectionLockMessage}", this);
+        return false;
     }
 }

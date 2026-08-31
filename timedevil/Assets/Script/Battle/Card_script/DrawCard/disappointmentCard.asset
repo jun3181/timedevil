@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae67f8acdd35dd84fb814605a4b67711, type: 3}
+  m_Name: disappointmentCard
+  m_EditorClassIdentifier:
+  id: disappointment
+  displayName: "\uc2e4\ub9dd"
+  type: 2
+  display: "\uc0c1\ub300 \ud328 - 4"
+  explanation: "\uae30\ub300\ud588\ub358 \ub9cc\ud07c \ub354 \uc2e4\ub9dd\uc2a4\ub7ec\uc6cc."
+  mainArtwork: {fileID: 21300000, guid: 6c979036faf3fffc2a7819d539a641a1, type: 3}
+  arrowArtwork: {fileID: 0}
+  effectTextOverride:
+  cost: 6
+  positive: 1
+  negative: 9
+  drawMode: 1
+  amount: 4
+  refreshDiscardAmount: 1
+  refreshDrawAmount: 1
+  handEffectSequence: []

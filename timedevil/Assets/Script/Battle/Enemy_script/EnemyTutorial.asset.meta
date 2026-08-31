@@ -1,9 +1,5 @@
 fileFormatVersion: 2
-<<<<<<<< HEAD:timedevil/Assets/Script/Player/item/Inventory/ItemDefinitions/HealthRecovery/DustyCandy.asset.meta
 guid: 0d45b0acbacbbe848902e2afd4c9bd48
-========
-guid: f7f5a65ee8784a4b891b178b843f5aac
->>>>>>>> main:timedevil/Assets/Script/Battle/Enemy_script/EnemyTutorial.asset.meta
 NativeFormatImporter:
   externalObjects: {}
   mainObjectFileID: 11400000

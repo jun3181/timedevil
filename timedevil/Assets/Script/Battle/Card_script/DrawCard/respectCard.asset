@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae67f8acdd35dd84fb814605a4b67711, type: 3}
+  m_Name: respectCard
+  m_EditorClassIdentifier:
+  id: respect
+  displayName: "\uc874\uacbd"
+  type: 2
+  display: "\uc0c1\ub300 \ud328 - 1"
+  explanation: "\uc815\ub9d0 \ub300\ub2e8\ud574, \uc9c4\uc2ec\uc73c\ub85c \uc874\uacbd\ud574."
+  mainArtwork: {fileID: 21300000, guid: 683f6905c150254b3320c1950c456bb9, type: 3}
+  arrowArtwork: {fileID: 0}
+  effectTextOverride:
+  cost: 4
+  positive: 9
+  negative: 1
+  drawMode: 1
+  amount: 1
+  refreshDiscardAmount: 1
+  refreshDrawAmount: 1
+  handEffectSequence: []

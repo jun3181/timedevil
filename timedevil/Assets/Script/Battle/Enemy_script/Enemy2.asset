@@ -13,21 +13,21 @@ MonoBehaviour:
   m_Name: Enemy2
   m_EditorClassIdentifier: 
   enemyId: Enemy2
-  displayName: Enemy2
-  stateSprite: {fileID: -1445880832, guid: d6290a656c3818b43879c9ea963dfbf1, type: 3}
-  gameplaySprite: {fileID: -1445880832, guid: d6290a656c3818b43879c9ea963dfbf1, type: 3}
-  maxHP: 999999
-  baseATK: 8
-  baseDEF: 3
-  baseSPD: 100
+  displayName: "\uCD08\uB85D\uBC8C\uB808"
+  stateSprite: {fileID: -493134498, guid: 4be161401c10c0c4bb7dbd499e03fdd4, type: 3}
+  gameplaySprite: {fileID: -676687659, guid: 4be161401c10c0c4bb7dbd499e03fdd4, type: 3}
+  maxHP: 40
+  baseATK: 7
+  baseDEF: 10
+  baseSPD: 2
   deckIds:
-  - AttackCard1
-  - AttackCard2
-  - AttackCard3
-  - AttackCard4
-  - AttackCard5
-  - AttackCard6
-  - AttackCard7
-  - AttackCard8
-  - AttackCard9
-  - AttackCard10
+  - fascination
+  - jealousy
+  - scary
+  - attachment
+  - regret
+  - reassurance
+  - contempt
+  - discard
+  - sympathy
+  - fear

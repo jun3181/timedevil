@@ -19,13 +19,15 @@ public class CardTemplateView : MonoBehaviour
 
     [Header("Icon Sprites")]
     [SerializeField] private Sprite attackPatternIconSprite;
+    [SerializeField] private Sprite trapPatternIconSprite;
     [SerializeField] private Sprite drawIconSprite;
     [SerializeField] private Sprite drawSecondaryIconSprite;
     [SerializeField] private Sprite moveIconSprite;
 
     [Header("Artwork")]
     [SerializeField] private Sprite testArtworkSprite;
-    [SerializeField] private bool useCardMainArtwork = false;
+    [SerializeField] private bool useCardMainArtwork = true;
+    [SerializeField] private string cardArtworkResourcesFolder = "my_asset/CardArt";
     [SerializeField] private Rect artworkRect = new Rect(0.10f, 0.345f, 0.80f, 0.46f);
     [SerializeField, Min(0.1f)] private float artworkFillScale = 1.12f;
 
@@ -87,6 +89,8 @@ public class CardTemplateView : MonoBehaviour
         }
 
         bool isSupport = IsSupport(card);
+        SupportCardSO supportCard = card as SupportCardSO;
+        bool showsTrapPattern = supportCard != null && HasTrapPattern(supportCard);
         Sprite frameSprite = GetFrameSprite(card);
         SetImage(frameImage, frameSprite != null ? frameSprite : fallbackFullCardSprite, false);
         SetArtwork(GetArtworkSprite(card));
@@ -96,13 +100,15 @@ public class CardTemplateView : MonoBehaviour
         if (effectText)
         {
             effectText.text = card.EffectText ?? string.Empty;
-            SetNormalizedRect((RectTransform)effectText.transform, isSupport ? supportEffectTextRect : effectTextRect);
+            SetNormalizedRect((RectTransform)effectText.transform, isSupport && !showsTrapPattern ? supportEffectTextRect : effectTextRect);
         }
 
         ClearCardSpecificVisuals();
 
         if (card is AttackCardSO || card.type == CardType.Attack)
             ShowAttackPattern(card as AttackCardSO);
+        else if (showsTrapPattern)
+            ShowTrapPattern(supportCard);
         else if (card is MoveCardSO || card.type == CardType.Move)
             ShowMoveIcon(card as MoveCardSO);
         else if (card is DrawCardSO || card.type == CardType.Draw)
@@ -122,6 +128,55 @@ public class CardTemplateView : MonoBehaviour
         SetImage(frameImage, null, false);
         SetArtwork(null);
         ClearCardSpecificVisuals();
+    }
+
+    public void OverrideTextFontSizes(float newCornerFontSize, float newEffectFontSize)
+    {
+        cornerFontSize = Mathf.Max(1f, newCornerFontSize);
+        effectFontSize = Mathf.Max(1f, newEffectFontSize);
+
+        EnsureGeneratedTemplate();
+        ConfigureText(costText, cornerFontSize, TextAlignmentOptions.Center);
+        ConfigureText(nameText, cornerFontSize, TextAlignmentOptions.MidlineLeft);
+        ConfigureText(effectText, effectFontSize, TextAlignmentOptions.TopLeft);
+    }
+
+    public void CopyVisualSettingsFrom(CardTemplateView source)
+    {
+        if (!source || source == this)
+            return;
+
+        attackFrameSprite = source.attackFrameSprite;
+        moveDrawFrameSprite = source.moveDrawFrameSprite;
+        supportFrameSprite = source.supportFrameSprite;
+        attackPatternIconSprite = source.attackPatternIconSprite;
+        trapPatternIconSprite = source.trapPatternIconSprite;
+        drawIconSprite = source.drawIconSprite;
+        drawSecondaryIconSprite = source.drawSecondaryIconSprite;
+        moveIconSprite = source.moveIconSprite;
+        testArtworkSprite = source.testArtworkSprite;
+        useCardMainArtwork = source.useCardMainArtwork;
+        cardArtworkResourcesFolder = source.cardArtworkResourcesFolder;
+        artworkRect = source.artworkRect;
+        artworkFillScale = source.artworkFillScale;
+        textColor = source.textColor;
+        costTextRect = source.costTextRect;
+        nameTextRect = source.nameTextRect;
+        effectTextRect = source.effectTextRect;
+        supportEffectTextRect = source.supportEffectTextRect;
+        cornerFontSize = source.cornerFontSize;
+        effectFontSize = source.effectFontSize;
+        attackPatternRect = source.attackPatternRect;
+        typeIconRect = source.typeIconRect;
+        attackGridLineColor = source.attackGridLineColor;
+        attackGridLineThickness = source.attackGridLineThickness;
+        patternIconInset = source.patternIconInset;
+        maxStackedMoveIcons = source.maxStackedMoveIcons;
+        moveIconStackOffset = source.moveIconStackOffset;
+        moveIconNormalizedSize = source.moveIconNormalizedSize;
+        moveIconBaseRotation = source.moveIconBaseRotation;
+        hideEmptyImages = source.hideEmptyImages;
+        triedAutoAssignSprites = false;
     }
 
     private void EnsureGeneratedTemplate()
@@ -199,6 +254,7 @@ public class CardTemplateView : MonoBehaviour
         if (!moveDrawFrameSprite) moveDrawFrameSprite = LoadSprite("card3", "card3_1");
         if (!supportFrameSprite) supportFrameSprite = LoadSprite("card3", "card3_2");
         if (!attackPatternIconSprite) attackPatternIconSprite = LoadSprite("icon", "icon_0");
+        if (!trapPatternIconSprite) trapPatternIconSprite = attackPatternIconSprite ? attackPatternIconSprite : LoadSprite("icon", "icon_0");
         if (!drawIconSprite) drawIconSprite = LoadSprite("icon", "icon_2");
         if (!moveIconSprite) moveIconSprite = LoadSprite("icon", "icon_3");
         if (!drawSecondaryIconSprite) drawSecondaryIconSprite = LoadSprite("icon", "icon_10");
@@ -224,10 +280,26 @@ public class CardTemplateView : MonoBehaviour
 
     private Sprite GetArtworkSprite(BaseCardSO card)
     {
-        if (card != null && useCardMainArtwork && card.mainArtwork)
-            return card.mainArtwork;
+        if (card != null && useCardMainArtwork)
+        {
+            if (card.mainArtwork)
+                return card.mainArtwork;
+
+            Sprite resourcesArtwork = LoadCardArtwork(card.id);
+            if (resourcesArtwork)
+                return resourcesArtwork;
+        }
 
         return testArtworkSprite != null ? testArtworkSprite : card != null ? card.mainArtwork : null;
+    }
+
+    private Sprite LoadCardArtwork(string cardId)
+    {
+        if (string.IsNullOrWhiteSpace(cardId) || string.IsNullOrWhiteSpace(cardArtworkResourcesFolder))
+            return null;
+
+        string folder = cardArtworkResourcesFolder.Trim().Trim('/');
+        return Resources.Load<Sprite>($"{folder}/{cardId}");
     }
 
     private static string ResolveCardTitle(BaseCardSO card)
@@ -376,9 +448,40 @@ public class CardTemplateView : MonoBehaviour
                 continue;
 
             cell.sprite = attackPatternIconSprite;
+            cell.color = Color.white;
             cell.preserveAspect = true;
             cell.raycastTarget = false;
             cell.gameObject.SetActive(mask[i] && attackPatternIconSprite != null);
+        }
+    }
+
+    private void ShowTrapPattern(SupportCardSO supportCard)
+    {
+        if (!attackPatternRoot)
+            return;
+
+        attackPatternRoot.gameObject.SetActive(true);
+        SetNormalizedRect(attackPatternRoot, attackPatternRect);
+        EnsureAttackGridLines();
+        EnsureAttackPatternCells();
+
+        for (int i = 0; i < attackGridLines.Count; i++)
+            if (attackGridLines[i]) attackGridLines[i].gameObject.SetActive(true);
+
+        Sprite iconSprite = trapPatternIconSprite ? trapPatternIconSprite : attackPatternIconSprite;
+        bool[] mask = BuildTrapMask(supportCard);
+        for (int i = 0; i < 16; i++)
+        {
+            Image cell = attackPatternCells[i];
+            if (!cell)
+                continue;
+
+            cell.sprite = iconSprite;
+            cell.color = Color.white;
+            cell.preserveAspect = true;
+            cell.raycastTarget = false;
+            cell.transform.localRotation = Quaternion.identity;
+            cell.gameObject.SetActive(mask[i] && iconSprite != null);
         }
     }
 
@@ -399,11 +502,15 @@ public class CardTemplateView : MonoBehaviour
 
             Rect iconRect = BuildStackedIconRect(i, amount);
             SetNormalizedRect((RectTransform)icon.transform, iconRect);
-            icon.sprite = moveIconSprite;
+            bool useCardArrow = moveCard != null && moveCard.arrowArtwork != null;
+            Sprite iconSprite = useCardArrow ? moveCard.arrowArtwork : moveIconSprite;
+            icon.sprite = iconSprite;
             icon.preserveAspect = true;
             icon.raycastTarget = false;
-            icon.transform.localRotation = Quaternion.Euler(0f, 0f, moveIconBaseRotation + GetMoveRotation(moveCard));
-            icon.gameObject.SetActive(moveIconSprite != null);
+            icon.transform.localRotation = useCardArrow
+                ? Quaternion.identity
+                : Quaternion.Euler(0f, 0f, moveIconBaseRotation + GetMoveRotation(moveCard));
+            icon.gameObject.SetActive(iconSprite != null);
         }
     }
 
@@ -463,30 +570,90 @@ public class CardTemplateView : MonoBehaviour
         if (!attackCard)
             return mask;
 
-        MergePattern(mask, attackCard.pattern16);
+        MergeMask(mask, attackCard.hitMask);
 
         if (attackCard.waves != null)
         {
             for (int i = 0; i < attackCard.waves.Length; i++)
             {
                 if (attackCard.waves[i] != null)
-                    MergePattern(mask, attackCard.waves[i].pattern16);
+                    MergeMask(mask, attackCard.waves[i].hitMask);
             }
         }
 
         return mask;
     }
 
-    private static void MergePattern(bool[] mask, string pattern16)
+    private static bool HasTrapPattern(SupportCardSO supportCard)
     {
-        if (mask == null || mask.Length < 16)
+        if (!supportCard || supportCard.effects == null)
+            return false;
+
+        for (int i = 0; i < supportCard.effects.Count; i++)
+        {
+            SupportEffect effect = supportCard.effects[i];
+            if (effect == null || effect.category != SupportEffectCategory.Trap || effect.trapPlacements == null)
+                continue;
+
+            for (int j = 0; j < effect.trapPlacements.Count; j++)
+            {
+                SupportTrapPlacement placement = effect.trapPlacements[j];
+                if (placement != null && placement.gridMask != null && !placement.gridMask.IsEmpty())
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool[] BuildTrapMask(SupportCardSO supportCard)
+    {
+        bool[] mask = new bool[16];
+        if (!supportCard || supportCard.effects == null)
+            return mask;
+
+        for (int i = 0; i < supportCard.effects.Count; i++)
+        {
+            SupportEffect effect = supportCard.effects[i];
+            if (effect == null || effect.category != SupportEffectCategory.Trap || effect.trapPlacements == null)
+                continue;
+
+            for (int j = 0; j < effect.trapPlacements.Count; j++)
+            {
+                SupportTrapPlacement placement = effect.trapPlacements[j];
+                MergeTrapMask(mask, placement != null ? placement.gridMask : null);
+            }
+        }
+
+        return mask;
+    }
+
+    private static void MergeTrapMask(bool[] target, SupportGridMask source)
+    {
+        if (target == null || target.Length < 16 || source == null || source.IsEmpty())
             return;
 
-        for (int i = 0; i < 16; i++)
+        for (int row = 1; row <= 4; row++)
         {
-            char ch = pattern16 != null && pattern16.Length > i ? pattern16[i] : '0';
-            mask[i] |= ch == '1';
+            for (int col = 1; col <= 4; col++)
+            {
+                Vector2Int rc = new Vector2Int(row, col);
+                int index = SupportGridMask.ToIndex(rc);
+                if (index >= 0 && source.Contains(rc))
+                    target[index] = true;
+            }
         }
+    }
+
+    private static void MergeMask(bool[] target, AttackGridMask source)
+    {
+        if (target == null || target.Length < 16 || source == null || source.IsEmpty())
+            return;
+
+        bool[] sourceMask = new bool[16];
+        source.CopyTo(sourceMask);
+        for (int i = 0; i < 16; i++)
+            target[i] |= sourceMask[i];
     }
 
     private void EnsureAttackPatternCells()
@@ -653,14 +820,25 @@ public class CardTemplateView : MonoBehaviour
 
     private static Sprite LoadSprite(string assetName, string spriteName)
     {
-        Sprite[] resourceSprites = Resources.LoadAll<Sprite>($"my_asset/{assetName}");
+        Sprite[] resourceSprites = Resources.LoadAll<Sprite>($"my_asset/CardTemplate/{assetName}");
         for (int i = 0; i < resourceSprites.Length; i++)
         {
             if (resourceSprites[i] && resourceSprites[i].name == spriteName)
                 return resourceSprites[i];
         }
 
-        Sprite resourceSprite = Resources.Load<Sprite>($"my_asset/{spriteName}");
+        Sprite resourceSprite = Resources.Load<Sprite>($"my_asset/CardTemplate/{spriteName}");
+        if (resourceSprite)
+            return resourceSprite;
+
+        resourceSprites = Resources.LoadAll<Sprite>($"my_asset/{assetName}");
+        for (int i = 0; i < resourceSprites.Length; i++)
+        {
+            if (resourceSprites[i] && resourceSprites[i].name == spriteName)
+                return resourceSprites[i];
+        }
+
+        resourceSprite = Resources.Load<Sprite>($"my_asset/{spriteName}");
         if (resourceSprite)
             return resourceSprite;
 

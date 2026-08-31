@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 12fb9ea00e2eff64fa777bc8f86ce364, type: 3}
+  m_Name: angerCard
+  m_EditorClassIdentifier:
+  id: anger
+  displayName: "\ubd84\ub178"
+  type: 3
+  display: "\uc0c1\ub300 \uc67c\ucabd\uc73c\ub85c 2\uce78"
+  explanation: "\ub098 \uc9c0\uae08 \uc815\ub9d0 \ud654\uac00 \ub098."
+  mainArtwork: {fileID: 21300000, guid: 27b81397eff6719f8a695e86d2b99328, type: 3}
+  arrowArtwork: {fileID: 21300000, guid: b8a6bf4981e7bcb0e5bd0f23a60070ea, type: 3}
+  effectTextOverride:
+  cost: 4
+  positive: 2
+  negative: 6
+  moveMode: 1
+  where: 2
+  amount: 2

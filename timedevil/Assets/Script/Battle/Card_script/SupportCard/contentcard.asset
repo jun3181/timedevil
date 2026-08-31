@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4aba08e57345df14899d9494d051ce96, type: 3}
+  m_Name: contentcard
+  m_EditorClassIdentifier:
+  id: content
+  displayName: "\ub9cc\uc871"
+  type: 1
+  display: "HP 10%\ub97c \ub0b4\uace0 \ucf54\uc2a4\ud2b8 +2"
+  explanation: "\ub108\ubb34 \ub9cc\uc871\ub410\uc5b4"
+  mainArtwork: {fileID: 21300000, guid: 9bf1c88d272744809d7ae72ab4c187b6, type: 3}
+  arrowArtwork: {fileID: 0}
+  effectTextOverride:
+  cost: 0
+  positive: 0
+  negative: 0
+  effects:
+  - category: 0
+    target: 0
+    costType: 1
+    freeCardCount: 1
+    hpCostPercent: 10
+    costGainAmount: 2
+    discardHandCount: 1
+    allowCostOverMax: 0
+    hpPaymentCanDefeat: 0
+    hpType: 0
+    hpAmount: -1
+    hpTurns: 1
+    statType: 0
+    statAmount: 1
+    statTurns: 1
+    trapPlacements:
+    - panelSide: 1
+      gridMask:
+        cells: 00000000000000000000000000000000
+    trapDamage: 1
+    trapDurationTurns: 1
+    triggerImmediatelyIfOccupied: 1
+    removeAfterTrigger: 1
+    guardTurns: 1

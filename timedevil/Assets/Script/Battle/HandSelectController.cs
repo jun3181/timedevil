@@ -72,6 +72,9 @@ public class HandSelectController : MonoBehaviour
             if (!BattleTutorialGate.Allows(BattleTutorialAction.CardSelect))
                 return;
 
+            if (!CanSelectPlayerCards())
+                return;
+
             if (!hand.EnsureCardsReady(BattleTutorialGate.IsActive)) return;
             panelViewBeforeSelect = panelController != null && panelController.IsGameplayView;
             hand.EnterSelectMode();
@@ -165,6 +168,20 @@ public class HandSelectController : MonoBehaviour
             orchestrator.RefreshSelectedAttackWarning();
         else
             orchestrator.ClearSelectedAttackWarning();
+    }
+
+    private bool CanSelectPlayerCards()
+    {
+        BattleDeckRuntime battleDeck = BattleDeckRuntime.Instance;
+        if (battleDeck == null || battleDeck.CanSelectCards)
+            return true;
+
+        if (!desc)
+            desc = FindObjectOfType<DescriptionPanelController>(true);
+
+        desc?.ShowOneShotMessage(battleDeck.CardSelectionLockMessage);
+        Debug.LogWarning($"[HandSelectController] {battleDeck.CardSelectionLockMessage}", this);
+        return false;
     }
 
     private void SnapExternalSelector(int index)

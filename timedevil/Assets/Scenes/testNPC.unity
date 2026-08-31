@@ -3264,21 +3264,19 @@ MonoBehaviour:
     dialogue:
       name: 
       sentences: []
-      leftPortrait: {fileID: 0}
+      leftPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
       rightPortrait: {fileID: 0}
       lines:
       - text: "\uBC16\uC774 \uC65C\uC774\uB798....?"
         speakerName: 
-        leftPortrait: {fileID: 21300000, guid: faddc8e013202db42a2074ac85536ec3, type: 3}
-        rightPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e,
-          type: 3}
-        focus: 2
+        leftPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
+        rightPortrait: {fileID: 21300000, guid: faddc8e013202db42a2074ac85536ec3, type: 3}
+        focus: 1
       - text: "\uB611\uB611\uB611...."
         speakerName: ??
-        leftPortrait: {fileID: 21300000, guid: faddc8e013202db42a2074ac85536ec3, type: 3}
-        rightPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e,
-          type: 3}
-        focus: 1
+        leftPortrait: {fileID: 21300000, guid: 9388f37de956bcb4c88653a9264beb6e, type: 3}
+        rightPortrait: {fileID: 21300000, guid: faddc8e013202db42a2074ac85536ec3, type: 3}
+        focus: 2
     advanceKey: 101
   nextKey: 101
   playOnStart: 1
